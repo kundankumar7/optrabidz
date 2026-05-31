@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="780" viewBox="0 0 1400 780" role="img" aria-labelledby="title desc">
+  <title id="title">Notification Delivery and Subscription Context ER diagram</title>
+  <desc id="desc">Schema-backed ER slice showing notification recipients, delivery channels, delivery attempts, account ownership, and subscriptions.</desc>
+  <defs>
+    <style>
+      .canvas{fill:#F7F3EA}.title{font:700 28px "Segoe UI",Arial,sans-serif;fill:#17212B}.subtitle{font:400 14px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+      .entity{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1.5;rx:8}.identity{fill:#EAF6F1;stroke:#2F7D67}.notify{fill:#FCEAE5;stroke:#B45A45}.delivery{fill:#E8F6F8;stroke:#2E7D8D}
+      .head{font:700 16px "Segoe UI",Arial,sans-serif;fill:#17212B}.field{font:400 13px "Segoe UI",Arial,sans-serif;fill:#2E3A46}.key{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}
+      .fk{fill:none;stroke:#344253;stroke-width:1.8;stroke-linecap:square;stroke-linejoin:round}.port{fill:#F7F3EA;stroke:#344253;stroke-width:1.6}
+      .card{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}.tagbox{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1}.tag{font:700 12px "Segoe UI",Arial,sans-serif;fill:#17212B}.note{font:400 12px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+    </style>
+  </defs>
+  <rect class="canvas" width="1400" height="780"/>
+  <text class="title" x="700" y="44" text-anchor="middle">Notification Delivery and Subscription Context</text>
+  <text class="subtitle" x="700" y="70" text-anchor="middle">Recipient fan-out, delivery channels, delivery attempts, and account subscriptions</text>
+
+  <g id="relationships">
+    <path class="fk" d="M850 185 H1000"/>
+    <circle class="port" cx="850" cy="185" r="4"/><circle class="port" cx="1000" cy="185" r="4"/>
+    <text class="card" x="862" y="176">1</text><text class="card" x="960" y="176">0..N</text>
+    <rect class="tagbox" x="903" y="174" width="44" height="22" rx="6"/><text class="tag" x="925" y="190" text-anchor="middle">R5</text>
+
+    <path class="fk" d="M650 250 V320"/>
+    <circle class="port" cx="650" cy="250" r="4"/><circle class="port" cx="650" cy="320" r="4"/>
+    <text class="card" x="662" y="276">1</text><text class="card" x="662" y="314">0..N</text>
+    <rect class="tagbox" x="628" y="282" width="44" height="22" rx="6"/><text class="tag" x="650" y="298" text-anchor="middle">R2</text>
+
+    <path class="fk" d="M380 410 H450"/>
+    <circle class="port" cx="380" cy="410" r="4"/><circle class="port" cx="450" cy="410" r="4"/>
+    <text class="card" x="392" y="400">1</text><text class="card" x="412" y="430">0..N</text>
+    <rect class="tagbox" x="393" y="399" width="44" height="22" rx="6"/><text class="tag" x="415" y="415" text-anchor="middle">R1</text>
+
+    <path class="fk" d="M750 410 H820"/>
+    <circle class="port" cx="750" cy="410" r="4"/><circle class="port" cx="820" cy="410" r="4"/>
+    <text class="card" x="762" y="400">1</text><text class="card" x="782" y="430">0..N</text>
+    <rect class="tagbox" x="763" y="399" width="44" height="22" rx="6"/><text class="tag" x="785" y="415" text-anchor="middle">R3</text>
+
+    <path class="fk" d="M970 500 V570"/>
+    <circle class="port" cx="970" cy="500" r="4"/><circle class="port" cx="970" cy="570" r="4"/>
+    <text class="card" x="982" y="526">1</text><text class="card" x="982" y="564">0..N</text>
+    <rect class="tagbox" x="948" y="532" width="44" height="22" rx="6"/><text class="tag" x="970" y="548" text-anchor="middle">R4</text>
+  </g>
+
+  <g transform="translate(550 120)">
+    <rect class="entity identity" width="300" height="130" rx="8"/>
+    <text class="head" x="18" y="32">account</text>
+    <text class="key" x="18" y="64">account_id PK</text>
+    <text class="field" x="18" y="94">recipient/subscription owner</text>
+  </g>
+
+  <g transform="translate(1000 120)">
+    <rect class="entity notify" width="300" height="130" rx="8"/>
+    <text class="head" x="18" y="32">notification_subscription</text>
+    <text class="key" x="18" y="64">subscription_id PK</text>
+    <text class="field" x="18" y="94">account_id FK</text>
+  </g>
+
+  <g transform="translate(80 330)">
+    <rect class="entity notify" width="300" height="160" rx="8"/>
+    <text class="head" x="18" y="32">notification</text>
+    <text class="key" x="18" y="64">notification_id PK</text>
+    <text class="field" x="18" y="94">event_id UK part</text>
+    <text class="field" x="18" y="120">notification_name UK part</text>
+  </g>
+
+  <g transform="translate(450 320)">
+    <rect class="entity notify" width="300" height="180" rx="8"/>
+    <text class="head" x="18" y="32">notification_recipient</text>
+    <text class="key" x="18" y="64">recipient_id PK</text>
+    <text class="field" x="18" y="94">notification_id FK</text>
+    <text class="field" x="18" y="120">account_id FK</text>
+    <text class="field" x="18" y="146">notification + account UK</text>
+  </g>
+
+  <g transform="translate(820 330)">
+    <rect class="entity delivery" width="300" height="160" rx="8"/>
+    <text class="head" x="18" y="32">notification_delivery</text>
+    <text class="key" x="18" y="64">delivery_id PK</text>
+    <text class="field" x="18" y="94">recipient_id FK</text>
+    <text class="field" x="18" y="120">recipient + channel UK</text>
+  </g>
+
+  <g transform="translate(820 570)">
+    <rect class="entity delivery" width="300" height="140" rx="8"/>
+    <text class="head" x="18" y="32">notification_delivery_attempt</text>
+    <text class="key" x="18" y="64">delivery_attempt_id PK</text>
+    <text class="field" x="18" y="94">delivery_id FK</text>
+    <text class="field" x="18" y="120">delivery + attempt_number UK</text>
+  </g>
+
+  <text class="note" x="80" y="748">Outbox and audit event_id correlation is intentionally documented in a separate slice because these delivery relationships are real foreign keys.</text>
+</svg>

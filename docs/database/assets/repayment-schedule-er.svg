@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="780" viewBox="0 0 1200 780" role="img" aria-labelledby="title desc">
+  <title id="title">Repayment Schedule Context ER diagram</title>
+  <desc id="desc">Schema-backed ER slice showing repayment ownership by agreement, startup, investor, and repayment installments.</desc>
+  <defs>
+    <style>
+      .canvas{fill:#F7F3EA}.title{font:700 28px "Segoe UI",Arial,sans-serif;fill:#17212B}.subtitle{font:400 14px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+      .entity{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1.5;rx:8}.actor{fill:#EAF6F1;stroke:#2F7D67}.market{fill:#F2EAF5;stroke:#6E4A7E}.finance{fill:#FFF1DA;stroke:#9A641E}
+      .head{font:700 16px "Segoe UI",Arial,sans-serif;fill:#17212B}.field{font:400 13px "Segoe UI",Arial,sans-serif;fill:#2E3A46}.key{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}
+      .fk{fill:none;stroke:#344253;stroke-width:1.8;stroke-linecap:square;stroke-linejoin:round}.port{fill:#F7F3EA;stroke:#344253;stroke-width:1.6}
+      .card{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}.tagbox{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1}.tag{font:700 12px "Segoe UI",Arial,sans-serif;fill:#17212B}.note{font:400 12px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+    </style>
+  </defs>
+  <rect class="canvas" width="1200" height="780"/>
+  <text class="title" x="600" y="44" text-anchor="middle">Repayment Schedule Context</text>
+  <text class="subtitle" x="600" y="70" text-anchor="middle">How a repayment plan belongs to an agreement and expands into installments</text>
+
+  <g id="relationships">
+    <path class="fk" d="M250 268 V395 H410"/>
+    <circle class="port" cx="250" cy="268" r="4"/><circle class="port" cx="410" cy="395" r="4"/>
+    <text class="card" x="262" y="292">1</text><text class="card" x="374" y="386">0..N</text>
+    <rect class="tagbox" x="318" y="384" width="44" height="22" rx="6"/><text class="tag" x="340" y="400" text-anchor="middle">R2</text>
+
+    <path class="fk" d="M600 268 V324"/>
+    <circle class="port" cx="600" cy="268" r="4"/><circle class="port" cx="600" cy="324" r="4"/>
+    <text class="card" x="612" y="292">1</text><text class="card" x="612" y="318">0..1</text>
+    <rect class="tagbox" x="578" y="290" width="44" height="22" rx="6"/><text class="tag" x="600" y="306" text-anchor="middle">R1</text>
+
+    <path class="fk" d="M950 268 V395 H790"/>
+    <circle class="port" cx="950" cy="268" r="4"/><circle class="port" cx="790" cy="395" r="4"/>
+    <text class="card" x="962" y="292">1</text><text class="card" x="802" y="386">0..N</text>
+    <rect class="tagbox" x="838" y="384" width="44" height="22" rx="6"/><text class="tag" x="860" y="400" text-anchor="middle">R3</text>
+
+    <path class="fk" d="M600 526 V562"/>
+    <circle class="port" cx="600" cy="526" r="4"/><circle class="port" cx="600" cy="562" r="4"/>
+    <text class="card" x="612" y="546">1</text><text class="card" x="612" y="558">0..N</text>
+    <rect class="tagbox" x="578" y="532" width="44" height="22" rx="6"/><text class="tag" x="600" y="548" text-anchor="middle">R4</text>
+  </g>
+
+  <g transform="translate(100 145)">
+    <rect class="entity actor" width="300" height="120" rx="8"/>
+    <text class="head" x="18" y="32">startup</text>
+    <text class="key" x="18" y="64">startup_id PK</text>
+    <text class="field" x="18" y="94">repayment.startup_id FK</text>
+  </g>
+
+  <g transform="translate(450 145)">
+    <rect class="entity market" width="300" height="120" rx="8"/>
+    <text class="head" x="18" y="32">agreement</text>
+    <text class="key" x="18" y="64">agreement_id PK</text>
+    <text class="field" x="18" y="94">repayment.agreement_id FK, UK</text>
+  </g>
+
+  <g transform="translate(800 145)">
+    <rect class="entity actor" width="300" height="120" rx="8"/>
+    <text class="head" x="18" y="32">investor</text>
+    <text class="key" x="18" y="64">investor_id PK</text>
+    <text class="field" x="18" y="94">repayment.investor_id FK</text>
+  </g>
+
+  <g transform="translate(420 330)">
+    <rect class="entity finance" width="360" height="190" rx="8"/>
+    <text class="head" x="18" y="32">repayment</text>
+    <text class="key" x="18" y="64">repayment_id PK</text>
+    <text class="field" x="18" y="94">agreement_id FK, UK</text>
+    <text class="field" x="18" y="120">startup_id FK</text>
+    <text class="field" x="18" y="146">investor_id FK</text>
+    <text class="field" x="18" y="172">repayment_status</text>
+  </g>
+
+  <g transform="translate(420 568)">
+    <rect class="entity finance" width="360" height="150" rx="8"/>
+    <text class="head" x="18" y="32">repayment_installment</text>
+    <text class="key" x="18" y="64">repayment_installment_id PK</text>
+    <text class="field" x="18" y="94">repayment_id FK</text>
+    <text class="field" x="18" y="120">installment_number UK part</text>
+  </g>
+
+  <text class="note" x="100" y="742">The database trigger enforces that repayment.startup_id and repayment.investor_id match the selected agreement.</text>
+  <text class="note" x="100" y="764">repayment_installment.confirmed_payment_intent_id is not shown because it is not a foreign key; payment_intent owns the installment relationship.</text>
+</svg>

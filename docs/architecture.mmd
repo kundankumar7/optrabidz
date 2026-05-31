@@ -1,0 +1,39 @@
+flowchart TB
+    Client["Clients<br/>Browser, API client, Swagger UI, reviewer tooling"]
+    Access["Spring MVC + Security<br/>Controllers, sessions, CSRF, role checks"]
+
+    subgraph App["Modular Monolith<br/>One Spring Boot application"]
+        subgraph IdentityCore["Identity Core"]
+            Security["security"]
+            Identity["identity"]
+            Participation["participation"]
+        end
+
+        subgraph MarketplaceDomain["Marketplace Domain"]
+            Classification["classification"]
+            Marketplace["marketplace"]
+            Governance["governance"]
+        end
+
+        subgraph FinanceDomain["Finance"]
+            Financial["financial"]
+        end
+
+        subgraph Support["Support"]
+            Common["common"]
+            Audit["audit"]
+            Notification["notification"]
+        end
+    end
+
+    Database["PostgreSQL Persistence<br/>JPA entities and repository adapters"]
+    Outbox["Domain Events + Outbox<br/>audit and notification delivery"]
+    Channels["Audit records, in-app feed,<br/>sandbox email, sandbox push"]
+
+    Client --> Access --> App
+    App --> Database
+    App --> Outbox --> Channels
+
+    IdentityCore --> MarketplaceDomain
+    MarketplaceDomain --> FinanceDomain
+    FinanceDomain --> Support

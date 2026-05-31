@@ -16,6 +16,27 @@ tracking, notifications, governance, and auditability.
 OptraBidz does not act as a lender, broker, escrow service, legal authority,
 credit scoring engine, or real-money payment processor.
 
+## Quick Start
+
+Use Java 21 and provide a PostgreSQL database named `optrabidz`. If Docker is
+available, start PostgreSQL with:
+
+```powershell
+docker run --name optrabidz-postgres -e POSTGRES_DB=optrabidz -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+```
+
+Start the application:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+Then open Swagger UI:
+
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+
 ## Project Purpose
 
 Startups often need flexible funding options, but comparing offers from
@@ -122,31 +143,11 @@ while still making the domain boundaries visible.
 | Event layer | Outbox events used by audit and notification processors |
 | Integration adapters | Local/sandbox payment strategies and sandbox notification channels |
 
-```mermaid
-flowchart TB
-    Client["Frontend or client application"] --> Access["Access and security layer"]
-    Access --> App["Application use cases"]
-    App --> Identity["Identity and sessions"]
-    App --> Participation["Participation profiles"]
-    App --> Classification["Classification and preferences"]
-    App --> Marketplace["Marketplace: listings, bids, agreements"]
-    App --> Finance["Financial records: settlement and repayment"]
-    App --> Governance["Governance: eligibility and lifecycle rules"]
-    Identity --> Database["PostgreSQL persistence"]
-    Participation --> Database
-    Classification --> Database
-    Marketplace --> Database
-    Finance --> Database
-    Governance --> Database
-    Marketplace --> Outbox["Outbox event store"]
-    Finance --> Outbox
-    Governance --> Outbox
-    Participation --> Outbox
-    Classification --> Outbox
-    Outbox --> Audit["Audit records"]
-    Outbox --> Notification["Notification records and delivery attempts"]
-    Notification --> Channels["In-app feed, sandbox email, sandbox push"]
-```
+<a href="docs/assets/optrabidz-architecture-overview.svg">
+  <img src="docs/assets/optrabidz-architecture-overview.svg?v=20260531-1040" alt="OptraBidz architecture diagram">
+</a>
+
+Editable diagram source: [`docs/architecture.mmd`](docs/architecture.mmd).
 
 ## API Reference
 
@@ -304,10 +305,10 @@ Run the full integration test command:
 The integration command uses Testcontainers PostgreSQL, so Docker must be
 running. The fast test command is the same command used by CI.
 
-Current verified result:
+The test suite is expected to complete with:
 
 ```text
-126 tests, 0 failures, 0 errors
+0 failures, 0 errors
 ```
 
 ## Continuous Integration

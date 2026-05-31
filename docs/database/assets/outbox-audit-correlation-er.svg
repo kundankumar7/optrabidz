@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Outbox and Audit Correlation Context ER diagram</title>
+  <desc id="desc">Schema-backed ER slice showing event_id correlation between event_outbox, notification, and audit_record, plus the nullable audit actor account foreign key.</desc>
+  <defs>
+    <style>
+      .canvas{fill:#F7F3EA}.title{font:700 28px "Segoe UI",Arial,sans-serif;fill:#17212B}.subtitle{font:400 14px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+      .entity{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1.5;rx:8}.outbox{fill:#FFF1DA;stroke:#9A641E}.notify{fill:#FCEAE5;stroke:#B45A45}.audit{fill:#F2EAF5;stroke:#6E4A7E}.identity{fill:#EAF6F1;stroke:#2F7D67}
+      .head{font:700 16px "Segoe UI",Arial,sans-serif;fill:#17212B}.field{font:400 13px "Segoe UI",Arial,sans-serif;fill:#2E3A46}.key{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}
+      .fk{fill:none;stroke:#344253;stroke-width:1.8;stroke-linecap:square;stroke-linejoin:round}.corr{fill:none;stroke:#B45A45;stroke-width:1.8;stroke-dasharray:7 6;stroke-linecap:square;stroke-linejoin:round}
+      .port{fill:#F7F3EA;stroke:#344253;stroke-width:1.6}.corrport{fill:#F7F3EA;stroke:#B45A45;stroke-width:1.6}
+      .card{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}.corrtext{font:700 12px "Segoe UI",Arial,sans-serif;fill:#8C3F30}.tagbox{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1}.tag{font:700 12px "Segoe UI",Arial,sans-serif;fill:#17212B}.note{font:400 12px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+    </style>
+  </defs>
+  <rect class="canvas" width="1200" height="700"/>
+  <text class="title" x="600" y="44" text-anchor="middle">Outbox and Audit Correlation Context</text>
+  <text class="subtitle" x="600" y="70" text-anchor="middle">event_id correlation plus nullable audit actor ownership</text>
+
+  <g id="relationships">
+    <path class="corr" d="M535 270 V335 H250 V398"/>
+    <circle class="corrport" cx="535" cy="270" r="4"/><circle class="corrport" cx="250" cy="398" r="4"/>
+    <text class="corrtext" x="392" y="326" text-anchor="middle">event_id correlation</text>
+    <rect class="tagbox" x="228" y="334" width="44" height="22" rx="6"/><text class="tag" x="250" y="350" text-anchor="middle">R1</text>
+
+    <path class="corr" d="M665 270 V335 H600 V398"/>
+    <circle class="corrport" cx="665" cy="270" r="4"/><circle class="corrport" cx="600" cy="398" r="4"/>
+    <text class="corrtext" x="646" y="326" text-anchor="middle">event_id correlation</text>
+    <rect class="tagbox" x="578" y="334" width="44" height="22" rx="6"/><text class="tag" x="600" y="350" text-anchor="middle">R2</text>
+
+    <path class="fk" d="M890 480 H750"/>
+    <circle class="port" cx="890" cy="480" r="4"/><circle class="port" cx="750" cy="480" r="4"/>
+    <text class="card" x="850" y="470">0..1</text><text class="card" x="762" y="470">0..N</text>
+    <rect class="tagbox" x="798" y="469" width="44" height="22" rx="6"/><text class="tag" x="820" y="485" text-anchor="middle">R3</text>
+  </g>
+
+  <g transform="translate(450 120)">
+    <rect class="entity outbox" width="300" height="150" rx="8"/>
+    <text class="head" x="18" y="32">event_outbox</text>
+    <text class="key" x="18" y="64">outbox_event_id PK</text>
+    <text class="field" x="18" y="94">event_id UK</text>
+    <text class="field" x="18" y="120">event_status</text>
+  </g>
+
+  <g transform="translate(100 400)">
+    <rect class="entity notify" width="300" height="150" rx="8"/>
+    <text class="head" x="18" y="32">notification</text>
+    <text class="key" x="18" y="64">notification_id PK</text>
+    <text class="field" x="18" y="94">event_id UK part</text>
+    <text class="field" x="18" y="120">notification_name UK part</text>
+  </g>
+
+  <g transform="translate(450 400)">
+    <rect class="entity audit" width="300" height="170" rx="8"/>
+    <text class="head" x="18" y="32">audit_record</text>
+    <text class="key" x="18" y="64">audit_record_id PK</text>
+    <text class="field" x="18" y="94">event_id UK part, nullable</text>
+    <text class="field" x="18" y="120">action UK part</text>
+    <text class="field" x="18" y="146">actor_account_id FK, nullable</text>
+  </g>
+
+  <g transform="translate(890 410)">
+    <rect class="entity identity" width="240" height="140" rx="8"/>
+    <text class="head" x="18" y="32">account</text>
+    <text class="key" x="18" y="64">account_id PK</text>
+    <text class="field" x="18" y="94">audit actor</text>
+  </g>
+
+  <text class="note" x="100" y="638">Dotted lines are event_id correlation only; the schema defines no foreign key from notification or audit_record to event_outbox.</text>
+  <text class="note" x="100" y="662">audit_record.actor_account_id is nullable, so an audit record may have no account actor.</text>
+</svg>

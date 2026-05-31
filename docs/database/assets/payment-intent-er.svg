@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Payment Intent Context ER diagram</title>
+  <desc id="desc">Schema-backed ER slice showing payment intent source references and payer/payee account relationships.</desc>
+  <defs>
+    <style>
+      .canvas{fill:#F7F3EA}.title{font:700 28px "Segoe UI",Arial,sans-serif;fill:#17212B}.subtitle{font:400 14px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+      .entity{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1.5;rx:8}.actor{fill:#EAF6F1;stroke:#2F7D67}.finance{fill:#FFF1DA;stroke:#9A641E}.payment{fill:#FCEBE6;stroke:#B55239}
+      .head{font:700 16px "Segoe UI",Arial,sans-serif;fill:#17212B}.role{font:700 12px "Segoe UI",Arial,sans-serif;fill:#5D6775}.field{font:400 13px "Segoe UI",Arial,sans-serif;fill:#2E3A46}.key{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}
+      .fk{fill:none;stroke:#344253;stroke-width:1.8;stroke-linecap:square;stroke-linejoin:round}.port{fill:#F7F3EA;stroke:#344253;stroke-width:1.6}
+      .card{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}.tagbox{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1}.tag{font:700 12px "Segoe UI",Arial,sans-serif;fill:#17212B}.note{font:400 12px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+    </style>
+  </defs>
+  <rect class="canvas" width="1200" height="720"/>
+  <text class="title" x="600" y="44" text-anchor="middle">Payment Intent Context</text>
+  <text class="subtitle" x="600" y="70" text-anchor="middle">How a payment intent is sourced and which accounts participate</text>
+
+  <g id="relationships">
+    <path class="fk" d="M370 205 H450"/>
+    <circle class="port" cx="370" cy="205" r="4"/><circle class="port" cx="450" cy="205" r="4"/>
+    <text class="card" x="372" y="192">0..1</text><text class="card" x="420" y="228">0..N</text>
+    <rect class="tagbox" x="388" y="194" width="44" height="22" rx="6"/><text class="tag" x="410" y="210" text-anchor="middle">R1</text>
+
+    <path class="fk" d="M370 405 H450"/>
+    <circle class="port" cx="370" cy="405" r="4"/><circle class="port" cx="450" cy="405" r="4"/>
+    <text class="card" x="372" y="392">0..1</text><text class="card" x="420" y="428">0..N</text>
+    <rect class="tagbox" x="388" y="394" width="44" height="22" rx="6"/><text class="tag" x="410" y="410" text-anchor="middle">R2</text>
+
+    <path class="fk" d="M830 205 H890"/>
+    <circle class="port" cx="830" cy="205" r="4"/><circle class="port" cx="890" cy="205" r="4"/>
+    <text class="card" x="842" y="192">0..N</text><text class="card" x="876" y="228">1</text>
+    <rect class="tagbox" x="838" y="214" width="44" height="22" rx="6"/><text class="tag" x="860" y="230" text-anchor="middle">R3</text>
+
+    <path class="fk" d="M830 405 H890"/>
+    <circle class="port" cx="830" cy="405" r="4"/><circle class="port" cx="890" cy="405" r="4"/>
+    <text class="card" x="842" y="392">0..N</text><text class="card" x="876" y="428">1</text>
+    <rect class="tagbox" x="838" y="414" width="44" height="22" rx="6"/><text class="tag" x="860" y="430" text-anchor="middle">R4</text>
+  </g>
+
+  <g transform="translate(80 140)">
+    <rect class="entity finance" width="280" height="130" rx="8"/>
+    <text class="head" x="18" y="32">settlement</text>
+    <text class="key" x="18" y="62">settlement_id PK</text>
+    <text class="field" x="18" y="90">payment_intent.settlement_id FK</text>
+    <text class="field" x="18" y="114">source for SETTLEMENT purpose</text>
+  </g>
+
+  <g transform="translate(80 340)">
+    <rect class="entity finance" width="280" height="130" rx="8"/>
+    <text class="head" x="18" y="32">repayment_installment</text>
+    <text class="key" x="18" y="62">repayment_installment_id PK</text>
+    <text class="field" x="18" y="90">payment_intent.repayment_installment_id FK</text>
+    <text class="field" x="18" y="114">source for REPAYMENT purpose</text>
+  </g>
+
+  <g transform="translate(460 185)">
+    <rect class="entity payment" width="360" height="240" rx="8"/>
+    <text class="head" x="18" y="34">payment_intent</text>
+    <text class="key" x="18" y="66">payment_intent_id PK</text>
+    <text class="field" x="18" y="94">payment_purpose</text>
+    <text class="field" x="18" y="120">settlement_id FK, nullable</text>
+    <text class="field" x="18" y="146">repayment_installment_id FK, nullable</text>
+    <text class="field" x="18" y="172">payer_account_id FK</text>
+    <text class="field" x="18" y="198">payee_account_id FK</text>
+    <text class="field" x="18" y="224">payment_state</text>
+  </g>
+
+  <g transform="translate(900 140)">
+    <rect class="entity actor" width="260" height="130" rx="8"/>
+    <text class="head" x="18" y="32">account</text>
+    <text class="role" x="18" y="54">payer role</text>
+    <text class="key" x="18" y="82">account_id PK</text>
+    <text class="field" x="18" y="110">payment_intent.payer_account_id FK</text>
+  </g>
+
+  <g transform="translate(900 340)">
+    <rect class="entity actor" width="260" height="130" rx="8"/>
+    <text class="head" x="18" y="32">account</text>
+    <text class="role" x="18" y="54">payee role</text>
+    <text class="key" x="18" y="82">account_id PK</text>
+    <text class="field" x="18" y="110">payment_intent.payee_account_id FK</text>
+  </g>
+
+  <text class="note" x="80" y="620">The same account table is shown twice to separate the payer and payee foreign keys.</text>
+  <text class="note" x="80" y="645">The schema check on payment_purpose allows exactly one source reference: settlement_id or repayment_installment_id.</text>
+</svg>

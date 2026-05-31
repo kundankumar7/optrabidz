@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Marketplace Listing and Bidding Context ER diagram</title>
+  <desc id="desc">Schema-backed ER slice showing startup listings, listing debt terms, investor bids, and bid debt terms.</desc>
+  <defs>
+    <style>
+      .canvas{fill:#F7F3EA}.title{font:700 28px "Segoe UI",Arial,sans-serif;fill:#17212B}.subtitle{font:400 14px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+      .entity{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1.5;rx:8}.actor{fill:#EAF6F1;stroke:#2F7D67}.market{fill:#F2EAF5;stroke:#6E4A7E}
+      .head{font:700 16px "Segoe UI",Arial,sans-serif;fill:#17212B}.field{font:400 13px "Segoe UI",Arial,sans-serif;fill:#2E3A46}.key{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}
+      .fk{fill:none;stroke:#344253;stroke-width:1.8;stroke-linecap:square;stroke-linejoin:round}.port{fill:#F7F3EA;stroke:#344253;stroke-width:1.6}
+      .card{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}.tagbox{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1}.tag{font:700 12px "Segoe UI",Arial,sans-serif;fill:#17212B}.note{font:400 12px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+    </style>
+  </defs>
+  <rect class="canvas" width="1200" height="760"/>
+  <text class="title" x="600" y="44" text-anchor="middle">Marketplace Listing and Bidding Context</text>
+  <text class="subtitle" x="600" y="70" text-anchor="middle">Startup listings, listing terms, investor bids, and bid terms</text>
+
+  <g id="relationships">
+    <path class="fk" d="M250 255 V292 H360 V330"/>
+    <circle class="port" cx="250" cy="255" r="4"/><circle class="port" cx="360" cy="330" r="4"/>
+    <text class="card" x="262" y="278">1</text><text class="card" x="372" y="322">0..N</text>
+    <rect class="tagbox" x="338" y="286" width="44" height="22" rx="6"/><text class="tag" x="360" y="302" text-anchor="middle">R1</text>
+
+    <path class="fk" d="M360 505 V578"/>
+    <circle class="port" cx="360" cy="505" r="4"/><circle class="port" cx="360" cy="578" r="4"/>
+    <text class="card" x="372" y="526">1</text><text class="card" x="372" y="570">0..1</text>
+    <rect class="tagbox" x="338" y="536" width="44" height="22" rx="6"/><text class="tag" x="360" y="552" text-anchor="middle">R2</text>
+
+    <path class="fk" d="M530 418 H670"/>
+    <circle class="port" cx="530" cy="418" r="4"/><circle class="port" cx="670" cy="418" r="4"/>
+    <text class="card" x="542" y="408">1</text><text class="card" x="634" y="408">0..N</text>
+    <rect class="tagbox" x="578" y="407" width="44" height="22" rx="6"/><text class="tag" x="600" y="423" text-anchor="middle">R3</text>
+
+    <path class="fk" d="M950 255 V292 H840 V330"/>
+    <circle class="port" cx="950" cy="255" r="4"/><circle class="port" cx="840" cy="330" r="4"/>
+    <text class="card" x="962" y="278">1</text><text class="card" x="852" y="322">0..N</text>
+    <rect class="tagbox" x="818" y="286" width="44" height="22" rx="6"/><text class="tag" x="840" y="302" text-anchor="middle">R4</text>
+
+    <path class="fk" d="M840 505 V578"/>
+    <circle class="port" cx="840" cy="505" r="4"/><circle class="port" cx="840" cy="578" r="4"/>
+    <text class="card" x="852" y="526">1</text><text class="card" x="852" y="570">0..1</text>
+    <rect class="tagbox" x="818" y="536" width="44" height="22" rx="6"/><text class="tag" x="840" y="552" text-anchor="middle">R5</text>
+  </g>
+
+  <g transform="translate(100 135)">
+    <rect class="entity actor" width="300" height="120" rx="8"/>
+    <text class="head" x="18" y="32">startup</text>
+    <text class="key" x="18" y="64">startup_id PK</text>
+    <text class="field" x="18" y="94">funding_listing.startup_id FK</text>
+  </g>
+
+  <g transform="translate(800 135)">
+    <rect class="entity actor" width="300" height="120" rx="8"/>
+    <text class="head" x="18" y="32">investor</text>
+    <text class="key" x="18" y="64">investor_id PK</text>
+    <text class="field" x="18" y="94">bid.investor_id FK</text>
+  </g>
+
+  <g transform="translate(190 330)">
+    <rect class="entity market" width="340" height="175" rx="8"/>
+    <text class="head" x="18" y="32">funding_listing</text>
+    <text class="key" x="18" y="64">listing_id PK</text>
+    <text class="field" x="18" y="94">startup_id FK</text>
+    <text class="field" x="18" y="120">listing_state</text>
+    <text class="field" x="18" y="146">funding_model</text>
+  </g>
+
+  <g transform="translate(670 330)">
+    <rect class="entity market" width="340" height="175" rx="8"/>
+    <text class="head" x="18" y="32">bid</text>
+    <text class="key" x="18" y="64">bid_id PK</text>
+    <text class="field" x="18" y="94">listing_id FK</text>
+    <text class="field" x="18" y="120">investor_id FK</text>
+    <text class="field" x="18" y="146">bid_state</text>
+  </g>
+
+  <g transform="translate(190 580)">
+    <rect class="entity market" width="340" height="130" rx="8"/>
+    <text class="head" x="18" y="32">listing_debt_terms</text>
+    <text class="key" x="18" y="64">listing_debt_terms_id PK</text>
+    <text class="field" x="18" y="94">listing_id FK, UK</text>
+  </g>
+
+  <g transform="translate(670 580)">
+    <rect class="entity market" width="340" height="130" rx="8"/>
+    <text class="head" x="18" y="32">bid_debt_terms</text>
+    <text class="key" x="18" y="64">bid_debt_terms_id PK</text>
+    <text class="field" x="18" y="94">bid_id FK, UK</text>
+  </g>
+
+  <text class="note" x="100" y="735">Partial unique index uq_one_accepted_bid_per_listing limits accepted bids per listing, but the base FK relationship funding_listing -> bid remains 1 -> 0..N.</text>
+</svg>

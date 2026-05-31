@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="780" viewBox="0 0 1400 780" role="img" aria-labelledby="title desc">
+  <title id="title">Agreement Acceptance and Debt Terms Context ER diagram</title>
+  <desc id="desc">Schema-backed ER slice showing how an agreement references a listing, accepted bid, startup, investor, and agreed debt terms.</desc>
+  <defs>
+    <style>
+      .canvas{fill:#F7F3EA}.title{font:700 28px "Segoe UI",Arial,sans-serif;fill:#17212B}.subtitle{font:400 14px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+      .entity{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1.5;rx:8}.actor{fill:#EAF6F1;stroke:#2F7D67}.market{fill:#F2EAF5;stroke:#6E4A7E}.contract{fill:#EAF1FB;stroke:#4E6F9F}
+      .head{font:700 16px "Segoe UI",Arial,sans-serif;fill:#17212B}.field{font:400 13px "Segoe UI",Arial,sans-serif;fill:#2E3A46}.key{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}
+      .fk{fill:none;stroke:#344253;stroke-width:1.8;stroke-linecap:square;stroke-linejoin:round}.port{fill:#F7F3EA;stroke:#344253;stroke-width:1.6}
+      .card{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}.tagbox{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1}.tag{font:700 12px "Segoe UI",Arial,sans-serif;fill:#17212B}.note{font:400 12px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+    </style>
+  </defs>
+  <rect class="canvas" width="1400" height="780"/>
+  <text class="title" x="700" y="44" text-anchor="middle">Agreement Acceptance and Debt Terms Context</text>
+  <text class="subtitle" x="700" y="70" text-anchor="middle">Accepted bid, selected listing, participants, and agreed debt terms</text>
+
+  <g id="relationships">
+    <path class="fk" d="M200 258 V338 H500 V470 H520"/>
+    <circle class="port" cx="200" cy="258" r="4"/><circle class="port" cx="520" cy="470" r="4"/>
+    <text class="card" x="212" y="282">1</text><text class="card" x="468" y="462">0..N</text>
+    <rect class="tagbox" x="318" y="327" width="44" height="22" rx="6"/><text class="tag" x="340" y="343" text-anchor="middle">R3</text>
+
+    <path class="fk" d="M535 300 V380"/>
+    <circle class="port" cx="535" cy="300" r="4"/><circle class="port" cx="535" cy="380" r="4"/>
+    <text class="card" x="547" y="326">1</text><text class="card" x="547" y="372">0..N</text>
+    <rect class="tagbox" x="513" y="340" width="44" height="22" rx="6"/><text class="tag" x="535" y="356" text-anchor="middle">R1</text>
+
+    <path class="fk" d="M865 300 V380"/>
+    <circle class="port" cx="865" cy="300" r="4"/><circle class="port" cx="865" cy="380" r="4"/>
+    <text class="card" x="877" y="326">1</text><text class="card" x="877" y="372">0..1</text>
+    <rect class="tagbox" x="843" y="340" width="44" height="22" rx="6"/><text class="tag" x="865" y="356" text-anchor="middle">R2</text>
+
+    <path class="fk" d="M1200 258 V338 H900 V470 H880"/>
+    <circle class="port" cx="1200" cy="258" r="4"/><circle class="port" cx="880" cy="470" r="4"/>
+    <text class="card" x="1212" y="282">1</text><text class="card" x="892" y="462">0..N</text>
+    <rect class="tagbox" x="1038" y="327" width="44" height="22" rx="6"/><text class="tag" x="1060" y="343" text-anchor="middle">R4</text>
+
+    <path class="fk" d="M700 560 V608"/>
+    <circle class="port" cx="700" cy="560" r="4"/><circle class="port" cx="700" cy="608" r="4"/>
+    <text class="card" x="712" y="584">1</text><text class="card" x="712" y="602">0..1</text>
+    <rect class="tagbox" x="678" y="574" width="44" height="22" rx="6"/><text class="tag" x="700" y="590" text-anchor="middle">R5</text>
+  </g>
+
+  <g transform="translate(70 138)">
+    <rect class="entity actor" width="260" height="120" rx="8"/>
+    <text class="head" x="18" y="32">startup</text>
+    <text class="key" x="18" y="64">startup_id PK</text>
+    <text class="field" x="18" y="94">agreement.startup_id FK</text>
+  </g>
+
+  <g transform="translate(385 138)">
+    <rect class="entity market" width="300" height="160" rx="8"/>
+    <text class="head" x="18" y="32">funding_listing</text>
+    <text class="key" x="18" y="64">listing_id PK</text>
+    <text class="field" x="18" y="94">agreement.listing_id FK</text>
+    <text class="field" x="18" y="120">startup_id FK</text>
+  </g>
+
+  <g transform="translate(715 138)">
+    <rect class="entity market" width="300" height="160" rx="8"/>
+    <text class="head" x="18" y="32">bid</text>
+    <text class="key" x="18" y="64">bid_id PK</text>
+    <text class="field" x="18" y="94">listing_id FK</text>
+    <text class="field" x="18" y="120">investor_id FK</text>
+  </g>
+
+  <g transform="translate(1070 138)">
+    <rect class="entity actor" width="260" height="120" rx="8"/>
+    <text class="head" x="18" y="32">investor</text>
+    <text class="key" x="18" y="64">investor_id PK</text>
+    <text class="field" x="18" y="94">agreement.investor_id FK</text>
+  </g>
+
+  <g transform="translate(520 380)">
+    <rect class="entity contract" width="360" height="180" rx="8"/>
+    <text class="head" x="18" y="32">agreement</text>
+    <text class="key" x="18" y="64">agreement_id PK</text>
+    <text class="field" x="18" y="94">listing_id FK</text>
+    <text class="field" x="18" y="120">bid_id FK, UK</text>
+    <text class="field" x="18" y="146">startup_id FK, investor_id FK</text>
+  </g>
+
+  <g transform="translate(520 610)">
+    <rect class="entity contract" width="360" height="125" rx="8"/>
+    <text class="head" x="18" y="32">agreement_debt_terms</text>
+    <text class="key" x="18" y="64">agreement_debt_terms_id PK</text>
+    <text class="field" x="18" y="94">agreement_id FK, UK</text>
+  </g>
+
+  <text class="note" x="70" y="752">Triggers require agreement.bid_id to reference an ACCEPTED bid and enforce listing, startup, and investor consistency with that bid and listing.</text>
+</svg>

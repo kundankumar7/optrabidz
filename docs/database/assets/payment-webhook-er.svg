@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+  <title id="title">Payment Webhook Context ER diagram</title>
+  <desc id="desc">Schema-backed ER slice showing provider webhook events and their optional payment intent and payment attempt references.</desc>
+  <defs>
+    <style>
+      .canvas{fill:#F7F3EA}.title{font:700 28px "Segoe UI",Arial,sans-serif;fill:#17212B}.subtitle{font:400 14px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+      .entity{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1.5;rx:8}.payment{fill:#FCEBE6;stroke:#B55239}
+      .head{font:700 16px "Segoe UI",Arial,sans-serif;fill:#17212B}.field{font:400 13px "Segoe UI",Arial,sans-serif;fill:#2E3A46}.key{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}
+      .fk{fill:none;stroke:#344253;stroke-width:1.8;stroke-linecap:square;stroke-linejoin:round}.port{fill:#F7F3EA;stroke:#344253;stroke-width:1.6}
+      .card{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}.tagbox{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1}.tag{font:700 12px "Segoe UI",Arial,sans-serif;fill:#17212B}.note{font:400 12px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+    </style>
+  </defs>
+  <rect class="canvas" width="1200" height="650"/>
+  <text class="title" x="600" y="44" text-anchor="middle">Payment Webhook Context</text>
+  <text class="subtitle" x="600" y="70" text-anchor="middle">Provider webhook events and their optional payment references</text>
+
+  <g id="relationships">
+    <path class="fk" d="M600 260 V330"/>
+    <circle class="port" cx="600" cy="260" r="4"/><circle class="port" cx="600" cy="330" r="4"/>
+    <text class="card" x="612" y="282">1</text><text class="card" x="612" y="322">0..N</text>
+    <rect class="tagbox" x="578" y="288" width="44" height="22" rx="6"/><text class="tag" x="600" y="304" text-anchor="middle">R1</text>
+
+    <path class="fk" d="M350 405 H420"/>
+    <circle class="port" cx="350" cy="405" r="4"/><circle class="port" cx="420" cy="405" r="4"/>
+    <text class="card" x="362" y="392">0..1</text><text class="card" x="382" y="428">0..N</text>
+    <rect class="tagbox" x="373" y="394" width="44" height="22" rx="6"/><text class="tag" x="395" y="410" text-anchor="middle">R2</text>
+
+    <path class="fk" d="M780 405 H850"/>
+    <circle class="port" cx="780" cy="405" r="4"/><circle class="port" cx="850" cy="405" r="4"/>
+    <text class="card" x="790" y="392">0..N</text><text class="card" x="820" y="428">0..1</text>
+    <rect class="tagbox" x="803" y="394" width="44" height="22" rx="6"/><text class="tag" x="825" y="410" text-anchor="middle">R3</text>
+  </g>
+
+  <g transform="translate(450 130)">
+    <rect class="entity payment" width="300" height="130" rx="8"/>
+    <text class="head" x="18" y="32">payment_provider</text>
+    <text class="key" x="18" y="64">provider_code PK</text>
+    <text class="field" x="18" y="94">display_name</text>
+    <text class="field" x="18" y="118">enabled</text>
+  </g>
+
+  <g transform="translate(420 330)">
+    <rect class="entity payment" width="360" height="190" rx="8"/>
+    <text class="head" x="18" y="32">payment_webhook_event</text>
+    <text class="key" x="18" y="64">payment_webhook_event_id PK</text>
+    <text class="field" x="18" y="94">provider_code FK</text>
+    <text class="field" x="18" y="120">provider_event_id UK part</text>
+    <text class="field" x="18" y="146">payment_intent_id FK, nullable</text>
+    <text class="field" x="18" y="172">payment_attempt_id FK, nullable</text>
+  </g>
+
+  <g transform="translate(80 330)">
+    <rect class="entity payment" width="270" height="150" rx="8"/>
+    <text class="head" x="18" y="32">payment_intent</text>
+    <text class="key" x="18" y="64">payment_intent_id PK</text>
+    <text class="field" x="18" y="94">payment_purpose</text>
+    <text class="field" x="18" y="120">payment_state</text>
+  </g>
+
+  <g transform="translate(850 330)">
+    <rect class="entity payment" width="270" height="150" rx="8"/>
+    <text class="head" x="18" y="32">payment_attempt</text>
+    <text class="key" x="18" y="64">payment_attempt_id PK</text>
+    <text class="field" x="18" y="94">payment_intent_id FK</text>
+    <text class="field" x="18" y="120">attempt_state</text>
+  </g>
+
+  <text class="note" x="80" y="585">provider_code is required; payment_intent_id and payment_attempt_id are nullable webhook references.</text>
+  <text class="note" x="80" y="610">provider_event_id is unique per provider through UNIQUE (provider_code, provider_event_id).</text>
+</svg>

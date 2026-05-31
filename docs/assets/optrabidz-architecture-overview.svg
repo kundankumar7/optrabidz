@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1040" viewBox="0 0 1200 1040" role="img" aria-labelledby="title desc">
+  <title id="title">OptraBidz architecture overview</title>
+  <desc id="desc">A high-level architecture diagram for OptraBidz showing clients, Spring MVC and security, a spacious grouped modular monolith, PostgreSQL persistence, and the domain event outbox flow to audit and notification processing.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2E3A46" />
+    </marker>
+    <style>
+      .canvas { fill: #F7F3EA; }
+      .panel { fill: #FFFDF8; stroke: #D8CDBD; stroke-width: 1.5; rx: 10; }
+      .title { font: 700 31px "Segoe UI", Arial, sans-serif; fill: #17212B; }
+      .subtitle { font: 400 15px "Segoe UI", Arial, sans-serif; fill: #5D6775; }
+      .section { font: 700 19px "Segoe UI", Arial, sans-serif; fill: #17212B; }
+      .label { font: 600 16px "Segoe UI", Arial, sans-serif; fill: #17212B; }
+      .small { font: 400 14px "Segoe UI", Arial, sans-serif; fill: #5D6775; }
+      .tiny { font: 400 13px "Segoe UI", Arial, sans-serif; fill: #5D6775; }
+      .chip { fill: #FFFDF8; stroke-width: 1.5; rx: 8; }
+      .wire { fill: none; stroke: #2E3A46; stroke-width: 2.2; marker-end: url(#arrow); }
+      .wire-soft { fill: none; stroke: #5D6775; stroke-width: 1.7; marker-end: url(#arrow); }
+      .api { fill: #E7F3F4; stroke: #146C78; }
+      .identity { fill: #EAF6F1; stroke: #2F7D67; }
+      .market { fill: #F2EAF5; stroke: #6E4A7E; }
+      .finance { fill: #FFF1DA; stroke: #9A641E; }
+      .support { fill: #FCEBE6; stroke: #B55239; }
+      .db { fill: #EEF4E8; stroke: #4F6F3A; }
+      .event { fill: #FCEBE6; stroke: #B55239; }
+    </style>
+  </defs>
+
+  <rect class="canvas" x="0" y="0" width="1200" height="1040" />
+
+  <text class="title" x="600" y="48" text-anchor="middle">OptraBidz Architecture</text>
+  <text class="subtitle" x="600" y="76" text-anchor="middle">Modular Spring Boot monolith with clear business modules, persistence, audit, and notification flows</text>
+
+  <rect class="panel api" x="420" y="110" width="360" height="74" />
+  <text class="section" x="600" y="140" text-anchor="middle">Clients</text>
+  <text class="small" x="600" y="164" text-anchor="middle">Browser, API client, Swagger UI, or reviewer tooling</text>
+
+  <line class="wire" x1="600" y1="184" x2="600" y2="220" />
+
+  <rect class="panel api" x="380" y="220" width="440" height="88" />
+  <text class="section" x="600" y="253" text-anchor="middle">Spring MVC + Security</text>
+  <text class="small" x="600" y="278" text-anchor="middle">Controllers, sessions, CSRF, role checks, standard responses</text>
+
+  <line class="wire" x1="600" y1="308" x2="600" y2="348" />
+
+  <rect class="panel" x="58" y="348" width="1084" height="455" />
+  <text class="section" x="600" y="383" text-anchor="middle">Modular Monolith</text>
+  <text class="small" x="600" y="409" text-anchor="middle">One Spring Boot application organized by bounded business modules</text>
+
+  <rect class="panel identity" x="100" y="442" width="460" height="150" />
+  <text class="section" x="330" y="474" text-anchor="middle">Identity Core</text>
+  <text class="tiny" x="330" y="497" text-anchor="middle">accounts, roles, profiles, sessions</text>
+  <rect class="chip identity" x="130" y="522" width="120" height="38" />
+  <text class="label" x="190" y="546" text-anchor="middle">security</text>
+  <rect class="chip identity" x="270" y="522" width="120" height="38" />
+  <text class="label" x="330" y="546" text-anchor="middle">identity</text>
+  <rect class="chip identity" x="410" y="522" width="120" height="38" />
+  <text class="label" x="470" y="546" text-anchor="middle">participation</text>
+
+  <rect class="panel market" x="640" y="442" width="460" height="150" />
+  <text class="section" x="870" y="474" text-anchor="middle">Marketplace Domain</text>
+  <text class="tiny" x="870" y="497" text-anchor="middle">discovery, bids, agreements, lifecycle rules</text>
+  <rect class="chip market" x="670" y="522" width="130" height="38" />
+  <text class="label" x="735" y="546" text-anchor="middle">classification</text>
+  <rect class="chip market" x="820" y="522" width="120" height="38" />
+  <text class="label" x="880" y="546" text-anchor="middle">marketplace</text>
+  <rect class="chip market" x="960" y="522" width="110" height="38" />
+  <text class="label" x="1015" y="546" text-anchor="middle">governance</text>
+
+  <rect class="panel finance" x="100" y="628" width="460" height="130" />
+  <text class="section" x="330" y="660" text-anchor="middle">Finance</text>
+  <text class="tiny" x="330" y="683" text-anchor="middle">declared settlement and repayment outcomes</text>
+  <rect class="chip finance" x="250" y="710" width="160" height="38" />
+  <text class="label" x="330" y="734" text-anchor="middle">financial</text>
+
+  <rect class="panel support" x="640" y="628" width="460" height="130" />
+  <text class="section" x="870" y="660" text-anchor="middle">Support</text>
+  <text class="tiny" x="870" y="683" text-anchor="middle">shared services, audit records, notification delivery</text>
+  <rect class="chip support" x="680" y="710" width="115" height="38" />
+  <text class="label" x="737.5" y="734" text-anchor="middle">common</text>
+  <rect class="chip support" x="820" y="710" width="100" height="38" />
+  <text class="label" x="870" y="734" text-anchor="middle">audit</text>
+  <rect class="chip support" x="945" y="710" width="125" height="38" />
+  <text class="label" x="1007.5" y="734" text-anchor="middle">notification</text>
+
+  <line class="wire-soft" x1="560" y1="517" x2="640" y2="517" />
+  <line class="wire-soft" x1="330" y1="592" x2="330" y2="628" />
+  <line class="wire-soft" x1="870" y1="592" x2="870" y2="628" />
+  <path class="wire-soft" d="M560 693 C590 693 610 693 640 693" />
+
+  <line class="wire" x1="470" y1="803" x2="390" y2="850" />
+  <line class="wire" x1="730" y1="803" x2="810" y2="850" />
+
+  <rect class="panel db" x="155" y="850" width="430" height="88" />
+  <text class="section" x="370" y="884" text-anchor="middle">PostgreSQL Persistence</text>
+  <text class="small" x="370" y="910" text-anchor="middle">JPA entities, repository adapters, durable application state</text>
+
+  <rect class="panel event" x="615" y="850" width="430" height="88" />
+  <text class="section" x="830" y="884" text-anchor="middle">Domain Events + Outbox</text>
+  <text class="small" x="830" y="910" text-anchor="middle">Common event publisher stores events for audit and delivery</text>
+
+  <line class="wire" x1="830" y1="938" x2="830" y2="970" />
+
+  <rect class="panel support" x="650" y="970" width="360" height="48" />
+  <text class="small" x="830" y="999" text-anchor="middle">Audit records, in-app feed, sandbox email, sandbox push</text>
+</svg>
