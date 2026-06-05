@@ -2,6 +2,8 @@ package com.project.optrabidz.identity.infrastructure.entity;
 
 import com.project.optrabidz.identity.domain.model.ProfileStatus;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "profile",
@@ -13,7 +15,8 @@ public class ProfileEntity {
     private Long profileId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "profile_status", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "profile_status", nullable = false, columnDefinition = "profile_status_enum")
     private ProfileStatus profileStatus;
 
     @OneToOne(fetch = FetchType.LAZY)

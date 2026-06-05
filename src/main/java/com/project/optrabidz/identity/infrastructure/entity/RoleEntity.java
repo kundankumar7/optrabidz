@@ -2,6 +2,8 @@ package com.project.optrabidz.identity.infrastructure.entity;
 
 import com.project.optrabidz.identity.domain.model.RoleType;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "role",
@@ -13,7 +15,8 @@ public class RoleEntity {
     private Long roleId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role_type", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "role_type", nullable = false, columnDefinition = "role_type_enum")
     private RoleType roleType;
 
     @OneToOne(fetch = FetchType.LAZY)

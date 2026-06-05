@@ -2,6 +2,8 @@ package com.project.optrabidz.security.infrastructure.entity;
 
 import com.project.optrabidz.security.domain.model.SessionStatus;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -23,7 +25,8 @@ public class Session {
     private Instant expiresAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "session_status", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "session_status", nullable = false, columnDefinition = "session_status_enum")
     private SessionStatus sessionStatus;
 
     public Session() {

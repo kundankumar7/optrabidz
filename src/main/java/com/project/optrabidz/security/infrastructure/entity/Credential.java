@@ -2,6 +2,8 @@ package com.project.optrabidz.security.infrastructure.entity;
 
 import com.project.optrabidz.security.domain.model.CredentialStatus;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -23,7 +25,8 @@ public class Credential {
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "credential_status", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "credential_status", nullable = false, columnDefinition = "credential_status_enum")
     private CredentialStatus credentialStatus;
 
     @Column(name = "created_at", nullable = false, updatable = false)
