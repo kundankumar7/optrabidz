@@ -38,6 +38,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
         AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
 
         outboxDispatcher.dispatchPending();
+        notificationDeliveryDispatcher.dispatchReadyDeliveries();
 
         String feedJson = mockMvc.perform(get("/api/v1/notifications/me?page=1&size=20")
                         .session(startup.session())
@@ -118,6 +119,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
         assertThat(auditRecords).isEqualTo(1);
 
         outboxDispatcher.dispatchPending();
+        notificationDeliveryDispatcher.dispatchReadyDeliveries();
 
         Integer duplicateNotificationCount = jdbcTemplate.queryForObject("""
                 select count(*)
