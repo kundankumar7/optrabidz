@@ -8,10 +8,10 @@ Open the ER diagrams index first:
 
 [View the ER diagrams](er-diagram.md)
 
-Use the schema file when you need the exact PostgreSQL table, constraint, index,
-enum, trigger, and seed-reference details:
+Use the Flyway V1 migration when you need the exact PostgreSQL table,
+constraint, index, enum, trigger, and seed-reference details:
 
-[View the PostgreSQL schema](optrabidz-schema.sql)
+[View the executable V1 baseline](../../src/main/resources/db/migration/V1__baseline.sql)
 
 ## Current ER Diagram Set
 
@@ -32,29 +32,24 @@ The ER diagrams are split into the same schema-backed slices listed in
 |---|---|
 | `er-diagram.md` | Reviewer-friendly ER diagrams split by schema context for readability |
 | `er-diagram-source.md` | Editable Mermaid source for the rendered ER diagrams |
-| `optrabidz-schema.sql` | PostgreSQL schema reference for tables, constraints, indexes, enum types, triggers, and small reference seed data |
+| `../../src/main/resources/db/migration/V1__baseline.sql` | Executable Flyway V1 baseline for tables, constraints, indexes, enum types, triggers, and small reference seed data |
 
 ## How The Application Uses The Database
 
-For local development, the application can run with an empty PostgreSQL database
-named `optrabidz`. The development profile uses Hibernate/JPA to create or
-update the database structure from the entity mappings.
+The reviewed schema is now Flyway migration `V1__baseline.sql`. A fresh database
+must reach version 1 by running Flyway; Hibernate entity mappings are not the
+schema source of truth.
 
-The SQL file in this folder is included for review, documentation, and optional
-manual initialization.
+Environment startup ordering and the switch to Hibernate validation are handled
+separately so this migration change remains reviewable.
 
 The ER diagrams are based on the schema relationships in
-`optrabidz-schema.sql`. Solid lines represent foreign keys. Any non-FK event
+`V1__baseline.sql`. Solid lines represent foreign keys. Any non-FK event
 correlation is marked separately so the diagrams do not imply database
 relationships that do not exist.
 
-## Optional Manual Initialization
+## Migration Ownership
 
-If you want to initialize the schema manually before starting the application:
-
-```powershell
-psql -U postgres -d optrabidz -f docs/database/optrabidz-schema.sql
-```
-
-The project does not require a database backup file to run. Backup files can
-contain local test data and should not be published as project documentation.
+Apply this file through Flyway so the schema history table records version 1
+and its checksum. Do not run the SQL directly with `psql`, and do not edit a
+released migration; later schema changes must use a new versioned migration.
