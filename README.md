@@ -183,7 +183,7 @@ The table below is a route map for the main business areas.
 
 | File | Purpose |
 |---|---|
-| [`docs/database/optrabidz-schema.sql`](docs/database/optrabidz-schema.sql) | Full PostgreSQL schema reference |
+| [`src/main/resources/db/migration/V1__baseline.sql`](src/main/resources/db/migration/V1__baseline.sql) | Executable Flyway V1 PostgreSQL baseline |
 | [`docs/database/er-diagram.md`](docs/database/er-diagram.md) | ER diagram reference |
 
 ## Security Model
@@ -282,11 +282,9 @@ After startup, open Swagger UI:
 http://localhost:8080/swagger-ui/index.html
 ```
 
-Optional manual schema initialization:
-
-```powershell
-psql -U postgres -d optrabidz -f docs/database/optrabidz-schema.sql
-```
+Database migrations are owned by Flyway. Do not execute
+`V1__baseline.sql` directly with `psql`; Flyway must record its version and
+checksum in `flyway_schema_history`.
 
 ## Testing
 
