@@ -5,10 +5,13 @@ import com.project.optrabidz.financial.domain.model.PaymentState;
 import com.project.optrabidz.financial.domain.repository.PaymentIntentRepository;
 import com.project.optrabidz.financial.infrastructure.mapper.FinancialPersistenceMapper;
 import com.project.optrabidz.testsupport.PostgresJpaIntegrationTestSupport;
+import com.project.optrabidz.testsupport.PostgresTestDataFixture;
+import com.project.optrabidz.testsupport.PostgresTestDataFixture.PaymentReference;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.jdbc.Sql;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -20,24 +23,34 @@ import static org.assertj.core.api.Assertions.assertThat;
         FinancialPersistenceMapper.class,
         PaymentIntentRepositoryAdapter.class
 })
-@Sql(scripts = "/db/test/finance-active-payment-intent-indexes.sql")
 class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
     private static final Instant NOW = Instant.parse("2026-05-19T10:00:00Z");
 
     @Autowired
     private PaymentIntentRepository paymentIntentRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    private PostgresTestDataFixture testData;
+
+    @BeforeEach
+    void setUpTestData() {
+        testData = new PostgresTestDataFixture(jdbcTemplate, NOW);
+    }
+
     @Test
     void findActiveBySettlementIdReturnsCreatedOrPendingIntentOnly() {
+        PaymentReference settlement = testData.createSettlementReference("find-active");
         PaymentIntent created = paymentIntentRepository.save(settlementIntent(
-                20_001L,
+                settlement,
                 PaymentState.CREATED,
                 "active-created",
                 NOW.minusSeconds(120),
                 NOW.plusSeconds(900)
         ));
         PaymentIntent confirmed = settlementIntent(
-                20_001L,
+                settlement,
                 PaymentState.PAYMENT_CONFIRMED,
                 "confirmed",
                 NOW,
@@ -45,7 +58,7 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
         );
         paymentIntentRepository.save(confirmed);
 
-        Optional<PaymentIntent> found = paymentIntentRepository.findActiveBySettlementId(20_001L);
+        Optional<PaymentIntent> found = paymentIntentRepository.findActiveBySettlementId(settlement.referenceId());
 
         assertThat(found).isPresent();
         assertThat(found.get().getPaymentIntentId()).isEqualTo(created.getPaymentIntentId());
@@ -55,8 +68,9 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
 
     @Test
     void saveNewOrFindActiveBySettlementReturnsExistingActiveIntent() {
+        PaymentReference settlement = testData.createSettlementReference("save-settlement");
         PaymentIntent first = paymentIntentRepository.saveNewOrFindActiveBySettlement(settlementIntent(
-                20_006L,
+                settlement,
                 PaymentState.CREATED,
                 "settlement-intent-first",
                 NOW.minusSeconds(120),
@@ -64,7 +78,7 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
         ));
 
         PaymentIntent second = paymentIntentRepository.saveNewOrFindActiveBySettlement(settlementIntent(
-                20_006L,
+                settlement,
                 PaymentState.CREATED,
                 "settlement-intent-second",
                 NOW.minusSeconds(30),
@@ -77,8 +91,9 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
 
     @Test
     void saveNewOrFindActiveByRepaymentInstallmentReturnsExistingActiveIntent() {
+        PaymentReference installment = testData.createRepaymentInstallmentReference("save-repayment");
         PaymentIntent first = paymentIntentRepository.saveNewOrFindActiveByRepaymentInstallment(repaymentIntent(
-                30_007L,
+                installment,
                 PaymentState.CREATED,
                 "repayment-intent-first",
                 NOW.minusSeconds(120),
@@ -86,7 +101,7 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
         ));
 
         PaymentIntent second = paymentIntentRepository.saveNewOrFindActiveByRepaymentInstallment(repaymentIntent(
-                30_007L,
+                installment,
                 PaymentState.CREATED,
                 "repayment-intent-second",
                 NOW.minusSeconds(30),
@@ -99,29 +114,33 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
 
     @Test
     void expireExpiredActiveUsesBatchLimitAndIgnoresFutureOrConfirmedIntents() {
+        PaymentReference expiredCreatedSettlement = testData.createSettlementReference("expired-created");
+        PaymentReference expiredPendingSettlement = testData.createSettlementReference("expired-pending");
+        PaymentReference futureCreatedSettlement = testData.createSettlementReference("future-created");
+        PaymentReference confirmedSettlement = testData.createSettlementReference("expired-confirmed");
         PaymentIntent expiredCreated = paymentIntentRepository.save(settlementIntent(
-                20_002L,
+                expiredCreatedSettlement,
                 PaymentState.CREATED,
                 "expired-created",
                 NOW.minusSeconds(1_000),
                 NOW.minusSeconds(300)
         ));
         PaymentIntent expiredPending = paymentIntentRepository.save(settlementIntent(
-                20_003L,
+                expiredPendingSettlement,
                 PaymentState.PAYMENT_PENDING,
                 "expired-pending",
                 NOW.minusSeconds(900),
                 NOW.minusSeconds(100)
         ));
         paymentIntentRepository.save(settlementIntent(
-                20_004L,
+                futureCreatedSettlement,
                 PaymentState.CREATED,
                 "future-created",
                 NOW.minusSeconds(30),
                 NOW.plusSeconds(900)
         ));
         PaymentIntent confirmed = paymentIntentRepository.save(settlementIntent(
-                20_005L,
+                confirmedSettlement,
                 PaymentState.PAYMENT_CONFIRMED,
                 "expired-confirmed",
                 NOW.minusSeconds(1_000),
@@ -148,16 +167,16 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
                 .isEqualTo(PaymentState.PAYMENT_CONFIRMED);
     }
 
-    private static PaymentIntent settlementIntent(Long settlementId,
+    private static PaymentIntent settlementIntent(PaymentReference settlement,
                                                   PaymentState state,
                                                   String idempotencyKey,
                                                   Instant createdAt,
                                                   Instant expiresAt) {
         return PaymentIntent.builder()
                 .paymentPurpose(com.project.optrabidz.financial.domain.model.PaymentPurpose.SETTLEMENT)
-                .settlementId(settlementId)
-                .payerAccountId(220L + settlementId)
-                .payeeAccountId(110L + settlementId)
+                .settlementId(settlement.referenceId())
+                .payerAccountId(settlement.payerAccountId())
+                .payeeAccountId(settlement.payeeAccountId())
                 .amount(new BigDecimal("550000.00"))
                 .currencyCode("INR")
                 .paymentState(state)
@@ -168,16 +187,16 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
                 .build();
     }
 
-    private static PaymentIntent repaymentIntent(Long repaymentInstallmentId,
+    private static PaymentIntent repaymentIntent(PaymentReference installment,
                                                  PaymentState state,
                                                  String idempotencyKey,
                                                  Instant createdAt,
                                                  Instant expiresAt) {
         return PaymentIntent.builder()
                 .paymentPurpose(com.project.optrabidz.financial.domain.model.PaymentPurpose.REPAYMENT)
-                .repaymentInstallmentId(repaymentInstallmentId)
-                .payerAccountId(220L + repaymentInstallmentId)
-                .payeeAccountId(110L + repaymentInstallmentId)
+                .repaymentInstallmentId(installment.referenceId())
+                .payerAccountId(installment.payerAccountId())
+                .payeeAccountId(installment.payeeAccountId())
                 .amount(new BigDecimal("550000.00"))
                 .currencyCode("INR")
                 .paymentState(state)
@@ -187,4 +206,5 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
                 .confirmedAt(state == PaymentState.PAYMENT_CONFIRMED ? createdAt.plusSeconds(10) : null)
                 .build();
     }
+
 }
