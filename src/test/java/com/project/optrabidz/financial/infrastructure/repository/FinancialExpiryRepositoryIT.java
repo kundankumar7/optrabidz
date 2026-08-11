@@ -15,9 +15,13 @@ import com.project.optrabidz.financial.domain.repository.RepaymentRepository;
 import com.project.optrabidz.financial.domain.repository.SettlementRepository;
 import com.project.optrabidz.financial.infrastructure.mapper.FinancialPersistenceMapper;
 import com.project.optrabidz.testsupport.PostgresJpaIntegrationTestSupport;
+import com.project.optrabidz.testsupport.PostgresTestDataFixture;
+import com.project.optrabidz.testsupport.PostgresTestDataFixture.Agreement;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,22 +65,32 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    private PostgresTestDataFixture testData;
+
+    @BeforeEach
+    void setUpTestData() {
+        testData = new PostgresTestDataFixture(jdbcTemplate, NOW);
+    }
+
     @Test
     void settlementExpiryUpdatesOnlyExpiredPendingRowsInBatch() {
         Settlement expired = settlementRepository.save(settlement(
-                101L,
+                testData.createAgreement("expired settlement"),
                 SettlementState.SETTLEMENT_PENDING,
                 NOW.minusSeconds(900),
                 null
         ));
         Settlement future = settlementRepository.save(settlement(
-                102L,
+                testData.createAgreement("future settlement"),
                 SettlementState.SETTLEMENT_PENDING,
                 NOW.plusSeconds(900),
                 null
         ));
         Settlement confirmed = settlementRepository.save(settlement(
-                103L,
+                testData.createAgreement("confirmed settlement"),
                 SettlementState.SETTLEMENT_CONFIRMED,
                 NOW.minusSeconds(900),
                 NOW.minusSeconds(60)
@@ -105,7 +119,7 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
     @Test
     void settlementConfirmationRejectsExpiredPendingRows() {
         Settlement expired = settlementRepository.save(settlement(
-                104L,
+                testData.createAgreement("confirmation rejected settlement"),
                 SettlementState.SETTLEMENT_PENDING,
                 NOW.minusSeconds(900),
                 null
@@ -127,7 +141,10 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
 
     @Test
     void repaymentInstallmentOverdueUpdatesOnlyEligibleRowsInBatch() {
-        Repayment repayment = repaymentRepository.save(repayment(201L, RepaymentState.NOT_STARTED));
+        Repayment repayment = repaymentRepository.save(repayment(
+                testData.createAgreement("overdue repayment"),
+                RepaymentState.NOT_STARTED
+        ));
         RepaymentInstallment overdue = repaymentInstallmentRepository.save(installment(
                 repayment.getRepaymentId(),
                 1,
@@ -178,11 +195,11 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void paymentIntentExpiryCanRunInParallelWithoutDoubleProcessingRows() throws Exception {
         List<Long> expiredIntentIds = inTransaction(() -> List.of(
-                paymentIntentRepository.save(paymentIntent(501L, PaymentState.CREATED, "parallel-intent-1")).getPaymentIntentId(),
-                paymentIntentRepository.save(paymentIntent(502L, PaymentState.CREATED, "parallel-intent-2")).getPaymentIntentId(),
-                paymentIntentRepository.save(paymentIntent(503L, PaymentState.PAYMENT_PENDING, "parallel-intent-3")).getPaymentIntentId(),
-                paymentIntentRepository.save(paymentIntent(504L, PaymentState.PAYMENT_PENDING, "parallel-intent-4")).getPaymentIntentId(),
-                paymentIntentRepository.save(paymentIntent(505L, PaymentState.CREATED, "parallel-intent-5")).getPaymentIntentId()
+                saveExpiredPaymentIntent("parallel intent 1", PaymentState.CREATED, "parallel-intent-1"),
+                saveExpiredPaymentIntent("parallel intent 2", PaymentState.CREATED, "parallel-intent-2"),
+                saveExpiredPaymentIntent("parallel intent 3", PaymentState.PAYMENT_PENDING, "parallel-intent-3"),
+                saveExpiredPaymentIntent("parallel intent 4", PaymentState.PAYMENT_PENDING, "parallel-intent-4"),
+                saveExpiredPaymentIntent("parallel intent 5", PaymentState.CREATED, "parallel-intent-5")
         ));
 
         int expiredCount = runTwoWorkers(() -> paymentIntentRepository.expireExpiredActive(NOW, 3));
@@ -200,11 +217,11 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void settlementExpiryCanRunInParallelWithoutDoubleProcessingRows() throws Exception {
         List<Long> expiredSettlementIds = inTransaction(() -> List.of(
-                settlementRepository.save(settlement(601L, SettlementState.SETTLEMENT_PENDING, NOW.minusSeconds(900), null)).getSettlementId(),
-                settlementRepository.save(settlement(602L, SettlementState.SETTLEMENT_PENDING, NOW.minusSeconds(800), null)).getSettlementId(),
-                settlementRepository.save(settlement(603L, SettlementState.SETTLEMENT_PENDING, NOW.minusSeconds(700), null)).getSettlementId(),
-                settlementRepository.save(settlement(604L, SettlementState.SETTLEMENT_PENDING, NOW.minusSeconds(600), null)).getSettlementId(),
-                settlementRepository.save(settlement(605L, SettlementState.SETTLEMENT_PENDING, NOW.minusSeconds(500), null)).getSettlementId()
+                saveSettlement("parallel settlement 1", NOW.minusSeconds(900)),
+                saveSettlement("parallel settlement 2", NOW.minusSeconds(800)),
+                saveSettlement("parallel settlement 3", NOW.minusSeconds(700)),
+                saveSettlement("parallel settlement 4", NOW.minusSeconds(600)),
+                saveSettlement("parallel settlement 5", NOW.minusSeconds(500))
         ));
 
         int expiredCount = runTwoWorkers(() -> settlementRepository.expireExpiredPending(NOW, 3));
@@ -222,11 +239,11 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void repaymentInstallmentOverdueCanRunInParallelWithoutDoubleProcessingRows() throws Exception {
         List<Long> installmentIds = inTransaction(() -> List.of(
-                overdueInstallmentId(701L, 1),
-                overdueInstallmentId(702L, 1),
-                overdueInstallmentId(703L, 1),
-                overdueInstallmentId(704L, 1),
-                overdueInstallmentId(705L, 1)
+                overdueInstallmentId("parallel installment 1", 1),
+                overdueInstallmentId("parallel installment 2", 1),
+                overdueInstallmentId("parallel installment 3", 1),
+                overdueInstallmentId("parallel installment 4", 1),
+                overdueInstallmentId("parallel installment 5", 1)
         ));
 
         int overdueCount = runTwoWorkers(() -> {
@@ -269,12 +286,44 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
         return new TransactionTemplate(transactionManager).execute(status -> work.get());
     }
 
-    private static PaymentIntent paymentIntent(Long settlementId, PaymentState state, String idempotencyKey) {
+    private Long saveExpiredPaymentIntent(String label,
+                                          PaymentState state,
+                                          String idempotencyKey) {
+        Agreement agreement = testData.createAgreement(label);
+        Settlement settlement = settlementRepository.save(settlement(
+                agreement,
+                SettlementState.SETTLEMENT_PENDING,
+                NOW.plusSeconds(1_800),
+                null
+        ));
+        return paymentIntentRepository.save(paymentIntent(
+                settlement.getSettlementId(),
+                agreement.investorAccountId(),
+                agreement.startupAccountId(),
+                state,
+                idempotencyKey
+        )).getPaymentIntentId();
+    }
+
+    private Long saveSettlement(String label, Instant expiresAt) {
+        return settlementRepository.save(settlement(
+                testData.createAgreement(label),
+                SettlementState.SETTLEMENT_PENDING,
+                expiresAt,
+                null
+        )).getSettlementId();
+    }
+
+    private static PaymentIntent paymentIntent(Long settlementId,
+                                               Long payerAccountId,
+                                               Long payeeAccountId,
+                                               PaymentState state,
+                                               String idempotencyKey) {
         return PaymentIntent.builder()
                 .paymentPurpose(PaymentPurpose.SETTLEMENT)
                 .settlementId(settlementId)
-                .payerAccountId(2_000L + settlementId)
-                .payeeAccountId(3_000L + settlementId)
+                .payerAccountId(payerAccountId)
+                .payeeAccountId(payeeAccountId)
                 .amount(new BigDecimal("550000.00"))
                 .currencyCode("INR")
                 .paymentState(state)
@@ -284,14 +333,14 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
                 .build();
     }
 
-    private static Settlement settlement(Long agreementId,
+    private static Settlement settlement(Agreement agreement,
                                          SettlementState state,
                                          Instant expiresAt,
                                          Instant confirmedAt) {
         return Settlement.builder()
-                .agreementId(agreementId)
-                .startupId(301L + agreementId)
-                .investorId(401L + agreementId)
+                .agreementId(agreement.agreementId())
+                .startupId(agreement.startupId())
+                .investorId(agreement.investorId())
                 .amount(new BigDecimal("550000.00"))
                 .currencyCode("INR")
                 .settlementState(state)
@@ -301,8 +350,11 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
                 .build();
     }
 
-    private Long overdueInstallmentId(Long agreementId, Integer installmentNumber) {
-        Repayment repayment = repaymentRepository.save(repayment(agreementId, RepaymentState.NOT_STARTED));
+    private Long overdueInstallmentId(String label, Integer installmentNumber) {
+        Repayment repayment = repaymentRepository.save(repayment(
+                testData.createAgreement(label),
+                RepaymentState.NOT_STARTED
+        ));
         return repaymentInstallmentRepository.save(installment(
                 repayment.getRepaymentId(),
                 installmentNumber,
@@ -311,11 +363,11 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
         )).getRepaymentInstallmentId();
     }
 
-    private static Repayment repayment(Long agreementId, RepaymentState state) {
+    private static Repayment repayment(Agreement agreement, RepaymentState state) {
         return Repayment.builder()
-                .agreementId(agreementId)
-                .startupId(501L + agreementId)
-                .investorId(601L + agreementId)
+                .agreementId(agreement.agreementId())
+                .startupId(agreement.startupId())
+                .investorId(agreement.investorId())
                 .totalRepayableAmount(new BigDecimal("550000.00"))
                 .currencyCode("INR")
                 .totalInstallments(3)
