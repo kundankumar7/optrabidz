@@ -567,17 +567,17 @@ Expected: the base and head are unchanged, the remote peeled archive tag is
 - [ ] **Step 2: Create the release pull request**
 
 ```powershell
-$releaseBody = @"
+$releaseBody = @'
 ## Outcome
 
 Promote the verified database foundation from develop to main.
 
 ## Exact revisions
 
-- Base main: $oldMain
-- Release develop: $releaseHead
-- Archive tag: archive-pre-database-foundation
-- Flyway V1 blob: $v1Blob
+- Base `main`: `{0}`
+- Release `develop`: `{1}`
+- Archive tag: `{2}`
+- Flyway V1 blob: `{3}`
 
 ## Included work
 
@@ -617,7 +617,7 @@ The archive tag is not a database backup.
 - no new schema migration;
 - no claim that the complete application is production-ready;
 - no deletion or rewrite of develop.
-"@
+'@ -f $oldMain, $releaseHead, $archiveTag, $v1Blob
 
 $releasePrUrl = & $ghCli pr create `
   --repo $repoSlug `
