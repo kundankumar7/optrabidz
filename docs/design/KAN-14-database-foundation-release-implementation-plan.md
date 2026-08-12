@@ -207,7 +207,8 @@ $documentationChecks = & $ghCli pr checks $documentationPr.number `
   --repo $repoSlug --json name,state,bucket,workflow | ConvertFrom-Json
 foreach ($checkName in @('Unit Tests', 'PostgreSQL Integration Tests')) {
   $matchingCheck = @($documentationChecks | Where-Object { $_.name -eq $checkName })
-  if ($matchingCheck.Count -ne 1 -or $matchingCheck[0].bucket -ne 'pass') {
+  $nonPassingCheck = @($matchingCheck | Where-Object { $_.bucket -ne 'pass' })
+  if ($matchingCheck.Count -lt 1 -or $nonPassingCheck.Count -gt 0) {
     throw "$checkName is not passing."
   }
 }
