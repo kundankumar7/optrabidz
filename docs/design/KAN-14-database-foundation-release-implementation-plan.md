@@ -43,6 +43,9 @@ Flyway, Hibernate validation, JUnit 5.
 - An annotated tag is verified locally before it is pushed. A published tag
   is never moved or reused for another commit.
 - The release pull request is merged only after release review is recorded.
+- The verified release head is pinned after Task 4 in local Git configuration
+  under `kan14.verified-release-head`; Tasks 5 through 7 read that fixed value
+  and never derive it again from the movable `develop` branch.
 - The milestone tag is created only after post-merge local and GitHub
   verification succeeds on the exact `main` revision.
 
@@ -526,9 +529,15 @@ if ($developRun.headSha -ne $releaseHead) { throw 'Latest develop CI does not ta
 & $ghCli run watch $developRun.databaseId --repo $repoSlug --exit-status
 & $ghCli run view $developRun.databaseId --repo $repoSlug `
   --json headSha,status,conclusion,jobs,url
+git config --local kan14.verified-release-head $releaseHead
+$verifiedReleaseHead = git config --local --get kan14.verified-release-head
+if ($verifiedReleaseHead -ne $releaseHead) { throw 'Verified release head was not pinned correctly.' }
+$verifiedReleaseHead
 ```
 
-Expected: both required jobs pass for `$releaseHead`.
+Expected: both required jobs pass for `$releaseHead`. The exact verified SHA
+is printed and persisted as `kan14.verified-release-head`; record the same SHA
+in KAN-14 before continuing.
 
 ---
 
@@ -538,8 +547,8 @@ Expected: both required jobs pass for `$releaseHead`.
 
 **Interfaces:**
 
-- Consumes: unchanged `$oldMain`, verified `$releaseHead`, `$v1Blob`, archive
-  tag, branch protection, and Task 4 test evidence.
+- Consumes: unchanged `$oldMain`, pinned `$verifiedReleaseHead`, `$v1Blob`,
+  archive tag, branch protection, and Task 4 test evidence.
 - Produces: one exact develop-to-main release pull request with passing
   required checks, held open for release review.
 
@@ -552,9 +561,10 @@ $oldMain = '10b0d93791ae7dd90a5e3d1aca90b61b1aee3945'
 $archiveTag = 'archive-pre-database-foundation'
 $v1Blob = '8784c468aa169952a87e726303d03abae4376add'
 git fetch --prune origin
-$releaseHead = git rev-parse origin/develop
+$verifiedReleaseHead = git config --local --get kan14.verified-release-head
+if ($verifiedReleaseHead -notmatch '^[0-9a-f]{40}$') { throw 'Verified release head is missing or invalid; repeat Task 4.' }
 if ((git rev-parse origin/main) -ne $oldMain) { throw 'main moved; stop before creating the release PR.' }
-if ((git rev-parse origin/develop) -ne $releaseHead) { throw 'develop moved; repeat Task 4.' }
+if ((git rev-parse origin/develop) -ne $verifiedReleaseHead) { throw 'develop moved; repeat Task 4.' }
 if ((git rev-list -n 1 $archiveTag) -ne $oldMain) { throw 'Archive tag mismatch.' }
 git ls-remote --tags origin "refs/tags/$archiveTag^{}"
 & $ghCli api "repos/$repoSlug/branches/main/protection" `
@@ -617,7 +627,7 @@ The archive tag is not a database backup.
 - no new schema migration;
 - no claim that the complete application is production-ready;
 - no deletion or rewrite of develop.
-'@ -f $oldMain, $releaseHead, $archiveTag, $v1Blob
+'@ -f $oldMain, $verifiedReleaseHead, $archiveTag, $v1Blob
 
 $releasePrUrl = & $ghCli pr create `
   --repo $repoSlug `
@@ -640,12 +650,12 @@ $releasePr
 if ($releasePr.baseRefName -ne 'main') { throw 'Release PR base is not main.' }
 if ($releasePr.baseRefOid -ne $oldMain) { throw 'Release PR base SHA changed.' }
 if ($releasePr.headRefName -ne 'develop') { throw 'Release PR head is not develop.' }
-if ($releasePr.headRefOid -ne $releaseHead) { throw 'Release PR head SHA changed.' }
+if ($releasePr.headRefOid -ne $verifiedReleaseHead) { throw 'Release PR head SHA changed.' }
 & $ghCli pr diff $releasePr.number --repo $repoSlug --name-only
 ```
 
-Expected: base `$oldMain`, head `$releaseHead`, and the same reviewed files as
-Task 4.
+Expected: base `$oldMain`, head `$verifiedReleaseHead`, and the same reviewed
+files as Task 4.
 
 - [ ] **Step 4: Wait for required checks and pause for release review**
 
@@ -669,8 +679,8 @@ Do not merge during the PR-creation checkpoint.
 
 **Interfaces:**
 
-- Consumes: the reviewed release PR, unchanged `$oldMain` and `$releaseHead`,
-  and passing required checks.
+- Consumes: the reviewed release PR, unchanged `$oldMain` and pinned
+  `$verifiedReleaseHead`, and passing required checks.
 - Produces: `$finalMain`, a protected two-parent merge commit, followed by
   clean local and GitHub verification for that exact commit.
 
@@ -682,7 +692,9 @@ $repoSlug = 'kundankumar7/optrabidz'
 $oldMain = '10b0d93791ae7dd90a5e3d1aca90b61b1aee3945'
 $v1Blob = '8784c468aa169952a87e726303d03abae4376add'
 git fetch --prune origin
-$releaseHead = git rev-parse origin/develop
+$verifiedReleaseHead = git config --local --get kan14.verified-release-head
+if ($verifiedReleaseHead -notmatch '^[0-9a-f]{40}$') { throw 'Verified release head is missing or invalid; repeat Task 4.' }
+if ((git rev-parse origin/develop) -ne $verifiedReleaseHead) { throw 'develop changed after verification or review.' }
 $releaseCandidates = & $ghCli pr list --repo $repoSlug --state open `
   --base main --head develop `
   --json number,state,baseRefName,baseRefOid,headRefName,headRefOid,mergeable,mergeStateStatus,url |
@@ -695,7 +707,7 @@ $releasePr = & $ghCli pr view $releasePr.number --repo $repoSlug `
 $releasePr
 if ($releasePr.state -ne 'OPEN') { throw 'Release PR is not open.' }
 if ($releasePr.baseRefOid -ne $oldMain) { throw 'Release base changed after review.' }
-if ($releasePr.headRefOid -ne $releaseHead) { throw 'Release head changed after review.' }
+if ($releasePr.headRefOid -ne $verifiedReleaseHead) { throw 'Release head changed after review.' }
 & $ghCli pr checks $releasePr.number --repo $repoSlug --required
 ```
 
@@ -708,7 +720,7 @@ review.
 ```powershell
 & $ghCli pr merge $releasePr.number --repo $repoSlug `
   --merge `
-  --match-head-commit $releaseHead `
+  --match-head-commit $verifiedReleaseHead `
   --subject 'Promote database foundation to main (KAN-14)' `
   --body 'Merge the reviewed develop milestone after required verification.'
 ```
@@ -726,8 +738,8 @@ $parents = $parentLine -split ' '
 $parentLine
 if ($parents.Count -ne 3) { throw 'Final main is not a two-parent merge commit.' }
 if ($parents[1] -ne $oldMain) { throw 'First parent is not the old main revision.' }
-if ($parents[2] -ne $releaseHead) { throw 'Second parent is not the reviewed develop revision.' }
-git merge-base --is-ancestor $releaseHead origin/main
+if ($parents[2] -ne $verifiedReleaseHead) { throw 'Second parent is not the reviewed develop revision.' }
+git merge-base --is-ancestor $verifiedReleaseHead origin/main
 if ($LASTEXITCODE -ne 0) { throw 'Reviewed develop is not contained in main.' }
 ```
 
@@ -789,7 +801,7 @@ tag. Open a corrective or revert pull request against protected `main`.
 
 **Interfaces:**
 
-- Consumes: verified `$finalMain`, `$releaseHead`, `$oldMain`, branch
+- Consumes: verified `$finalMain`, `$verifiedReleaseHead`, `$oldMain`, branch
   protection, archive tag, and post-merge test evidence.
 - Produces: a pushed annotated milestone tag and final evidence that `main` is
   protected, default, verified, and ready to be the source for future work.
@@ -804,7 +816,8 @@ $archiveTag = 'archive-pre-database-foundation'
 $v1Blob = '8784c468aa169952a87e726303d03abae4376add'
 $milestoneTag = 'milestone-database-foundation-v1'
 git fetch --prune origin
-$releaseHead = git rev-parse origin/develop
+$verifiedReleaseHead = git config --local --get kan14.verified-release-head
+if ($verifiedReleaseHead -notmatch '^[0-9a-f]{40}$') { throw 'Verified release head is missing or invalid.' }
 $finalMain = git rev-parse origin/main
 git show-ref --verify --quiet "refs/tags/$milestoneTag"
 if ($LASTEXITCODE -eq 0) { throw 'Milestone tag already exists locally.' }
@@ -842,7 +855,7 @@ $openDevelopPrs = @($openPrs | Where-Object {
   })
 if ($openDevelopPrs.Count -ne 0) { throw 'An open pull request still depends on develop.' }
 
-if ((git rev-parse origin/develop) -ne $releaseHead) { throw 'develop changed during the release.' }
+if ((git rev-parse origin/develop) -ne $verifiedReleaseHead) { throw 'develop changed during the release.' }
 if ((git rev-parse origin/main) -ne $finalMain) { throw 'main changed after verification.' }
 if ((git rev-list -n 1 $archiveTag) -ne $oldMain) { throw 'Archive checkpoint changed.' }
 if ((git rev-list -n 1 $milestoneTag) -ne $finalMain) { throw 'Milestone checkpoint changed.' }
@@ -856,7 +869,8 @@ Expected:
 
 - `main` remains default and protected;
 - no open PR depends on `develop`;
-- `develop` still equals `$releaseHead` and was not deleted or rewritten;
+- `develop` still equals `$verifiedReleaseHead` and was not deleted or
+  rewritten;
 - archive and milestone tags still resolve to their intended commits;
 - local `main` is clean and equals `$finalMain`.
 
@@ -870,7 +884,7 @@ $releasePrUrl = (& $ghCli pr list --repo $repoSlug --state merged `
 $completionComment = @"
 Release PR: $releasePrUrl
 Old main: $oldMain
-Release develop: $releaseHead
+Release develop: $verifiedReleaseHead
 Final main: $finalMain
 Archive tag: $archiveTag -> $oldMain
 Milestone tag: $milestoneTag -> $finalMain
