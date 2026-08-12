@@ -132,10 +132,10 @@ across releases:
 3. **Contract:** remove obsolete columns, constraints, or compatibility code
    only after no running application version depends on them.
 
-For example, renaming `account.email` must not be implemented as one immediate
-rename when old and new application versions may overlap. A safe sequence adds
-the replacement column, writes and backfills both representations, switches
-reads, and removes the old column in a later migration.
+For example, renaming `funding_listing.title` must not be implemented as one
+immediate rename when old and new application versions may overlap. A safe
+sequence adds a `display_title` replacement column, writes and backfills both
+representations, switches reads, and removes `title` in a later migration.
 
 ## Failure Handling and Recovery
 

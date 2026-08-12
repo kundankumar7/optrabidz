@@ -146,10 +146,10 @@ when a change requires data transformation:
 3. **Contract:** remove obsolete columns, constraints, or compatibility code
    only after no running version depends on them.
 
-For example, do not immediately rename `account.email` while two application
-versions may run. First add the replacement column, write both representations,
-backfill existing rows, switch reads after verification, and remove the old
-column in a later migration.
+For example, do not immediately rename `funding_listing.title` while two
+application versions may run. First add a `display_title` replacement column,
+write both representations, backfill existing rows, switch reads after
+verification, and remove `title` in a later migration.
 
 ## Failure and Recovery Rules
 

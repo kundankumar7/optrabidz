@@ -86,7 +86,8 @@ Create `docs/database/migrations.md` with these sections and decisions:
      dedicated reconciliation task.
 7. `## Expand, Migrate, Contract`
    - Explain the three release phases.
-   - Use the safe replacement of `account.email` as the concrete example.
+   - Use the safe replacement of `funding_listing.title` with
+     `display_title` as the concrete example.
 8. `## Failure and Recovery Rules`
    - Investigate checksum mismatches; do not routinely use `flyway repair`.
    - Do not globally enable `baseline-on-migrate`.
