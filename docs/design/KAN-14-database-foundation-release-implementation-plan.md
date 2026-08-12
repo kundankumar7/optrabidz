@@ -158,12 +158,12 @@ repository protection, tagging, or main-branch promotion is performed.
 - PostgreSQL Integration Tests passed.
 '@
 
-$documentationPrUrl = $documentationBody | & $ghCli pr create `
+$documentationPrUrl = & $ghCli pr create `
   --repo $repoSlug `
   --base develop `
   --head release/KAN-14-database-foundation `
   --title 'KAN-14: Define database foundation release procedure' `
-  --body-file -
+  --body $documentationBody
 $documentationPrUrl
 ```
 
@@ -203,8 +203,8 @@ $documentationPr = & $ghCli pr view `
   release/KAN-14-database-foundation --repo $repoSlug `
   --json number,state,headRefOid,mergeable,mergeStateStatus | ConvertFrom-Json
 $documentationPr
-$documentationChecks = @(& $ghCli pr checks $documentationPr.number `
-  --repo $repoSlug --json name,state,bucket,workflow | ConvertFrom-Json)
+$documentationChecks = & $ghCli pr checks $documentationPr.number `
+  --repo $repoSlug --json name,state,bucket,workflow | ConvertFrom-Json
 foreach ($checkName in @('Unit Tests', 'PostgreSQL Integration Tests')) {
   $matchingCheck = @($documentationChecks | Where-Object { $_.name -eq $checkName })
   if ($matchingCheck.Count -ne 1 -or $matchingCheck[0].bucket -ne 'pass') {
@@ -606,12 +606,12 @@ The archive tag is not a database backup.
 - no deletion or rewrite of develop.
 "@
 
-$releasePrUrl = $releaseBody | & $ghCli pr create `
+$releasePrUrl = & $ghCli pr create `
   --repo $repoSlug `
   --base main `
   --head develop `
   --title 'KAN-14: Promote verified database foundation to main' `
-  --body-file -
+  --body $releaseBody
 $releasePrUrl
 ```
 
@@ -670,10 +670,10 @@ $oldMain = '10b0d93791ae7dd90a5e3d1aca90b61b1aee3945'
 $v1Blob = '8784c468aa169952a87e726303d03abae4376add'
 git fetch --prune origin
 $releaseHead = git rev-parse origin/develop
-$releaseCandidates = @(& $ghCli pr list --repo $repoSlug --state open `
+$releaseCandidates = & $ghCli pr list --repo $repoSlug --state open `
   --base main --head develop `
   --json number,state,baseRefName,baseRefOid,headRefName,headRefOid,mergeable,mergeStateStatus,url |
-  ConvertFrom-Json)
+  ConvertFrom-Json
 if ($releaseCandidates.Count -ne 1) { throw 'Expected exactly one open develop-to-main release PR.' }
 $releasePr = $releaseCandidates[0]
 $releasePr = & $ghCli pr view $releasePr.number --repo $repoSlug `
@@ -822,9 +822,11 @@ $repo = & $ghCli repo view $repoSlug `
   --json nameWithOwner,defaultBranchRef,isPrivate,url | ConvertFrom-Json
 if ($repo.defaultBranchRef.name -ne 'main') { throw 'main is not the default branch.' }
 
-$openDevelopPrs = @(& $ghCli pr list --repo $repoSlug --state open `
-  --json number,title,headRefName,baseRefName,url | ConvertFrom-Json | `
-  Where-Object { $_.headRefName -eq 'develop' -or $_.baseRefName -eq 'develop' })
+$openPrs = & $ghCli pr list --repo $repoSlug --state open `
+  --json number,title,headRefName,baseRefName,url | ConvertFrom-Json
+$openDevelopPrs = @($openPrs | Where-Object {
+    $_.headRefName -eq 'develop' -or $_.baseRefName -eq 'develop'
+  })
 if ($openDevelopPrs.Count -ne 0) { throw 'An open pull request still depends on develop.' }
 
 if ((git rev-parse origin/develop) -ne $releaseHead) { throw 'develop changed during the release.' }
