@@ -185,6 +185,7 @@ The table below is a route map for the main business areas.
 |---|---|
 | [`src/main/resources/db/migration/V1__baseline.sql`](src/main/resources/db/migration/V1__baseline.sql) | Executable Flyway V1 PostgreSQL baseline |
 | [`docs/database/er-diagram.md`](docs/database/er-diagram.md) | ER diagram reference |
+| [`docs/database/migrations.md`](docs/database/migrations.md) | Flyway migration authoring, upgrade, and recovery policy |
 
 ## Security Model
 
@@ -232,8 +233,11 @@ profiles, listings, bids, agreements, audit records, notifications, and payment
 simulation records.
 
 Use Java 21, then provide a PostgreSQL database named `optrabidz`. No private
-database backup is required. The application can start with an empty database;
-the database schema reference is included under `docs/database/`.
+database backup is required. An empty PostgreSQL 16 database is enough: Flyway
+applies the versioned migrations automatically, then Hibernate validates the
+resulting schema. See the
+[database migration guide](docs/database/migrations.md) for authoring, reset,
+and populated-database upgrade rules.
 
 If PostgreSQL is already installed, create the database locally. If Docker is
 available, the following command can start a local PostgreSQL container:
@@ -282,9 +286,10 @@ After startup, open Swagger UI:
 http://localhost:8080/swagger-ui/index.html
 ```
 
-Database migrations are owned by Flyway. Do not execute
-`V1__baseline.sql` directly with `psql`; Flyway must record its version and
-checksum in `flyway_schema_history`.
+Database migrations are owned by Flyway. Do not execute `V1__baseline.sql`
+directly; Flyway must record its version and checksum. See the
+[database migration guide](docs/database/migrations.md) for the complete
+authoring, local-reset, and environment-upgrade policy.
 
 ## Testing
 
