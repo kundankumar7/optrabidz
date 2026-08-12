@@ -387,14 +387,26 @@ $protectionBody = @'
 }
 '@
 
-$protectionBody | & $ghCli api --method PUT `
-  -H 'Accept: application/vnd.github+json' `
-  -H 'X-GitHub-Api-Version: 2026-03-10' `
-  "repos/$repoSlug/branches/main/protection" --input -
+$protectionFile = Join-Path ([System.IO.Path]::GetTempPath()) `
+  'optrabidz-kan14-main-protection.json'
+$utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($protectionFile, $protectionBody, $utf8WithoutBom)
+try {
+  & $ghCli api --method PUT `
+    -H 'Accept: application/vnd.github+json' `
+    -H 'X-GitHub-Api-Version: 2026-03-10' `
+    "repos/$repoSlug/branches/main/protection" --input $protectionFile
+  if ($LASTEXITCODE -ne 0) { throw 'Branch protection update failed.' }
+}
+finally {
+  Remove-Item -LiteralPath $protectionFile -Force -ErrorAction SilentlyContinue
+}
 ```
 
-Expected: HTTP 200. Zero required approving reviews avoids locking out the
-single pull-request author; pull-request use is still mandatory.
+Expected: HTTP 200 and no temporary request file remains. The explicit
+UTF-8-without-BOM encoding is required for Windows PowerShell 5.1. Zero
+required approving reviews avoids locking out the single pull-request author;
+pull-request use is still mandatory.
 
 - [ ] **Step 3: Read back and assert the effective protection**
 
