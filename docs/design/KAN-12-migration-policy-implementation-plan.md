@@ -227,14 +227,15 @@ created solely to store command output.
 Run:
 
 ```powershell
-rg -n "optrabidz-schema\.sql|ddl-auto=update|manual schema initialization" README.md docs src
-rg -n "spring\.sql\.init" README.md docs src/main src/test
+rg -n "optrabidz-schema\.sql|ddl-auto=update|manual schema initialization" README.md docs/database/README.md docs/database/er-diagram.md docs/database/er-diagram-source.md src
+rg -n "spring\.sql\.init" README.md docs/database/README.md docs/database/er-diagram.md docs/database/er-diagram-source.md src/main
+rg -n "spring\.sql\.init" src/test
 ```
 
 Expected:
 
-- the first command returns no matches;
-- the second command returns only the assertions in
+- the first two commands return no matches;
+- the third command returns only the assertions in
   `DatabaseMigrationIT` that confirm Spring SQL initialization is absent.
 
 - [ ] **Step 2: Prove V1 and configuration were not changed**

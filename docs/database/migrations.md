@@ -188,12 +188,14 @@ Confirm all of the following before accepting a migration:
 Scan for obsolete schema-initialization instructions:
 
 ```powershell
-rg -n "optrabidz-schema\.sql|ddl-auto=update|manual schema initialization" README.md docs src
-rg -n "spring\.sql\.init" README.md docs src/main src/test
+rg -n "optrabidz-schema\.sql|ddl-auto=update|manual schema initialization" README.md docs/database/README.md docs/database/er-diagram.md docs/database/er-diagram-source.md src
+rg -n "spring\.sql\.init" README.md docs/database/README.md docs/database/er-diagram.md docs/database/er-diagram-source.md src/main
+rg -n "spring\.sql\.init" src/test
 ```
 
-The first command should return no matches. The second should find only tests
-that assert Spring SQL initialization is absent, not active configuration.
+The first two commands should return no matches. The third should find only the
+`DatabaseMigrationIT` assertions that confirm Spring SQL initialization is
+absent.
 
 Run clean unit verification:
 
