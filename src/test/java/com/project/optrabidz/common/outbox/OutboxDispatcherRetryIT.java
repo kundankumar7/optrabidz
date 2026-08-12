@@ -3,7 +3,11 @@ package com.project.optrabidz.common.outbox;
 import com.project.optrabidz.common.event.DomainEvent;
 import com.project.optrabidz.common.event.EventPublisher;
 import com.project.optrabidz.testsupport.PostgresIntegrationTestSupport;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +18,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class OutboxDispatcherRetryIT extends PostgresIntegrationTestSupport {
     @Autowired
     private EventPublisher eventPublisher;
@@ -24,9 +29,30 @@ class OutboxDispatcherRetryIT extends PostgresIntegrationTestSupport {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @BeforeAll
+    void seedPreExistingOutboxState() {
+        eventPublisher.publish(new PriorProbeEvent(9000L, Instant.now()));
+    }
+
+    @BeforeEach
+    void clearPreExistingOutboxState() {
+        clearOutboxState();
+    }
+
+    @AfterEach
+    void clearTestOutboxState() {
+        clearOutboxState();
+    }
+
+    private void clearOutboxState() {
+        jdbcTemplate.update("delete from event_outbox");
+    }
+
     @Test
     void failedProcessorKeepsEventPendingAndSchedulesRetry() {
         eventPublisher.publish(new RetryProbeEvent(9001L, Instant.now()));
+        Integer outboxCount = jdbcTemplate.queryForObject("select count(*) from event_outbox", Integer.class);
+        assertThat(outboxCount).isEqualTo(1);
 
         int processed = outboxDispatcher.dispatchPending();
 
@@ -46,6 +72,9 @@ class OutboxDispatcherRetryIT extends PostgresIntegrationTestSupport {
     }
 
     record RetryProbeEvent(Long accountId, Instant occurredAt) implements DomainEvent {
+    }
+
+    record PriorProbeEvent(Long accountId, Instant occurredAt) implements DomainEvent {
     }
 
     @TestConfiguration
