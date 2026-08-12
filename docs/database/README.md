@@ -8,6 +8,10 @@ Open the ER diagrams index first:
 
 [View the ER diagrams](er-diagram.md)
 
+Read the migration guide before authoring or applying a schema change:
+
+[View the database migration guide](migrations.md)
+
 Use the Flyway V1 migration when you need the exact PostgreSQL table,
 constraint, index, enum, trigger, and seed-reference details:
 
@@ -32,6 +36,7 @@ The ER diagrams are split into the same schema-backed slices listed in
 |---|---|
 | `er-diagram.md` | Reviewer-friendly ER diagrams split by schema context for readability |
 | `er-diagram-source.md` | Editable Mermaid source for the rendered ER diagrams |
+| `migrations.md` | Migration authoring, environment upgrade, and recovery policy |
 | `../../src/main/resources/db/migration/V1__baseline.sql` | Executable Flyway V1 baseline for tables, constraints, indexes, enum types, triggers, and small reference seed data |
 
 ## How The Application Uses The Database
@@ -50,6 +55,6 @@ relationships that do not exist.
 
 ## Migration Ownership
 
-Apply this file through Flyway so the schema history table records version 1
-and its checksum. Do not run the SQL directly with `psql`, and do not edit a
-released migration; later schema changes must use a new versioned migration.
+Flyway owns schema creation and upgrades; Hibernate only validates the migrated
+schema. Follow the [database migration guide](migrations.md) for authoring,
+local reset, populated-database upgrade, and recovery rules.
