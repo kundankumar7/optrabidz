@@ -57,7 +57,7 @@ present at the branch baseline.
 
 ### Steps
 
-- [ ] Confirm the branch, clean worktree, and exact base.
+- [x] Confirm the branch, clean worktree, and exact base.
 
   ```powershell
   git branch --show-current
@@ -70,13 +70,13 @@ present at the branch baseline.
   local base and `origin/develop` both resolve to the recorded base unless a
   reviewed rebase decision is made before implementation.
 
-- [ ] Add the version property under the existing Maven properties.
+- [x] Add the version property under the existing Maven properties.
 
   ```xml
   <archunit.version>1.4.2</archunit.version>
   ```
 
-- [ ] Add the test-only dependency beside the other test dependencies.
+- [x] Add the test-only dependency beside the other test dependencies.
 
   ```xml
   <dependency>
@@ -87,7 +87,7 @@ present at the branch baseline.
   </dependency>
   ```
 
-- [ ] Create
+- [x] Create
   `src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java`
   first with the unfrozen rule below.
 
@@ -117,7 +117,7 @@ present at the branch baseline.
   }
   ```
 
-- [ ] Run the strict rule to capture meaningful RED evidence.
+- [x] Run the strict rule to capture meaningful RED evidence.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=ExceptionArchitectureTest" test
@@ -127,7 +127,7 @@ present at the branch baseline.
   `ErrorCode`, or Spring HTTP types. A missing dependency or test-discovery
   error is not acceptable RED evidence.
 
-- [ ] Wrap only the legacy rule with `FreezingArchRule`.
+- [x] Wrap only the legacy rule with `FreezingArchRule`.
 
   ```java
   import static com.tngtech.archunit.library.freeze.FreezingArchRule.freeze;
@@ -149,7 +149,7 @@ present at the branch baseline.
                   .as("domain and application exceptions must remain transport-neutral"));
   ```
 
-- [ ] Create `src/test/resources/archunit.properties`.
+- [x] Create `src/test/resources/archunit.properties`.
 
   ```properties
   freeze.store.default.path=src/test/resources/archunit-store
@@ -157,11 +157,12 @@ present at the branch baseline.
   freeze.store.default.allowStoreUpdate=false
   ```
 
-- [ ] Initialize the baseline once from the reviewed current violations.
+- [x] Initialize the baseline once from the reviewed current violations.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=ExceptionArchitectureTest" `
-    "-Darchunit.freeze.store.default.allowStoreCreation=true" test
+    "-Darchunit.freeze.store.default.allowStoreCreation=true" `
+    "-Darchunit.freeze.store.default.allowStoreUpdate=true" test
   ```
 
   Expected: PASS and generated tracked files under
@@ -169,7 +170,7 @@ present at the branch baseline.
   class names and dependency descriptions only, never credentials or runtime
   data.
 
-- [ ] Prove ordinary execution cannot recreate or silently update the store.
+- [x] Prove ordinary execution cannot recreate or silently update the store.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=ExceptionArchitectureTest" test
@@ -180,7 +181,7 @@ present at the branch baseline.
   staged. Later migration stories must explicitly allow a one-time store update
   when removing recorded violations.
 
-- [ ] Commit this independently reviewable guardrail.
+- [x] Commit this independently reviewable guardrail.
 
   ```powershell
   git add pom.xml `
