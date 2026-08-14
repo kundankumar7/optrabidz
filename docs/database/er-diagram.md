@@ -4,7 +4,8 @@ These diagrams show the main database relationships in a reviewer-friendly
 format. Cardinality is based on the PostgreSQL schema only: foreign-key
 nullability, foreign-key uniqueness, primary keys, and unique constraints.
 Application lifecycle expectations are not assumed here. The complete schema is
-available in [`optrabidz-schema.sql`](optrabidz-schema.sql).
+available in the executable Flyway migration
+[`V1__baseline.sql`](../../src/main/resources/db/migration/V1__baseline.sql).
 
 ## Legend
 

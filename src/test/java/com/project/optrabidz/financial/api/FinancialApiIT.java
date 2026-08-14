@@ -5,7 +5,6 @@ import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MvcResult;
 
 import javax.crypto.Mac;
@@ -28,7 +27,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Sql(scripts = "/db/test/finance-active-payment-intent-indexes.sql")
 class FinancialApiIT extends ApiIntegrationTestSupport {
 
     @Test
