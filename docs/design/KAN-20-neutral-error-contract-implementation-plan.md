@@ -94,13 +94,17 @@ present at the branch baseline.
   ```java
   package com.project.optrabidz.architecture;
 
+  import com.tngtech.archunit.core.importer.ImportOption;
   import com.tngtech.archunit.junit.AnalyzeClasses;
   import com.tngtech.archunit.junit.ArchTest;
   import com.tngtech.archunit.lang.ArchRule;
 
   import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
-  @AnalyzeClasses(packages = "com.project.optrabidz")
+  @AnalyzeClasses(
+          packages = "com.project.optrabidz",
+          importOptions = ImportOption.DoNotIncludeTests.class
+  )
   class ExceptionArchitectureTest {
       @ArchTest
       static final ArchRule BUSINESS_EXCEPTIONS_ARE_TRANSPORT_NEUTRAL =
@@ -589,11 +593,12 @@ and convenience constructors without details or cause.
 **Consumes:** The complete `common.error` package from Tasks 2 and 3.
 
 **Produces:** A non-frozen rule that permits dependencies only on Java and the
-neutral package itself.
+neutral package itself. The class importer excludes test output so same-package
+JUnit and AssertJ dependencies are not mistaken for production dependencies.
 
 ### Steps
 
-- [ ] Add this second rule to `ExceptionArchitectureTest`.
+- [x] Add this second rule to `ExceptionArchitectureTest`.
 
   ```java
   @ArchTest
@@ -613,7 +618,7 @@ neutral package itself.
   import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
   ```
 
-- [ ] Prove the strict rule detects an adapter dependency. Temporarily add the
+- [x] Prove the strict rule detects an adapter dependency. Temporarily add the
   following probe to `ErrorDescriptor` without committing it:
 
   ```java
@@ -622,7 +627,7 @@ neutral package itself.
   private static final HttpStatus ARCHITECTURE_TEST_PROBE = HttpStatus.BAD_REQUEST;
   ```
 
-- [ ] Run the architecture test and record mutation RED.
+- [x] Run the architecture test and record mutation RED.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=ExceptionArchitectureTest" test
@@ -631,7 +636,7 @@ neutral package itself.
   Expected: FAIL naming the forbidden `HttpStatus` dependency. Failure caused
   by compilation or freeze-store configuration is not valid evidence.
 
-- [ ] Remove the temporary import and field exactly; confirm the production
+- [x] Remove the temporary import and field exactly; confirm the production
   diff contains no probe.
 
   ```powershell
@@ -641,7 +646,7 @@ neutral package itself.
 
   Expected: no matches.
 
-- [ ] Run architecture and neutral-contract tests again.
+- [x] Run architecture and neutral-contract tests again.
 
   ```powershell
   .\mvnw.cmd -B `
@@ -652,7 +657,7 @@ neutral package itself.
 
   Expected: PASS and a clean diff check.
 
-- [ ] Commit the strict rule.
+- [x] Commit the strict rule.
 
   ```powershell
   git add src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java
