@@ -371,7 +371,7 @@ and convenience constructors without details or cause.
 
 ### Steps
 
-- [ ] Create
+- [x] Create
   `src/test/java/com/project/optrabidz/common/error/ApplicationExceptionTest.java`
   before the production class.
 
@@ -468,14 +468,14 @@ and convenience constructors without details or cause.
   }
   ```
 
-- [ ] Run the focused test and record RED caused by missing
+- [x] Run the focused test and record RED caused by missing
   `ApplicationException`.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=ApplicationExceptionTest" test
   ```
 
-- [ ] Create `ApplicationException.java`.
+- [x] Create `ApplicationException.java`.
 
   ```java
   package com.project.optrabidz.common.error;
@@ -563,7 +563,7 @@ and convenience constructors without details or cause.
   }
   ```
 
-- [ ] Run the neutral-contract tests and architecture baseline.
+- [x] Run the neutral-contract tests and architecture baseline.
 
   ```powershell
   .\mvnw.cmd -B `
@@ -573,7 +573,7 @@ and convenience constructors without details or cause.
 
   Expected: PASS with the legacy freeze store unchanged.
 
-- [ ] Commit the application exception.
+- [x] Commit the application exception.
 
   ```powershell
   git add `
