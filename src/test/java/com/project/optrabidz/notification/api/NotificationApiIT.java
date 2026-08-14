@@ -6,6 +6,7 @@ import com.project.optrabidz.notification.application.channel.NotificationDelive
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.security.infrastructure.config.SecuritySessionConstants;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -32,6 +33,12 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @BeforeEach
+    void clearAsynchronousStateFromOtherTests() {
+        jdbcTemplate.update("delete from event_outbox");
+        jdbcTemplate.update("delete from notification");
+    }
 
     @Test
     void outboxDispatchCreatesNotificationAndAuditForRegisteredAccount() throws Exception {
