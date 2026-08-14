@@ -670,7 +670,7 @@ JUnit and AssertJ dependencies are not mistaken for production dependencies.
 
 ### Steps
 
-- [ ] Confirm ArchUnit is test-scoped and resolves to 1.4.2.
+- [x] Confirm ArchUnit is test-scoped and resolves to 1.4.2.
 
   ```powershell
   .\mvnw.cmd -B dependency:tree "-Dincludes=com.tngtech.archunit"
@@ -678,7 +678,7 @@ JUnit and AssertJ dependencies are not mistaken for production dependencies.
 
   Expected: `archunit-junit5:1.4.2:test`; no compile or runtime ArchUnit entry.
 
-- [ ] Run all unit and architecture tests.
+- [x] Run all unit and architecture tests.
 
   ```powershell
   .\mvnw.cmd -B test
@@ -686,7 +686,7 @@ JUnit and AssertJ dependencies are not mistaken for production dependencies.
 
   Expected: BUILD SUCCESS with zero failures and errors.
 
-- [ ] Run the production-path PostgreSQL integration suite.
+- [x] Run the production-path PostgreSQL integration suite.
 
   ```powershell
   .\mvnw.cmd -B verify -Pintegration-tests
@@ -696,7 +696,7 @@ JUnit and AssertJ dependencies are not mistaken for production dependencies.
   PostgreSQL integration tests pass, Flyway validates V1, and no schema change
   is applied beyond the existing migration.
 
-- [ ] Verify the packaged JAR does not contain ArchUnit classes.
+- [x] Verify the packaged JAR does not contain ArchUnit classes.
 
   ```powershell
   jar tf target\optrabidz-0.0.1-SNAPSHOT.jar |
@@ -705,7 +705,7 @@ JUnit and AssertJ dependencies are not mistaken for production dependencies.
 
   Expected: no matches.
 
-- [ ] Run explicit dependency and disclosure scans.
+- [x] Run explicit dependency and disclosure scans.
 
   ```powershell
   rg -n "org\.springframework|jakarta\.servlet|jakarta\.persistence|com\.fasterxml" `
@@ -718,7 +718,7 @@ JUnit and AssertJ dependencies are not mistaken for production dependencies.
   Expected: no framework imports and no code that treats diagnostic messages as
   public messages.
 
-- [ ] Audit the exact branch scope.
+- [x] Audit the exact branch scope.
 
   ```powershell
   git diff --check origin/develop...HEAD
@@ -732,10 +732,10 @@ JUnit and AssertJ dependencies are not mistaken for production dependencies.
   changes to controllers, security configuration, handlers, business modules,
   database migrations, runtime configuration, or CI.
 
-- [ ] Record exact test totals, the initialized legacy violation count, the
+- [x] Record exact test totals, the initialized legacy violation count, the
   zero-new-violation result, and the verified branch SHA in KAN-20.
 
-- [ ] Push the branch and open a pull request into `develop` only after all
+- [x] Push the branch and open a pull request into `develop` only after all
   local gates pass. Require both exact-head GitHub checks before review.
 
   ```powershell
