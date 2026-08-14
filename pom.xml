@@ -15,6 +15,7 @@
 	<description>OptraBidz startup funding marketplace system.</description>
 	<properties>
 		<java.version>21</java.version>
+		<archunit.version>1.4.2</archunit.version>
 		<testcontainers.version>1.21.4</testcontainers.version>
 		<skipTests>false</skipTests>
 		<skipITs>true</skipITs>
@@ -78,6 +79,12 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.tngtech.archunit</groupId>
+			<artifactId>archunit-junit5</artifactId>
+			<version>${archunit.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
