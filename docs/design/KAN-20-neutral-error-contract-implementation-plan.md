@@ -206,7 +206,7 @@ new ErrorDetail(String field, String issue)
 
 ### Steps
 
-- [ ] Create
+- [x] Create
   `src/test/java/com/project/optrabidz/common/error/ErrorDescriptorTest.java`
   with focused tests before creating production types.
 
@@ -262,13 +262,13 @@ new ErrorDetail(String field, String issue)
   }
   ```
 
-- [ ] Run the focused test and record RED caused only by missing neutral types.
+- [x] Run the focused test and record RED caused only by missing neutral types.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=ErrorDescriptorTest" test
   ```
 
-- [ ] Create `ErrorCategory.java` with the categories approved in KAN-17.
+- [x] Create `ErrorCategory.java` with the categories approved in KAN-17.
 
   ```java
   package com.project.optrabidz.common.error;
@@ -284,7 +284,7 @@ new ErrorDetail(String field, String issue)
   }
   ```
 
-- [ ] Create `ErrorDescriptor.java`.
+- [x] Create `ErrorDescriptor.java`.
 
   ```java
   package com.project.optrabidz.common.error;
@@ -314,7 +314,7 @@ new ErrorDetail(String field, String issue)
   }
   ```
 
-- [ ] Create `ErrorDetail.java`.
+- [x] Create `ErrorDetail.java`.
 
   ```java
   package com.project.optrabidz.common.error;
@@ -333,7 +333,7 @@ new ErrorDetail(String field, String issue)
   }
   ```
 
-- [ ] Run focused tests and the architecture guardrail.
+- [x] Run focused tests and the architecture guardrail.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=ErrorDescriptorTest,ExceptionArchitectureTest" test
@@ -341,7 +341,7 @@ new ErrorDetail(String field, String issue)
 
   Expected: PASS. The types import only Java packages.
 
-- [ ] Commit the neutral value contract.
+- [x] Commit the neutral value contract.
 
   ```powershell
   git add src/main/java/com/project/optrabidz/common/error `
