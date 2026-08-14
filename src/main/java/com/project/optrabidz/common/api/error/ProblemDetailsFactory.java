@@ -48,7 +48,7 @@ public final class ProblemDetailsFactory {
         ));
         problem.setProperty("code", descriptor.code());
         problem.setProperty("requestId", requestId);
-        problem.setProperty("timestamp", clock.instant());
+        problem.setProperty("timestamp", clock.instant().toString());
         return problem;
     }
 

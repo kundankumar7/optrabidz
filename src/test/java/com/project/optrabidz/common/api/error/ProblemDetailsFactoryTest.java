@@ -62,7 +62,7 @@ class ProblemDetailsFactoryTest {
                 .containsOnlyKeys("code", "requestId", "timestamp")
                 .containsEntry("code", "LISTING_NOT_FOUND")
                 .containsEntry("requestId", "request-123")
-                .containsEntry("timestamp", NOW);
+                .containsEntry("timestamp", NOW.toString());
     }
 
     @Test
