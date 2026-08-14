@@ -761,7 +761,7 @@ diff evidence for the exact branch head.
   git commit -m "docs: record KAN-21 verification evidence"
   ```
 
-- [ ] Push the feature branch and open a pull request into `develop`.
+- [x] Push the feature branch and open a pull request into `develop`.
 
   ```powershell
   git push -u origin feature/KAN-21-rfc9457-error-adapter
@@ -776,7 +776,7 @@ diff evidence for the exact branch head.
   from the verified scope, RED/GREEN evidence, test results, security notes,
   and rollback statement; do not add a project file solely for one PR.
 
-- [ ] Verify the remote PR head equals the locally tested head and wait for both
+- [x] Verify the remote PR head equals the locally tested head and wait for both
   required CI checks. Do not merge. Present the exact diff and PR to the user
   for review.
 
@@ -811,6 +811,14 @@ diff evidence for the exact branch head.
   `4edf9479e49e198e05da9b851369be5a71544995`.
 - No scope deviation was required. ISO timestamp normalization is a wire-format
   correction inside the approved contract.
+- Pull request: `https://github.com/kundankumar7/optrabidz/pull/18`, open and
+  mergeable against `develop`.
+- GitHub exact-head evidence for `4d3f0183c482a4baeb0001c9c1e5f811471b42f8`:
+  both push and pull-request runs passed `Unit Tests` and `PostgreSQL
+  Integration Tests` under Temurin 21.
+- This final evidence commit changes only this plan. GitHub reruns the required
+  checks on the resulting final PR head; the live PR check status is the
+  authoritative exact-head record.
 
 ## Review gates
 
