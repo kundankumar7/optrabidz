@@ -11,6 +11,10 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -22,7 +26,9 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 import java.util.Objects;
@@ -178,6 +184,96 @@ public final class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return frameworkResponse(
                 FrameworkProblem.VALIDATION_ERROR,
                 List.of(validationViolationMapper.typeMismatch(field)),
+                headers,
+                request
+        );
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException exception,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request
+    ) {
+        return frameworkResponse(
+                FrameworkProblem.MALFORMED_REQUEST,
+                List.of(),
+                headers,
+                request
+        );
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleNoHandlerFoundException(
+            NoHandlerFoundException exception,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request
+    ) {
+        return frameworkResponse(
+                FrameworkProblem.ENDPOINT_NOT_FOUND,
+                List.of(),
+                headers,
+                request
+        );
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleNoResourceFoundException(
+            NoResourceFoundException exception,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request
+    ) {
+        return frameworkResponse(
+                FrameworkProblem.ENDPOINT_NOT_FOUND,
+                List.of(),
+                headers,
+                request
+        );
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(
+            HttpRequestMethodNotSupportedException exception,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request
+    ) {
+        return frameworkResponse(
+                FrameworkProblem.METHOD_NOT_ALLOWED,
+                List.of(),
+                headers,
+                request
+        );
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMediaTypeNotAcceptable(
+            HttpMediaTypeNotAcceptableException exception,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request
+    ) {
+        return frameworkResponse(
+                FrameworkProblem.NOT_ACCEPTABLE,
+                List.of(),
+                headers,
+                request
+        );
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMediaTypeNotSupported(
+            HttpMediaTypeNotSupportedException exception,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request
+    ) {
+        return frameworkResponse(
+                FrameworkProblem.UNSUPPORTED_MEDIA_TYPE,
+                List.of(),
                 headers,
                 request
         );
