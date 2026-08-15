@@ -50,7 +50,10 @@ class RestExceptionHandlerTest {
                 .standaloneSetup(new FailureProbeController())
                 .setControllerAdvice(
                         new GlobalExceptionHandler(),
-                        new RestExceptionHandler(factory)
+                        new RestExceptionHandler(
+                                factory,
+                                new ValidationViolationMapper()
+                        )
                 )
                 .addFilters(new RequestMetadataFilter())
                 .build();
