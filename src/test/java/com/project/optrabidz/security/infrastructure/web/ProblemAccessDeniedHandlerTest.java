@@ -79,6 +79,20 @@ class ProblemAccessDeniedHandlerTest {
         verifyCalls(SecurityProblem.CSRF_VALIDATION_FAILED, null, null);
     }
 
+    @Test
+    void mapsAuthorizationFailureWithoutRecognizedPrincipal()
+            throws Exception {
+        ProblemAccessDeniedHandler handler = handler();
+
+        handler.handle(
+                request,
+                response,
+                new AccessDeniedException("Access denied")
+        );
+
+        verifyCalls(SecurityProblem.AUTHORIZATION_FAILED, null, null);
+    }
+
     private ProblemAccessDeniedHandler handler() {
         return new ProblemAccessDeniedHandler(
                 securityAuditService,

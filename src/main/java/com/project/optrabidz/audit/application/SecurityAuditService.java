@@ -8,8 +8,6 @@ import com.project.optrabidz.common.observability.RequestIdProvider;
 import com.project.optrabidz.common.observability.SensitiveDataMasker;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -35,7 +33,6 @@ public class SecurityAuditService {
         this.operationalEventLogger = operationalEventLogger;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordLoginFailure(String email, String reason, HttpServletRequest request) {
         String maskedEmail = safeText(sensitiveDataMasker.maskEmail(email));
         saveSafely("LOGIN_FAILED", "CREDENTIAL", maskedEmail, null, null,
@@ -45,7 +42,6 @@ public class SecurityAuditService {
                 )));
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordAuthenticationRequired(HttpServletRequest request, String reason) {
         saveSafely("AUTHENTICATION_REQUIRED", "HTTP_REQUEST", requestPath(request), null, null,
                 AuditOutcome.DENIED, request, details(Map.of(
@@ -55,7 +51,6 @@ public class SecurityAuditService {
                 )));
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordAuthorizationDenied(HttpServletRequest request,
                                           String reason,
                                           Long actorAccountId,

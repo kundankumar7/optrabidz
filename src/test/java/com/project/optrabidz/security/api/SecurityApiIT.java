@@ -1,5 +1,6 @@
 package com.project.optrabidz.security.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
@@ -67,6 +68,36 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
     }
 
     @Test
+    void unsafeRequestIdIsReplacedConsistentlyForSecurityFailure()
+            throws Exception {
+        String unsafeRequestId = "invalid request id!";
+
+        MvcResult result = mockMvc.perform(get("/api/v1/me")
+                        .header("X-Request-Id", unsafeRequestId))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentType(
+                        MediaType.APPLICATION_PROBLEM_JSON
+                ))
+                .andExpect(jsonPath("$.code").value(
+                        "AUTHENTICATION_REQUIRED"
+                ))
+                .andReturn();
+
+        String replacement = result.getResponse().getHeader("X-Request-Id");
+        JsonNode body = objectMapper.readTree(
+                result.getResponse().getContentAsByteArray()
+        );
+        assertThat(replacement)
+                .isNotBlank()
+                .isNotEqualTo(unsafeRequestId)
+                .matches("[A-Za-z0-9._-]+");
+        assertThat(body.get("requestId").asText()).isEqualTo(replacement);
+        assertThat(body.get("instance").asText()).isEqualTo(
+                "urn:optrabidz:request:" + replacement
+        );
+    }
+
+    @Test
     void mutatingProtectedEndpointRequiresMatchingCsrfHeader() throws Exception {
         AuthenticatedClient client = registerAndLogin(RoleType.STARTUP);
 
@@ -83,6 +114,24 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
         ).andReturn();
 
         assertThat(result.getResponse().getContentAsString())
+                .doesNotContain(client.csrfToken());
+
+        String wrongToken = "wrong-csrf-token";
+        MvcResult wrongTokenResult = expectSecurityProblem(
+                mockMvc.perform(post("/api/v1/auth/logout")
+                        .session(client.session())
+                        .cookie(client.xsrfCookie())
+                        .header("X-CSRF-TOKEN", wrongToken)
+                        .header("X-Request-Id", REQUEST_ID)),
+                403,
+                "csrf-validation-failed",
+                "Request security validation failed",
+                "Request security validation failed",
+                "CSRF_VALIDATION_FAILED"
+        ).andReturn();
+
+        assertThat(wrongTokenResult.getResponse().getContentAsString())
+                .doesNotContain(wrongToken)
                 .doesNotContain(client.csrfToken());
 
         mockMvc.perform(post("/api/v1/auth/logout")
