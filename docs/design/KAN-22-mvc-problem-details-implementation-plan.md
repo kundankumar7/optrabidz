@@ -757,7 +757,7 @@ evidence for the pull request into `develop`.
   git commit -m "refactor: retire migrated MVC error handlers (KAN-22)"
   ```
 
-- [ ] Push and open a pull request into `develop`; do not merge it.
+- [x] Push and open a pull request into `develop`; do not merge it.
 
   ```powershell
   git push -u origin feature/KAN-22-mvc-problem-details
@@ -772,7 +772,7 @@ evidence for the pull request into `develop`.
   contract table, RED/GREEN evidence, security review, complete test results,
   and rollback statement; do not add a one-use project file.
 
-- [ ] Verify the remote PR head equals the locally tested head and wait for
+- [x] Verify the remote PR head equals the locally tested head and wait for
   `Unit Tests` and `PostgreSQL Integration Tests` on that exact head. Present
   the PR and exact diff for user review. Do not merge.
 
@@ -833,9 +833,13 @@ Recorded on 2026-08-15 before publication.
 - The deprecated DispatcherServlet throw-if-no-handler switch was not used.
   Spring 6.1's `NoResourceFoundException` path provides the tested 404 mapping.
 
-The pull-request number, published head SHA, and exact-head CI results are
-recorded in the PR after publication so this file does not require a
-self-referential evidence commit. No merge is part of KAN-22 execution.
+PR #19 was opened against `develop` at exact implementation head
+`c2a3c7967e824a5f926e8bbb14aa8181a9e929a3`. GitHub reported the PR as
+mergeable and ran the required workflows twice (push and pull-request events):
+both `Unit Tests` runs and both `PostgreSQL Integration Tests` runs passed on
+that head. This documentation-only evidence update changes no production or
+test source; its resulting exact-head CI result is retained by GitHub on PR
+#19. No merge is part of KAN-22 execution.
 
 ## Review gates
 
