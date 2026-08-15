@@ -3,14 +3,10 @@ package com.project.optrabidz.common.api.exception;
 import com.project.optrabidz.common.api.response.ApiResponse;
 import com.project.optrabidz.common.api.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -27,56 +23,6 @@ public class GlobalExceptionHandler {
                         exception.getErrorCode(),
                         exception.getMessage(),
                         exception.getFields(),
-                        request
-                ));
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException exception,
-                                                                   HttpServletRequest request) {
-        List<ErrorField> fields = exception.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(this::toErrorField)
-                .toList();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(
-                        ErrorCode.VALIDATION_ERROR,
-                        "Request validation failed",
-                        fields,
-                        request
-                ));
-    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException exception,
-                                                                   HttpServletRequest request) {
-        List<ErrorField> fields = exception.getConstraintViolations()
-                .stream()
-                .map(violation -> new ErrorField(
-                        violation.getPropertyPath().toString(),
-                        violation.getMessage()
-                ))
-                .toList();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(
-                        ErrorCode.VALIDATION_ERROR,
-                        "Request validation failed",
-                        fields,
-                        request
-                ));
-    }
-
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleUnreadableBody(HttpMessageNotReadableException exception,
-                                                              HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(
-                        ErrorCode.VALIDATION_ERROR,
-                        "Malformed request body",
-                        List.of(),
                         request
                 ));
     }
@@ -131,7 +77,4 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    private ErrorField toErrorField(FieldError error) {
-        return new ErrorField(error.getField(), error.getDefaultMessage());
-    }
 }

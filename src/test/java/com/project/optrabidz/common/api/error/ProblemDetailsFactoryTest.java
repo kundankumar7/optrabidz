@@ -12,8 +12,10 @@ import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 class ProblemDetailsFactoryTest {
     private static final Instant NOW =
@@ -87,5 +89,79 @@ class ProblemDetailsFactoryTest {
                 .doesNotContain(exception.diagnosticCode())
                 .doesNotContain("internal-host")
                 .doesNotContain("IllegalStateException");
+    }
+
+    @Test
+    void createsFrameworkProblemWithSafeViolations() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Request-Id", "request-123");
+
+        ProblemDetail problem = factory.createFramework(
+                FrameworkProblem.VALIDATION_ERROR,
+                List.of(new ValidationViolation(
+                        "items[0].amount",
+                        "must be greater than zero"
+                )),
+                request
+        );
+
+        assertThat(problem.getType()).isEqualTo(
+                URI.create("urn:optrabidz:problem:validation-error")
+        );
+        assertThat(problem.getTitle()).isEqualTo(
+                "Request validation failed"
+        );
+        assertThat(problem.getStatus()).isEqualTo(400);
+        assertThat(problem.getDetail()).isEqualTo(
+                "One or more request values are invalid"
+        );
+        assertThat(problem.getProperties())
+                .containsEntry("code", "VALIDATION_ERROR")
+                .containsEntry("requestId", "request-123")
+                .containsEntry("timestamp", NOW.toString())
+                .containsEntry("violations", List.of(
+                        new ValidationViolation(
+                                "items[0].amount",
+                                "must be greater than zero"
+                        )
+                ));
+    }
+
+    @Test
+    void omitsViolationsWhenFrameworkFailureHasNone() {
+        ProblemDetail problem = factory.createFramework(
+                FrameworkProblem.MALFORMED_REQUEST,
+                List.of(),
+                new MockHttpServletRequest()
+        );
+
+        assertThat(problem.getProperties())
+                .doesNotContainKey("violations");
+    }
+
+    @Test
+    void doesNotCopyUnrelatedRequestDataIntoFrameworkProblem() {
+        String secret = "password=hunter2";
+        MockHttpServletRequest request = new MockHttpServletRequest(
+                "POST",
+                "/test/" + secret
+        );
+        request.addHeader("X-Debug", secret);
+
+        ProblemDetail problem = factory.createFramework(
+                FrameworkProblem.MALFORMED_REQUEST,
+                List.of(),
+                request
+        );
+
+        assertThat(problem.toString()).doesNotContain(secret);
+    }
+
+    @Test
+    void rejectsBlankValidationViolationParts() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ValidationViolation(" ", "is invalid"));
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ValidationViolation("field", " "));
     }
 }
