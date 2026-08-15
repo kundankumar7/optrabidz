@@ -51,6 +51,8 @@ class SecurityProblemResponseWriterTest {
         assertThat(response.getContentType()).isEqualTo(
                 MediaType.APPLICATION_PROBLEM_JSON_VALUE
         );
+        assertThat(response.getHeader("X-Request-Id"))
+                .isEqualTo("request-123");
         JsonNode body = objectMapper.readTree(
                 response.getContentAsByteArray()
         );

@@ -4,18 +4,24 @@ import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class SecurityApiIT extends ApiIntegrationTestSupport {
     private static final String INITIAL_PASSWORD = "Password01";
     private static final String CHANGED_PASSWORD = "Changed01";
+    private static final String REQUEST_ID = "security-request-123";
 
     @Test
     void registerLoginAndMeUseStatefulSessionWithCsrfCookie() throws Exception {
@@ -42,24 +48,42 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
 
     @Test
     void protectedEndpointRequiresAuthentication() throws Exception {
-        mockMvc.perform(get("/api/v1/me"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHENTICATION_REQUIRED"))
-                .andExpect(jsonPath("$.error.message").value("Authentication is required"));
+        String secret = "secret-bearer-token";
+
+        MvcResult result = expectSecurityProblem(
+                mockMvc.perform(get("/api/v1/me")
+                        .header("X-Request-Id", REQUEST_ID)
+                        .header("Authorization", "Bearer " + secret)),
+                401,
+                "authentication-required",
+                "Authentication required",
+                "Authentication is required",
+                "AUTHENTICATION_REQUIRED"
+        ).andReturn();
+
+        assertThat(result.getResponse().getContentAsString())
+                .doesNotContain(secret)
+                .doesNotContain("Authorization");
     }
 
     @Test
     void mutatingProtectedEndpointRequiresMatchingCsrfHeader() throws Exception {
         AuthenticatedClient client = registerAndLogin(RoleType.STARTUP);
 
-        mockMvc.perform(post("/api/v1/auth/logout")
+        MvcResult result = expectSecurityProblem(
+                mockMvc.perform(post("/api/v1/auth/logout")
                         .session(client.session())
-                        .cookie(client.xsrfCookie()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("CSRF validation failed"));
+                        .cookie(client.xsrfCookie())
+                        .header("X-Request-Id", REQUEST_ID)),
+                403,
+                "csrf-validation-failed",
+                "Request security validation failed",
+                "Request security validation failed",
+                "CSRF_VALIDATION_FAILED"
+        ).andReturn();
+
+        assertThat(result.getResponse().getContentAsString())
+                .doesNotContain(client.csrfToken());
 
         mockMvc.perform(post("/api/v1/auth/logout")
                         .session(client.session())
@@ -115,21 +139,29 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
         AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
         AuthenticatedClient investor = registerAndLogin(RoleType.INVESTOR);
 
-        mockMvc.perform(get("/api/v1/investor-preferences/me")
+        expectSecurityProblem(
+                mockMvc.perform(get("/api/v1/investor-preferences/me")
                         .session(startup.session())
-                        .cookie(startup.xsrfCookie()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("You are not authorized to perform this action"));
+                        .cookie(startup.xsrfCookie())
+                        .header("X-Request-Id", REQUEST_ID)),
+                403,
+                "authorization-failed",
+                "Access denied",
+                "You are not authorized to perform this action",
+                "AUTHORIZATION_FAILED"
+        );
 
-        mockMvc.perform(get("/api/v1/startup-classifications/me")
+        expectSecurityProblem(
+                mockMvc.perform(get("/api/v1/startup-classifications/me")
                         .session(investor.session())
-                        .cookie(investor.xsrfCookie()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("You are not authorized to perform this action"));
+                        .cookie(investor.xsrfCookie())
+                        .header("X-Request-Id", REQUEST_ID)),
+                403,
+                "authorization-failed",
+                "Access denied",
+                "You are not authorized to perform this action",
+                "AUTHORIZATION_FAILED"
+        );
     }
 
     @Test
@@ -148,5 +180,36 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
                 .andExpect(jsonPath("$.error.message").value("Webhook signature is missing"));
+    }
+
+    private ResultActions expectSecurityProblem(
+            ResultActions result,
+            int expectedStatus,
+            String typeSlug,
+            String title,
+            String detail,
+            String code
+    ) throws Exception {
+        return result
+                .andExpect(status().is(expectedStatus))
+                .andExpect(content().contentType(
+                        MediaType.APPLICATION_PROBLEM_JSON
+                ))
+                .andExpect(header().string("X-Request-Id", REQUEST_ID))
+                .andExpect(jsonPath("$.type").value(
+                        "urn:optrabidz:problem:" + typeSlug
+                ))
+                .andExpect(jsonPath("$.title").value(title))
+                .andExpect(jsonPath("$.status").value(expectedStatus))
+                .andExpect(jsonPath("$.detail").value(detail))
+                .andExpect(jsonPath("$.instance").value(
+                        "urn:optrabidz:request:" + REQUEST_ID
+                ))
+                .andExpect(jsonPath("$.code").value(code))
+                .andExpect(jsonPath("$.requestId").value(REQUEST_ID))
+                .andExpect(jsonPath("$.timestamp").isString())
+                .andExpect(jsonPath("$.violations").doesNotExist())
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
     }
 }

@@ -1,6 +1,7 @@
 package com.project.optrabidz.common.api.error;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.optrabidz.common.observability.RequestIdProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -38,12 +39,14 @@ public final class SecurityProblemResponseWriter {
         Objects.requireNonNull(request, "request");
         Objects.requireNonNull(response, "response");
 
+        String requestId = RequestIdProvider.resolveOrCreate(request);
         ProblemDetail body = problemDetailsFactory.createSecurity(
                 problem,
                 request
         );
         response.setStatus(problem.mapping().status().value());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+        response.setHeader(RequestIdProvider.REQUEST_ID_HEADER, requestId);
         objectMapper.writeValue(response.getOutputStream(), body);
     }
 }
