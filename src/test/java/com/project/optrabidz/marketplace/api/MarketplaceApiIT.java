@@ -357,9 +357,8 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(createListingRequest("CSRF Listing", new BigDecimal("765432.10")))))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("CSRF validation failed"));
+                .andExpect(jsonPath("$.code").value("CSRF_VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.detail").value("Request security validation failed"));
     }
 
     private AuthenticatedClient eligibleStartup(String publicDisplayName) throws Exception {

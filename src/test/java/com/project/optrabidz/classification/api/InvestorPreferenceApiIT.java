@@ -111,9 +111,8 @@ class InvestorPreferenceApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(investorPreference("GEOGRAPHY", "INDIA"))))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("CSRF validation failed"));
+                .andExpect(jsonPath("$.code").value("CSRF_VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.detail").value("Request security validation failed"));
     }
 
     @Test
@@ -125,8 +124,8 @@ class InvestorPreferenceApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"));
+                .andExpect(jsonPath("$.code").value("AUTHORIZATION_FAILED"))
+                .andExpect(jsonPath("$.detail").value("You are not authorized to perform this action"));
 
         mockMvc.perform(post("/api/v1/investor-preferences")
                         .session(investorWithoutProfile.session())

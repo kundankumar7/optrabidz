@@ -62,6 +62,23 @@ public final class ProblemDetailsFactory {
         );
     }
 
+    public ProblemDetail createSecurity(
+            SecurityProblem securityProblem,
+            HttpServletRequest request
+    ) {
+        Objects.requireNonNull(
+                securityProblem,
+                "securityProblem must not be null"
+        );
+        return createProblem(
+                securityProblem.code(),
+                securityProblem.detail(),
+                securityProblem.mapping(),
+                List.of(),
+                request
+        );
+    }
+
     private ProblemDetail createProblem(
             String code,
             String detail,

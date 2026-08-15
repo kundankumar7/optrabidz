@@ -6,6 +6,7 @@ import com.project.optrabidz.common.error.ErrorDescriptor;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.mock.web.MockCookie;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.net.URI;
@@ -155,6 +156,60 @@ class ProblemDetailsFactoryTest {
         );
 
         assertThat(problem.toString()).doesNotContain(secret);
+    }
+
+    @Test
+    void createsSecurityProblemFromTheAllowlistedCatalogue() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Request-Id", "request-123");
+
+        ProblemDetail problem = factory.createSecurity(
+                SecurityProblem.CSRF_VALIDATION_FAILED,
+                request
+        );
+
+        assertThat(problem.getType()).isEqualTo(
+                URI.create("urn:optrabidz:problem:csrf-validation-failed")
+        );
+        assertThat(problem.getTitle()).isEqualTo(
+                "Request security validation failed"
+        );
+        assertThat(problem.getStatus()).isEqualTo(403);
+        assertThat(problem.getDetail()).isEqualTo(
+                "Request security validation failed"
+        );
+        assertThat(problem.getInstance()).isEqualTo(
+                URI.create("urn:optrabidz:request:request-123")
+        );
+        assertThat(problem.getProperties())
+                .containsOnlyKeys("code", "requestId", "timestamp")
+                .containsEntry("code", "CSRF_VALIDATION_FAILED")
+                .containsEntry("requestId", "request-123")
+                .containsEntry("timestamp", NOW.toString())
+                .doesNotContainKey("violations");
+    }
+
+    @Test
+    void securityProblemDoesNotCopyUnrelatedRequestData() {
+        String secret = "csrf-secret-value";
+        MockHttpServletRequest request = new MockHttpServletRequest(
+                "POST",
+                "/test/" + secret
+        );
+        request.addHeader("X-Request-Id", "request-123");
+        request.addHeader("Authorization", "Bearer " + secret);
+        request.setCookies(new MockCookie("XSRF-TOKEN", secret));
+        request.setAttribute("securityException", secret);
+
+        ProblemDetail problem = factory.createSecurity(
+                SecurityProblem.AUTHORIZATION_FAILED,
+                request
+        );
+
+        assertThat(problem.toString())
+                .doesNotContain(secret)
+                .doesNotContain("Authorization")
+                .doesNotContain("securityException");
     }
 
     @Test

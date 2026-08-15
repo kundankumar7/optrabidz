@@ -49,6 +49,28 @@ class SecurityAuditIT extends ApiIntegrationTestSupport {
     }
 
     @Test
+    void anonymousAccessCreatesStableAuthenticationAuditRecord()
+            throws Exception {
+        mockMvc.perform(get("/api/v1/me"))
+                .andExpect(status().isUnauthorized());
+
+        Map<String, Object> audit = jdbcTemplate.queryForMap("""
+                select action, outcome, object_id, details::text as details
+                from audit_record
+                where source_module = 'SECURITY'
+                  and action = 'AUTHENTICATION_REQUIRED'
+                  and object_id = '/api/v1/me'
+                order by audit_record_id desc
+                limit 1
+                """);
+
+        assertThat(audit.get("outcome")).isEqualTo("DENIED");
+        assertThat(audit.get("object_id")).isEqualTo("/api/v1/me");
+        assertThat(audit.get("details").toString())
+                .contains("AUTHENTICATION_REQUIRED");
+    }
+
+    @Test
     void deniedAdminAccessCreatesSecurityAuditRecord() throws Exception {
         AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
 
@@ -62,6 +84,7 @@ class SecurityAuditIT extends ApiIntegrationTestSupport {
                 from audit_record
                 where source_module = 'SECURITY'
                   and action = 'AUTHORIZATION_DENIED'
+                  and object_id = '/api/v1/admin/audit-records'
                 order by audit_record_id desc
                 limit 1
                 """);
@@ -70,6 +93,37 @@ class SecurityAuditIT extends ApiIntegrationTestSupport {
         assertThat(audit.get("actor_account_id")).isNotNull();
         assertThat(audit.get("actor_role")).isEqualTo("STARTUP");
         assertThat(audit.get("object_id")).isEqualTo("/api/v1/admin/audit-records");
-        assertThat(audit.get("details").toString()).contains("You are not authorized");
+        assertThat(audit.get("details").toString())
+                .contains("AUTHORIZATION_FAILED")
+                .doesNotContain("You are not authorized");
+    }
+
+    @Test
+    void missingCsrfCreatesStableAuditRecordWithoutTokenDisclosure()
+            throws Exception {
+        AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .session(startup.session())
+                        .cookie(startup.xsrfCookie()))
+                .andExpect(status().isForbidden());
+
+        Map<String, Object> audit = jdbcTemplate.queryForMap("""
+                select action, outcome, object_id, details::text as details
+                from audit_record
+                where source_module = 'SECURITY'
+                  and action = 'AUTHORIZATION_DENIED'
+                  and object_id = '/api/v1/auth/logout'
+                order by audit_record_id desc
+                limit 1
+                """);
+
+        String details = audit.get("details").toString();
+        assertThat(audit.get("outcome")).isEqualTo("DENIED");
+        assertThat(details)
+                .contains("CSRF_VALIDATION_FAILED")
+                .doesNotContain(startup.csrfToken())
+                .doesNotContain("Invalid CSRF token")
+                .doesNotContain("Could not verify the provided CSRF token");
     }
 }

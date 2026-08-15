@@ -32,6 +32,7 @@ class ExceptionArchitectureTest {
                     .should().dependOnClassesThat().resideInAnyPackage(
                             "..common.api..",
                             "org.springframework.http..",
+                            "org.springframework.security..",
                             "org.springframework.web..",
                             "jakarta.servlet.."
                     )
