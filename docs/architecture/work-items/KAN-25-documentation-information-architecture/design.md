@@ -1,6 +1,6 @@
 # KAN-25 Documentation Information Architecture
 
-Status: Written specification awaiting review
+Status: Approved design baseline
 
 Date: 2026-08-16
 
