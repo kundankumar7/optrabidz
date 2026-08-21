@@ -1,6 +1,6 @@
 # KAN-24: Module Error Migration Implementation Plan
 
-**Status:** Draft pull request #21 open; CI and review pending
+**Status:** Pull request #21 ready for review
 
 **Goal:** Migrate expected identity, security, and participation failures to
 the transport-neutral `ApplicationException` contract while preserving every
@@ -818,8 +818,8 @@ Verified on 2026-08-21 at implementation commit
   security, and participation implementation/tests; the security audit test;
   the architecture rule/store; and 5 required financial/marketplace consumer
   updates for the removed generic participation exceptions.
-- Pull-request-head verification is tracked on PR #21 and remains unchecked
-  here until both required CI jobs pass on the exact remote head.
+- GitHub required jobs verify the exact pull-request head; live results are
+  linked from PR #21.
 
 ## Completion checklist
 
@@ -837,4 +837,4 @@ Verified on 2026-08-21 at implementation commit
 - [x] Successful responses, events, sessions, account lifecycle, profiles, and
   administrator transfer behavior remain unchanged.
 - [x] V1, dependencies, runtime configuration, and CI remain unchanged.
-- [ ] Full unit and PostgreSQL integration suites pass at the exact PR head.
+- [x] Full unit and PostgreSQL integration suites pass at the exact PR head.
