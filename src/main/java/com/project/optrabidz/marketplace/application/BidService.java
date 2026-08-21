@@ -44,8 +44,8 @@ import com.project.optrabidz.marketplace.domain.model.FundingListing;
 import com.project.optrabidz.marketplace.domain.repository.AgreementRepository;
 import com.project.optrabidz.marketplace.domain.repository.BidRepository;
 import com.project.optrabidz.marketplace.domain.repository.FundingListingRepository;
-import com.project.optrabidz.participation.application.exception.InvalidRoleException;
-import com.project.optrabidz.participation.application.exception.ParticipationNotFoundException;
+import com.project.optrabidz.participation.application.exception.InvestorNotFoundException;
+import com.project.optrabidz.participation.application.exception.StartupNotFoundException;
 import com.project.optrabidz.participation.domain.model.Investor;
 import com.project.optrabidz.participation.domain.model.Startup;
 import com.project.optrabidz.participation.domain.repository.InvestorRepository;
@@ -344,27 +344,27 @@ public class BidService {
 
     private Startup getStartupByAccount(Long accountId) {
         return startupRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Startup not found for this account"));
+                .orElseThrow(() -> new StartupNotFoundException(accountId));
     }
 
     private Startup getStartupById(Long startupId) {
         return startupRepository.findById(startupId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Startup not found"));
+                .orElseThrow(() -> new StartupNotFoundException("startup", startupId));
     }
 
     private Investor getInvestorByAccount(Long accountId) {
         return investorRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Investor not found for this account"));
+                .orElseThrow(() -> new InvestorNotFoundException(accountId));
     }
 
     private Investor getInvestorById(Long investorId) {
         return investorRepository.findById(investorId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Investor not found"));
+                .orElseThrow(() -> new InvestorNotFoundException("investor", investorId));
     }
 
     private void ensureRole(RoleType actualRole, RoleType expectedRole) {
         if (actualRole != expectedRole) {
-            throw new InvalidRoleException("Role is not allowed to perform this operation");
+            throw new MarketplaceAccessException("Role is not allowed to perform this operation");
         }
     }
 

@@ -6,7 +6,9 @@ import com.project.optrabidz.common.event.EventPublisher;
 import com.project.optrabidz.identity.application.command.CreateAccountCommand;
 import com.project.optrabidz.identity.application.command.DeactivateAccountCommand;
 import com.project.optrabidz.identity.application.command.UpdateProfileStatusCommand;
-import com.project.optrabidz.identity.application.exception.InvalidAccountStateException;
+import com.project.optrabidz.identity.application.exception.AccountNotFoundException;
+import com.project.optrabidz.identity.application.exception.AccountStateConflictException;
+import com.project.optrabidz.identity.application.exception.ProfileStateConflictException;
 import com.project.optrabidz.identity.application.port.IdentityCommandPort;
 import com.project.optrabidz.identity.domain.model.Account;
 import com.project.optrabidz.identity.domain.model.Profile;
@@ -107,10 +109,7 @@ public class AccountApplicationService implements IdentityCommandPort {
         try {
             account.getProfile().markComplete();
         } catch (IllegalStateException exception) {
-            throw new InvalidAccountStateException(
-                    "Unable to complete profile for account " + accountId + ": " + exception.getMessage(),
-                    exception
-            );
+            throw new ProfileStateConflictException(accountId, "complete", exception);
         }
 
         return accountRepository.save(account);
@@ -122,10 +121,7 @@ public class AccountApplicationService implements IdentityCommandPort {
         try {
             mutation.apply(account);
         } catch (IllegalStateException exception) {
-            throw new InvalidAccountStateException(
-                    "Unable to " + action + " account " + accountId + ": " + exception.getMessage(),
-                    exception
-            );
+            throw new AccountStateConflictException(accountId, action, exception);
         }
 
         return accountRepository.save(account);
@@ -134,7 +130,7 @@ public class AccountApplicationService implements IdentityCommandPort {
     private Account requireAccount(Long accountId) {
         Assert.notNull(accountId, "accountId must not be null");
         return accountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found: " + accountId));
+                .orElseThrow(() -> new AccountNotFoundException(accountId));
     }
 
     @FunctionalInterface

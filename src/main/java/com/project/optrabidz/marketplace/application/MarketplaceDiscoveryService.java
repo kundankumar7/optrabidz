@@ -4,13 +4,13 @@ import com.project.optrabidz.common.api.pagination.PageResponse;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.marketplace.application.dto.response.ListingResponse;
 import com.project.optrabidz.marketplace.application.dto.response.RecommendedListingResponse;
+import com.project.optrabidz.marketplace.application.exception.MarketplaceAccessException;
 import com.project.optrabidz.marketplace.application.recommendation.MarketplaceRecommendationPipeline;
 import com.project.optrabidz.marketplace.application.recommendation.RecommendationCandidate;
 import com.project.optrabidz.marketplace.application.recommendation.RecommendationRequest;
 import com.project.optrabidz.marketplace.domain.model.FundingModel;
 import com.project.optrabidz.marketplace.domain.model.ListingSortMode;
 import com.project.optrabidz.marketplace.domain.repository.FundingListingRepository;
-import com.project.optrabidz.participation.application.exception.InvalidRoleException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -74,7 +74,7 @@ public class MarketplaceDiscoveryService {
                                                                            int page,
                                                                            int size) {
         if (roleType != RoleType.INVESTOR) {
-            throw new InvalidRoleException("Role is not allowed to perform this operation");
+            throw new MarketplaceAccessException("Role is not allowed to perform this operation");
         }
 
         RecommendationRequest request = new RecommendationRequest(

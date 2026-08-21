@@ -1,14 +1,18 @@
 package com.project.optrabidz.security.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.Map;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -23,6 +27,9 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
     private static final String INITIAL_PASSWORD = "Password01";
     private static final String CHANGED_PASSWORD = "Changed01";
     private static final String REQUEST_ID = "security-request-123";
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     void registerLoginAndMeUseStatefulSessionWithCsrfCookie() throws Exception {
@@ -165,8 +172,11 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
 
         loginAttempt(email, INITIAL_PASSWORD)
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("INVALID_CREDENTIALS"));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
+                .andExpect(jsonPath("$.detail").value("Invalid email or password"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
 
         loginAttempt(email, CHANGED_PASSWORD)
                 .andExpect(status().isOk())
@@ -176,11 +186,106 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
 
     @Test
     void selfRegistrationRejectsAdminRole() throws Exception {
-        register(uniqueEmail("admin-denied"), INITIAL_PASSWORD, RoleType.ADMIN)
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.error.message").value("Only STARTUP or INVESTOR accounts can self-register"));
+        expectApplicationProblem(
+                register(uniqueEmail("admin-denied"), INITIAL_PASSWORD, RoleType.ADMIN),
+                422,
+                "SELF_REGISTRATION_NOT_ALLOWED",
+                "Business rule violation",
+                "Only startup or investor accounts can self-register"
+        );
+    }
+
+    @Test
+    void loginRejectionsShareOneDisclosureSafeProblemContract() throws Exception {
+        String unknownEmail = uniqueEmail("unknown-login");
+        String wrongPasswordEmail = registeredEmail("wrong-secret");
+        String lockedEmail = registeredEmail("locked-login");
+        String disabledEmail = registeredEmail("disabled-login");
+        String suspendedEmail = registeredEmail("suspended-login");
+        String deactivatedEmail = registeredEmail("deactivated-login");
+
+        jdbcTemplate.update(
+                "update credential set credential_status = 'LOCKED' where email = ?",
+                lockedEmail);
+        jdbcTemplate.update(
+                "update credential set credential_status = 'DISABLED' where email = ?",
+                disabledEmail);
+        jdbcTemplate.update("""
+                update account
+                set account_state = 'SUSPENDED'
+                where account_id = (select account_id from credential where email = ?)
+                """, suspendedEmail);
+        jdbcTemplate.update("""
+                update account
+                set account_state = 'DEACTIVATED', deactivated_at = now()
+                where account_id = (select account_id from credential where email = ?)
+                """, deactivatedEmail);
+
+        List<MvcResult> results = List.of(
+                rejectedLogin(unknownEmail, INITIAL_PASSWORD),
+                rejectedLogin(wrongPasswordEmail, "WrongPassword01"),
+                rejectedLogin(lockedEmail, INITIAL_PASSWORD),
+                rejectedLogin(disabledEmail, INITIAL_PASSWORD),
+                rejectedLogin(suspendedEmail, INITIAL_PASSWORD),
+                rejectedLogin(deactivatedEmail, INITIAL_PASSWORD)
+        );
+
+        JsonNode expected = normalizeProblem(results.getFirst());
+        for (MvcResult result : results) {
+            assertThat(normalizeProblem(result)).isEqualTo(expected);
+            assertThat(result.getResponse().getContentAsString())
+                    .doesNotContain(unknownEmail)
+                    .doesNotContain(wrongPasswordEmail)
+                    .doesNotContain(lockedEmail)
+                    .doesNotContain(disabledEmail)
+                    .doesNotContain(suspendedEmail)
+                    .doesNotContain(deactivatedEmail)
+                    .doesNotContain("UNKNOWN_IDENTITY")
+                    .doesNotContain("INVALID_SECRET")
+                    .doesNotContain("CREDENTIAL_LOCKED")
+                    .doesNotContain("CREDENTIAL_DISABLED")
+                    .doesNotContain("ACCOUNT_RESTRICTED")
+                    .doesNotContain("CredentialStatus")
+                    .doesNotContain("InvalidCredentialsException");
+        }
+    }
+
+    @Test
+    void registrationAndPasswordFailuresUseModuleProblemContracts() throws Exception {
+        String email = registeredEmail("security-contracts");
+
+        expectApplicationProblem(
+                register(email, INITIAL_PASSWORD, RoleType.STARTUP),
+                409,
+                "EMAIL_ALREADY_REGISTERED",
+                "Request conflict",
+                "Email is already registered"
+        );
+        expectApplicationProblem(
+                register(uniqueEmail("weak-password"), "onlyletters", RoleType.STARTUP),
+                400,
+                "PASSWORD_POLICY_VIOLATION",
+                "Request validation failed",
+                "Password must contain at least one letter and one digit"
+        );
+
+        AuthenticatedClient client = login(email, INITIAL_PASSWORD);
+        expectApplicationProblem(
+                mockMvc.perform(post("/api/v1/auth/change-password")
+                        .session(client.session())
+                        .cookie(client.xsrfCookie())
+                        .header("X-CSRF-TOKEN", client.csrfToken())
+                        .header("X-Request-Id", REQUEST_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "currentPassword", "WrongPassword01",
+                                "newPassword", CHANGED_PASSWORD
+                        )))),
+                401,
+                "CURRENT_PASSWORD_INVALID",
+                "Authentication required",
+                "Current password is incorrect"
+        );
     }
 
     @Test
@@ -260,5 +365,54 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.violations").doesNotExist())
                 .andExpect(jsonPath("$.success").doesNotExist())
                 .andExpect(jsonPath("$.error").doesNotExist());
+    }
+
+    private ResultActions expectApplicationProblem(
+            ResultActions result,
+            int expectedStatus,
+            String code,
+            String title,
+            String detail
+    ) throws Exception {
+        return result
+                .andExpect(status().is(expectedStatus))
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value(
+                        "urn:optrabidz:problem:" + code.toLowerCase().replace('_', '-')))
+                .andExpect(jsonPath("$.title").value(title))
+                .andExpect(jsonPath("$.status").value(expectedStatus))
+                .andExpect(jsonPath("$.detail").value(detail))
+                .andExpect(jsonPath("$.code").value(code))
+                .andExpect(jsonPath("$.requestId").isString())
+                .andExpect(jsonPath("$.timestamp").isString())
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
+    }
+
+    private String registeredEmail(String prefix) throws Exception {
+        String email = uniqueEmail(prefix);
+        register(email, INITIAL_PASSWORD, RoleType.STARTUP)
+                .andExpect(status().isCreated());
+        return email;
+    }
+
+    private MvcResult rejectedLogin(String email, String password) throws Exception {
+        return expectApplicationProblem(
+                mockMvc.perform(post("/api/v1/auth/login")
+                        .header("X-Request-Id", REQUEST_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("email", email, "password", password)))),
+                401,
+                "INVALID_CREDENTIALS",
+                "Authentication required",
+                "Invalid email or password"
+        ).andReturn();
+    }
+
+    private JsonNode normalizeProblem(MvcResult result) throws Exception {
+        ObjectNode body = (ObjectNode) objectMapper.readTree(
+                result.getResponse().getContentAsByteArray());
+        body.remove(List.of("requestId", "timestamp", "instance"));
+        return body;
     }
 }

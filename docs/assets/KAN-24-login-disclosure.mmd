@@ -1,0 +1,7 @@
+flowchart TD
+    Request["Login request"] --> Cause{"Protected cause"}
+    Cause -->|"Unknown identity"| Public["401 INVALID_CREDENTIALS"]
+    Cause -->|"Wrong password"| Public
+    Cause -->|"Locked or disabled"| Public
+    Cause -->|"Restricted account"| Public
+    Cause --> Audit["Stable protected audit reason"]

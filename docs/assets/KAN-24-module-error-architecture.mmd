@@ -1,0 +1,6 @@
+flowchart TD
+    Controller["Controller"] --> Service["Module application service"]
+    Service --> Exception["Typed module exception"]
+    Exception --> Neutral["ApplicationException and ErrorDescriptor"]
+    Neutral --> Handler["RestExceptionHandler"]
+    Handler --> Response["RFC 9457 Problem Details"]

@@ -11,10 +11,13 @@ import java.util.Map;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class ParticipationApiIT extends ApiIntegrationTestSupport {
+
+    private static final String REQUEST_ID = "participation-request-123";
 
     @Test
     void startupCanCreateIncompleteProfileThenUpdateToCompleteProfile() throws Exception {
@@ -123,23 +126,66 @@ class ParticipationApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie())
                         .header("X-CSRF-TOKEN", startup.csrfToken())
+                        .header("X-Request-Id", REQUEST_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(investorRequest("Invalid Investor", "Invalid Investor LLP"))))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("Role is not allowed to perform this operation"));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("AUTHORIZATION_FAILED"))
+                .andExpect(jsonPath("$.detail").value("You are not authorized to perform this action"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
 
         mockMvc.perform(post("/api/v1/startups")
                         .session(investor.session())
                         .cookie(investor.xsrfCookie())
                         .header("X-CSRF-TOKEN", investor.csrfToken())
+                        .header("X-Request-Id", REQUEST_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(completeStartupRequest("Invalid Startup Private Limited", "Invalid Startup"))))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("Role is not allowed to perform this operation"));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("AUTHORIZATION_FAILED"))
+                .andExpect(jsonPath("$.detail").value("You are not authorized to perform this action"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
+    }
+
+    @Test
+    void duplicateAndMissingProfilesUseModuleSpecificProblemContracts() throws Exception {
+        AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
+        AuthenticatedClient investor = registerAndLogin(RoleType.INVESTOR);
+
+        expectApplicationProblem(
+                mockMvc.perform(get("/api/v1/investors/me")
+                        .session(investor.session())
+                        .cookie(investor.xsrfCookie())
+                        .header("X-Request-Id", REQUEST_ID)),
+                404,
+                "INVESTOR_NOT_FOUND",
+                "The requested investor profile was not found"
+        );
+
+        mockMvc.perform(post("/api/v1/startups")
+                        .session(startup.session())
+                        .cookie(startup.xsrfCookie())
+                        .header("X-CSRF-TOKEN", startup.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(incompleteStartupRequest())))
+                .andExpect(status().isOk());
+
+        expectApplicationProblem(
+                mockMvc.perform(post("/api/v1/startups")
+                        .session(startup.session())
+                        .cookie(startup.xsrfCookie())
+                        .header("X-CSRF-TOKEN", startup.csrfToken())
+                        .header("X-Request-Id", REQUEST_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(incompleteStartupRequest()))),
+                409,
+                "STARTUP_ALREADY_EXISTS",
+                "A startup profile already exists"
+        );
     }
 
     @Test
@@ -188,5 +234,22 @@ class ParticipationApiIT extends ApiIntegrationTestSupport {
                 "legalEntityName", legalEntityName,
                 "webPresences", List.of("https://investor.example.com")
         );
+    }
+
+    private void expectApplicationProblem(
+            org.springframework.test.web.servlet.ResultActions result,
+            int expectedStatus,
+            String code,
+            String detail
+    ) throws Exception {
+        result.andExpect(status().is(expectedStatus))
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(expectedStatus))
+                .andExpect(jsonPath("$.code").value(code))
+                .andExpect(jsonPath("$.detail").value(detail))
+                .andExpect(jsonPath("$.requestId").isString())
+                .andExpect(jsonPath("$.timestamp").isString())
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
     }
 }

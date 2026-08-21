@@ -43,9 +43,15 @@ class SecurityAuditIT extends ApiIntegrationTestSupport {
 
         assertThat(audit.get("outcome")).isEqualTo("FAILED");
         assertThat(audit.get("object_id").toString()).contains("@example.com");
-        assertThat(audit.get("details").toString()).contains("Invalid credentials");
-        assertThat(audit.get("details").toString()).doesNotContain("WrongPassword01");
-        assertThat(audit.get("details").toString()).doesNotContain(email);
+        assertThat(audit.get("details").toString())
+                .contains("INVALID_SECRET")
+                .doesNotContain("UNKNOWN_IDENTITY")
+                .doesNotContain("CREDENTIAL_LOCKED")
+                .doesNotContain("CREDENTIAL_DISABLED")
+                .doesNotContain("ACCOUNT_RESTRICTED")
+                .doesNotContain("WrongPassword01")
+                .doesNotContain("BadCredentialsException")
+                .doesNotContain(email);
     }
 
     @Test

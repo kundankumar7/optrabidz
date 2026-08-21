@@ -1,8 +1,8 @@
 package com.project.optrabidz.participation.application;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
-import com.project.optrabidz.participation.application.exception.ParticipationAlreadyExistsException;
+import com.project.optrabidz.participation.application.exception.ActiveAdminAlreadyExistsException;
+import com.project.optrabidz.participation.application.exception.ActiveAdminNotFoundException;
+import com.project.optrabidz.participation.application.exception.AdminAuthorityAlreadyGrantedException;
 import com.project.optrabidz.participation.application.port.AdminAuthorityQueryPort;
 import com.project.optrabidz.participation.application.port.AdminProvisioningPort;
 import com.project.optrabidz.participation.domain.model.Admin;
@@ -27,11 +27,11 @@ public class AdminService implements AdminProvisioningPort, AdminAuthorityQueryP
         Assert.notNull(accountId, "accountId must not be null");
 
         if (adminRepository.existsActiveAdmin()) {
-            throw new ParticipationAlreadyExistsException("An active admin already exists");
+            throw new ActiveAdminAlreadyExistsException();
         }
 
         if (adminRepository.existsByAccountId(accountId)) {
-            throw new ParticipationAlreadyExistsException("Admin record already exists for this account");
+            throw new AdminAuthorityAlreadyGrantedException(accountId);
         }
 
         return adminRepository.save(Admin.grant(accountId, publicDisplayName, organizationLabel));
@@ -41,10 +41,7 @@ public class AdminService implements AdminProvisioningPort, AdminAuthorityQueryP
     @Transactional
     public Admin revokeActiveAdmin(Long revokedByAccountId, String reason) {
         Admin activeAdmin = adminRepository.findActiveAdmin()
-                .orElseThrow(() -> new ApiException(
-                        ErrorCode.RESOURCE_NOT_FOUND,
-                        "No active admin exists to revoke"
-                ));
+                .orElseThrow(ActiveAdminNotFoundException::new);
 
         activeAdmin.revoke(revokedByAccountId, reason);
         return adminRepository.save(activeAdmin);
