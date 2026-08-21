@@ -1,6 +1,6 @@
 # KAN-24: Module Error Migration Implementation Plan
 
-**Status:** Implementation verified locally; pull request pending
+**Status:** Draft pull request #21 open; CI and review pending
 
 **Goal:** Migrate expected identity, security, and participation failures to
 the transport-neutral `ApplicationException` contract while preserving every
@@ -793,10 +793,12 @@ evidence, a clean exact diff, and a reviewable KAN-24 feature branch.
   git commit -m "test: enforce migrated error boundaries (KAN-24)"
   ```
 
-- [ ] Push the single feature branch and open one pull request targeting
+- [x] Push the single feature branch and open one pull request targeting
   `develop`. The pull request description lists the identity, security, and
   participation commits separately and includes exact test evidence. Do not
   merge it as part of this task.
+
+  Pull request: [#21](https://github.com/kundankumar7/optrabidz/pull/21)
 
 ## Local verification evidence
 
@@ -816,8 +818,8 @@ Verified on 2026-08-21 at implementation commit
   security, and participation implementation/tests; the security audit test;
   the architecture rule/store; and 5 required financial/marketplace consumer
   updates for the removed generic participation exceptions.
-- Pull-request-head verification remains pending until the documentation-only
-  evidence commit is pushed and CI runs on the exact remote head.
+- Pull-request-head verification is tracked on PR #21 and remains unchecked
+  here until both required CI jobs pass on the exact remote head.
 
 ## Completion checklist
 
