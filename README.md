@@ -37,6 +37,9 @@ Then open Swagger UI:
 http://localhost:8080/swagger-ui/index.html
 ```
 
+Repository guidance and engineering decision records are organized in the
+[documentation portal](docs/README.md).
+
 ## Project Purpose
 
 Startups often need flexible funding options, but comparing offers from
@@ -143,11 +146,11 @@ while still making the domain boundaries visible.
 | Event layer | Outbox events used by audit and notification processors |
 | Integration adapters | Local/sandbox payment strategies and sandbox notification channels |
 
-<a href="docs/assets/optrabidz-architecture-overview.svg">
-  <img src="docs/assets/optrabidz-architecture-overview.svg?v=20260531-1040" alt="OptraBidz architecture diagram">
+<a href="docs/architecture/assets/optrabidz-architecture-overview.svg">
+  <img src="docs/architecture/assets/optrabidz-architecture-overview.svg?v=20260531-1040" alt="OptraBidz architecture diagram">
 </a>
 
-Editable diagram source: [`docs/architecture.mmd`](docs/architecture.mmd).
+Editable diagram source: [`docs/architecture/overview.mmd`](docs/architecture/overview.mmd).
 
 ## API Reference
 
