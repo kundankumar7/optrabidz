@@ -29,6 +29,7 @@ the work items that introduced it.
 | [KAN-21](https://0707manna0895.atlassian.net/browse/KAN-21) | RFC 9457 REST adapter | [Implementation plan](error-handling/work-items/KAN-21-rest-adapter/implementation-plan.md) |
 | [KAN-22](https://0707manna0895.atlassian.net/browse/KAN-22) | MVC Problem Details adapter | [Implementation plan](error-handling/work-items/KAN-22-mvc-adapter/implementation-plan.md) |
 | [KAN-23](https://0707manna0895.atlassian.net/browse/KAN-23) | Spring Security Problem Details adapter | [Implementation plan](error-handling/work-items/KAN-23-security-adapter/implementation-plan.md) |
+| [KAN-24](https://0707manna0895.atlassian.net/browse/KAN-24) | Module error migration | [Design and implementation plan](error-handling/work-items/KAN-24-module-migration/) |
 | [KAN-25](https://0707manna0895.atlassian.net/browse/KAN-25) | Documentation information architecture | [Design and implementation plan](architecture/work-items/KAN-25-documentation-information-architecture/) |
 
 Additional work-item records are added here as their existing files move into

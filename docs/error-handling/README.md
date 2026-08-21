@@ -16,7 +16,7 @@ Expected application failures use a transport-neutral core:
 
 Identity, security, and participation use the neutral contract. The current
 module catalogue and login-disclosure policy are documented in the
-[KAN-24 module migration design](../design/KAN-24-module-error-migration-design.md).
+[KAN-24 module migration design](work-items/KAN-24-module-migration/design.md).
 
 ## Work-item History
 
@@ -27,4 +27,4 @@ module catalogue and login-disclosure policy are documented in the
 | [KAN-21](https://0707manna0895.atlassian.net/browse/KAN-21) | [RFC 9457 REST adapter implementation](work-items/KAN-21-rest-adapter/implementation-plan.md) |
 | [KAN-22](https://0707manna0895.atlassian.net/browse/KAN-22) | [MVC Problem Details implementation](work-items/KAN-22-mvc-adapter/implementation-plan.md) |
 | [KAN-23](https://0707manna0895.atlassian.net/browse/KAN-23) | [Spring Security Problem Details implementation](work-items/KAN-23-security-adapter/implementation-plan.md) |
-| [KAN-24](https://0707manna0895.atlassian.net/browse/KAN-24) | [Module error migration design](../design/KAN-24-module-error-migration-design.md) |
+| [KAN-24](https://0707manna0895.atlassian.net/browse/KAN-24) | [Module error migration design](work-items/KAN-24-module-migration/design.md) and [implementation plan](work-items/KAN-24-module-migration/implementation-plan.md) |

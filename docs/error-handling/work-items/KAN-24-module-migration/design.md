@@ -45,9 +45,9 @@ Each module owns its public descriptors and typed exceptions. The neutral
 contract remains in `common.error`, and the existing REST adapter remains the
 only HTTP translation boundary.
 
-![Module error translation architecture](../assets/KAN-24-module-error-architecture.png)
+![Module error translation architecture](assets/architecture.png)
 
-Editable source: [KAN-24-module-error-architecture.mmd](../assets/KAN-24-module-error-architecture.mmd)
+Editable source: [architecture.mmd](assets/architecture.mmd)
 
 The rejected alternatives are:
 
@@ -128,9 +128,9 @@ suspended or deactivated account all produce the exact same public response:
 - detail `Invalid email or password`;
 - no cause-specific property or message.
 
-![Login disclosure and audit flow](../assets/KAN-24-login-disclosure.png)
+![Login disclosure and audit flow](assets/login-flow.png)
 
-Editable source: [KAN-24-login-disclosure.mmd](../assets/KAN-24-login-disclosure.mmd)
+Editable source: [login-flow.mmd](assets/login-flow.mmd)
 
 Protected diagnostics and audits may distinguish stable reasons such as
 `UNKNOWN_IDENTITY`, `INVALID_SECRET`, `CREDENTIAL_LOCKED`,
