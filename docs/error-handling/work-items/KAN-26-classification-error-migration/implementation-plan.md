@@ -1,6 +1,6 @@
 # KAN-26: Classification Error Migration Implementation Plan
 
-**Status:** Verification complete; pull request pending
+**Status:** Draft pull request open for review
 
 **Goal:** Migrate expected classification failures to the neutral
 `ApplicationException` contract while preserving successful startup and
@@ -556,7 +556,7 @@ git add -- src/test/java/com/project/optrabidz/architecture/ExceptionArchitectur
 git commit -m "test: verify classification error migration (KAN-26)"
 ```
 
-- [ ] **Step 7: Push the review branch and open the pull request**
+- [x] **Step 7: Push the review branch and open the pull request**
 
 ```powershell
 git push -u origin feature/KAN-26-classification-error-migration
@@ -592,4 +592,5 @@ pass.
   `.github/workflows`): empty.
 - Flyway V1 blob: `8784c468aa169952a87e726303d03abae4376add`, identical
   to `origin/develop`.
-- Pull request: pending creation after this evidence commit.
+- Pull request: [#23](https://github.com/kundankumar7/optrabidz/pull/23),
+  targeting `develop` from `feature/KAN-26-classification-error-migration`.
