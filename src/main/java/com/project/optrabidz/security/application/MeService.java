@@ -1,7 +1,5 @@
 package com.project.optrabidz.security.application;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.identity.application.port.IdentityQueryPort;
 import com.project.optrabidz.identity.application.query.AccountSnapshot;
 import com.project.optrabidz.identity.domain.model.RoleType;
@@ -32,9 +30,8 @@ public class MeService {
     @Transactional(readOnly = true)
     public MeResponse getCurrentUser(AuthenticatedUserPrincipal principal) {
         AccountSnapshot account = identityQueryPort.findAccountById(principal.getAccountId())
-                .orElseThrow(() -> new ApiException(
-                        ErrorCode.RESOURCE_NOT_FOUND,
-                        "Authenticated account was not found"
+                .orElseThrow(() -> new IllegalStateException(
+                        "Authenticated session references a missing account"
                 ));
 
         RoleType role = account.roleType();

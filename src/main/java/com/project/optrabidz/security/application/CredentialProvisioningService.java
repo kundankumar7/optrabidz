@@ -1,9 +1,9 @@
 package com.project.optrabidz.security.application;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.security.application.command.ProvisionCredentialCommand;
-import com.project.optrabidz.security.application.exception.EmailAlreadyExistsException;
+import com.project.optrabidz.security.application.exception.CredentialNotFoundException;
+import com.project.optrabidz.security.application.exception.EmailAlreadyRegisteredException;
+import com.project.optrabidz.security.application.exception.PasswordPolicyViolationException;
 import com.project.optrabidz.security.application.port.SecurityCredentialProvisioningPort;
 import com.project.optrabidz.security.domain.model.Credential;
 import com.project.optrabidz.security.domain.repository.CredentialRepository;
@@ -35,7 +35,7 @@ public class CredentialProvisioningService implements SecurityCredentialProvisio
         validatePasswordPolicy(command.rawPassword());
 
         if (credentialRepository.existsByEmail(email)) {
-            throw new EmailAlreadyExistsException("Email is already registered");
+            throw new EmailAlreadyRegisteredException(email);
         }
 
         credentialRepository.save(Credential.register(
@@ -51,10 +51,7 @@ public class CredentialProvisioningService implements SecurityCredentialProvisio
         Assert.notNull(accountId, "accountId must not be null");
 
         Credential credential = credentialRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ApiException(
-                        ErrorCode.RESOURCE_NOT_FOUND,
-                        "Credential not found for account"
-                ));
+                .orElseThrow(() -> new CredentialNotFoundException(accountId));
 
         credential.disable();
         credentialRepository.save(credential);
@@ -67,10 +64,7 @@ public class CredentialProvisioningService implements SecurityCredentialProvisio
         boolean hasDigit = password.chars().anyMatch(Character::isDigit);
 
         if (!hasLetter || !hasDigit) {
-            throw new ApiException(
-                    ErrorCode.VALIDATION_ERROR,
-                    "Password must contain at least one letter and one digit"
-            );
+            throw new PasswordPolicyViolationException();
         }
     }
 
