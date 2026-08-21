@@ -5,7 +5,7 @@ Problem Details response at the HTTP boundary without changing legacy exception
 responses.
 
 **Source:** KAN-21 and
-`docs/design/KAN-17-exception-handling-foundation-design.md`, sections 6.2, 7,
+`docs/error-handling/work-items/KAN-17-foundation/design.md`, sections 6.2, 7,
 8, 11, 13, and 14.
 
 **Architecture:** `HttpErrorMapping` owns the exhaustive neutral-category to
@@ -53,7 +53,7 @@ JUnit 5, AssertJ, MockMvc, ArchUnit, Testcontainers, and PostgreSQL 16.
 | `src/test/java/com/project/optrabidz/common/api/error/HttpErrorMappingTest.java` | Parameterized mapping completeness and null-contract tests. |
 | `src/test/java/com/project/optrabidz/common/api/error/ProblemDetailsFactoryTest.java` | Exact body, correlation, timestamp, type URI, and disclosure tests. |
 | `src/test/java/com/project/optrabidz/common/api/error/RestExceptionHandlerTest.java` | MockMvc serialization, content type, request ID, advice precedence, and legacy-coexistence tests. |
-| `docs/design/KAN-21-rfc9457-rest-error-adapter-implementation-plan.md` | Approved scope, execution checklist, and verification evidence. |
+| `docs/error-handling/work-items/KAN-21-rest-adapter/implementation-plan.md` | Approved scope, execution checklist, and verification evidence. |
 
 ---
 

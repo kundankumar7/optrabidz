@@ -32,7 +32,7 @@ Maven Wrapper, JUnit 5, Testcontainers, GitHub Actions with Temurin Java 21.
 **Files:**
 
 - Create: `docs/database/migrations.md`
-- Reference: `docs/design/KAN-12-migration-policy-design.md`
+- Reference: `docs/database/work-items/KAN-12-migration-policy/design.md`
 - Must not modify: `src/main/resources/db/migration/V1__baseline.sql`
 
 **Produces:** The canonical migration guide consumed by Task 2.

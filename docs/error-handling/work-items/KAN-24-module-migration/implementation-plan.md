@@ -8,14 +8,14 @@ successful workflow and preventing protected diagnostic data from entering
 RFC 9457 responses.
 
 **Source:** [KAN-24](https://0707manna0895.atlassian.net/browse/KAN-24) and
-`docs/design/KAN-24-module-error-migration-design.md`.
+`docs/error-handling/work-items/KAN-24-module-migration/design.md`.
 
 **Architecture:** Each module owns fixed `ErrorDescriptor` catalogues and typed
 application exceptions. Application services translate expected business
 failures into those types. `RestExceptionHandler` remains the single HTTP
 translation boundary and uses only the descriptor allowlist.
 
-![Module error translation architecture](../assets/KAN-24-module-error-architecture.png)
+![Module error translation architecture](assets/architecture.png)
 
 **Tech stack:** Java 21, Spring Boot 3.3.2, Spring Security 6.3, Spring MVC
 `ProblemDetail`, JUnit 5, AssertJ, Mockito, MockMvc, ArchUnit, Testcontainers,
@@ -126,7 +126,7 @@ module-specific callers and tests are green.
 | Path | Responsibility |
 |---|---|
 | `src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java` | Prohibits legacy HTTP-coupled exceptions in the migrated modules. |
-| `docs/design/KAN-24-module-error-migration-implementation-plan.md` | Tracks implementation and verification evidence. |
+| `docs/error-handling/work-items/KAN-24-module-migration/implementation-plan.md` | Tracks implementation and verification evidence. |
 
 ---
 

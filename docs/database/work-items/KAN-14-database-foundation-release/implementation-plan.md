@@ -18,7 +18,7 @@ Flyway, Hibernate validation, JUnit 5.
 
 - Repository: `kundankumar7/optrabidz`.
 - Release design:
-  `docs/design/KAN-14-database-foundation-release-design.md`.
+  `docs/database/work-items/KAN-14-database-foundation-release/design.md`.
 - Release documentation branch:
   `release/KAN-14-database-foundation`.
 - Old `main` revision:
