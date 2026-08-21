@@ -18,10 +18,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -148,6 +152,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
 
     @Test
     void publishingRequiresStartupClassificationWhenGovernanceRequiresIt() throws Exception {
+        String requestId = "kan-27-marketplace-governance";
         AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
         createCompleteStartupProfile(startup, "Unclassified Startup");
 
@@ -166,12 +171,27 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie())
                         .header("X-CSRF-TOKEN", startup.csrfToken())
+                        .header("X-Request-Id", requestId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("Startup is not eligible to publish listings"));
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(header().string("X-Request-Id", requestId))
+                .andExpect(jsonPath("$.type").value(
+                        "urn:optrabidz:problem:governance-action-not-eligible"))
+                .andExpect(jsonPath("$.title").value("Business rule violation"))
+                .andExpect(jsonPath("$.status").value(422))
+                .andExpect(jsonPath("$.detail").value(
+                        "The requested action does not satisfy governance eligibility rules"))
+                .andExpect(jsonPath("$.instance").value(
+                        "urn:optrabidz:request:" + requestId))
+                .andExpect(jsonPath("$.code").value("GOVERNANCE_ACTION_NOT_ELIGIBLE"))
+                .andExpect(jsonPath("$.requestId").value(requestId))
+                .andExpect(jsonPath("$.timestamp").isString())
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(content().string(not(containsString(
+                        "Startup is not eligible to publish listings"))));
     }
 
     @Test
