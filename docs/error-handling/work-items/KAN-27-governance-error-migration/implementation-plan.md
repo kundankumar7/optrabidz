@@ -79,6 +79,7 @@ unapproved path, or Jira does not show the expected starting status.
 | `src/test/java/com/project/optrabidz/governance/api/AdminRecoveryApiIT.java` | Verifies real Spring MVC Problem Details against the PostgreSQL test context. |
 | `src/test/java/com/project/optrabidz/marketplace/api/MarketplaceApiIT.java` | Migrates the existing eligibility-denial API assertion. |
 | `src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java` | Adds governance to the legacy-dependency prohibition. |
+| `src/test/resources/archunit-store/5c2f7ae8-7609-459a-8ad7-49f65df73f4f` | Removes only the resolved frozen violations owned by the migrated governance exception. |
 | `docs/error-handling/README.md` | Adds KAN-27 to the error-handling history after implementation. |
 | `docs/error-handling/work-items/KAN-27-governance-error-migration/implementation-plan.md` | Records executed checks and review evidence. |
 
@@ -101,7 +102,7 @@ unapproved path, or Jira does not show the expected starting status.
 - Consumes: existing `ErrorDescriptor`, `ErrorCategory`,
   `ApplicationException`, `GovernanceDecision`, and `GovernanceRuleCode`.
 
-- [ ] **Step 1: Write the failing contract tests**
+- [x] **Step 1: Write the failing contract tests**
 
 Create `GovernanceErrorContractTest` with exact descriptor assertions and a
 parameterized mapping table. The table must contain every rule except
@@ -160,7 +161,7 @@ assertThat(failure.descriptor().publicMessage())
 Test each descriptor against the exact code, category, and public detail from
 the approved design.
 
-- [ ] **Step 2: Run the focused test and preserve RED evidence**
+- [x] **Step 2: Run the focused test and preserve RED evidence**
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=GovernanceErrorContractTest" test
@@ -169,7 +170,7 @@ the approved design.
 Expected RED: `GovernanceErrors` does not exist and the legacy
 `GovernanceException` is not an `ApplicationException`.
 
-- [ ] **Step 3: Implement `GovernanceErrors`**
+- [x] **Step 3: Implement `GovernanceErrors`**
 
 Create five `public static final ErrorDescriptor` constants with the exact
 approved values. Implement an exhaustive switch:
@@ -197,7 +198,7 @@ public static ErrorDescriptor forRule(GovernanceRuleCode ruleCode) {
 The descriptor declarations must use the design's exact public strings and
 categories; do not import HTTP or Spring types.
 
-- [ ] **Step 4: Migrate `GovernanceException` in place**
+- [x] **Step 4: Migrate `GovernanceException` in place**
 
 Replace the legacy superclass and remove the unused string constructor:
 
@@ -225,7 +226,7 @@ public final class GovernanceException extends ApplicationException {
 
 Do not copy `GovernanceViolation` values into public `ErrorDetail` entries.
 
-- [ ] **Step 5: Run the focused tests and verify GREEN**
+- [x] **Step 5: Run the focused tests and verify GREEN**
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=GovernanceErrorContractTest" test
@@ -234,7 +235,7 @@ Do not copy `GovernanceViolation` values into public `ErrorDetail` entries.
 Expected GREEN: all descriptor, mapping, allowed-decision, and protected-data
 assertions pass.
 
-- [ ] **Step 6: Commit the contract slice**
+- [x] **Step 6: Commit the contract slice**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/governance/application/error `
@@ -264,7 +265,7 @@ git commit -m "feat: add governance error contract (KAN-27)"
 - Consumes: `GovernanceErrors.ADMIN_RECOVERY_ACCESS_DENIED` and
   `GovernanceErrors.ADMIN_AUTHORITY_UNAVAILABLE`.
 
-- [ ] **Step 1: Write failing authority-guard tests**
+- [x] **Step 1: Write failing authority-guard tests**
 
 Use a mocked `AdminAuthorityQueryPort`. Cover these exact branches:
 
@@ -286,7 +287,7 @@ assertThatCode(() -> guard.assertRecoveryTransferAllowed(true))
 For `assertActiveAdmin`, verify false produces a `GovernanceException` mapped
 to `GOVERNANCE_ACTION_NOT_PERMITTED`, while true returns normally.
 
-- [ ] **Step 2: Write failing recovery-controller tests**
+- [x] **Step 2: Write failing recovery-controller tests**
 
 Construct the controller with mocked `AdminAuthorityTransferService` and a real
 mutable `AdminBootstrapProperties`. Call `transferAdminAuthority` directly with
@@ -307,7 +308,7 @@ For every rejected case, assert the descriptor is the same
 selected, and `verifyNoInteractions(transferService)` succeeds. Never assert a
 diagnostic containing either token value.
 
-- [ ] **Step 3: Run focused tests and preserve RED evidence**
+- [x] **Step 3: Run focused tests and preserve RED evidence**
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=AdministrativeAuthorityGuardTest,AdminRecoveryControllerTest" test
@@ -316,7 +317,7 @@ diagnostic containing either token value.
 Expected RED: neutral admin exception types do not exist and both production
 classes still throw the legacy API exception.
 
-- [ ] **Step 4: Implement the typed admin exceptions**
+- [x] **Step 4: Implement the typed admin exceptions**
 
 `AdminRecoveryAccessDeniedException` has a private constructor and four public
 factories. Use these exact diagnostic codes:
@@ -336,7 +337,7 @@ accepts a token value.
 `GOVERNANCE.ADMIN_AUTHORITY.UNAVAILABLE`, and protected message
 `No active admin authority exists to transfer`.
 
-- [ ] **Step 5: Migrate `AdministrativeAuthorityGuard`**
+- [x] **Step 5: Migrate `AdministrativeAuthorityGuard`**
 
 Replace direct `ApiException` construction:
 
@@ -353,7 +354,7 @@ For `assertActiveAdmin`, create a denied `GovernanceDecision` using
 `ADMIN_AUTHORITY_REQUIRED`; do not include `accountId` in its message or public
 details. Remove all legacy imports.
 
-- [ ] **Step 6: Migrate `AdminRecoveryController`**
+- [x] **Step 6: Migrate `AdminRecoveryController`**
 
 Keep the existing check order and constant-work comparison. Replace the three
 legacy branches with four neutral branches:
@@ -377,7 +378,7 @@ if (!secureEquals(properties.getRecoveryToken(), recoveryToken)) {
 Do not change the request mapping, recovery header name, validation, success
 response, transfer command, or `secureEquals` implementation.
 
-- [ ] **Step 7: Run focused tests and verify GREEN**
+- [x] **Step 7: Run focused tests and verify GREEN**
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=GovernanceErrorContractTest,AdministrativeAuthorityGuardTest,AdminRecoveryControllerTest" test
@@ -387,7 +388,7 @@ Expected GREEN: every guard and recovery branch passes, delegation occurs only
 for the matching token, and no test accesses raw secret values through the
 exception.
 
-- [ ] **Step 8: Commit the admin-recovery slice**
+- [x] **Step 8: Commit the admin-recovery slice**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/governance/application/admin `
@@ -406,6 +407,7 @@ git commit -m "refactor: migrate governance recovery failures (KAN-27)"
 - Create: `src/test/java/com/project/optrabidz/governance/api/AdminRecoveryApiIT.java`
 - Modify: `src/test/java/com/project/optrabidz/marketplace/api/MarketplaceApiIT.java`
 - Modify: `src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java`
+- Modify: `src/test/resources/archunit-store/5c2f7ae8-7609-459a-8ad7-49f65df73f4f`
 
 **Interfaces:**
 
@@ -414,7 +416,7 @@ git commit -m "refactor: migrate governance recovery failures (KAN-27)"
 - Produces: end-to-end evidence for the RFC 9457 contract and a permanent
   architecture guard for governance.
 
-- [ ] **Step 1: Migrate the marketplace eligibility API assertion first**
+- [x] **Step 1: Migrate the marketplace eligibility API assertion first**
 
 In `publishingRequiresStartupClassificationWhenGovernanceRequiresIt`, replace
 the legacy 403-envelope assertions with:
@@ -434,7 +436,7 @@ the legacy 403-envelope assertions with:
 Supply an `X-Request-Id` and assert `requestId`, `instance`, and `timestamp`.
 Assert that the body does not contain the internal startup eligibility message.
 
-- [ ] **Step 2: Write `AdminRecoveryApiIT`**
+- [x] **Step 2: Write `AdminRecoveryApiIT`**
 
 Extend `ApiIntegrationTestSupport` and add:
 
@@ -469,22 +471,24 @@ remains zero after the request, proving the failure occurred before mutation.
 Use only obviously synthetic test credentials. Do not log or persist either
 header value in test evidence.
 
-- [ ] **Step 3: Extend the architecture rule**
+- [x] **Step 3: Extend the architecture rule**
 
 Add `"..governance.."` to `MIGRATED_MODULES_DO_NOT_USE_LEGACY_API_EXCEPTIONS`.
-Keep the frozen transport-neutral exception rule unchanged.
+Keep the frozen transport-neutral exception rule unchanged. Remove only the
+five obsolete `GovernanceException` entries from its violation store; never
+enable automatic store creation or updates.
 
-- [ ] **Step 4: Run the governance unit tests and focused integration tests**
+- [x] **Step 4: Run the governance unit tests and focused integration tests**
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=GovernanceErrorContractTest,AdministrativeAuthorityGuardTest,AdminRecoveryControllerTest,ExceptionArchitectureTest" test
-.\mvnw.cmd -B -Pintegration-tests -DskipTests "-Dit.test=AdminRecoveryApiIT,MarketplaceApiIT" verify
+.\mvnw.cmd -B verify -Pintegration-tests "-Dit.test=AdminRecoveryApiIT,MarketplaceApiIT"
 ```
 
 Expected GREEN: all focused tests pass. `AdminRecoveryApiIT` performs no
 successful transfer and leaves the active-admin count unchanged.
 
-- [ ] **Step 5: Run explicit disclosure and legacy-dependency scans**
+- [x] **Step 5: Run explicit disclosure and legacy-dependency scans**
 
 ```powershell
 if (rg -n "\b(ApiException|ErrorCode)\b" src/main/java/com/project/optrabidz/governance) {
@@ -498,12 +502,13 @@ git diff --check
 
 Expected: both searches produce no matches and `git diff --check` exits zero.
 
-- [ ] **Step 6: Commit the API and architecture slice**
+- [x] **Step 6: Commit the API and architecture slice**
 
 ```powershell
 git add src/test/java/com/project/optrabidz/governance/api/AdminRecoveryApiIT.java `
         src/test/java/com/project/optrabidz/marketplace/api/MarketplaceApiIT.java `
-        src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java
+        src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java `
+        src/test/resources/archunit-store/5c2f7ae8-7609-459a-8ad7-49f65df73f4f
 git commit -m "test: verify governance error migration (KAN-27)"
 ```
 
@@ -522,7 +527,7 @@ git commit -m "test: verify governance error migration (KAN-27)"
 - Produces: full regression evidence, navigable documentation, and a reviewed
   pull request targeting `develop`.
 
-- [ ] **Step 1: Run the complete unit suite**
+- [x] **Step 1: Run the complete unit suite**
 
 ```powershell
 .\mvnw.cmd -B test
@@ -531,7 +536,7 @@ git commit -m "test: verify governance error migration (KAN-27)"
 Expected: every unit and architecture test passes with zero failures and zero
 errors. Record the final test count in this plan.
 
-- [ ] **Step 2: Run the complete PostgreSQL integration suite**
+- [x] **Step 2: Run the complete PostgreSQL integration suite**
 
 Confirm Docker is available, then run:
 
@@ -543,7 +548,7 @@ docker version
 Expected: all unit and PostgreSQL integration tests pass; Flyway applies the
 unchanged V1 baseline successfully. Record both final counts.
 
-- [ ] **Step 3: Verify protected scope and repository state**
+- [x] **Step 3: Verify protected scope and repository state**
 
 ```powershell
 $base = git merge-base origin/develop HEAD
@@ -564,7 +569,7 @@ git status --short
 Expected: only approved KAN-27 paths differ; protected paths have no diff; the
 legacy scan is empty; the worktree becomes clean after the evidence commit.
 
-- [ ] **Step 4: Update documentation and record evidence**
+- [x] **Step 4: Update documentation and record evidence**
 
 Update `docs/error-handling/README.md` to state that governance uses the
 neutral contract and add one KAN-27 work-item link. In this plan, check only
@@ -580,7 +585,7 @@ steps actually executed and record:
 Do not add machine-specific paths, usernames, tokens, AI/tool references, or
 temporary log filenames.
 
-- [ ] **Step 5: Commit documentation evidence**
+- [x] **Step 5: Commit documentation evidence**
 
 ```powershell
 git add docs/error-handling/README.md `
@@ -619,16 +624,45 @@ feature branch. `main` remains unchanged.
 
 ---
 
+## Execution evidence
+
+- Verified base: `origin/develop` at
+  `29d44f591b513adc76deed7133ce36207b616076`.
+- Verified implementation head before this documentation-only evidence commit:
+  `16c7658f020a9447c8ded2316ba9d9d923d6dc04`.
+- Contract RED: compilation failed because the governance catalogue did not
+  exist. Contract GREEN: 17/17 descriptor and rule-mapping tests passed.
+- Admin recovery RED: compilation failed because the typed recovery exceptions
+  did not exist. Combined contract and admin GREEN: 29/29 tests passed.
+- Marketplace RED: the legacy assertion expected HTTP 403 while the migrated
+  endpoint returned the approved HTTP 422 Problem Details response.
+- Architecture: 3/3 rules passed. Exactly five obsolete frozen violations
+  belonging to the migrated `GovernanceException` were removed; no waiver or
+  automatic store update was enabled.
+- Focused verification: 32/32 governance and architecture tests passed; 9/9
+  PostgreSQL API tests passed across admin recovery and marketplace.
+- Complete unit suite: 226/226 passed with zero failures, errors, or skips.
+- Complete PostgreSQL integration suite: 76/76 passed with zero failures,
+  errors, or skips; Flyway applied and validated V1 against PostgreSQL 16.
+- Disclosure checks confirmed that public responses omit recovery tokens,
+  diagnostic codes, internal messages, and legacy response envelopes.
+- Governance legacy dependency scans returned no matches.
+- Protected configuration, Flyway, Maven, and CI diffs are empty.
+- Flyway V1 blob: `8784c468aa169952a87e726303d03abae4376add`,
+  identical to `origin/develop`.
+- `main` and `origin/main` both remain at
+  `bc7727b0b2e09ebbfef8b9c6c5dc729cd4aab4fb`.
+
 ## Completion checklist
 
-- [ ] Approved grouped descriptors and mapping are implemented exactly.
-- [ ] Every non-`ALLOWED` governance rule has a tested mapping.
-- [ ] Recovery denial variants have indistinguishable public contracts.
-- [ ] No recovery token or configuration value enters public or diagnostic data.
-- [ ] Missing active authority produces the approved 409 response.
-- [ ] Existing successful governance/admin behavior remains unchanged.
-- [ ] Governance production code has no legacy exception dependency.
-- [ ] Architecture, unit, focused integration, and full integration tests pass.
-- [ ] Flyway V1 and protected configuration paths are unchanged.
+- [x] Approved grouped descriptors and mapping are implemented exactly.
+- [x] Every non-`ALLOWED` governance rule has a tested mapping.
+- [x] Recovery denial variants have indistinguishable public contracts.
+- [x] No recovery token or configuration value enters public or diagnostic data.
+- [x] Missing active authority produces the approved 409 response.
+- [x] Existing successful governance/admin behavior remains unchanged.
+- [x] Governance production code has no legacy exception dependency.
+- [x] Architecture, unit, focused integration, and full integration tests pass.
+- [x] Flyway V1 and protected configuration paths are unchanged.
 - [ ] PR targets `develop`; `main` is unchanged.
 - [ ] Jira status and evidence match the actual delivery stage.
