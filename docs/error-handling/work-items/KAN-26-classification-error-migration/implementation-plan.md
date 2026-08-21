@@ -1,6 +1,6 @@
 # KAN-26: Classification Error Migration Implementation Plan
 
-**Status:** Ready for implementation
+**Status:** Verification complete; pull request pending
 
 **Goal:** Migrate expected classification failures to the neutral
 `ApplicationException` contract while preserving successful startup and
@@ -102,7 +102,7 @@ green and a reference scan finds no remaining consumer.
 **Produces:** `ClassificationErrors` and the eight typed exceptions with the
 constructor signatures defined below.
 
-- [ ] **Step 1: Write the failing contract test**
+- [x] **Step 1: Write the failing contract test**
 
 Create `ClassificationErrorContractTest` and freeze all eight descriptors. The
 startup assertions begin with:
@@ -171,7 +171,7 @@ Instantiate all eight exceptions and assert these diagnostic codes:
 | `InvestorPreferenceNotFoundException(String type, String value)` | `CLASSIFICATION.INVESTOR.NOT_FOUND` |
 | `InvestorPreferenceRuleViolationException(String diagnosticMessage)` | `CLASSIFICATION.INVESTOR.RULE_VIOLATION` |
 
-- [ ] **Step 2: Run the contract test and preserve RED evidence**
+- [x] **Step 2: Run the contract test and preserve RED evidence**
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=ClassificationErrorContractTest" test
@@ -180,7 +180,7 @@ Instantiate all eight exceptions and assert these diagnostic codes:
 Expected RED: compilation fails because the catalogue and typed exceptions do
 not exist.
 
-- [ ] **Step 3: Implement the fixed catalogue and typed exceptions**
+- [x] **Step 3: Implement the fixed catalogue and typed exceptions**
 
 Create `ClassificationErrors` as a non-instantiable class. Each constant must
 exactly match the code, category, and public detail in the design. Implement
@@ -206,7 +206,7 @@ diagnostic message. Not-found constructors mention the protected type and
 value only in the diagnostic message. Rule-violation constructors accept the
 existing protected rule message and never copy it into the descriptor.
 
-- [ ] **Step 4: Run focused GREEN and diff checks**
+- [x] **Step 4: Run focused GREEN and diff checks**
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=ClassificationErrorContractTest" test
@@ -215,7 +215,7 @@ git diff --check
 
 Expected: the contract test passes and the diff check is clean.
 
-- [ ] **Step 5: Commit the neutral classification contract**
+- [x] **Step 5: Commit the neutral classification contract**
 
 ```powershell
 git add -- src/main/java/com/project/optrabidz/classification/application/error src/main/java/com/project/optrabidz/classification/application/exception src/test/java/com/project/optrabidz/classification/application/ClassificationErrorContractTest.java
@@ -232,7 +232,7 @@ git commit -m "feat: add classification error contract (KAN-26)"
 
 **Produces:** Startup services and rules no longer emit a legacy exception.
 
-- [ ] **Step 1: Write failing startup service tests**
+- [x] **Step 1: Write failing startup service tests**
 
 Create `StartupClassificationServiceTest` with Mockito. Cover missing startup
 participant, duplicate add, missing removal, and one successful add. The
@@ -257,7 +257,7 @@ rule validation, save, or event. For removal of a missing entry, assert
 asserts rule validation, `saveAll`, one `StartupClassificationChangedEvent`,
 and the unchanged success message.
 
-- [ ] **Step 2: Write failing startup rule tests**
+- [x] **Step 2: Write failing startup rule tests**
 
 Create `StartupClassificationRuleTest` and test the concrete specifications
 without Spring:
@@ -282,7 +282,7 @@ cardinality. Call `DefaultStartupClassificationTypePolicy.validateValue(" ")`
 directly for the value-policy path. Each non-duplicate case must assert
 `StartupClassificationRuleViolationException`.
 
-- [ ] **Step 3: Update startup API contract tests**
+- [x] **Step 3: Update startup API contract tests**
 
 In `StartupClassificationApiIT`, replace legacy duplicate and profile-required
 envelope assertions with RFC 9457 assertions. The duplicate response must
@@ -309,7 +309,7 @@ blank `classificationValue` request asserting 400, `VALIDATION_ERROR`,
 request value `FINTECH` is absent from the duplicate error body. Preserve the
 existing success, role, and CSRF assertions.
 
-- [ ] **Step 4: Run startup tests and preserve RED evidence**
+- [x] **Step 4: Run startup tests and preserve RED evidence**
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=StartupClassificationServiceTest,StartupClassificationRuleTest" test
@@ -319,7 +319,7 @@ existing success, role, and CSRF assertions.
 Expected RED: unit tests observe legacy exception types and the API test
 observes the legacy envelope/status.
 
-- [ ] **Step 5: Migrate startup service and rule throw sites**
+- [x] **Step 5: Migrate startup service and rule throw sites**
 
 In `StartupClassificationService`:
 
@@ -340,7 +340,7 @@ Update startup uniqueness, integrity, cardinality, and default type policy to
 use the startup-specific exceptions. Pass existing rule messages only as
 protected diagnostic text.
 
-- [ ] **Step 6: Run startup GREEN and regression tests**
+- [x] **Step 6: Run startup GREEN and regression tests**
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=ClassificationErrorContractTest,StartupClassificationServiceTest,StartupClassificationRuleTest" test
@@ -356,7 +356,7 @@ git diff --check
 Expected: focused unit and PostgreSQL API tests pass; the reference scan prints
 no match in startup files; diff check is clean.
 
-- [ ] **Step 7: Commit the startup slice**
+- [x] **Step 7: Commit the startup slice**
 
 ```powershell
 git add -- src/main/java/com/project/optrabidz/classification/application/StartupClassificationService.java src/main/java/com/project/optrabidz/classification/application/specification/StartupClassification* src/main/java/com/project/optrabidz/classification/application/policy/DefaultStartupClassificationTypePolicy.java src/test/java/com/project/optrabidz/classification/application/StartupClassificationServiceTest.java src/test/java/com/project/optrabidz/classification/application/StartupClassificationRuleTest.java src/test/java/com/project/optrabidz/classification/api/StartupClassificationApiIT.java
@@ -374,7 +374,7 @@ git commit -m "refactor: migrate startup classification errors (KAN-26)"
 **Produces:** Investor services and rules no longer emit a legacy exception;
 the two generic legacy classification exceptions are removed.
 
-- [ ] **Step 1: Write failing investor service and rule tests**
+- [x] **Step 1: Write failing investor service and rule tests**
 
 Create `InvestorPreferenceServiceTest` with the same four independently named
 scenarios as the startup service, using:
@@ -397,7 +397,7 @@ type path, a test policy capped at one entry for cardinality, and direct blank
 value validation for `DefaultInvestorPreferenceTypePolicy`. Assert the precise
 investor duplicate or rule-violation type in every case.
 
-- [ ] **Step 2: Update investor API contract tests**
+- [x] **Step 2: Update investor API contract tests**
 
 In `InvestorPreferenceApiIT`, replace the legacy duplicate response with 409,
 `application/problem+json`, code `INVESTOR_PREFERENCE_ALREADY_EXISTS`, detail
@@ -413,7 +413,7 @@ blank `preferenceValue` request asserting 400, `VALIDATION_ERROR`,
 `application/problem+json`, and a nonempty `violations` array. Preserve the
 existing success, role, and CSRF assertions.
 
-- [ ] **Step 3: Run investor tests and preserve RED evidence**
+- [x] **Step 3: Run investor tests and preserve RED evidence**
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=InvestorPreferenceServiceTest,InvestorPreferenceRuleTest" test
@@ -423,7 +423,7 @@ existing success, role, and CSRF assertions.
 Expected RED: unit tests observe legacy exception types and the API test
 observes the legacy envelope/status.
 
-- [ ] **Step 4: Migrate investor service and rule throw sites**
+- [x] **Step 4: Migrate investor service and rule throw sites**
 
 Use `InvestorPreferenceProfileRequiredException(accountId)` in
 `resolveInvestorId`, `InvestorPreferenceAlreadyExistsException(type, value)` in
@@ -432,7 +432,7 @@ for missing removal targets, and `InvestorPreferenceRuleViolationException`
 for integrity, cardinality, and type-policy failures. Do not add a broad domain
 exception catch.
 
-- [ ] **Step 5: Delete the obsolete generic exceptions and prove isolation**
+- [x] **Step 5: Delete the obsolete generic exceptions and prove isolation**
 
 Delete:
 
@@ -449,7 +449,7 @@ if (rg -n "\b(ClassificationAlreadyExistsException|InvalidClassificationExceptio
 
 Expected: no exception is thrown and no match is printed.
 
-- [ ] **Step 6: Run classification unit and investor API tests GREEN**
+- [x] **Step 6: Run classification unit and investor API tests GREEN**
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=ClassificationErrorContractTest,StartupClassificationServiceTest,StartupClassificationRuleTest,InvestorPreferenceServiceTest,InvestorPreferenceRuleTest" test
@@ -460,7 +460,7 @@ git diff --check
 Expected: all focused classification unit tests and the investor PostgreSQL API
 test pass; diff check is clean.
 
-- [ ] **Step 7: Commit the investor slice**
+- [x] **Step 7: Commit the investor slice**
 
 ```powershell
 git add -A -- src/main/java/com/project/optrabidz/classification src/test/java/com/project/optrabidz/classification/application src/test/java/com/project/optrabidz/classification/api/InvestorPreferenceApiIT.java
@@ -477,7 +477,7 @@ PostgreSQL/Flyway infrastructure.
 **Produces:** An enforced classification boundary, topic navigation, and
 complete verification evidence.
 
-- [ ] **Step 1: Extend the architecture boundary**
+- [x] **Step 1: Extend the architecture boundary**
 
 Add `"..classification.."` to
 `MIGRATED_MODULES_DO_NOT_USE_LEGACY_API_EXCEPTIONS` in
@@ -500,7 +500,7 @@ Run:
 
 Expected: all architecture rules pass without adding a freeze-store waiver.
 
-- [ ] **Step 2: Update the error-handling topic index**
+- [x] **Step 2: Update the error-handling topic index**
 
 Update `docs/error-handling/README.md` so the current-system text includes
 classification and the work-item table links both KAN-26 documents:
@@ -517,7 +517,7 @@ Run:
 
 Expected: the documentation link test passes.
 
-- [ ] **Step 3: Run the complete unit suite**
+- [x] **Step 3: Run the complete unit suite**
 
 ```powershell
 .\mvnw.cmd -B test
@@ -525,7 +525,7 @@ Expected: the documentation link test passes.
 
 Expected: `BUILD SUCCESS` with zero failures and errors.
 
-- [ ] **Step 4: Run the complete PostgreSQL integration suite**
+- [x] **Step 4: Run the complete PostgreSQL integration suite**
 
 ```powershell
 .\mvnw.cmd -B verify -Pintegration-tests
@@ -533,7 +533,7 @@ Expected: `BUILD SUCCESS` with zero failures and errors.
 
 Expected: `BUILD SUCCESS` with zero failures and errors.
 
-- [ ] **Step 5: Perform final scope and safety checks**
+- [x] **Step 5: Perform final scope and safety checks**
 
 ```powershell
 if (rg -n "\b(ClassificationAlreadyExistsException|InvalidClassificationException|ApiException|ErrorCode)\b" src/main/java/com/project/optrabidz/classification) { throw 'legacy classification exception dependency remains' }
@@ -545,7 +545,7 @@ git status --short
 Expected: no legacy match, clean diff, no protected configuration path, and no
 uncommitted file.
 
-- [ ] **Step 6: Record evidence and commit the final slice**
+- [x] **Step 6: Record evidence and commit the final slice**
 
 Update this plan with the exact focused, unit, and integration test totals and
 the verified commit range. Then commit the architecture rule, documentation
@@ -569,6 +569,27 @@ pass.
 
 ## Execution evidence
 
-Record the verified base/head commit IDs, RED failure causes, focused test
-totals, complete unit and integration totals, architecture result, unchanged V1
-blob, and pull-request URL here during Task 4.
+- Verified base: `origin/develop` at
+  `82119acf414d261973516170567001268ab3e769`.
+- Verified implementation head before this documentation-only evidence commit:
+  `0523793b3c6f75793cfa73540914518fcebd776d`.
+- Contract RED: compilation failed because the catalogue and typed exceptions
+  did not exist. Contract GREEN: 2/2 tests passed.
+- Startup RED: 7/8 focused unit tests and 3/6 API tests failed on legacy
+  exception/envelope behaviour. Startup GREEN: 10/10 focused unit tests and
+  6/6 PostgreSQL API tests passed.
+- Investor RED: 7/8 focused unit tests and 3/6 API tests failed on legacy
+  exception/envelope behaviour. Investor GREEN: 18/18 focused classification
+  unit tests and 6/6 PostgreSQL API tests passed.
+- Architecture: 3/3 rules passed. Six obsolete frozen violations belonging to
+  the two deleted classification exceptions were removed; no waiver was added.
+- Documentation links: 1/1 test passed.
+- Complete unit suite: 197/197 passed with zero failures, errors, or skips.
+- Complete PostgreSQL integration suite: 74/74 passed with zero failures,
+  errors, or skips; Flyway applied/validated V1 against PostgreSQL 16.
+- Legacy classification reference scan: no matches.
+- Protected configuration diff (`src/main/resources`, `pom.xml`, and
+  `.github/workflows`): empty.
+- Flyway V1 blob: `8784c468aa169952a87e726303d03abae4376add`, identical
+  to `origin/develop`.
+- Pull request: pending creation after this evidence commit.

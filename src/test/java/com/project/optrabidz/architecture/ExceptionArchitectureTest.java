@@ -30,7 +30,8 @@ class ExceptionArchitectureTest {
                     .that().resideInAnyPackage(
                             "..identity..",
                             "..security..",
-                            "..participation.."
+                            "..participation..",
+                            "..classification.."
                     )
                     .should().dependOnClassesThat().resideInAPackage(
                             "..common.api.exception.."
