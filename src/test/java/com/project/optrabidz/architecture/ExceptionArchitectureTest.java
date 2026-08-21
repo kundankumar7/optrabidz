@@ -25,6 +25,19 @@ class ExceptionArchitectureTest {
                     .as("the neutral error contract may depend only on Java and itself");
 
     @ArchTest
+    static final ArchRule MIGRATED_MODULES_DO_NOT_USE_LEGACY_API_EXCEPTIONS =
+            noClasses()
+                    .that().resideInAnyPackage(
+                            "..identity..",
+                            "..security..",
+                            "..participation.."
+                    )
+                    .should().dependOnClassesThat().resideInAPackage(
+                            "..common.api.exception.."
+                    )
+                    .as("migrated modules must use the neutral error contract");
+
+    @ArchTest
     static final ArchRule BUSINESS_EXCEPTIONS_ARE_TRANSPORT_NEUTRAL =
             freeze(noClasses()
                     .that().resideInAnyPackage("..domain..", "..application..")
