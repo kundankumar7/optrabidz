@@ -69,7 +69,7 @@
 
 **Produces:** A clean KAN-25 branch whose history contains the merged KAN-24 documents and assets.
 
-- [ ] **Step 1: Verify both worktrees are clean**
+- [x] **Step 1: Verify both worktrees are clean**
 
 ```powershell
 git -C C:\Users\kumar\IdeaProjects\optrabidz status --short
@@ -78,7 +78,7 @@ git status --short
 
 Expected: both commands produce no file entries.
 
-- [ ] **Step 2: Update the remote baseline**
+- [x] **Step 2: Update the remote baseline**
 
 ```powershell
 git fetch origin develop
@@ -87,7 +87,7 @@ git rebase origin/develop
 
 Expected: rebase succeeds without losing the KAN-25 design commit.
 
-- [ ] **Step 3: Verify the required KAN-24 inputs**
+- [x] **Step 3: Verify the required KAN-24 inputs**
 
 ```powershell
 $required = @(
@@ -104,7 +104,7 @@ if ($missing) { throw "KAN-24 is not ready: $($missing -join ', ')" }
 
 Expected: no exception.
 
-- [ ] **Step 4: Re-run the clean baseline**
+- [x] **Step 4: Re-run the clean baseline**
 
 ```powershell
 .\mvnw.cmd -B test
@@ -125,7 +125,7 @@ Expected: `BUILD SUCCESS` with zero failures and errors.
 - Produces: `DocumentationLinkValidator.findBrokenTargets(Path repositoryRoot)` returning `List<BrokenTarget>`.
 - Produces: `BrokenTarget(Path source, String target, String reason)` with a readable `toString()` supplied by the record.
 
-- [ ] **Step 1: Write focused failing tests**
+- [x] **Step 1: Write focused failing tests**
 
 Create `DocumentationLinkValidatorTest.java` with tests that require Markdown image/link parsing, HTML `src`/`href` parsing, query and fragment removal, percent-decoding, external-link exclusion, and repository-boundary enforcement:
 
@@ -191,7 +191,7 @@ class DocumentationLinkValidatorTest {
 }
 ```
 
-- [ ] **Step 2: Add the repository-wide failing test**
+- [x] **Step 2: Add the repository-wide failing test**
 
 Create `DocumentationLinksTest.java`:
 
@@ -216,7 +216,7 @@ class DocumentationLinksTest {
 }
 ```
 
-- [ ] **Step 3: Run the tests to verify RED**
+- [x] **Step 3: Run the tests to verify RED**
 
 ```powershell
 .\mvnw.cmd -B -Dtest=DocumentationLinkValidatorTest,DocumentationLinksTest test
@@ -224,7 +224,7 @@ class DocumentationLinksTest {
 
 Expected: compilation fails because `DocumentationLinkValidator` does not exist.
 
-- [ ] **Step 4: Implement the test-only validator**
+- [x] **Step 4: Implement the test-only validator**
 
 Create `DocumentationLinkValidator.java` with these rules:
 
@@ -320,7 +320,7 @@ final class DocumentationLinkValidator {
 }
 ```
 
-- [ ] **Step 5: Run focused and complete unit tests**
+- [x] **Step 5: Run focused and complete unit tests**
 
 ```powershell
 .\mvnw.cmd -B -Dtest=DocumentationLinkValidatorTest,DocumentationLinksTest test
@@ -329,7 +329,7 @@ final class DocumentationLinkValidator {
 
 Expected: both commands report `BUILD SUCCESS`.
 
-- [ ] **Step 6: Commit the integrity test**
+- [x] **Step 6: Commit the integrity test**
 
 ```powershell
 git add -- src/test/java/com/project/optrabidz/documentation
@@ -348,7 +348,7 @@ git commit -m "test: validate documentation targets (KAN-25)"
 
 **Produces:** Working subject/task/Jira navigation and canonical architecture paths.
 
-- [ ] **Step 1: Move architecture assets without changing their content**
+- [x] **Step 1: Move architecture assets without changing their content**
 
 ```powershell
 New-Item -ItemType Directory -Force docs/architecture/assets | Out-Null
@@ -356,7 +356,7 @@ git mv docs/architecture.mmd docs/architecture/overview.mmd
 git mv docs/assets/optrabidz-architecture-overview.svg docs/architecture/assets/optrabidz-architecture-overview.svg
 ```
 
-- [ ] **Step 2: Run the repository link test to expose stale paths**
+- [x] **Step 2: Run the repository link test to expose stale paths**
 
 ```powershell
 .\mvnw.cmd -B -Dtest=DocumentationLinksTest test
@@ -364,7 +364,7 @@ git mv docs/assets/optrabidz-architecture-overview.svg docs/architecture/assets/
 
 Expected: FAIL because the root README still points at the former SVG path.
 
-- [ ] **Step 3: Add the portal and architecture index**
+- [x] **Step 3: Add the portal and architecture index**
 
 Create `docs/README.md` with these sections and links:
 
@@ -393,7 +393,7 @@ The final index lists KAN-12, KAN-14, KAN-17, and KAN-20 through KAN-25.
 
 Create `docs/architecture/README.md` linking the editable overview and rendered image, then listing KAN-25 separately under `Work-item History`.
 
-- [ ] **Step 4: Repair root README navigation**
+- [x] **Step 4: Repair root README navigation**
 
 Change the architecture image/link target to:
 
@@ -403,7 +403,7 @@ docs/architecture/assets/optrabidz-architecture-overview.svg
 
 Add a visible `Documentation` link to `docs/README.md` near the onboarding sections.
 
-- [ ] **Step 5: Verify links and moved-file identity**
+- [x] **Step 5: Verify links and moved-file identity**
 
 ```powershell
 .\mvnw.cmd -B -Dtest=DocumentationLinksTest test
@@ -413,7 +413,7 @@ git diff --check
 
 Expected: test passes; the diff summary reports two renames; diff check is clean.
 
-- [ ] **Step 6: Commit the portal and architecture topic**
+- [x] **Step 6: Commit the portal and architecture topic**
 
 ```powershell
 git add -- README.md docs/README.md docs/architecture
@@ -429,7 +429,7 @@ git commit -m "docs: add topic-first documentation portal (KAN-25)"
 - Modify: moved KAN-12/KAN-14 files where they name canonical paths.
 - Modify: `docs/README.md`
 
-- [ ] **Step 1: Create destinations and move tracked files**
+- [x] **Step 1: Create destinations and move tracked files**
 
 ```powershell
 New-Item -ItemType Directory -Force docs/database/work-items/KAN-12-migration-policy | Out-Null
@@ -440,7 +440,7 @@ git mv docs/design/KAN-14-database-foundation-release-design.md docs/database/wo
 git mv docs/design/KAN-14-database-foundation-release-implementation-plan.md docs/database/work-items/KAN-14-database-foundation-release/implementation-plan.md
 ```
 
-- [ ] **Step 2: Find stale canonical paths**
+- [x] **Step 2: Find stale canonical paths**
 
 ```powershell
 rg -n "docs/design/KAN-(12|14)|design/KAN-(12|14)" README.md docs
@@ -448,11 +448,11 @@ rg -n "docs/design/KAN-(12|14)|design/KAN-(12|14)" README.md docs
 
 Expected: matches identify text that must refer to the new canonical locations.
 
-- [ ] **Step 3: Repair paths and split reference from history**
+- [x] **Step 3: Repair paths and split reference from history**
 
 Update `docs/database/README.md` so `Start Here` contains only current database references and a separate `Work-item History` table links KAN-12 and KAN-14. Update `docs/README.md` Jira index and all stale canonical path statements in moved documents.
 
-- [ ] **Step 4: Verify the database move**
+- [x] **Step 4: Verify the database move**
 
 ```powershell
 if (rg -n "docs/design/KAN-(12|14)|design/KAN-(12|14)" README.md docs) { throw 'stale database documentation path' }
@@ -463,7 +463,7 @@ git diff --check
 
 Expected: no stale-path exception, test passes, four moves appear as renames, and diff check is clean.
 
-- [ ] **Step 5: Commit database history**
+- [x] **Step 5: Commit database history**
 
 ```powershell
 git add -- docs/README.md docs/database
@@ -479,7 +479,7 @@ git commit -m "docs: organize database work-item history (KAN-25)"
 - Modify: `docs/README.md`
 - Modify: moved files where they name canonical paths.
 
-- [ ] **Step 1: Create destinations and move tracked files**
+- [x] **Step 1: Create destinations and move tracked files**
 
 ```powershell
 $destinations = @(
@@ -497,7 +497,7 @@ git mv docs/design/KAN-22-mvc-problem-details-implementation-plan.md docs/error-
 git mv docs/design/KAN-23-security-problem-details-implementation-plan.md docs/error-handling/work-items/KAN-23-security-adapter/implementation-plan.md
 ```
 
-- [ ] **Step 2: Write the current-system topic index**
+- [x] **Step 2: Write the current-system topic index**
 
 Create `docs/error-handling/README.md` with:
 
@@ -507,7 +507,7 @@ Create `docs/error-handling/README.md` with:
 - a link to the KAN-24 current module migration design; and
 - a separate chronological work-item history for KAN-17 and KAN-20 through KAN-24.
 
-- [ ] **Step 3: Repair stale canonical paths**
+- [x] **Step 3: Repair stale canonical paths**
 
 ```powershell
 rg -n "docs/design/KAN-(17|20|21|22|23)|design/KAN-(17|20|21|22|23)" README.md docs
@@ -515,7 +515,7 @@ rg -n "docs/design/KAN-(17|20|21|22|23)|design/KAN-(17|20|21|22|23)" README.md d
 
 Update every result that identifies a canonical repository file, then update the Jira index in `docs/README.md`.
 
-- [ ] **Step 4: Verify links and stale paths**
+- [x] **Step 4: Verify links and stale paths**
 
 ```powershell
 if (rg -n "docs/design/KAN-(17|20|21|22|23)|design/KAN-(17|20|21|22|23)" README.md docs) { throw 'stale error-handling documentation path' }
@@ -526,7 +526,7 @@ git diff --check
 
 Expected: validator passes, five moves appear as renames, and no stale path remains.
 
-- [ ] **Step 5: Commit error-handling history**
+- [x] **Step 5: Commit error-handling history**
 
 ```powershell
 git add -- docs/README.md docs/error-handling
@@ -542,7 +542,7 @@ git commit -m "docs: organize error-handling history (KAN-25)"
 - Modify: `docs/README.md`
 - Modify: `docs/error-handling/README.md`
 
-- [ ] **Step 1: Move the work item as one unit**
+- [x] **Step 1: Move the work item as one unit**
 
 ```powershell
 New-Item -ItemType Directory -Force docs/error-handling/work-items/KAN-24-module-migration/assets | Out-Null
@@ -554,7 +554,7 @@ git mv docs/assets/KAN-24-login-disclosure.mmd docs/error-handling/work-items/KA
 git mv docs/assets/KAN-24-login-disclosure.png docs/error-handling/work-items/KAN-24-module-migration/assets/login-flow.png
 ```
 
-- [ ] **Step 2: Repair KAN-24 owned links**
+- [x] **Step 2: Repair KAN-24 owned links**
 
 In both moved Markdown files, replace global asset links with local links:
 
@@ -570,7 +570,7 @@ Editable source: [login-flow.mmd](assets/login-flow.mmd)
 
 Repair references between `design.md` and `implementation-plan.md`, and update portal/topic indexes.
 
-- [ ] **Step 3: Verify cleanup and integrity**
+- [x] **Step 3: Verify cleanup and integrity**
 
 ```powershell
 if (Test-Path docs/design) {
@@ -591,7 +591,7 @@ git diff --check
 
 Expected: no unclassified file, no stale path, link test passes, and all six KAN-24 files appear as renames.
 
-- [ ] **Step 4: Verify diagram files**
+- [x] **Step 4: Verify diagram files**
 
 ```powershell
 $images = @(
@@ -605,7 +605,7 @@ $images | ForEach-Object {
 
 Open the moved `design.md` through GitHub's mobile viewport during PR review and confirm both PNGs render. Keep both `.mmd` sources downloadable.
 
-- [ ] **Step 5: Commit KAN-24 documentation ownership**
+- [x] **Step 5: Commit KAN-24 documentation ownership**
 
 ```powershell
 git add -A -- docs
@@ -618,7 +618,7 @@ git commit -m "docs: colocate KAN-24 diagrams and records (KAN-25)"
 
 - Modify: `docs/architecture/work-items/KAN-25-documentation-information-architecture/implementation-plan.md` only to mark completed checkboxes and record exact evidence.
 
-- [ ] **Step 1: Verify the final documentation inventory**
+- [x] **Step 1: Verify the final documentation inventory**
 
 ```powershell
 rg --files docs | Sort-Object
@@ -628,7 +628,7 @@ git diff origin/develop...HEAD --name-status
 
 Expected: every document is under a defined subject, with no `docs/design` or global `docs/assets` file remaining.
 
-- [ ] **Step 2: Run focused documentation tests**
+- [x] **Step 2: Run focused documentation tests**
 
 ```powershell
 .\mvnw.cmd -B -Dtest=DocumentationLinkValidatorTest,DocumentationLinksTest test
@@ -636,7 +636,7 @@ Expected: every document is under a defined subject, with no `docs/design` or gl
 
 Expected: `BUILD SUCCESS`.
 
-- [ ] **Step 3: Run the complete unit suite**
+- [x] **Step 3: Run the complete unit suite**
 
 ```powershell
 .\mvnw.cmd -B test
@@ -644,7 +644,7 @@ Expected: `BUILD SUCCESS`.
 
 Expected: `BUILD SUCCESS` with zero failures and errors.
 
-- [ ] **Step 4: Run the PostgreSQL integration suite**
+- [x] **Step 4: Run the PostgreSQL integration suite**
 
 ```powershell
 .\mvnw.cmd -B verify -Pintegration-tests
@@ -652,7 +652,7 @@ Expected: `BUILD SUCCESS` with zero failures and errors.
 
 Expected: `BUILD SUCCESS` with zero failures and errors.
 
-- [ ] **Step 5: Perform repository safety checks**
+- [x] **Step 5: Perform repository safety checks**
 
 ```powershell
 git diff --check origin/develop...HEAD
@@ -661,7 +661,7 @@ git diff --name-only origin/develop...HEAD -- src/main src/main/resources pom.xm
 
 Expected: diff check is clean. The protected-path command prints nothing except the intentional test-only files are outside these paths.
 
-- [ ] **Step 6: Record evidence and commit the completed plan**
+- [x] **Step 6: Record evidence and commit the completed plan**
 
 Update this plan with the exact test totals, commit SHAs, rename count, and GitHub mobile observation.
 
@@ -670,7 +670,7 @@ git add -- docs/architecture/work-items/KAN-25-documentation-information-archite
 git commit -m "docs: record documentation migration evidence (KAN-25)"
 ```
 
-- [ ] **Step 7: Push one review branch and open one pull request**
+- [x] **Step 7: Push one review branch and open one pull request**
 
 ```powershell
 git push -u origin docs/KAN-25-information-architecture
@@ -679,3 +679,27 @@ gh pr create --base develop --head docs/KAN-25-information-architecture --title 
 ```
 
 Do not merge until the user reviews and approves the pull request.
+
+## Execution Evidence
+
+- Verified base: `915d432067269054b93b429353ad134f31d622b5`
+  (`origin/develop`).
+- Implementation head before this evidence commit:
+  `ac7f755ec1ba226dbfa852e5b167e10c25fc0f12`.
+- TDD RED: the focused test compilation failed only because
+  `DocumentationLinkValidator` did not exist; after implementation, the focused
+  documentation suite passed `5/5`.
+- Complete unit suite: `179/179` passed with zero failures and errors.
+- PostgreSQL integration profile: `70/70` integration tests passed with zero
+  failures and errors; its unit phase also passed `179/179`.
+- Migration audit: `27` changed files and `17` Git-recognized renames.
+- Protected production paths were unchanged: no `src/main`, `pom.xml`, or CI
+  workflow changes.
+- Flyway baseline blob remained
+  `8784c468aa169952a87e726303d03abae4376add` on both base and head.
+- No tracked files remain under the former `docs/design` or global
+  `docs/assets` directories.
+- GitHub mobile verification at `390 x 844`: both KAN-24 PNG diagrams loaded
+  with non-zero natural and displayed dimensions; both adjacent `.mmd` source
+  links resolved on the review branch.
+- Review pull request: [#22](https://github.com/kundankumar7/optrabidz/pull/22).
