@@ -2,6 +2,8 @@
 
 This folder contains the database design artifacts for OptraBidz.
 
+[Back to the documentation portal](../README.md)
+
 ## Start Here
 
 Open the ER diagrams index first:
@@ -38,6 +40,17 @@ The ER diagrams are split into the same schema-backed slices listed in
 | `er-diagram-source.md` | Editable Mermaid source for the rendered ER diagrams |
 | `migrations.md` | Migration authoring, environment upgrade, and recovery policy |
 | `../../src/main/resources/db/migration/V1__baseline.sql` | Executable Flyway V1 baseline for tables, constraints, indexes, enum types, triggers, and small reference seed data |
+
+## Work-item History
+
+These records explain the decisions and verification behind the current
+database guidance. They are historical delivery records, not substitutes for
+the current references above.
+
+| Jira | Decision record | Delivery plan |
+|---|---|---|
+| [KAN-12](https://0707manna0895.atlassian.net/browse/KAN-12) | [Migration policy](work-items/KAN-12-migration-policy/design.md) | [Implementation plan](work-items/KAN-12-migration-policy/implementation-plan.md) |
+| [KAN-14](https://0707manna0895.atlassian.net/browse/KAN-14) | [Database foundation release](work-items/KAN-14-database-foundation-release/design.md) | [Implementation plan](work-items/KAN-14-database-foundation-release/implementation-plan.md) |
 
 ## How The Application Uses The Database
 

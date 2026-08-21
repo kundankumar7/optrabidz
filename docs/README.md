@@ -20,6 +20,8 @@ the work items that introduced it.
 
 | Jira | Subject | Repository record |
 |---|---|---|
+| [KAN-12](https://0707manna0895.atlassian.net/browse/KAN-12) | Database migration policy | [Design and implementation plan](database/work-items/KAN-12-migration-policy/) |
+| [KAN-14](https://0707manna0895.atlassian.net/browse/KAN-14) | Database foundation release | [Design and implementation plan](database/work-items/KAN-14-database-foundation-release/) |
 | [KAN-25](https://0707manna0895.atlassian.net/browse/KAN-25) | Documentation information architecture | [Design and implementation plan](architecture/work-items/KAN-25-documentation-information-architecture/) |
 
 Additional work-item records are added here as their existing files move into
