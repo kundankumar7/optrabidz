@@ -1,6 +1,6 @@
 # KAN-24: Module Error Migration Implementation Plan
 
-**Status:** Awaiting implementation-plan review
+**Status:** Implementation verified locally; pull request pending
 
 **Goal:** Migrate expected identity, security, and participation failures to
 the transport-neutral `ApplicationException` contract while preserving every
@@ -30,8 +30,10 @@ PostgreSQL 16, Flyway, and the Maven Wrapper.
 - Do not change V1, Flyway, the database schema, runtime profiles, CI,
   authentication strategy, session storage, CSRF, or endpoint permissions.
 - Do not introduce AOP or a generic unexpected-500 handler.
-- Do not migrate marketplace, classification, governance, financial,
-  notification, or audit-owned business errors.
+- Do not redesign marketplace, classification, governance, financial,
+  notification, or audit-owned business-error catalogues. Consumers of the
+  removed generic participation exceptions may use the new participant-specific
+  types or an existing owning-module access exception.
 - Module catalogues and typed exceptions must not depend on HTTP status,
   Spring Web, Spring Security, servlet APIs, `common.api`, `ApiException`, or
   legacy `ErrorCode`.
@@ -141,7 +143,7 @@ failure for expected missing-account or state-transition cases.
 
 ### Steps
 
-- [ ] Confirm the exact baseline and that only approved documentation precedes
+- [x] Confirm the exact baseline and that only approved documentation precedes
   implementation.
 
   ```powershell
@@ -154,7 +156,7 @@ failure for expected missing-account or state-transition cases.
   Expected: the branch is `feature/KAN-24-module-error-migration`, the ancestor
   check exits `0`, the worktree is clean, and the unit suite passes.
 
-- [ ] Add `IdentityErrorContractTest` first. It must assert the catalogue
+- [x] Add `IdentityErrorContractTest` first. It must assert the catalogue
   contains exactly these values and that typed exceptions preserve protected
   diagnostics separately from the descriptor.
 
@@ -185,7 +187,7 @@ failure for expected missing-account or state-transition cases.
   assertThat(failure.descriptor().publicMessage()).doesNotContain("41");
   ```
 
-- [ ] Add `AccountApplicationServiceTest` with Mockito. Cover missing account,
+- [x] Add `AccountApplicationServiceTest` with Mockito. Cover missing account,
   invalid account transition, invalid profile completion, unchanged status,
   successful save, and unchanged registration-event publication.
 
@@ -203,7 +205,7 @@ failure for expected missing-account or state-transition cases.
   descriptor, retained cause, and absence of identifiers in the public
   message.
 
-- [ ] Run the focused tests and preserve RED evidence.
+- [x] Run the focused tests and preserve RED evidence.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=IdentityErrorContractTest,AccountApplicationServiceTest" test
@@ -213,7 +215,7 @@ failure for expected missing-account or state-transition cases.
   exceptions do not exist, or behavior assertions fail against the legacy
   exceptions.
 
-- [ ] Create `IdentityErrors` as a non-instantiable fixed catalogue.
+- [x] Create `IdentityErrors` as a non-instantiable fixed catalogue.
 
   ```java
   public final class IdentityErrors {
@@ -241,7 +243,7 @@ failure for expected missing-account or state-transition cases.
   }
   ```
 
-- [ ] Implement the three typed exceptions. Constructors accept protected
+- [x] Implement the three typed exceptions. Constructors accept protected
   context, but every descriptor remains fixed.
 
   ```java
@@ -262,7 +264,7 @@ failure for expected missing-account or state-transition cases.
   Throwable cause)` uses diagnostic code `IDENTITY.PROFILE.STATE_CONFLICT`.
   Both pass the original domain failure as the protected cause.
 
-- [ ] Migrate `AccountApplicationService` at its application boundary.
+- [x] Migrate `AccountApplicationService` at its application boundary.
 
   ```java
   private Account requireAccount(Long accountId) {
@@ -279,7 +281,7 @@ failure for expected missing-account or state-transition cases.
   domain operation has no state-conflict rule. Repository mapper corruption
   remains an unmodified internal failure.
 
-- [ ] Remove `AccountAlreadyExistsException.java` and
+- [x] Remove `AccountAlreadyExistsException.java` and
   `InvalidAccountStateException.java`, then prove no reference remains.
 
   ```powershell
@@ -288,7 +290,7 @@ failure for expected missing-account or state-transition cases.
 
   Expected: no matches.
 
-- [ ] Run focused and full unit GREEN verification.
+- [x] Run focused and full unit GREEN verification.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=IdentityErrorContractTest,AccountApplicationServiceTest" test
@@ -296,7 +298,7 @@ failure for expected missing-account or state-transition cases.
   git diff --check
   ```
 
-- [ ] Commit the identity slice.
+- [x] Commit the identity slice.
 
   ```powershell
   git add -- src/main/java/com/project/optrabidz/identity src/test/java/com/project/optrabidz/identity
@@ -317,7 +319,7 @@ reasons.
 
 ### Steps
 
-- [ ] Add `SecurityErrorContractTest` first. Freeze all descriptors and the
+- [x] Add `SecurityErrorContractTest` first. Freeze all descriptors and the
   exact login-reason values.
 
   ```java
@@ -343,7 +345,7 @@ reasons.
   `PASSWORD_POLICY_VIOLATION`, and `AUTHORIZATION_FAILED` against the approved
   code, category, and public message table.
 
-- [ ] Add `AuthenticationServiceTest` before production changes. Use a
+- [x] Add `AuthenticationServiceTest` before production changes. Use a
   parameterized test for the public disclosure invariant.
 
   ```java
@@ -380,7 +382,7 @@ reasons.
     typed failures;
   - successful registration and password change retain existing responses.
 
-- [ ] Add focused `CredentialProvisioningServiceTest` and `MeServiceTest`.
+- [x] Add focused `CredentialProvisioningServiceTest` and `MeServiceTest`.
 
   ```java
   assertThatThrownBy(() -> provisioning.disableCredentialForAccount(41L))
@@ -391,7 +393,7 @@ reasons.
           .isNotInstanceOf(ApplicationException.class);
   ```
 
-- [ ] Extend `SecurityApiIT` and `SecurityAuditIT` before implementation.
+- [x] Extend `SecurityApiIT` and `SecurityAuditIT` before implementation.
   Compare normalized JSON bodies for every login cause after removing only
   `requestId`, `timestamp`, and `instance`.
 
@@ -414,7 +416,7 @@ reasons.
   stable reason and masked email, never the raw email/password or Spring
   Security exception text.
 
-- [ ] Run focused RED verification.
+- [x] Run focused RED verification.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=SecurityErrorContractTest,AuthenticationServiceTest,CredentialProvisioningServiceTest,MeServiceTest" test
@@ -423,7 +425,7 @@ reasons.
 
   Expected RED: missing catalogue/types and legacy response-shape assertions.
 
-- [ ] Create `SecurityErrors` with exactly these descriptors.
+- [x] Create `SecurityErrors` with exactly these descriptors.
 
   ```java
   public static final ErrorDescriptor INVALID_CREDENTIALS = descriptor(
@@ -452,7 +454,7 @@ reasons.
   `descriptor` is a private helper that only calls the `ErrorDescriptor`
   constructor. The catalogue has a private constructor and no mutable fields.
 
-- [ ] Implement `LoginFailureReason` and typed exceptions. The login exception
+- [x] Implement `LoginFailureReason` and typed exceptions. The login exception
   accepts only the enum, so callers cannot invent public or audit text.
 
   ```java
@@ -481,7 +483,7 @@ reasons.
   `SECURITY.REGISTRATION.ROLE_NOT_ALLOWED`, and
   `SECURITY.AUTHORIZATION.FAILED`.
 
-- [ ] Migrate `AuthenticationService` with one login-rejection helper.
+- [x] Migrate `AuthenticationService` with one login-rejection helper.
 
   ```java
   private void rejectLogin(
@@ -513,12 +515,12 @@ reasons.
   typed exceptions. Do not alter session creation, expiration, logout, password
   hashing, lock threshold, or success responses.
 
-- [ ] Migrate `CredentialProvisioningService` and `MeService`. Provisioning
+- [x] Migrate `CredentialProvisioningService` and `MeService`. Provisioning
   uses the same email, password-policy, and credential-target failures.
   `MeService` throws `IllegalStateException("Authenticated session references a missing account")`
   for the broken reference and retains its existing success response.
 
-- [ ] Delete `CredentialLockedException.java` and
+- [x] Delete `CredentialLockedException.java` and
   `EmailAlreadyExistsException.java`, and verify no legacy security dependency
   remains.
 
@@ -528,7 +530,7 @@ reasons.
 
   Expected: no matches.
 
-- [ ] Run focused and full security GREEN verification.
+- [x] Run focused and full security GREEN verification.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=SecurityErrorContractTest,AuthenticationServiceTest,CredentialProvisioningServiceTest,MeServiceTest" test
@@ -537,7 +539,7 @@ reasons.
   git diff --check
   ```
 
-- [ ] Commit the security slice.
+- [x] Commit the security slice.
 
   ```powershell
   git add -- src/main/java/com/project/optrabidz/security src/test/java/com/project/optrabidz/security src/test/java/com/project/optrabidz/audit/api/SecurityAuditIT.java
@@ -556,7 +558,7 @@ unchanged successful persistence, event, and transfer behavior.
 
 ### Steps
 
-- [ ] Add `ParticipationErrorContractTest` first. Freeze all catalogue entries.
+- [x] Add `ParticipationErrorContractTest` first. Freeze all catalogue entries.
 
   ```java
   assertThat(StartupErrors.STARTUP_ALREADY_EXISTS.code())
@@ -579,7 +581,7 @@ unchanged successful persistence, event, and transfer behavior.
   that account IDs and actual/expected roles appear only in protected
   diagnostics.
 
-- [ ] Add `StartupServiceTest`, `InvestorServiceTest`, and `AdminServiceTest`
+- [x] Add `StartupServiceTest`, `InvestorServiceTest`, and `AdminServiceTest`
   before production changes.
 
   ```java
@@ -601,7 +603,7 @@ unchanged successful persistence, event, and transfer behavior.
   3. no active administrator during revoke produces `ACTIVE_ADMIN_NOT_FOUND`;
   4. successful grant and revoke retain existing repository/domain behavior.
 
-- [ ] Extend `ParticipationApiIT` with real Problem Details assertions for
+- [x] Extend `ParticipationApiIT` with real Problem Details assertions for
   duplicate, not-found, and wrong-role failures. Replace legacy envelope
   assertions with the shared shape.
 
@@ -626,14 +628,14 @@ unchanged successful persistence, event, and transfer behavior.
   Preserve all existing startup/investor success and profile-completeness
   assertions.
 
-- [ ] Run focused RED verification.
+- [x] Run focused RED verification.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=ParticipationErrorContractTest,StartupServiceTest,InvestorServiceTest,AdminServiceTest" test
   .\mvnw.cmd -B -Pintegration-tests "-Dit.test=ParticipationApiIT" verify
   ```
 
-- [ ] Create the four fixed catalogues with the exact approved contracts.
+- [x] Create the four fixed catalogues with the exact approved contracts.
 
   ```java
   public static final ErrorDescriptor STARTUP_ALREADY_EXISTS = descriptor(
@@ -665,12 +667,12 @@ unchanged successful persistence, event, and transfer behavior.
   Each constant belongs to the catalogue named in the file map. Each catalogue
   is non-instantiable and mutable state is prohibited.
 
-- [ ] Implement the eight typed participation exceptions. Use fixed diagnostic
+- [x] Implement the eight typed participation exceptions. Use fixed diagnostic
   codes under `PARTICIPATION.STARTUP`, `PARTICIPATION.INVESTOR`,
   `PARTICIPATION.ADMIN`, and `PARTICIPATION.AUTHORIZATION`. Constructors accept
   only the protected context required by the relevant service.
 
-- [ ] Migrate all three services. Startup and investor services choose their
+- [x] Migrate all three services. Startup and investor services choose their
   own duplicate/not-found types. Their role guards use
   `ParticipationAuthorizationException(actualRole, expectedRole)`.
   `AdminService` keeps the existing conflict-check order and chooses distinct
@@ -688,7 +690,7 @@ unchanged successful persistence, event, and transfer behavior.
   Revocation uses `ActiveAdminNotFoundException`. Do not add a reactivation
   method, modify `AdminState`, or change persistence constraints.
 
-- [ ] Delete `ParticipationAlreadyExistsException.java`,
+- [x] Delete `ParticipationAlreadyExistsException.java`,
   `ParticipationNotFoundException.java`, and `InvalidRoleException.java`, then
   prove the migrated module has no HTTP-coupled error dependency.
 
@@ -698,7 +700,7 @@ unchanged successful persistence, event, and transfer behavior.
 
   Expected: no matches.
 
-- [ ] Run focused and full participation GREEN verification.
+- [x] Run focused and full participation GREEN verification.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=ParticipationErrorContractTest,StartupServiceTest,InvestorServiceTest,AdminServiceTest" test
@@ -707,7 +709,7 @@ unchanged successful persistence, event, and transfer behavior.
   git diff --check
   ```
 
-- [ ] Commit the participation slice.
+- [x] Commit the participation slice.
 
   ```powershell
   git add -- src/main/java/com/project/optrabidz/participation src/test/java/com/project/optrabidz/participation
@@ -725,7 +727,7 @@ evidence, a clean exact diff, and a reviewable KAN-24 feature branch.
 
 ### Steps
 
-- [ ] Add a targeted ArchUnit rule before checking the migrated source tree.
+- [x] Add a targeted ArchUnit rule before checking the migrated source tree.
 
   ```java
   @ArchTest
@@ -745,7 +747,7 @@ evidence, a clean exact diff, and a reviewable KAN-24 feature branch.
   Keep the existing framework-free `common.error` rule and frozen global
   transition rule. Do not weaken or delete either one.
 
-- [ ] Run architecture and source scans.
+- [x] Run architecture and source scans.
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=ExceptionArchitectureTest" test
@@ -755,7 +757,7 @@ evidence, a clean exact diff, and a reviewable KAN-24 feature branch.
 
   Expected: architecture tests pass and both scans return no matches.
 
-- [ ] Run the complete unit and PostgreSQL integration suites from a clean
+- [x] Run the complete unit and PostgreSQL integration suites from a clean
   Docker-enabled environment.
 
   ```powershell
@@ -767,7 +769,7 @@ evidence, a clean exact diff, and a reviewable KAN-24 feature branch.
   Expected: both Maven commands exit `0`; no test has a failure or error;
   Testcontainers uses PostgreSQL 16; Flyway applies unchanged V1.
 
-- [ ] Verify scope and protected files.
+- [x] Verify scope and protected files.
 
   ```powershell
   git diff --check origin/develop...HEAD
@@ -780,11 +782,11 @@ evidence, a clean exact diff, and a reviewable KAN-24 feature branch.
   approved KAN-24 documentation, identity, security, participation, audit-test,
   and architecture-test paths; the worktree is clean.
 
-- [ ] Record final evidence in this plan without pasting console dumps:
+- [x] Record final evidence in this plan without pasting console dumps:
   exact HEAD SHA, unit and integration counts, zero failures/errors, unchanged
   V1 blob hash, and the reviewed file list.
 
-- [ ] Commit only the architecture/evidence slice if it changed tracked files.
+- [x] Commit only the architecture/evidence slice if it changed tracked files.
 
   ```powershell
   git add -- src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java docs/design/KAN-24-module-error-migration-implementation-plan.md
@@ -796,20 +798,41 @@ evidence, a clean exact diff, and a reviewable KAN-24 feature branch.
   participation commits separately and includes exact test evidence. Do not
   merge it as part of this task.
 
+## Local verification evidence
+
+Verified on 2026-08-21 at implementation commit
+`9cc1df61bad77bd17af0e698db7991c65199b132` against `origin/develop`
+`c36e0db1cd652ff1fda928058290ca5beaaacb03`:
+
+- Maven unit suite: 174 tests, 0 failures, 0 errors, 0 skipped.
+- PostgreSQL integration suite: 70 tests, 0 failures, 0 errors, 0 skipped.
+- Architecture suite: 3 rules, including the migrated-module boundary rule.
+- Testcontainers used PostgreSQL 16; Flyway validated and applied only V1.
+- V1 Git blob remained
+  `8784c468aa169952a87e726303d03abae4376add` at both range endpoints.
+- `pom.xml`, `.github`, and `src/main/resources/db/migration` were unchanged.
+- Both legacy-dependency source scans and `git diff --check` were clean.
+- The reviewed 65-file range comprised 6 design/assets files; identity,
+  security, and participation implementation/tests; the security audit test;
+  the architecture rule/store; and 5 required financial/marketplace consumer
+  updates for the removed generic participation exceptions.
+- Pull-request-head verification remains pending until the documentation-only
+  evidence commit is pushed and CI runs on the exact remote head.
+
 ## Completion checklist
 
-- [ ] Identity expected failures use only their neutral catalogue and typed
+- [x] Identity expected failures use only their neutral catalogue and typed
   exceptions.
-- [ ] Security expected failures use only their neutral catalogue and typed
+- [x] Security expected failures use only their neutral catalogue and typed
   exceptions.
-- [ ] All protected login causes have one identical public response.
-- [ ] Login attempts and audits store stable reasons without raw secrets.
-- [ ] Participation errors distinguish startup, investor, active-admin,
+- [x] All protected login causes have one identical public response.
+- [x] Login attempts and audits store stable reasons without raw secrets.
+- [x] Participation errors distinguish startup, investor, active-admin,
   authority-history, and missing-active-admin cases.
-- [ ] The three modules contain no `ApiException` or legacy `ErrorCode` use.
-- [ ] Broken account references remain internal failures.
-- [ ] Public Problem Details contain no protected diagnostic content.
-- [ ] Successful responses, events, sessions, account lifecycle, profiles, and
+- [x] The three modules contain no `ApiException` or legacy `ErrorCode` use.
+- [x] Broken account references remain internal failures.
+- [x] Public Problem Details contain no protected diagnostic content.
+- [x] Successful responses, events, sessions, account lifecycle, profiles, and
   administrator transfer behavior remain unchanged.
-- [ ] V1, dependencies, runtime configuration, and CI remain unchanged.
+- [x] V1, dependencies, runtime configuration, and CI remain unchanged.
 - [ ] Full unit and PostgreSQL integration suites pass at the exact PR head.
