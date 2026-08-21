@@ -313,7 +313,7 @@ existing success, role, and CSRF assertions.
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=StartupClassificationServiceTest,StartupClassificationRuleTest" test
-.\mvnw.cmd -B verify -Pintegration-tests "-Dit.test=StartupClassificationApiIT"
+.\mvnw.cmd -B -Pintegration-tests "-Dit.test=StartupClassificationApiIT" failsafe:integration-test failsafe:verify
 ```
 
 Expected RED: unit tests observe legacy exception types and the API test
@@ -344,8 +344,12 @@ protected diagnostic text.
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=ClassificationErrorContractTest,StartupClassificationServiceTest,StartupClassificationRuleTest" test
-.\mvnw.cmd -B verify -Pintegration-tests "-Dit.test=StartupClassificationApiIT"
-rg -n "ApiException|ErrorCode|ClassificationAlreadyExistsException|InvalidClassificationException" src/main/java/com/project/optrabidz/classification/application/StartupClassificationService.java src/main/java/com/project/optrabidz/classification/application/specification/StartupClassification* src/main/java/com/project/optrabidz/classification/application/policy/DefaultStartupClassificationTypePolicy.java
+.\mvnw.cmd -B -Pintegration-tests "-Dit.test=StartupClassificationApiIT" failsafe:integration-test failsafe:verify
+$legacyStartup = @(
+  rg -n "\b(ApiException|ErrorCode|ClassificationAlreadyExistsException|InvalidClassificationException)\b" src/main/java/com/project/optrabidz/classification/application/StartupClassificationService.java src/main/java/com/project/optrabidz/classification/application/policy/DefaultStartupClassificationTypePolicy.java
+  rg -n -g "StartupClassification*.java" "\b(ApiException|ErrorCode|ClassificationAlreadyExistsException|InvalidClassificationException)\b" src/main/java/com/project/optrabidz/classification/application/specification
+)
+if ($legacyStartup) { throw "legacy startup exception dependency remains: $legacyStartup" }
 git diff --check
 ```
 
@@ -413,7 +417,7 @@ existing success, role, and CSRF assertions.
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=InvestorPreferenceServiceTest,InvestorPreferenceRuleTest" test
-.\mvnw.cmd -B verify -Pintegration-tests "-Dit.test=InvestorPreferenceApiIT"
+.\mvnw.cmd -B -Pintegration-tests "-Dit.test=InvestorPreferenceApiIT" failsafe:integration-test failsafe:verify
 ```
 
 Expected RED: unit tests observe legacy exception types and the API test
@@ -440,7 +444,7 @@ src/main/java/com/project/optrabidz/classification/application/exception/Invalid
 Then run:
 
 ```powershell
-if (rg -n "ClassificationAlreadyExistsException|InvalidClassificationException|ApiException|ErrorCode" src/main/java/com/project/optrabidz/classification) { throw 'legacy classification exception dependency remains' }
+if (rg -n "\b(ClassificationAlreadyExistsException|InvalidClassificationException|ApiException|ErrorCode)\b" src/main/java/com/project/optrabidz/classification) { throw 'legacy classification exception dependency remains' }
 ```
 
 Expected: no exception is thrown and no match is printed.
@@ -449,7 +453,7 @@ Expected: no exception is thrown and no match is printed.
 
 ```powershell
 .\mvnw.cmd -B "-Dtest=ClassificationErrorContractTest,StartupClassificationServiceTest,StartupClassificationRuleTest,InvestorPreferenceServiceTest,InvestorPreferenceRuleTest" test
-.\mvnw.cmd -B verify -Pintegration-tests "-Dit.test=InvestorPreferenceApiIT"
+.\mvnw.cmd -B -Pintegration-tests "-Dit.test=InvestorPreferenceApiIT" failsafe:integration-test failsafe:verify
 git diff --check
 ```
 
@@ -532,7 +536,7 @@ Expected: `BUILD SUCCESS` with zero failures and errors.
 - [ ] **Step 5: Perform final scope and safety checks**
 
 ```powershell
-if (rg -n "ClassificationAlreadyExistsException|InvalidClassificationException|ApiException|ErrorCode" src/main/java/com/project/optrabidz/classification) { throw 'legacy classification exception dependency remains' }
+if (rg -n "\b(ClassificationAlreadyExistsException|InvalidClassificationException|ApiException|ErrorCode)\b" src/main/java/com/project/optrabidz/classification) { throw 'legacy classification exception dependency remains' }
 git diff --check origin/develop...HEAD
 git diff --name-only origin/develop...HEAD -- src/main/resources pom.xml .github/workflows
 git status --short

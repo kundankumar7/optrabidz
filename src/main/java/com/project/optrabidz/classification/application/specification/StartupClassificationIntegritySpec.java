@@ -1,6 +1,6 @@
 package com.project.optrabidz.classification.application.specification;
 
-import com.project.optrabidz.classification.application.exception.InvalidClassificationException;
+import com.project.optrabidz.classification.application.exception.StartupClassificationRuleViolationException;
 import com.project.optrabidz.classification.application.policy.StartupClassificationTypePolicy;
 import com.project.optrabidz.classification.domain.model.StartupClassificationProfile;
 import org.springframework.stereotype.Component;
@@ -20,7 +20,9 @@ public class StartupClassificationIntegritySpec implements StartupClassification
     public void validate(StartupClassificationProfile profile) {
         profile.getClassifications().forEach(classification -> {
             if (!StringUtils.hasText(classification.getClassificationType())) {
-                throw new InvalidClassificationException("Classification type must not be blank");
+                throw new StartupClassificationRuleViolationException(
+                        "Classification type must not be blank"
+                );
             }
             StartupClassificationTypePolicy policy = resolvePolicy(classification.getClassificationType());
             policy.validateValue(classification.getClassificationValue());
@@ -31,7 +33,7 @@ public class StartupClassificationIntegritySpec implements StartupClassification
         return policies.stream()
                 .filter(policy -> policy.supports(classificationType))
                 .findFirst()
-                .orElseThrow(() -> new InvalidClassificationException(
+                .orElseThrow(() -> new StartupClassificationRuleViolationException(
                         "Unsupported startup classification type: " + classificationType
                 ));
     }
