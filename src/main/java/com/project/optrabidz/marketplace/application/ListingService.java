@@ -30,8 +30,7 @@ import com.project.optrabidz.marketplace.domain.model.FundingModel;
 import com.project.optrabidz.marketplace.domain.model.ListingDebtTerms;
 import com.project.optrabidz.marketplace.domain.model.ListingState;
 import com.project.optrabidz.marketplace.domain.repository.FundingListingRepository;
-import com.project.optrabidz.participation.application.exception.InvalidRoleException;
-import com.project.optrabidz.participation.application.exception.ParticipationNotFoundException;
+import com.project.optrabidz.participation.application.exception.StartupNotFoundException;
 import com.project.optrabidz.participation.domain.model.Startup;
 import com.project.optrabidz.participation.domain.repository.StartupRepository;
 import org.springframework.data.domain.Page;
@@ -226,17 +225,17 @@ public class ListingService {
 
     private Startup getStartupByAccount(Long accountId) {
         return startupRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Startup not found for this account"));
+                .orElseThrow(() -> new StartupNotFoundException(accountId));
     }
 
     private Startup getStartupById(Long startupId) {
         return startupRepository.findById(startupId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Startup not found"));
+                .orElseThrow(() -> new StartupNotFoundException("startup", startupId));
     }
 
     private void ensureRole(RoleType actualRole, RoleType expectedRole) {
         if (actualRole != expectedRole) {
-            throw new InvalidRoleException("Role is not allowed to perform this operation");
+            throw new MarketplaceAccessException("Role is not allowed to perform this operation");
         }
     }
 
