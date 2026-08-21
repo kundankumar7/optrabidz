@@ -1,13 +1,12 @@
 package com.project.optrabidz.governance.api;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.common.api.response.ApiResponse;
 import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.governance.application.admin.AdminAuthorityTransferService;
 import com.project.optrabidz.governance.application.admin.AdminBootstrapProperties;
 import com.project.optrabidz.governance.application.admin.AdminTransferResponse;
 import com.project.optrabidz.governance.application.admin.TransferAdminAuthorityRequest;
+import com.project.optrabidz.governance.application.admin.exception.AdminRecoveryAccessDeniedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -52,25 +51,19 @@ public class AdminRecoveryController {
 
     private void assertRecoveryAccess(String recoveryToken) {
         if (!properties.isRecoveryMode()) {
-            throw new ApiException(
-                    ErrorCode.AUTHORIZATION_FAILED,
-                    "Admin recovery mode is disabled"
-            );
+            throw AdminRecoveryAccessDeniedException.recoveryModeDisabled();
         }
 
         if (properties.getRecoveryToken() == null || properties.getRecoveryToken().isBlank()) {
-            throw new ApiException(
-                    ErrorCode.AUTHORIZATION_FAILED,
-                    "Admin recovery token is not configured"
-            );
+            throw AdminRecoveryAccessDeniedException.tokenNotConfigured();
         }
 
-        if (recoveryToken == null || recoveryToken.isBlank()
-                || !secureEquals(properties.getRecoveryToken(), recoveryToken)) {
-            throw new ApiException(
-                    ErrorCode.AUTHORIZATION_FAILED,
-                    "Invalid admin recovery token"
-            );
+        if (recoveryToken == null || recoveryToken.isBlank()) {
+            throw AdminRecoveryAccessDeniedException.tokenMissing();
+        }
+
+        if (!secureEquals(properties.getRecoveryToken(), recoveryToken)) {
+            throw AdminRecoveryAccessDeniedException.tokenRejected();
         }
     }
 

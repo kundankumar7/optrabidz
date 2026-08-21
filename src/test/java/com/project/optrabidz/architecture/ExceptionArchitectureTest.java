@@ -31,7 +31,8 @@ class ExceptionArchitectureTest {
                             "..identity..",
                             "..security..",
                             "..participation..",
-                            "..classification.."
+                            "..classification..",
+                            "..governance.."
                     )
                     .should().dependOnClassesThat().resideInAPackage(
                             "..common.api.exception.."

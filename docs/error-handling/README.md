@@ -14,9 +14,9 @@ Expected application failures use a transport-neutral core:
 4. clients receive RFC 9457 `application/problem+json` responses without
    internal identifiers, secrets, stack traces, or raw exception messages.
 
-Identity, security, participation, and classification use the neutral contract.
-The current module catalogue and login-disclosure policy are documented in the
-[KAN-24 module migration design](work-items/KAN-24-module-migration/design.md).
+Identity, security, participation, classification, and governance use the
+neutral contract. The current module catalogue and login-disclosure policy are
+documented in the [KAN-24 module migration design](work-items/KAN-24-module-migration/design.md).
 
 ## Work-item History
 
@@ -29,3 +29,4 @@ The current module catalogue and login-disclosure policy are documented in the
 | [KAN-23](https://0707manna0895.atlassian.net/browse/KAN-23) | [Spring Security Problem Details implementation](work-items/KAN-23-security-adapter/implementation-plan.md) |
 | [KAN-24](https://0707manna0895.atlassian.net/browse/KAN-24) | [Module error migration design](work-items/KAN-24-module-migration/design.md) and [implementation plan](work-items/KAN-24-module-migration/implementation-plan.md) |
 | [KAN-26](https://0707manna0895.atlassian.net/browse/KAN-26) | [Classification error migration design](work-items/KAN-26-classification-error-migration/design.md) and [implementation plan](work-items/KAN-26-classification-error-migration/implementation-plan.md) |
+| [KAN-27](https://0707manna0895.atlassian.net/browse/KAN-27) | [Governance error migration design](work-items/KAN-27-governance-error-migration/design.md) and [implementation plan](work-items/KAN-27-governance-error-migration/implementation-plan.md) |
