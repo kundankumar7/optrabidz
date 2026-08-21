@@ -75,6 +75,7 @@ unapproved path, or Jira does not show the expected starting status.
 | `src/main/java/com/project/optrabidz/governance/api/AdminRecoveryController.java` | Classifies recovery boundary failures without constructing response bodies. |
 | `src/test/java/com/project/optrabidz/governance/application/GovernanceErrorContractTest.java` | Freezes descriptor values, rule mapping, allowed-decision rejection, and disclosure boundaries. |
 | `src/test/java/com/project/optrabidz/governance/application/admin/AdministrativeAuthorityGuardTest.java` | Verifies recovery and active-authority guard behavior. |
+| `src/test/java/com/project/optrabidz/governance/application/admin/AdminAuthorityTransferServiceTest.java` | Proves an unavailable authority prevents every downstream mutation and event collaborator. |
 | `src/test/java/com/project/optrabidz/governance/api/AdminRecoveryControllerTest.java` | Verifies every recovery-access branch and constant-work success path delegation. |
 | `src/test/java/com/project/optrabidz/governance/api/AdminRecoveryApiIT.java` | Verifies real Spring MVC Problem Details against the PostgreSQL test context. |
 | `src/test/java/com/project/optrabidz/marketplace/api/MarketplaceApiIT.java` | Migrates the existing eligibility-denial API assertion. |
@@ -630,6 +631,8 @@ feature branch. `main` remains unchanged.
   `29d44f591b513adc76deed7133ce36207b616076`.
 - Verified implementation head before this documentation-only evidence commit:
   `16c7658f020a9447c8ded2316ba9d9d923d6dc04`.
+- Verified review-hardening head before the final evidence update:
+  `4294cc1d988737e507bb7f6878cde4b981430101`.
 - Contract RED: compilation failed because the governance catalogue did not
   exist. Contract GREEN: 17/17 descriptor and rule-mapping tests passed.
 - Admin recovery RED: compilation failed because the typed recovery exceptions
@@ -641,11 +644,16 @@ feature branch. `main` remains unchanged.
   automatic store update was enabled.
 - Focused verification: 32/32 governance and architecture tests passed; 9/9
   PostgreSQL API tests passed across admin recovery and marketplace.
-- Complete unit suite: 226/226 passed with zero failures, errors, or skips.
+- Service-boundary verification: 1/1 test passed and proved that an unavailable
+  authority stops every downstream mutation and event collaborator.
+- Complete unit suite: 227/227 passed with zero failures, errors, or skips.
 - Complete PostgreSQL integration suite: 76/76 passed with zero failures,
   errors, or skips; Flyway applied and validated V1 against PostgreSQL 16.
 - Disclosure checks confirmed that public responses omit recovery tokens,
   diagnostic codes, internal messages, and legacy response envelopes.
+- Service-boundary verification confirms an unavailable authority stops before
+  revocation, credential changes, account deactivation, replacement-admin
+  creation, and event publication.
 - Governance legacy dependency scans returned no matches.
 - Protected configuration, Flyway, Maven, and CI diffs are empty.
 - Flyway V1 blob: `8784c468aa169952a87e726303d03abae4376add`,
