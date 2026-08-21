@@ -8,7 +8,7 @@ authorization, CSRF, session, audit, and success-path behavior.
 
 **Source:** [KAN-23](https://0707manna0895.atlassian.net/browse/KAN-23),
 the approved written specification, and
-`docs/design/KAN-17-exception-handling-foundation-design.md`.
+`docs/error-handling/work-items/KAN-17-foundation/design.md`.
 
 **Architecture:** A public `SecurityProblem` catalogue and
 `SecurityProblemResponseWriter` live in the shared REST error boundary. The
@@ -102,7 +102,7 @@ flowchart LR
 | `src/test/java/com/project/optrabidz/audit/application/SecurityAuditServiceTest.java` | Proves audit persistence failure remains isolated from callers. |
 | `src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java` | Preserves neutral and business-module framework boundaries. |
 | Affected module `*ApiIT` classes | Migrates existing Spring Security 401/403 consumers while preserving controller-generated business-error assertions. |
-| `docs/design/KAN-23-security-problem-details-implementation-plan.md` | Approved checklist and execution evidence. |
+| `docs/error-handling/work-items/KAN-23-security-adapter/implementation-plan.md` | Approved checklist and execution evidence. |
 
 ---
 

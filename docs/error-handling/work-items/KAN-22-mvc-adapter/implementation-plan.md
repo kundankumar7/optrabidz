@@ -5,7 +5,7 @@ failures as safe RFC 9457 Problem Details responses without changing business
 exceptions, Spring Security failures, or the generic unexpected-error policy.
 
 **Source:** KAN-22 and
-`docs/design/KAN-17-exception-handling-foundation-design.md`, especially
+`docs/error-handling/work-items/KAN-17-foundation/design.md`, especially
 sections 6.2, 7, 8, 11, 13, and 14.
 
 **Architecture:** `RestExceptionHandler` will extend Spring MVC's supported
@@ -79,7 +79,7 @@ Each `type` is derived from the code as
 | `src/test/java/com/project/optrabidz/common/api/error/RestExceptionHandlerValidationTest.java` | MockMvc DTO, nested, collection, method, missing-input, and type-mismatch contracts. |
 | `src/test/java/com/project/optrabidz/common/api/error/RestExceptionHandlerFrameworkTest.java` | MockMvc malformed JSON, 404, 405, 406, 415, header, and success regressions. |
 | `src/test/java/com/project/optrabidz/common/api/error/RestExceptionHandlerTest.java` | Existing application-exception, request-ID, precedence, and legacy-coexistence regression suite. |
-| `docs/design/KAN-22-mvc-problem-details-implementation-plan.md` | Approved execution checklist and verification evidence. |
+| `docs/error-handling/work-items/KAN-22-mvc-adapter/implementation-plan.md` | Approved execution checklist and verification evidence. |
 
 ---
 

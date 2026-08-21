@@ -4,7 +4,7 @@
 exception architecture boundaries without changing any existing HTTP response.
 
 **Source:** KAN-20 and
-`docs/design/KAN-17-exception-handling-foundation-design.md`, sections 5, 6.1,
+`docs/error-handling/work-items/KAN-17-foundation/design.md`, sections 5, 6.1,
 11, 13, and 14.
 
 **Architecture:** The new `common.error` package contains only Java value types
@@ -786,4 +786,4 @@ without data recovery or compatibility work.
 
 - [ArchUnit 1.4.2 release](https://github.com/TNG/ArchUnit/releases/tag/v1.4.2)
 - [ArchUnit freezing rules guide](https://www.archunit.org/userguide/html/000_Index.html#_freezing_arch_rules)
-- `docs/design/KAN-17-exception-handling-foundation-design.md`
+- `docs/error-handling/work-items/KAN-17-foundation/design.md`
