@@ -1,6 +1,6 @@
 package com.project.optrabidz.classification.application.specification;
 
-import com.project.optrabidz.classification.application.exception.InvalidClassificationException;
+import com.project.optrabidz.classification.application.exception.InvestorPreferenceRuleViolationException;
 import com.project.optrabidz.classification.application.policy.InvestorPreferenceTypePolicy;
 import com.project.optrabidz.classification.domain.model.InvestorPreferenceProfile;
 import org.springframework.stereotype.Component;
@@ -20,7 +20,9 @@ public class InvestorPreferenceIntegritySpec implements InvestorPreferenceSpecif
     public void validate(InvestorPreferenceProfile profile) {
         profile.getPreferences().forEach(preference -> {
             if (!StringUtils.hasText(preference.getPreferenceType())) {
-                throw new InvalidClassificationException("Preference type must not be blank");
+                throw new InvestorPreferenceRuleViolationException(
+                        "Preference type must not be blank"
+                );
             }
             InvestorPreferenceTypePolicy policy = resolvePolicy(preference.getPreferenceType());
             policy.validateValue(preference.getPreferenceValue());
@@ -31,7 +33,7 @@ public class InvestorPreferenceIntegritySpec implements InvestorPreferenceSpecif
         return policies.stream()
                 .filter(policy -> policy.supports(preferenceType))
                 .findFirst()
-                .orElseThrow(() -> new InvalidClassificationException(
+                .orElseThrow(() -> new InvestorPreferenceRuleViolationException(
                         "Unsupported investor preference type: " + preferenceType
                 ));
     }
