@@ -76,7 +76,9 @@ public class AgreementService {
 
     private Agreement getAgreement(Long agreementId) {
         return agreementRepository.findById(agreementId)
-                .orElseThrow(() -> new AgreementNotFoundException("Agreement not found"));
+                .orElseThrow(() -> new AgreementNotFoundException(
+                        "Agreement " + agreementId + " was not found"
+                ));
     }
 
     private void ensureAgreementVisible(Long accountId, RoleType roleType, Agreement agreement) {
@@ -117,7 +119,10 @@ public class AgreementService {
 
     private void ensureRole(RoleType actualRole, RoleType expectedRole) {
         if (actualRole != expectedRole) {
-            throw new MarketplaceAccessException("Role is not allowed to perform this operation");
+            throw new MarketplaceAccessException(
+                    "Marketplace operation requires role " + expectedRole
+                            + " but actor role was " + actualRole
+            );
         }
     }
 

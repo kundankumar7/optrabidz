@@ -5,7 +5,6 @@ import com.project.optrabidz.common.error.ErrorCategory;
 import com.project.optrabidz.common.error.ErrorDescriptor;
 import com.project.optrabidz.marketplace.application.exception.AgreementNotFoundException;
 import com.project.optrabidz.marketplace.application.exception.BidAcceptanceConflictException;
-import com.project.optrabidz.marketplace.application.exception.BidAlreadyAcceptedException;
 import com.project.optrabidz.marketplace.application.exception.BidAlreadyExistsException;
 import com.project.optrabidz.marketplace.application.exception.BidNotFoundException;
 import com.project.optrabidz.marketplace.application.exception.InvalidBidStateException;
@@ -115,8 +114,6 @@ class MarketplaceErrorContractTest {
                         BID_STATE_CONFLICT, "MARKETPLACE.BID.STATE_CONFLICT"),
                 arguments((Function<String, ApplicationException>) BidAlreadyExistsException::new,
                         BID_ALREADY_EXISTS, "MARKETPLACE.BID.ALREADY_EXISTS"),
-                arguments((Function<String, ApplicationException>) BidAlreadyAcceptedException::new,
-                        BID_ACCEPTANCE_CONFLICT, "MARKETPLACE.BID.ACCEPTANCE_CONFLICT"),
                 arguments((Function<String, ApplicationException>) BidAcceptanceConflictException::new,
                         BID_ACCEPTANCE_CONFLICT, "MARKETPLACE.BID.ACCEPTANCE_CONFLICT"),
                 arguments((Function<String, ApplicationException>) UnsupportedFundingModelException::new,

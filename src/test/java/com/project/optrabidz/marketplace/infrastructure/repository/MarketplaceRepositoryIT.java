@@ -195,6 +195,33 @@ class MarketplaceRepositoryIT extends PostgresJpaIntegrationTestSupport {
                 .containsExactly(submitted.getBidId());
     }
 
+    @Test
+    void agreementReachedConditionalUpdateChangesOnlyAnOpenListingOnce() {
+        FundingListing listing = listingRepository.save(openListing(
+                testData.createStartup("conditional update listing").startupId(),
+                "Conditional update listing",
+                "INR",
+                new BigDecimal("575000.00"),
+                NOW.plusSeconds(3_600)
+        ));
+
+        int firstUpdate = listingRepository.markAgreementReachedIfOpen(
+                listing.getListingId(),
+                NOW
+        );
+        int secondUpdate = listingRepository.markAgreementReachedIfOpen(
+                listing.getListingId(),
+                NOW.plusSeconds(1)
+        );
+
+        assertThat(firstUpdate).isEqualTo(1);
+        assertThat(secondUpdate).isZero();
+        assertThat(listingRepository.findById(listing.getListingId()))
+                .get()
+                .extracting(FundingListing::getListingState)
+                .isEqualTo(ListingState.AGREEMENT_REACHED);
+    }
+
     private static FundingListing openListing(Long startupId,
                                               String title,
                                               String currencyCode,

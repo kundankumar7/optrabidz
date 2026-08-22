@@ -3,7 +3,7 @@ package com.project.optrabidz.marketplace.application.specification;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.common.error.ApplicationException;
 import com.project.optrabidz.marketplace.application.error.MarketplaceErrors;
-import com.project.optrabidz.marketplace.application.exception.BidAlreadyAcceptedException;
+import com.project.optrabidz.marketplace.application.exception.BidAcceptanceConflictException;
 import com.project.optrabidz.marketplace.application.exception.InvalidBidStateException;
 import com.project.optrabidz.marketplace.application.exception.InvalidListingStateException;
 import com.project.optrabidz.marketplace.application.exception.MarketplaceAccessException;
@@ -69,14 +69,29 @@ class MarketplaceSpecificationTest {
         assertThatNoException().isThrownBy(() -> spec.assertSatisfiedBy(openListing, submittedBid, false));
 
         assertThatThrownBy(() -> spec.assertSatisfiedBy(listing(ListingState.CLOSED, NOW), submittedBid, false))
-                .isInstanceOf(BidAlreadyAcceptedException.class)
-                .hasMessageContaining("Listing is not open for bid acceptance");
+                .isInstanceOf(BidAcceptanceConflictException.class)
+                .hasMessageContaining("Listing 101")
+                .hasMessageContaining("CLOSED")
+                .hasMessageContaining("bid 501")
+                .satisfies(failure -> assertThatDescriptor(
+                        failure,
+                        MarketplaceErrors.BID_ACCEPTANCE_CONFLICT
+                ));
         assertThatThrownBy(() -> spec.assertSatisfiedBy(openListing, submittedBid, true))
-                .isInstanceOf(BidAlreadyAcceptedException.class)
-                .hasMessageContaining("Listing already has an accepted bid");
+                .isInstanceOf(BidAcceptanceConflictException.class)
+                .hasMessageContaining("Listing 101")
+                .hasMessageContaining("candidate bid=501")
+                .satisfies(failure -> assertThatDescriptor(
+                        failure,
+                        MarketplaceErrors.BID_ACCEPTANCE_CONFLICT
+                ));
         assertThatThrownBy(() -> spec.assertSatisfiedBy(openListing, bid(BidState.WITHDRAWN), false))
                 .isInstanceOf(InvalidBidStateException.class)
-                .hasMessageContaining("Only SUBMITTED bids can be accepted");
+                .hasMessageContaining("Only SUBMITTED bids can be accepted")
+                .satisfies(failure -> assertThatDescriptor(
+                        failure,
+                        MarketplaceErrors.BID_STATE_CONFLICT
+                ));
     }
 
     @Test
