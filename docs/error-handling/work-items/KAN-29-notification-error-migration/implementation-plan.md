@@ -76,12 +76,12 @@ JUnit 5, MockMvc, AssertJ, ArchUnit, Maven Failsafe, Testcontainers, PostgreSQL 
   `8aef4469729f6823273a191af93ee2b1b977684b` and user inline-execution approval.
 - Produces: a clean, synchronized feature branch and Jira **In Progress** state.
 
-- [ ] **Step 1: Confirm the explicit start gate**
+- [x] **Step 1: Confirm the explicit start gate**
 
 Do not execute this task until the user states that the KAN-29 implementation
 plan and inline execution are approved.
 
-- [ ] **Step 2: Verify branch, ancestry, remote head, and clean state**
+- [x] **Step 2: Verify branch, ancestry, remote head, and clean state**
 
 ```powershell
 git fetch origin
@@ -113,7 +113,7 @@ if ($LASTEXITCODE -ne 0) {
 Expected: every guard passes and `origin/main` equals the preserved release
 head at the start of execution.
 
-- [ ] **Step 3: Synchronize Jira**
+- [x] **Step 3: Synchronize Jira**
 
 Move KAN-29 from **To Do** to **In Progress** and add a comment containing the
 approved plan commit, exact branch head, exact `origin/develop` merge base, and
@@ -133,7 +133,7 @@ approved plan commit, exact branch head, exact `origin/develop` merge base, and
 - Produces: `NotificationErrors.NOTIFICATION_NOT_FOUND` and
   `NotificationErrors.NOTIFICATION_SUBSCRIPTION_NOT_FOUND`.
 
-- [ ] **Step 1: Write the failing descriptor contract test**
+- [x] **Step 1: Write the failing descriptor contract test**
 
 Create `NotificationErrorContractTest` with the following initial content:
 
@@ -185,7 +185,7 @@ class NotificationErrorContractTest {
 }
 ```
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 ```powershell
 ./mvnw -q -Dtest=NotificationErrorContractTest test
@@ -194,7 +194,7 @@ class NotificationErrorContractTest {
 Expected RED: test compilation fails because `NotificationErrors` and its two
 descriptor fields do not exist. A pass is invalid and must be investigated.
 
-- [ ] **Step 3: Add the minimal descriptor catalogue**
+- [x] **Step 3: Add the minimal descriptor catalogue**
 
 Create `NotificationErrors.java`:
 
@@ -224,7 +224,7 @@ public final class NotificationErrors {
 }
 ```
 
-- [ ] **Step 4: Run focused GREEN verification**
+- [x] **Step 4: Run focused GREEN verification**
 
 ```powershell
 ./mvnw -q -Dtest=NotificationErrorContractTest test
@@ -233,7 +233,7 @@ public final class NotificationErrors {
 Expected GREEN: two parameterized descriptor cases pass with zero failures and
 errors.
 
-- [ ] **Step 5: Commit and update Jira**
+- [x] **Step 5: Commit and update Jira**
 
 ```powershell
 git add -- `
@@ -261,7 +261,7 @@ Add the exact RED reason, GREEN count, and commit SHA to KAN-29.
 - Produces: `NotificationNotFoundException(String diagnosticMessage)` and
   `NotificationSubscriptionNotFoundException(String diagnosticMessage)`.
 
-- [ ] **Step 1: Add failing PostgreSQL API ownership tests**
+- [x] **Step 1: Add failing PostgreSQL API ownership tests**
 
 In `NotificationApiIT`, add imports for `MvcResult`, `ResultMatcher`,
 `java.util.Locale`, and the static MockMvc `content` and `header` matchers. Add
@@ -495,18 +495,19 @@ private void assertBodyExcludes(
 }
 ```
 
-- [ ] **Step 2: Run the PostgreSQL API tests and verify RED**
+- [x] **Step 2: Run the PostgreSQL API tests and verify RED**
 
 ```powershell
-./mvnw -q -DskipUnitTests -Pintegration-tests `
-  -Dit.test=NotificationApiIT failsafe:integration-test failsafe:verify
+./mvnw -q -Pintegration-tests `
+  "-Dtest=NotificationErrorContractTest" `
+  "-Dit.test=NotificationApiIT" verify
 ```
 
 Expected RED: the new tests expect RFC 9457 Problem Details and distinct
 notification/subscription codes but receive the legacy response and generic
 `RESOURCE_NOT_FOUND` code. Existing successful methods remain green.
 
-- [ ] **Step 3: Extend the contract test with failing typed-failure cases**
+- [x] **Step 3: Extend the contract test with failing typed-failure cases**
 
 Add these imports and members to `NotificationErrorContractTest`:
 
@@ -561,7 +562,7 @@ private static Stream<Arguments> failures() {
 }
 ```
 
-- [ ] **Step 4: Run the contract test and verify RED**
+- [x] **Step 4: Run the contract test and verify RED**
 
 ```powershell
 ./mvnw -q -Dtest=NotificationErrorContractTest test
@@ -571,7 +572,7 @@ Expected RED: test compilation fails because the existing
 `NotificationNotFoundException` lacks the diagnostic constructor and
 `NotificationSubscriptionNotFoundException` does not exist.
 
-- [ ] **Step 5: Implement the two typed neutral exceptions**
+- [x] **Step 5: Implement the two typed neutral exceptions**
 
 Replace `NotificationNotFoundException` with:
 
@@ -612,7 +613,7 @@ public final class NotificationSubscriptionNotFoundException
 }
 ```
 
-- [ ] **Step 6: Select failures only after zero-row mutations**
+- [x] **Step 6: Select failures only after zero-row mutations**
 
 Import `NotificationSubscriptionNotFoundException` in `NotificationService`.
 Replace the three zero-row branches with these exact diagnostics:
@@ -649,19 +650,20 @@ if (updated == 0) {
 
 Do not add a lookup query or a catch block around any JDBC operation.
 
-- [ ] **Step 7: Run focused GREEN verification**
+- [x] **Step 7: Run focused GREEN verification**
 
 ```powershell
 ./mvnw -q -Dtest=NotificationErrorContractTest test
-./mvnw -q -DskipUnitTests -Pintegration-tests `
-  -Dit.test=NotificationApiIT failsafe:integration-test failsafe:verify
+./mvnw -q -Pintegration-tests `
+  "-Dtest=NotificationErrorContractTest" `
+  "-Dit.test=NotificationApiIT" verify
 ```
 
 Expected GREEN: all four contract invocations and all NotificationApiIT methods
 pass. Wrong-owner rows remain unchanged; missing/deleted/revoked paths use the
 approved safe 404 codes.
 
-- [ ] **Step 8: Commit and update Jira**
+- [x] **Step 8: Commit and update Jira**
 
 ```powershell
 git add -- `
@@ -694,7 +696,7 @@ and commit SHA to KAN-29.
 - Produces: a notification module with zero legacy exception-package
   dependencies and an unchanged shared anonymous 401 boundary.
 
-- [ ] **Step 1: Add the anonymous-boundary characterization test**
+- [x] **Step 1: Add the anonymous-boundary characterization test**
 
 Add to `NotificationApiIT`:
 
@@ -720,15 +722,16 @@ void anonymousNotificationQueryUsesSharedAuthenticationBoundary()
 Run it before changing the controller:
 
 ```powershell
-./mvnw -q -DskipUnitTests -Pintegration-tests `
-  -Dit.test=NotificationApiIT#anonymousNotificationQueryUsesSharedAuthenticationBoundary `
-  failsafe:integration-test failsafe:verify
+./mvnw -q -Pintegration-tests `
+  "-Dtest=NotificationErrorContractTest" `
+  "-Dit.test=NotificationApiIT#anonymousNotificationQueryUsesSharedAuthenticationBoundary" `
+  verify
 ```
 
 Expected characterization GREEN: Spring Security already returns the shared
 401 before controller execution. This locks behavior; it is not the RED signal.
 
-- [ ] **Step 2: Make the permanent architecture rule fail**
+- [x] **Step 2: Make the permanent architecture rule fail**
 
 Add `"..notification.."` to
 `MIGRATED_MODULES_DO_NOT_USE_LEGACY_API_EXCEPTIONS` in
@@ -743,7 +746,7 @@ and the unused legacy access-denied exception. The frozen rule may also report
 the six now-obsolete stored notification violations because automatic store
 updates are disabled.
 
-- [ ] **Step 3: Remove controller-local authentication construction**
+- [x] **Step 3: Remove controller-local authentication construction**
 
 In `NotificationController`:
 
@@ -769,7 +772,7 @@ success messages, statuses, or SecurityConfig.
 Delete `NotificationAccessDeniedException.java`; repository-wide search proves
 it has no caller.
 
-- [ ] **Step 4: Remove exactly the six obsolete frozen entries**
+- [x] **Step 4: Remove exactly the six obsolete frozen entries**
 
 Before editing the store, verify the baseline:
 
@@ -790,7 +793,7 @@ if ($after -ne 0) {
 }
 ```
 
-- [ ] **Step 5: Run architecture, source, and focused API GREEN checks**
+- [x] **Step 5: Run architecture, source, and focused API GREEN checks**
 
 ```powershell
 ./mvnw -q -Dtest=ExceptionArchitectureTest test
@@ -804,14 +807,15 @@ if (rg -n "NotificationAccessDeniedException" src/main src/test) {
     throw 'Deleted access-denied exception still has a caller'
 }
 
-./mvnw -q -DskipUnitTests -Pintegration-tests `
-  -Dit.test=NotificationApiIT failsafe:integration-test failsafe:verify
+./mvnw -q -Pintegration-tests `
+  "-Dtest=ExceptionArchitectureTest,NotificationErrorContractTest" `
+  "-Dit.test=NotificationApiIT" verify
 ```
 
 Expected GREEN: all three architecture rules pass, both scans are empty, and
 all NotificationApiIT methods pass, including the unchanged anonymous 401.
 
-- [ ] **Step 6: Commit and update Jira**
+- [x] **Step 6: Commit and update Jira**
 
 ```powershell
 git add -- `
@@ -841,7 +845,7 @@ six-entry removal, source scans, focused API result, and commit SHA to KAN-29.
 - Produces: a clean reviewed feature head, synchronized Jira evidence, and one
   pull request targeting `develop`.
 
-- [ ] **Step 1: Run the complete unit and architecture suite**
+- [x] **Step 1: Run the complete unit and architecture suite**
 
 ```powershell
 ./mvnw -B test
@@ -850,7 +854,7 @@ six-entry removal, source scans, focused API result, and commit SHA to KAN-29.
 Expected: build success with zero failures/errors. Inspect every Surefire XML
 report and record the exact total rather than relying only on console output.
 
-- [ ] **Step 2: Run the complete PostgreSQL integration suite**
+- [x] **Step 2: Run the complete PostgreSQL integration suite**
 
 ```powershell
 ./mvnw -B verify -Pintegration-tests
@@ -859,7 +863,7 @@ report and record the exact total rather than relying only on console output.
 Expected: build success with zero failures/errors against PostgreSQL
 Testcontainers. Inspect every Failsafe XML report and record the exact total.
 
-- [ ] **Step 3: Run scope, disclosure, architecture, and migration guards**
+- [x] **Step 3: Run scope, disclosure, architecture, and migration guards**
 
 ```powershell
 git diff --check origin/develop...HEAD
@@ -875,7 +879,7 @@ if ((Select-String `
     throw 'Notification frozen architecture debt remains'
 }
 
-$v1 = 'src/main/resources/db/migration/V1__baseline_schema.sql'
+$v1 = 'src/main/resources/db/migration/V1__baseline.sql'
 $baseV1 = git rev-parse "origin/develop:$v1"
 $headV1 = git rev-parse "HEAD:$v1"
 if ($baseV1 -ne $headV1) {
@@ -890,7 +894,8 @@ $protected = @(
     'src/main/resources/application-test.properties',
     'src/main/resources/application-prod.properties',
     'src/test/resources/application-test.properties',
-    'src/main/resources/db/migration/V1__baseline_schema.sql'
+    'src/main/resources/db/migration/V1__baseline.sql',
+    'src/main/java/com/project/optrabidz/security/infrastructure/config/SecurityConfig.java'
 )
 $changed = git diff --name-only origin/develop...HEAD
 $unexpected = $changed | Where-Object { $_ -in $protected }
@@ -902,7 +907,7 @@ if ($unexpected) {
 Expected: all guards pass; notification has no legacy dependency; Flyway V1,
 build, CI, and runtime configuration remain byte-identical to `origin/develop`.
 
-- [ ] **Step 4: Finalize documentation evidence**
+- [x] **Step 4: Finalize documentation evidence**
 
 Update the KAN-29 row in `docs/error-handling/README.md` so it links both the
 design and implementation plan. In this plan, mark only completed checkboxes
@@ -1006,21 +1011,53 @@ defect or corrective commit for review.
 
 ---
 
+## Execution evidence
+
+Recorded on 2026-08-22 against `origin/develop`
+`70e8f0a585d648b6179fd31829b5f42e18e07f23`; the preserved `origin/main`
+checkpoint is `bc7727b0b2e09ebbfef8b9c6c5dc729cd4aab4fb`.
+
+| Slice | RED evidence | GREEN evidence | Commit |
+|---|---|---|---|
+| Catalogue | `./mvnw -q -Dtest=NotificationErrorContractTest test` failed to compile because `NotificationErrors` did not exist. | The same command passed 2/2 descriptor cases. | `db7bde53a230cc3f69f1beea417a6d0bb739f6ac` |
+| Typed lookup failures | PostgreSQL API run compiled the new tests and failed 2 of 5 against legacy JSON/`RESOURCE_NOT_FOUND`; the contract test then failed to compile because the subscription exception did not exist. | `NotificationErrorContractTest` passed 4/4; PostgreSQL-backed `NotificationApiIT` passed 5/5. | `3308e6f42ce7b0a98e1e708209368208c8cfec88` |
+| Security and architecture boundary | Anonymous characterization passed before the controller change. Adding notification to the permanent architecture rule reported five legacy dependencies plus the expected obsolete-store error. | Architecture passed 3/3, contract passed 4/4, and PostgreSQL-backed API tests passed 6/6. | `ab5d635ffe864a1bf776449463b103ad3fc02624` |
+
+Final verification:
+
+- `./mvnw -B test`: 257 tests, 0 failures, 0 errors, 0 skipped.
+- `./mvnw -B verify -Pintegration-tests`: 257 unit/architecture tests and
+  89 PostgreSQL integration tests, all passing.
+- Notification legacy-dependency scan: zero matches.
+- Notification frozen-store scan: zero matches; exactly six obsolete entries
+  were removed.
+- Flyway V1 blob at base and HEAD:
+  `8784c468aa169952a87e726303d03abae4376add`.
+- Protected-file diff: empty for the Maven build, CI workflow, runtime/test
+  properties, Flyway V1, and `SecurityConfig`.
+- `git diff --check`: clean.
+
+Ordered documentation commits preceding implementation:
+`8aef4469729f6823273a191af93ee2b1b977684b` (design) and
+`80b555a937231377d4a951eb874d5a375cea9c6c` (plan).
+
+---
+
 ## Final acceptance audit
 
-- [ ] Approved catalogue contains exactly two notification-owned descriptors.
-- [ ] Typed failures use the approved descriptors and protected diagnostics.
-- [ ] Missing/deleted/revoked and wrong-owner resources are indistinguishable
+- [x] Approved catalogue contains exactly two notification-owned descriptors.
+- [x] Typed failures use the approved descriptors and protected diagnostics.
+- [x] Missing/deleted/revoked and wrong-owner resources are indistinguishable
       within their endpoint family.
-- [ ] Wrong-owner requests leave owner rows unchanged.
-- [ ] Anonymous access retains the existing shared 401 response.
-- [ ] Notification production code has zero legacy exception dependencies.
-- [ ] Exactly six obsolete notification frozen violations are removed.
-- [ ] Unexpected SQL/runtime failures are not translated to 404.
-- [ ] Successful notification and asynchronous behavior remains unchanged.
-- [ ] Flyway V1, dependencies, CI, runtime properties, and SecurityConfig remain
+- [x] Wrong-owner requests leave owner rows unchanged.
+- [x] Anonymous access retains the existing shared 401 response.
+- [x] Notification production code has zero legacy exception dependencies.
+- [x] Exactly six obsolete notification frozen violations are removed.
+- [x] Unexpected SQL/runtime failures are not translated to 404.
+- [x] Successful notification and asynchronous behavior remains unchanged.
+- [x] Flyway V1, dependencies, CI, runtime properties, and SecurityConfig remain
       unchanged.
-- [ ] Complete unit/architecture and PostgreSQL integration suites pass.
+- [x] Complete unit/architecture and PostgreSQL integration suites pass.
 - [ ] Jira contains design, approval, RED/GREEN, PR, review, merge, and final
       verification evidence.
 - [ ] `main` remains unchanged; only the approved PR is merged into `develop`.
