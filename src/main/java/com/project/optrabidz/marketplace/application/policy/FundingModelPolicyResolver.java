@@ -21,7 +21,9 @@ public class FundingModelPolicyResolver {
     public FundingModelPolicy resolve(FundingModel fundingModel) {
         FundingModelPolicy policy = policies.get(fundingModel);
         if (policy == null) {
-            throw new UnsupportedFundingModelException("Only DEBT funding model is currently supported");
+            throw new UnsupportedFundingModelException(
+                    "No marketplace policy supports funding model " + fundingModel
+            );
         }
         return policy;
     }

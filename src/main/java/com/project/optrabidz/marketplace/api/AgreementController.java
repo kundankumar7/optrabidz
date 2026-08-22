@@ -1,7 +1,5 @@
 package com.project.optrabidz.marketplace.api;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.common.api.pagination.PageResponse;
 import com.project.optrabidz.common.api.response.ApiResponse;
 import com.project.optrabidz.common.api.response.SuccessResponse;
@@ -29,9 +27,12 @@ public class AgreementController {
     public SuccessResponse<AgreementResponse> getAgreement(@PathVariable Long agreementId,
                                                            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                            HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                agreementService.getAgreementById(user.getAccountId(), user.getRole(), agreementId),
+                agreementService.getAgreementById(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        agreementId
+                ),
                 httpRequest
         );
     }
@@ -42,9 +43,13 @@ public class AgreementController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                agreementService.getMyStartupAgreements(user.getAccountId(), user.getRole(), page, size),
+                agreementService.getMyStartupAgreements(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        page,
+                        size
+                ),
                 httpRequest
         );
     }
@@ -55,17 +60,14 @@ public class AgreementController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                agreementService.getMyInvestorAgreements(user.getAccountId(), user.getRole(), page, size),
+                agreementService.getMyInvestorAgreements(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        page,
+                        size
+                ),
                 httpRequest
         );
-    }
-
-    private AuthenticatedUserPrincipal requirePrincipal(AuthenticatedUserPrincipal principal) {
-        if (principal == null) {
-            throw new ApiException(ErrorCode.AUTHENTICATION_REQUIRED, "Authentication is required");
-        }
-        return principal;
     }
 }

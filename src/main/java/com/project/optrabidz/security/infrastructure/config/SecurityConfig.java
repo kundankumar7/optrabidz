@@ -41,6 +41,25 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/admin/recovery/transfer").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/payment-providers/*/webhooks").permitAll()
                         .requestMatchers(
+                                "/api/v1/bids",
+                                "/api/v1/bids/**",
+                                "/api/v1/agreements/**"
+                        ).authenticated()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/funding-listings/recommended",
+                                "/api/v1/funding-listings/*/accepted-bid"
+                        ).authenticated()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/funding-listings",
+                                "/api/v1/funding-listings/*/actions/**"
+                        ).authenticated()
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/v1/funding-listings/*"
+                        ).authenticated()
+                        .requestMatchers(
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/change-password",
                                 "/api/v1/me",

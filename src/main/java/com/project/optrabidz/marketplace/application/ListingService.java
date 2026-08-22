@@ -14,7 +14,6 @@ import com.project.optrabidz.marketplace.application.dto.response.ListingRespons
 import com.project.optrabidz.marketplace.application.dto.response.PublishListingResponse;
 import com.project.optrabidz.marketplace.application.event.ListingClosedEvent;
 import com.project.optrabidz.marketplace.application.event.ListingPublishedEvent;
-import com.project.optrabidz.marketplace.application.exception.InvalidListingStateException;
 import com.project.optrabidz.marketplace.application.exception.ListingNotFoundException;
 import com.project.optrabidz.marketplace.application.exception.MarketplaceAccessException;
 import com.project.optrabidz.marketplace.application.factory.FundingListingFactory;
@@ -124,12 +123,12 @@ public class ListingService {
                 debtTerms.getCreatedAt(),
                 now
         );
-        applyListingTransition(() -> listing.updateDraft(
+        listing.updateDraft(
                 request.title(),
                 request.fundingPurposeDescription(),
                 updatedDebtTerms,
                 now
-        ));
+        );
         policyResolver.resolve(listing.getFundingModel()).validateListing(listing);
         return toListingResponse(listingRepository.save(listing));
     }
@@ -149,7 +148,7 @@ public class ListingService {
         policyResolver.resolve(listing.getFundingModel()).validateListing(listing);
 
         Instant now = Instant.now();
-        applyListingTransition(() -> listing.publish(now, listingExpiryPolicy.expiresAtFor(now)));
+        listing.publish(now, listingExpiryPolicy.expiresAtFor(now));
         FundingListing saved = listingRepository.save(listing);
         eventPublisher.publish(new ListingPublishedEvent(saved.getListingId(), saved.getStartupId(), accountId, now));
         return new PublishListingResponse(
@@ -171,7 +170,7 @@ public class ListingService {
         startupOwnsListingSpec.assertSatisfiedBy(startup, listing);
         listingCanBeClosedSpec.assertSatisfiedBy(listing);
         Instant now = Instant.now();
-        applyListingTransition(() -> listing.close(now));
+        listing.close(now);
         FundingListing saved = listingRepository.save(listing);
         eventPublisher.publish(new ListingClosedEvent(
                 saved.getListingId(),
@@ -215,7 +214,9 @@ public class ListingService {
 
     FundingListing getListing(Long listingId) {
         return listingRepository.findById(listingId)
-                .orElseThrow(() -> new ListingNotFoundException("Funding listing not found"));
+                .orElseThrow(() -> new ListingNotFoundException(
+                        "Funding listing " + listingId + " was not found"
+                ));
     }
 
     ListingResponse toListingResponse(FundingListing listing) {
@@ -235,15 +236,10 @@ public class ListingService {
 
     private void ensureRole(RoleType actualRole, RoleType expectedRole) {
         if (actualRole != expectedRole) {
-            throw new MarketplaceAccessException("Role is not allowed to perform this operation");
-        }
-    }
-
-    private void applyListingTransition(Runnable transition) {
-        try {
-            transition.run();
-        } catch (IllegalStateException exception) {
-            throw new InvalidListingStateException(exception.getMessage());
+            throw new MarketplaceAccessException(
+                    "Marketplace operation requires role " + expectedRole
+                            + " but actor role was " + actualRole
+            );
         }
     }
 
