@@ -9,6 +9,7 @@ import com.project.optrabidz.notification.application.dto.request.CreateNotifica
 import com.project.optrabidz.notification.application.dto.response.NotificationResponse;
 import com.project.optrabidz.notification.application.dto.response.NotificationSubscriptionResponse;
 import com.project.optrabidz.notification.application.exception.NotificationNotFoundException;
+import com.project.optrabidz.notification.application.exception.NotificationSubscriptionNotFoundException;
 import com.project.optrabidz.notification.application.rule.NotificationPlan;
 import com.project.optrabidz.notification.domain.model.ChannelDeliveryStatus;
 import com.project.optrabidz.notification.domain.model.ChannelType;
@@ -139,7 +140,10 @@ public class NotificationService {
                 .addValue("now", Timestamp.from(Instant.now())));
 
         if (updated == 0) {
-            throw new NotificationNotFoundException();
+            throw new NotificationNotFoundException(
+                    "Notification read mutation matched no active owned recipient: "
+                            + "recipientId=" + recipientId + " accountId=" + accountId
+            );
         }
     }
 
@@ -172,7 +176,10 @@ public class NotificationService {
                 .addValue("now", Timestamp.from(Instant.now())));
 
         if (updated == 0) {
-            throw new NotificationNotFoundException();
+            throw new NotificationNotFoundException(
+                    "Notification delete mutation matched no active owned recipient: "
+                            + "recipientId=" + recipientId + " accountId=" + accountId
+            );
         }
     }
 
@@ -236,7 +243,10 @@ public class NotificationService {
                 .addValue("now", Timestamp.from(Instant.now())));
 
         if (updated == 0) {
-            throw new NotificationNotFoundException();
+            throw new NotificationSubscriptionNotFoundException(
+                    "Subscription revoke mutation matched no active owned subscription: "
+                            + "subscriptionId=" + subscriptionId + " accountId=" + accountId
+            );
         }
     }
 

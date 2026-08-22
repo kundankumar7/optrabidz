@@ -11,9 +11,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultMatcher;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,6 +24,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -144,6 +149,159 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                 """, Integer.class, accountId);
         assertThat(duplicateNotificationCount).isEqualTo(1);
         assertThat(duplicateAuditCount).isEqualTo(1);
+    }
+
+    @Test
+    void notificationMutationHidesMissingDeletedAndWrongOwnerResources()
+            throws Exception {
+        AuthenticatedClient owner = registerAndLogin(RoleType.STARTUP);
+        AuthenticatedClient other = registerAndLogin(RoleType.INVESTOR);
+        long ownerAccountId = accountIdBySessionClient(owner);
+        outboxDispatcher.dispatchPending();
+
+        long recipientId = jdbcTemplate.queryForObject("""
+                select r.recipient_id
+                from notification_recipient r
+                join notification n on n.notification_id = r.notification_id
+                where r.account_id = ?
+                  and n.notification_name = 'ACCOUNT_REGISTERED'
+                """, Long.class, ownerAccountId);
+
+        String wrongOwnerRequestId = "kan-29-notification-private";
+        MvcResult wrongOwner = mockMvc.perform(patch(
+                        "/api/v1/notifications/{recipientId}/read", recipientId)
+                        .session(other.session())
+                        .cookie(other.xsrfCookie())
+                        .header("X-CSRF-TOKEN", other.csrfToken())
+                        .header("X-Request-Id", wrongOwnerRequestId))
+                .andExpectAll(notificationProblem(
+                        "NOTIFICATION_NOT_FOUND",
+                        "The requested notification was not found",
+                        wrongOwnerRequestId
+                ))
+                .andReturn();
+
+        assertBodyExcludes(
+                wrongOwner,
+                "accountId=",
+                "recipientId=",
+                "NOTIFICATION.RECIPIENT.NOT_FOUND"
+        );
+        assertThat(jdbcTemplate.queryForObject("""
+                select read_status::text
+                from notification_recipient
+                where recipient_id = ?
+                """, String.class, recipientId)).isEqualTo("UNREAD");
+
+        mockMvc.perform(delete("/api/v1/notifications/{recipientId}", recipientId)
+                        .session(owner.session())
+                        .cookie(owner.xsrfCookie())
+                        .header("X-CSRF-TOKEN", owner.csrfToken()))
+                .andExpect(status().isOk());
+
+        String deletedRequestId = "kan-29-notification-deleted";
+        mockMvc.perform(patch("/api/v1/notifications/{recipientId}/read", recipientId)
+                        .session(owner.session())
+                        .cookie(owner.xsrfCookie())
+                        .header("X-CSRF-TOKEN", owner.csrfToken())
+                        .header("X-Request-Id", deletedRequestId))
+                .andExpectAll(notificationProblem(
+                        "NOTIFICATION_NOT_FOUND",
+                        "The requested notification was not found",
+                        deletedRequestId
+                ));
+
+        String missingRequestId = "kan-29-notification-missing";
+        mockMvc.perform(delete("/api/v1/notifications/{recipientId}", Long.MAX_VALUE)
+                        .session(owner.session())
+                        .cookie(owner.xsrfCookie())
+                        .header("X-CSRF-TOKEN", owner.csrfToken())
+                        .header("X-Request-Id", missingRequestId))
+                .andExpectAll(notificationProblem(
+                        "NOTIFICATION_NOT_FOUND",
+                        "The requested notification was not found",
+                        missingRequestId
+                ));
+    }
+
+    @Test
+    void subscriptionRevocationHidesMissingRevokedAndWrongOwnerResources()
+            throws Exception {
+        AuthenticatedClient owner = registerAndLogin(RoleType.STARTUP);
+        AuthenticatedClient other = registerAndLogin(RoleType.INVESTOR);
+        long subscriptionId = createSubscription(
+                owner,
+                "PUSH",
+                "https://push.example.com/subscription/kan-29-private",
+                "kan-29-public-key",
+                "kan-29-auth-secret"
+        );
+
+        String wrongOwnerRequestId = "kan-29-subscription-private";
+        MvcResult wrongOwner = mockMvc.perform(delete(
+                        "/api/v1/notification-subscriptions/{subscriptionId}",
+                        subscriptionId)
+                        .session(other.session())
+                        .cookie(other.xsrfCookie())
+                        .header("X-CSRF-TOKEN", other.csrfToken())
+                        .header("X-Request-Id", wrongOwnerRequestId))
+                .andExpectAll(notificationProblem(
+                        "NOTIFICATION_SUBSCRIPTION_NOT_FOUND",
+                        "The requested notification subscription was not found",
+                        wrongOwnerRequestId
+                ))
+                .andReturn();
+
+        assertBodyExcludes(
+                wrongOwner,
+                "accountId=",
+                "subscriptionId=",
+                "kan-29-private",
+                "kan-29-public-key",
+                "kan-29-auth-secret",
+                "NOTIFICATION.SUBSCRIPTION.NOT_FOUND"
+        );
+        assertThat(jdbcTemplate.queryForObject("""
+                select subscription_state::text
+                from notification_subscription
+                where subscription_id = ?
+                """, String.class, subscriptionId)).isEqualTo("ACTIVE");
+
+        mockMvc.perform(delete(
+                        "/api/v1/notification-subscriptions/{subscriptionId}",
+                        subscriptionId)
+                        .session(owner.session())
+                        .cookie(owner.xsrfCookie())
+                        .header("X-CSRF-TOKEN", owner.csrfToken()))
+                .andExpect(status().isOk());
+
+        String revokedRequestId = "kan-29-subscription-revoked";
+        mockMvc.perform(delete(
+                        "/api/v1/notification-subscriptions/{subscriptionId}",
+                        subscriptionId)
+                        .session(owner.session())
+                        .cookie(owner.xsrfCookie())
+                        .header("X-CSRF-TOKEN", owner.csrfToken())
+                        .header("X-Request-Id", revokedRequestId))
+                .andExpectAll(notificationProblem(
+                        "NOTIFICATION_SUBSCRIPTION_NOT_FOUND",
+                        "The requested notification subscription was not found",
+                        revokedRequestId
+                ));
+
+        String missingRequestId = "kan-29-subscription-missing";
+        mockMvc.perform(delete(
+                        "/api/v1/notification-subscriptions/{subscriptionId}",
+                        Long.MAX_VALUE)
+                        .session(owner.session())
+                        .cookie(owner.xsrfCookie())
+                        .header("X-CSRF-TOKEN", owner.csrfToken())
+                        .header("X-Request-Id", missingRequestId))
+                .andExpectAll(notificationProblem(
+                        "NOTIFICATION_SUBSCRIPTION_NOT_FOUND",
+                        "The requested notification subscription was not found",
+                        missingRequestId
+                ));
     }
 
     @Test
@@ -380,12 +538,12 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                 .andExpect(status().isOk());
     }
 
-    private void createSubscription(AuthenticatedClient client,
+    private long createSubscription(AuthenticatedClient client,
                                     String channelType,
                                     String endpoint,
                                     String publicKey,
                                     String authSecret) throws Exception {
-        mockMvc.perform(post("/api/v1/notification-subscriptions")
+        String response = mockMvc.perform(post("/api/v1/notification-subscriptions")
                         .session(client.session())
                         .cookie(client.xsrfCookie())
                         .header("X-CSRF-TOKEN", client.csrfToken())
@@ -396,7 +554,52 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                                 "publicKey", publicKey == null ? "" : publicKey,
                                 "authSecret", authSecret == null ? "" : authSecret
                         ))))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.message")
+                        .value("Notification subscription saved"))
+                .andExpect(jsonPath("$.data.subscriptionId").isNumber())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        return objectMapper.readTree(response)
+                .path("data")
+                .path("subscriptionId")
+                .asLong();
+    }
+
+    private ResultMatcher[] notificationProblem(
+            String code,
+            String detail,
+            String requestId
+    ) {
+        return new ResultMatcher[] {
+                status().isNotFound(),
+                content().contentTypeCompatibleWith(
+                        MediaType.APPLICATION_PROBLEM_JSON),
+                header().string("X-Request-Id", requestId),
+                jsonPath("$.type").value(
+                        "urn:optrabidz:problem:"
+                                + code.toLowerCase(Locale.ROOT).replace('_', '-')),
+                jsonPath("$.title").value("Resource not found"),
+                jsonPath("$.status").value(404),
+                jsonPath("$.detail").value(detail),
+                jsonPath("$.instance").value(
+                        "urn:optrabidz:request:" + requestId),
+                jsonPath("$.code").value(code),
+                jsonPath("$.requestId").value(requestId),
+                jsonPath("$.timestamp").isString(),
+                jsonPath("$.success").doesNotExist(),
+                jsonPath("$.error").doesNotExist()
+        };
+    }
+
+    private void assertBodyExcludes(
+            MvcResult result,
+            String... protectedValues
+    ) throws Exception {
+        assertThat(result.getResponse().getContentAsString())
+                .doesNotContain(protectedValues);
     }
 
     private long accountIdBySessionClient(AuthenticatedClient client) throws Exception {
