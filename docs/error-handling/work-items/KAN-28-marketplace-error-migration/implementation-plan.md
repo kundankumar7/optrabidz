@@ -744,7 +744,7 @@ Add the architecture and empty legacy-scan evidence to Jira.
 - Produces: full regression evidence and one reviewable pull request targeting
   `develop`.
 
-- [ ] **Step 1: Run the complete unit suite**
+- [x] **Step 1: Run the complete unit suite**
 
 ```powershell
 .\mvnw.cmd -B test
@@ -754,7 +754,7 @@ Expected: all unit and architecture tests pass with zero failures and errors.
 Record the final count in the execution-evidence section added during this
 step; it must be at least the pre-change baseline of 227.
 
-- [ ] **Step 2: Run the complete PostgreSQL integration suite**
+- [x] **Step 2: Run the complete PostgreSQL integration suite**
 
 ```powershell
 docker version
@@ -765,7 +765,7 @@ Expected: Docker is available; all unit and PostgreSQL integration tests pass;
 Flyway applies and validates unchanged V1. The integration count must be at
 least the pre-change baseline of 76.
 
-- [ ] **Step 3: Verify scope, disclosure, and protected paths**
+- [x] **Step 3: Verify scope, disclosure, and protected paths**
 
 ```powershell
 $base = git merge-base origin/develop HEAD
@@ -787,7 +787,7 @@ Expected: only approved KAN-28 paths differ; protected paths have no diff; the
 legacy scan is empty. `SecurityConfig` is the only approved runtime
 configuration-class change.
 
-- [ ] **Step 4: Update navigation and execution evidence**
+- [x] **Step 4: Update navigation and execution evidence**
 
 Update `docs/error-handling/README.md` so the current-system paragraph includes
 marketplace and the KAN-28 row links both design and implementation plan.
@@ -847,20 +847,57 @@ delete the merged local and remote feature branch. `main` remains unchanged.
 
 ---
 
+## Execution evidence
+
+Observed on the approved feature branch before review handoff:
+
+- Branch base and current remote `develop`:
+  `b0aa4adab85c07f2e435980298ed550aea44db95`.
+- Verified implementation head before the evidence-only documentation commit:
+  `54518e4d8595e79b5ba515b47589750375f320de`.
+- Task 1 RED failed compilation before the module contract existed; GREEN passed
+  26 focused marketplace tests.
+- Task 2 RED produced one unit failure and five security failures; GREEN passed
+  26 focused unit tests and 6 security integration tests.
+- Task 3 RED produced five focused failures; GREEN passed 33 focused unit tests
+  and 5 repository integration tests.
+- Task 4 RED retained one legacy-envelope assertion failure; GREEN passed 21
+  focused integration tests: 10 API, 6 security, and 5 repository tests.
+- Task 5 RED rejected 27 obsolete frozen marketplace violations; GREEN passed
+  all 3 architecture tests. The financial frozen baseline remained unchanged.
+- The first full integration run exposed 13 order-dependent CSRF test failures.
+  The isolated RED sequence failed 3 of 9 tests. After replacing the mutating
+  test helper with the real cookie/header exchange, the same sequence passed
+  9 of 9 tests.
+- Final regression passed 253 unit and architecture tests and 86 PostgreSQL
+  integration tests with zero failures, errors, or skipped tests.
+- Marketplace production code has zero `ApiException` or `ErrorCode`
+  references, and public contract tests reject protected identifiers and
+  diagnostics.
+- Protected build, CI, Flyway, and runtime-property paths have no diff. Flyway
+  V1 has the same blob `8784c468aa169952a87e726303d03abae4376add`
+  at the branch base and verified implementation head.
+- Local and remote `main` remain at
+  `bc7727b0b2e09ebbfef8b9c6c5dc729cd4aab4fb`.
+- Jira is **In Progress**. No pull request has been opened or merged at this
+  evidence checkpoint.
+
+---
+
 ## Completion checklist
 
-- [ ] Approved descriptors and typed marketplace exceptions are implemented.
-- [ ] Public listing browse and detail remain anonymous.
-- [ ] Actor-required marketplace endpoints use the shared authentication
+- [x] Approved descriptors and typed marketplace exceptions are implemented.
+- [x] Public listing browse and detail remain anonymous.
+- [x] Actor-required marketplace endpoints use the shared authentication
       boundary and 401 Problem Details.
-- [ ] Marketplace controllers contain no local legacy authentication error.
-- [ ] Listing, bid, agreement, access, state, duplicate, acceptance, and
+- [x] Marketplace controllers contain no local legacy authentication error.
+- [x] Listing, bid, agreement, access, state, duplicate, acceptance, and
       unsupported-model failures use approved semantics.
-- [ ] Known failures stop before prohibited writes and side effects.
-- [ ] Unexpected domain and unrelated persistence failures are not mislabeled.
-- [ ] Marketplace production code has no legacy exception dependency.
-- [ ] Public responses contain no protected diagnostic context.
-- [ ] Architecture, focused, full unit, and PostgreSQL integration tests pass.
-- [ ] Flyway V1, dependencies, runtime properties, sessions, roles, CSRF, and
+- [x] Known failures stop before prohibited writes and side effects.
+- [x] Unexpected domain and unrelated persistence failures are not mislabeled.
+- [x] Marketplace production code has no legacy exception dependency.
+- [x] Public responses contain no protected diagnostic context.
+- [x] Architecture, focused, full unit, and PostgreSQL integration tests pass.
+- [x] Flyway V1, dependencies, runtime properties, sessions, roles, CSRF, and
       `main` remain unchanged.
 - [ ] Pull request targets `develop` and Jira matches the actual delivery stage.

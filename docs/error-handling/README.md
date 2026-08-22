@@ -14,9 +14,9 @@ Expected application failures use a transport-neutral core:
 4. clients receive RFC 9457 `application/problem+json` responses without
    internal identifiers, secrets, stack traces, or raw exception messages.
 
-Identity, security, participation, classification, and governance use the
-neutral contract. The current module catalogue and login-disclosure policy are
-documented in the [KAN-24 module migration design](work-items/KAN-24-module-migration/design.md).
+Identity, security, participation, classification, governance, and marketplace
+use the neutral contract. The current module catalogue and login-disclosure
+policy are documented in the [KAN-24 module migration design](work-items/KAN-24-module-migration/design.md).
 
 ## Work-item History
 
