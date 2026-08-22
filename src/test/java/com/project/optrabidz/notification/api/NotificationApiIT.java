@@ -46,6 +46,24 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
     }
 
     @Test
+    void anonymousNotificationQueryUsesSharedAuthenticationBoundary()
+            throws Exception {
+        String requestId = "kan-29-notification-authentication";
+
+        mockMvc.perform(get("/api/v1/notifications/me")
+                        .header("X-Request-Id", requestId))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(
+                        MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.code").value(
+                        "AUTHENTICATION_REQUIRED"))
+                .andExpect(jsonPath("$.requestId").value(requestId))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
+    }
+
+    @Test
     void outboxDispatchCreatesNotificationAndAuditForRegisteredAccount() throws Exception {
         AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
 
