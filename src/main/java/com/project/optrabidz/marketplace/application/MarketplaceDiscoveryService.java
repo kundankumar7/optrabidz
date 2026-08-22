@@ -74,7 +74,10 @@ public class MarketplaceDiscoveryService {
                                                                            int page,
                                                                            int size) {
         if (roleType != RoleType.INVESTOR) {
-            throw new MarketplaceAccessException("Role is not allowed to perform this operation");
+            throw new MarketplaceAccessException(
+                    "Marketplace recommendations require role INVESTOR"
+                            + " but actor role was " + roleType
+            );
         }
 
         RecommendationRequest request = new RecommendationRequest(

@@ -1,6 +1,7 @@
 package com.project.optrabidz.marketplace.application;
 
 import com.project.optrabidz.common.event.EventPublisher;
+import com.project.optrabidz.common.error.ApplicationException;
 import com.project.optrabidz.governance.application.common.GovernanceDecision;
 import com.project.optrabidz.governance.application.constraint.CrossLifecycleConstraintController;
 import com.project.optrabidz.governance.application.constraint.EligibilityEvaluationController;
@@ -10,7 +11,8 @@ import com.project.optrabidz.marketplace.application.dto.request.BidDebtTermsReq
 import com.project.optrabidz.marketplace.application.dto.request.SubmitBidRequest;
 import com.project.optrabidz.marketplace.application.dto.response.AcceptBidResponse;
 import com.project.optrabidz.marketplace.application.dto.response.BidResponse;
-import com.project.optrabidz.marketplace.application.exception.BidAlreadyAcceptedException;
+import com.project.optrabidz.marketplace.application.error.MarketplaceErrors;
+import com.project.optrabidz.marketplace.application.exception.BidAcceptanceConflictException;
 import com.project.optrabidz.marketplace.application.factory.AgreementFactory;
 import com.project.optrabidz.marketplace.application.factory.BidFactory;
 import com.project.optrabidz.marketplace.application.factory.DebtTermsFactory;
@@ -47,6 +49,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -99,6 +102,9 @@ class BidServiceTest {
     @Mock
     private EventPublisher eventPublisher;
 
+    @Mock
+    private BidCanBeWithdrawnSpec bidCanBeWithdrawnSpec;
+
     private BidService service;
 
     @BeforeEach
@@ -124,7 +130,7 @@ class BidServiceTest {
                 eventPublisher,
                 responseMapper,
                 new BidCanBeSubmittedSpec(),
-                new BidCanBeWithdrawnSpec(),
+                bidCanBeWithdrawnSpec,
                 new BidCanBeRejectedSpec(),
                 new BidCanBeAcceptedSpec(),
                 new StartupOwnsListingSpec(),
@@ -211,8 +217,12 @@ class BidServiceTest {
                 BID_ID,
                 new BidActionRequest("Looks good", "CONFIRM")
         ))
-                .isInstanceOf(BidAlreadyAcceptedException.class)
-                .hasMessageContaining("Listing already has an accepted bid");
+                .isInstanceOf(BidAcceptanceConflictException.class)
+                .hasMessageContaining("Listing 101")
+                .hasMessageContaining("candidate bid=501")
+                .satisfies(failure -> assertThat(
+                                ((ApplicationException) failure).descriptor())
+                        .isSameAs(MarketplaceErrors.BID_ACCEPTANCE_CONFLICT));
 
         verify(listingRepository, never()).markAgreementReachedIfOpen(any(Long.class), any(Instant.class));
         verify(listingRepository, never()).save(any());
@@ -220,6 +230,106 @@ class BidServiceTest {
         verify(bidRepository, never()).rejectOtherSubmittedBids(any(), any(), any());
         verify(agreementRepository, never()).save(any());
         verify(financeAgreementPort, never()).onAgreementCreated(any());
+    }
+
+    @Test
+    void conditionalListingUpdateConflictStopsEveryAcceptanceSideEffect() {
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(startup()));
+        when(bidRepository.findById(BID_ID))
+                .thenReturn(Optional.of(submittedBid()));
+        when(listingRepository.findById(LISTING_ID))
+                .thenReturn(Optional.of(openListing()));
+        when(bidRepository.existsAcceptedByListingId(LISTING_ID)).thenReturn(false);
+        when(crossLifecycleConstraintController.evaluateAgreementCreation(
+                BidState.ACCEPTED.name()
+        )).thenReturn(GovernanceDecision.allow("Accepted bid can create agreement"));
+        when(listingRepository.markAgreementReachedIfOpen(
+                eq(LISTING_ID),
+                any(Instant.class)
+        )).thenReturn(0);
+
+        assertThatThrownBy(() -> service.acceptBid(
+                STARTUP_ACCOUNT_ID,
+                RoleType.STARTUP,
+                BID_ID,
+                new BidActionRequest("Looks good", "CONFIRM")
+        ))
+                .isInstanceOf(BidAcceptanceConflictException.class)
+                .satisfies(failure -> assertThat(
+                                ((ApplicationException) failure).descriptor())
+                        .isSameAs(MarketplaceErrors.BID_ACCEPTANCE_CONFLICT));
+
+        verify(bidRepository, never()).saveAndFlush(any());
+        verify(agreementRepository, never()).save(any());
+        verify(financeAgreementPort, never()).onAgreementCreated(any());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
+    void unrelatedPersistenceFailureIsNotRelabeledAsAcceptanceConflict() {
+        DataIntegrityViolationException persistenceFailure =
+                new DataIntegrityViolationException("unrelated agreement constraint");
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(startup()));
+        when(bidRepository.findById(BID_ID))
+                .thenReturn(Optional.of(submittedBid()));
+        when(listingRepository.findById(LISTING_ID))
+                .thenReturn(
+                        Optional.of(openListing()),
+                        Optional.of(agreementReachedListing())
+                );
+        when(bidRepository.existsAcceptedByListingId(LISTING_ID)).thenReturn(false);
+        when(crossLifecycleConstraintController.evaluateAgreementCreation(
+                BidState.ACCEPTED.name()
+        )).thenReturn(GovernanceDecision.allow("Accepted bid can create agreement"));
+        when(listingRepository.markAgreementReachedIfOpen(
+                eq(LISTING_ID),
+                any(Instant.class)
+        )).thenReturn(1);
+        when(bidRepository.saveAndFlush(any(Bid.class)))
+                .thenThrow(persistenceFailure);
+
+        assertThatThrownBy(() -> service.acceptBid(
+                STARTUP_ACCOUNT_ID,
+                RoleType.STARTUP,
+                BID_ID,
+                new BidActionRequest("Looks good", "CONFIRM")
+        )).isSameAs(persistenceFailure);
+
+        verify(agreementRepository, never()).save(any());
+        verify(financeAgreementPort, never()).onAgreementCreated(any());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
+    void unexpectedBidInvariantIsNotRelabeledAsBidConflict() {
+        Bid rejectedBid = Bid.builder()
+                .bidId(BID_ID)
+                .listingId(LISTING_ID)
+                .investorId(INVESTOR_ID)
+                .fundingModel(FundingModel.DEBT)
+                .bidState(BidState.REJECTED)
+                .proposalMessage("We are interested in funding this listing.")
+                .createdAt(now().minusSeconds(30))
+                .rejectedAt(now().minusSeconds(10))
+                .debtTerms(bidDebtTerms())
+                .build();
+        when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(investor()));
+        when(bidRepository.findById(BID_ID)).thenReturn(Optional.of(rejectedBid));
+
+        assertThatThrownBy(() -> service.withdrawBid(
+                INVESTOR_ACCOUNT_ID,
+                RoleType.INVESTOR,
+                BID_ID,
+                new BidActionRequest("No longer interested", null)
+        ))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Only SUBMITTED bids can be withdrawn");
+
+        verify(bidRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
     }
 
     private static SubmitBidRequest submitBidRequest() {
