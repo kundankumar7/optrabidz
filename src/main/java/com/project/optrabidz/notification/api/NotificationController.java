@@ -1,7 +1,5 @@
 package com.project.optrabidz.notification.api;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.common.api.pagination.PageResponse;
 import com.project.optrabidz.common.api.response.ApiResponse;
 import com.project.optrabidz.common.api.response.MessageData;
@@ -42,9 +40,8 @@ public class NotificationController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                notificationService.getMyFeed(user.getAccountId(), readStatus, page, size),
+                notificationService.getMyFeed(principal.getAccountId(), readStatus, page, size),
                 httpRequest
         );
     }
@@ -53,9 +50,8 @@ public class NotificationController {
     public SuccessResponse<NotificationFeedResponse> getMyNotificationSummary(
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                new NotificationFeedResponse(notificationService.unreadCount(user.getAccountId())),
+                new NotificationFeedResponse(notificationService.unreadCount(principal.getAccountId())),
                 httpRequest
         );
     }
@@ -64,16 +60,14 @@ public class NotificationController {
     public SuccessResponse<MessageData> markRead(@PathVariable Long recipientId,
                                                  @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                  HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
-        notificationService.markRead(user.getAccountId(), recipientId);
+        notificationService.markRead(principal.getAccountId(), recipientId);
         return ApiResponse.success(new MessageData("Notification marked as read"), httpRequest);
     }
 
     @PatchMapping("/notifications/me/read-all")
     public SuccessResponse<MessageData> markAllRead(@AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                     HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
-        int updated = notificationService.markAllRead(user.getAccountId());
+        int updated = notificationService.markAllRead(principal.getAccountId());
         return ApiResponse.success(new MessageData("Marked " + updated + " notification(s) as read"), httpRequest);
     }
 
@@ -81,8 +75,7 @@ public class NotificationController {
     public SuccessResponse<MessageData> deleteNotification(@PathVariable Long recipientId,
                                                            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                            HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
-        notificationService.delete(user.getAccountId(), recipientId);
+        notificationService.delete(principal.getAccountId(), recipientId);
         return ApiResponse.success(new MessageData("Notification deleted"), httpRequest);
     }
 
@@ -90,23 +83,14 @@ public class NotificationController {
     public SuccessResponse<NotificationSubscriptionResponse> createSubscription(@RequestBody @Valid CreateNotificationSubscriptionRequest request,
                                                                                 @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                                                 HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
-        return ApiResponse.success(notificationService.saveSubscription(user.getAccountId(), request), httpRequest);
+        return ApiResponse.success(notificationService.saveSubscription(principal.getAccountId(), request), httpRequest);
     }
 
     @DeleteMapping("/notification-subscriptions/{subscriptionId}")
     public SuccessResponse<MessageData> revokeSubscription(@PathVariable Long subscriptionId,
                                                            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                            HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
-        notificationService.revokeSubscription(user.getAccountId(), subscriptionId);
+        notificationService.revokeSubscription(principal.getAccountId(), subscriptionId);
         return ApiResponse.success(new MessageData("Notification subscription revoked"), httpRequest);
-    }
-
-    private AuthenticatedUserPrincipal requirePrincipal(AuthenticatedUserPrincipal principal) {
-        if (principal == null) {
-            throw new ApiException(ErrorCode.AUTHENTICATION_REQUIRED, "Authentication is required");
-        }
-        return principal;
     }
 }

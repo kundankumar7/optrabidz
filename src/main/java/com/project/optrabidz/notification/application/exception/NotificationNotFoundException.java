@@ -1,10 +1,14 @@
 package com.project.optrabidz.notification.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.notification.application.error.NotificationErrors;
 
-public class NotificationNotFoundException extends ApiException {
-    public NotificationNotFoundException() {
-        super(ErrorCode.RESOURCE_NOT_FOUND, "Notification was not found");
+public final class NotificationNotFoundException extends ApplicationException {
+    public NotificationNotFoundException(String diagnosticMessage) {
+        super(
+                NotificationErrors.NOTIFICATION_NOT_FOUND,
+                "NOTIFICATION.RECIPIENT.NOT_FOUND",
+                diagnosticMessage
+        );
     }
 }

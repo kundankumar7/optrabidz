@@ -1,0 +1,14 @@
+flowchart TD
+    Request["Notification API request"] --> Security{"Authenticated?"}
+    Security -->|No| Unauthorized["Existing shared 401 Problem Details"]
+    Security -->|Yes| Controller["NotificationController"]
+    Controller --> Service["NotificationService"]
+    Service --> Mutation["Conditional SQL: resource ID + account ID"]
+    Mutation -->|One row| Success["Existing success response"]
+    Mutation -->|Zero rows: notification| NotificationError["NotificationNotFoundException"]
+    Mutation -->|Zero rows: subscription| SubscriptionError["NotificationSubscriptionNotFoundException"]
+    NotificationError --> Neutral["ApplicationException + NotificationErrors"]
+    SubscriptionError --> Neutral
+    Neutral --> Adapter["Existing RFC 9457 REST adapter"]
+    Adapter --> Safe404["Ownership-private 404 Problem Details"]
+    Mutation -->|Unexpected failure| Internal["Existing generic 500 path"]
