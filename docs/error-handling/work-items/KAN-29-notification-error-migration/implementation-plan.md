@@ -929,7 +929,7 @@ git diff --check
 
 Expected: documentation links and diff checks pass.
 
-- [ ] **Step 5: Commit final evidence and push**
+- [x] **Step 5: Commit final evidence and push**
 
 ```powershell
 git add -- `
@@ -941,7 +941,7 @@ git push origin feature/KAN-29-notification-error-migration
 
 Verify the worktree is clean and local/remote feature heads match.
 
-- [ ] **Step 6: Create the pull request without merging**
+- [x] **Step 6: Create the pull request without merging**
 
 Write `.git/KAN-29-pr-body.md` with these sections and exact verified values:
 
@@ -1036,6 +1036,8 @@ Final verification:
 - Protected-file diff: empty for the Maven build, CI workflow, runtime/test
   properties, Flyway V1, and `SecurityConfig`.
 - `git diff --check`: clean.
+- Review handoff: [PR #26](https://github.com/kundankumar7/optrabidz/pull/26)
+  targets `develop`; no merge was performed.
 
 Ordered documentation commits preceding implementation:
 `8aef4469729f6823273a191af93ee2b1b977684b` (design) and
