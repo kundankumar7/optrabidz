@@ -1,10 +1,14 @@
 package com.project.optrabidz.marketplace.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.marketplace.application.error.MarketplaceErrors;
 
-public class BidNotFoundException extends ApiException {
-    public BidNotFoundException(String message) {
-        super(ErrorCode.RESOURCE_NOT_FOUND, message);
+public final class BidNotFoundException extends ApplicationException {
+    public BidNotFoundException(String diagnosticMessage) {
+        super(
+                MarketplaceErrors.BID_NOT_FOUND,
+                "MARKETPLACE.BID.NOT_FOUND",
+                diagnosticMessage
+        );
     }
 }

@@ -1,10 +1,14 @@
 package com.project.optrabidz.marketplace.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.marketplace.application.error.MarketplaceErrors;
 
-public class ListingNotFoundException extends ApiException {
-    public ListingNotFoundException(String message) {
-        super(ErrorCode.RESOURCE_NOT_FOUND, message);
+public final class ListingNotFoundException extends ApplicationException {
+    public ListingNotFoundException(String diagnosticMessage) {
+        super(
+                MarketplaceErrors.LISTING_NOT_FOUND,
+                "MARKETPLACE.LISTING.NOT_FOUND",
+                diagnosticMessage
+        );
     }
 }

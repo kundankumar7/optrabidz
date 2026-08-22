@@ -1,10 +1,14 @@
 package com.project.optrabidz.marketplace.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.marketplace.application.error.MarketplaceErrors;
 
-public class AgreementNotFoundException extends ApiException {
-    public AgreementNotFoundException(String message) {
-        super(ErrorCode.RESOURCE_NOT_FOUND, message);
+public final class AgreementNotFoundException extends ApplicationException {
+    public AgreementNotFoundException(String diagnosticMessage) {
+        super(
+                MarketplaceErrors.AGREEMENT_NOT_FOUND,
+                "MARKETPLACE.AGREEMENT.NOT_FOUND",
+                diagnosticMessage
+        );
     }
 }
