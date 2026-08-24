@@ -6,9 +6,10 @@ import com.project.optrabidz.financial.application.dto.response.PaymentIntentRes
 import com.project.optrabidz.financial.application.dto.response.RepaymentProgressResponse;
 import com.project.optrabidz.financial.application.dto.response.SettlementResponse;
 import com.project.optrabidz.financial.application.exception.FinancialAccessException;
-import com.project.optrabidz.financial.application.exception.InvalidPaymentStateException;
 import com.project.optrabidz.financial.application.exception.PaymentAlreadyConfirmedException;
 import com.project.optrabidz.financial.application.exception.UnsupportedPaymentMethodException;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.common.error.ErrorDescriptor;
 import com.project.optrabidz.financial.application.strategy.LocalPaymentStrategy;
 import com.project.optrabidz.financial.application.strategy.PaymentMethodStrategy;
 import com.project.optrabidz.financial.application.strategy.PaymentMethodStrategyRegistry;
@@ -61,6 +62,14 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_ALREADY_CONFIRMED;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_ATTEMPT_NOT_FOUND;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_INTENT_EXPIRED;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_INTENT_NOT_ACTIVE;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_INTENT_NOT_FOUND;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_METHOD_UNSUPPORTED;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_PROVIDER_MISMATCH;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_STATE_CONFLICT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -297,7 +306,8 @@ class FinancialServiceTest {
     @Test
     void payerCanCreatePaymentAttemptAndPaymentIntentMovesToPending() {
         PaymentIntent intent = settlementPaymentIntent(PaymentState.CREATED);
-        when(paymentIntentRepository.findById(PAYMENT_INTENT_ID)).thenReturn(Optional.of(intent));
+        when(paymentIntentRepository.findByIdForPayer(PAYMENT_INTENT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(intent));
         when(paymentProviderMethodRepository.existsByProviderCodeAndMethodTypeAndCurrencyCodeAndEnabledTrue(
                 LocalPaymentStrategy.PROVIDER_CODE,
                 PaymentMethodType.OTHER,
@@ -332,13 +342,211 @@ class FinancialServiceTest {
     }
 
     @Test
+    void missingParticipantIntentUsesNeutralNotFoundFailure() {
+        when(paymentIntentRepository.findByIdForParticipant(PAYMENT_INTENT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.empty());
+
+        assertPaymentFailure(
+                () -> service.getPaymentIntent(INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, PAYMENT_INTENT_ID),
+                PAYMENT_INTENT_NOT_FOUND
+        );
+
+        verify(paymentIntentRepository).findByIdForParticipant(PAYMENT_INTENT_ID, INVESTOR_ACCOUNT_ID);
+        verify(paymentIntentRepository, never()).findById(PAYMENT_INTENT_ID);
+    }
+
+    @Test
+    void nonOwnedParticipantIntentUsesSameNeutralNotFoundFailure() {
+        when(paymentIntentRepository.findByIdForParticipant(PAYMENT_INTENT_ID, STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.empty());
+
+        assertPaymentFailure(
+                () -> service.getPaymentIntent(STARTUP_ACCOUNT_ID, RoleType.STARTUP, PAYMENT_INTENT_ID),
+                PAYMENT_INTENT_NOT_FOUND
+        );
+
+        verify(paymentIntentRepository).findByIdForParticipant(PAYMENT_INTENT_ID, STARTUP_ACCOUNT_ID);
+        verify(paymentIntentRepository, never()).findById(PAYMENT_INTENT_ID);
+    }
+
+    @Test
+    void administratorUsesGlobalIntentLookup() {
+        PaymentIntent intent = settlementPaymentIntent(PaymentState.CREATED);
+        when(paymentIntentRepository.findById(PAYMENT_INTENT_ID)).thenReturn(Optional.of(intent));
+
+        PaymentIntentResponse response = service.getPaymentIntent(999L, RoleType.ADMIN, PAYMENT_INTENT_ID);
+
+        assertThat(response.paymentIntentId()).isEqualTo(PAYMENT_INTENT_ID);
+        verify(paymentIntentRepository).findById(PAYMENT_INTENT_ID);
+        verify(paymentIntentRepository, never()).findByIdForParticipant(any(), any());
+    }
+
+    @Test
+    void nonOwnedPayerIntentUsesNeutralNotFoundFailure() {
+        when(paymentIntentRepository.findByIdForPayer(PAYMENT_INTENT_ID, STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.empty());
+
+        assertPaymentFailure(
+                () -> service.createPaymentAttempt(
+                        STARTUP_ACCOUNT_ID,
+                        RoleType.STARTUP,
+                        PAYMENT_INTENT_ID,
+                        new CreatePaymentAttemptRequest(null, null)
+                ),
+                PAYMENT_INTENT_NOT_FOUND
+        );
+
+        verify(paymentIntentRepository).findByIdForPayer(PAYMENT_INTENT_ID, STARTUP_ACCOUNT_ID);
+        verify(paymentIntentRepository, never()).findById(PAYMENT_INTENT_ID);
+    }
+
+    @Test
+    void nonOwnedLocalAttemptUsesNeutralNotFoundFailure() {
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.empty());
+
+        assertPaymentFailure(
+                () -> service.confirmLocalPaymentAttempt(
+                        STARTUP_ACCOUNT_ID,
+                        RoleType.STARTUP,
+                        PAYMENT_ATTEMPT_ID
+                ),
+                PAYMENT_ATTEMPT_NOT_FOUND
+        );
+
+        verify(paymentAttemptRepository).findByIdForPayer(PAYMENT_ATTEMPT_ID, STARTUP_ACCOUNT_ID);
+        verify(paymentAttemptRepository, never()).findById(PAYMENT_ATTEMPT_ID);
+    }
+
+    @Test
+    void wrongProviderCallbackUsesNeutralNotFoundFailure() {
+        when(paymentAttemptRepository.findByIdForProvider(PAYMENT_ATTEMPT_ID, "UPI"))
+                .thenReturn(Optional.empty());
+
+        assertPaymentFailure(
+                () -> service.confirmProviderPaymentAttempt("UPI", PAYMENT_ATTEMPT_ID, "UPI-PAYMENT-1001"),
+                PAYMENT_ATTEMPT_NOT_FOUND
+        );
+
+        verify(paymentAttemptRepository).findByIdForProvider(PAYMENT_ATTEMPT_ID, "UPI");
+        verify(paymentAttemptRepository, never()).findById(PAYMENT_ATTEMPT_ID);
+        verify(paymentIntentRepository, never()).findById(any());
+    }
+
+    @Test
+    void ownedNonLocalAttemptOnLocalEndpointUsesProviderMismatchFailure() {
+        PaymentAttempt attempt = paymentAttempt("RAZORPAY", PaymentAttemptState.INITIATED);
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(attempt));
+
+        assertPaymentFailure(
+                () -> service.confirmLocalPaymentAttempt(
+                        INVESTOR_ACCOUNT_ID,
+                        RoleType.INVESTOR,
+                        PAYMENT_ATTEMPT_ID
+                ),
+                PAYMENT_PROVIDER_MISMATCH
+        );
+    }
+
+    @Test
+    void administratorUsesGlobalAttemptLookupBeforeLocalProviderCheck() {
+        PaymentAttempt attempt = paymentAttempt("RAZORPAY", PaymentAttemptState.INITIATED);
+        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID)).thenReturn(Optional.of(attempt));
+
+        assertPaymentFailure(
+                () -> service.confirmLocalPaymentAttempt(999L, RoleType.ADMIN, PAYMENT_ATTEMPT_ID),
+                PAYMENT_PROVIDER_MISMATCH
+        );
+
+        verify(paymentAttemptRepository).findById(PAYMENT_ATTEMPT_ID);
+        verify(paymentAttemptRepository, never()).findByIdForPayer(any(), any());
+    }
+
+    @Test
+    void unsupportedProviderMethodUsesNeutralBusinessRuleFailure() {
+        PaymentIntent intent = settlementPaymentIntent(PaymentState.CREATED);
+        when(paymentIntentRepository.findByIdForPayer(PAYMENT_INTENT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(intent));
+
+        assertPaymentFailure(
+                () -> service.createPaymentAttempt(
+                        INVESTOR_ACCOUNT_ID,
+                        RoleType.INVESTOR,
+                        PAYMENT_INTENT_ID,
+                        new CreatePaymentAttemptRequest("RAZORPAY", PaymentMethodType.CARD)
+                ),
+                PAYMENT_METHOD_UNSUPPORTED
+        );
+    }
+
+    @Test
+    void confirmedIntentUsesAlreadyConfirmedFailure() {
+        when(paymentIntentRepository.findByIdForPayer(PAYMENT_INTENT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(settlementPaymentIntent(PaymentState.PAYMENT_CONFIRMED)));
+
+        assertPaymentFailure(
+                () -> service.createPaymentAttempt(
+                        INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, PAYMENT_INTENT_ID, null),
+                PAYMENT_ALREADY_CONFIRMED
+        );
+    }
+
+    @Test
+    void expiredIntentUsesExpiredFailure() {
+        when(paymentIntentRepository.findByIdForPayer(PAYMENT_INTENT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(settlementPaymentIntent(PaymentState.PAYMENT_EXPIRED)));
+
+        assertPaymentFailure(
+                () -> service.createPaymentAttempt(
+                        INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, PAYMENT_INTENT_ID, null),
+                PAYMENT_INTENT_EXPIRED
+        );
+    }
+
+    @Test
+    void otherInactiveIntentUsesNotActiveFailure() {
+        when(paymentIntentRepository.findByIdForPayer(PAYMENT_INTENT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(settlementPaymentIntent(PaymentState.PAYMENT_FAILED)));
+
+        assertPaymentFailure(
+                () -> service.createPaymentAttempt(
+                        INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, PAYMENT_INTENT_ID, null),
+                PAYMENT_INTENT_NOT_ACTIVE
+        );
+    }
+
+    @Test
+    void oppositeAttemptTerminalStateUsesStateConflictFailure() {
+        PaymentAttempt failedAttempt = paymentAttempt(LocalPaymentStrategy.PROVIDER_CODE, PaymentAttemptState.FAILED);
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(failedAttempt), Optional.of(failedAttempt));
+        when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
+                .thenReturn(Optional.of(settlementPaymentIntent(PaymentState.PAYMENT_PENDING)));
+        when(paymentAttemptRepository.confirmActive(
+                eq(PAYMENT_ATTEMPT_ID),
+                eq("LOCAL-PAYMENT-" + PAYMENT_ATTEMPT_ID),
+                any(Instant.class)
+        )).thenReturn(0);
+
+        assertPaymentFailure(
+                () -> service.confirmLocalPaymentAttempt(
+                        INVESTOR_ACCOUNT_ID,
+                        RoleType.INVESTOR,
+                        PAYMENT_ATTEMPT_ID
+                ),
+                PAYMENT_STATE_CONFLICT
+        );
+    }
+
+    @Test
     void confirmingSettlementPaymentAttemptConfirmsSettlementAndCreatesRepaymentSchedule() {
         PaymentAttempt attempt = initiatedLocalAttempt();
         PaymentAttempt confirmedAttempt = confirmedLocalAttempt();
         PaymentIntent intent = settlementPaymentIntent(PaymentState.PAYMENT_PENDING);
         PaymentIntent confirmedIntent = settlementPaymentIntent(PaymentState.PAYMENT_CONFIRMED);
         Settlement settlement = settlement();
-        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID))
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, INVESTOR_ACCOUNT_ID))
                 .thenReturn(Optional.of(attempt), Optional.of(confirmedAttempt));
         when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
                 .thenReturn(Optional.of(intent), Optional.of(confirmedIntent));
@@ -402,7 +610,7 @@ class FinancialServiceTest {
         PaymentIntent intent = settlementPaymentIntent(PaymentState.PAYMENT_PENDING);
         PaymentIntent confirmedIntent = settlementPaymentIntent(PaymentState.PAYMENT_CONFIRMED);
         Settlement settlement = settlement();
-        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID))
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, INVESTOR_ACCOUNT_ID))
                 .thenReturn(Optional.of(attempt), Optional.of(confirmedAttempt));
         when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
                 .thenReturn(Optional.of(intent), Optional.of(confirmedIntent));
@@ -447,7 +655,8 @@ class FinancialServiceTest {
         PaymentIntent intent = settlementPaymentIntent(PaymentState.PAYMENT_PENDING);
         PaymentIntent confirmedIntent = settlementPaymentIntent(PaymentState.PAYMENT_CONFIRMED);
         Settlement settlement = settlement();
-        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID))
+        when(paymentAttemptRepository.findByIdForProvider(
+                PAYMENT_ATTEMPT_ID, LocalPaymentStrategy.PROVIDER_CODE))
                 .thenReturn(Optional.of(attempt), Optional.of(confirmedAttempt));
         when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
                 .thenReturn(Optional.of(intent), Optional.of(confirmedIntent));
@@ -486,7 +695,8 @@ class FinancialServiceTest {
         PaymentAttempt attempt = initiatedLocalAttempt();
         PaymentAttempt confirmedAttempt = confirmedLocalAttempt("LOCAL-PROVIDER-PAYMENT-1001");
         PaymentIntent intent = settlementPaymentIntent(PaymentState.PAYMENT_PENDING);
-        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID))
+        when(paymentAttemptRepository.findByIdForProvider(
+                PAYMENT_ATTEMPT_ID, LocalPaymentStrategy.PROVIDER_CODE))
                 .thenReturn(Optional.of(attempt), Optional.of(confirmedAttempt));
         when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
                 .thenReturn(Optional.of(intent), Optional.of(settlementPaymentIntent(PaymentState.PAYMENT_CONFIRMED)));
@@ -508,18 +718,20 @@ class FinancialServiceTest {
 
     @Test
     void providerCallbackRejectsProviderMismatchBeforeConfirmingState() {
-        PaymentAttempt attempt = initiatedLocalAttempt();
-        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID)).thenReturn(Optional.of(attempt));
+        when(paymentAttemptRepository.findByIdForProvider(PAYMENT_ATTEMPT_ID, "UPI"))
+                .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.confirmProviderPaymentAttempt(
-                "UPI",
-                PAYMENT_ATTEMPT_ID,
-                "UPI-PAYMENT-1001"
-        ))
-                .isInstanceOf(UnsupportedPaymentMethodException.class)
-                .hasMessageContaining("Payment attempt does not belong to this provider");
+        assertPaymentFailure(
+                () -> service.confirmProviderPaymentAttempt(
+                        "UPI",
+                        PAYMENT_ATTEMPT_ID,
+                        "UPI-PAYMENT-1001"
+                ),
+                PAYMENT_ATTEMPT_NOT_FOUND
+        );
 
         verify(paymentIntentRepository, never()).findById(any());
+        verify(paymentAttemptRepository, never()).findById(any());
         verify(paymentAttemptRepository, never()).confirmActive(any(), any(), any());
         verify(paymentIntentRepository, never()).confirmActive(any(), any());
         verify(settlementRepository, never()).confirmPending(any(), any(), any());
@@ -528,14 +740,14 @@ class FinancialServiceTest {
 
     @Test
     void nonPayerCannotConfirmPaymentAttempt() {
-        PaymentAttempt attempt = initiatedLocalAttempt();
-        PaymentIntent intent = settlementPaymentIntent(PaymentState.PAYMENT_PENDING);
-        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID)).thenReturn(Optional.of(attempt));
-        when(paymentIntentRepository.findById(PAYMENT_INTENT_ID)).thenReturn(Optional.of(intent));
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.confirmLocalPaymentAttempt(STARTUP_ACCOUNT_ID, RoleType.STARTUP, PAYMENT_ATTEMPT_ID))
-                .isInstanceOf(FinancialAccessException.class)
-                .hasMessageContaining("Only payer can perform this payment action");
+        assertPaymentFailure(
+                () -> service.confirmLocalPaymentAttempt(
+                        STARTUP_ACCOUNT_ID, RoleType.STARTUP, PAYMENT_ATTEMPT_ID),
+                PAYMENT_ATTEMPT_NOT_FOUND
+        );
 
         verify(paymentAttemptRepository, never()).save(any());
         verify(paymentIntentRepository, never()).save(any());
@@ -551,7 +763,7 @@ class FinancialServiceTest {
         PaymentAttempt attempt = initiatedLocalAttempt();
         PaymentAttempt failedAttempt = failedLocalAttempt();
         PaymentIntent intent = settlementPaymentIntent(PaymentState.PAYMENT_PENDING);
-        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID))
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, INVESTOR_ACCOUNT_ID))
                 .thenReturn(Optional.of(attempt), Optional.of(failedAttempt));
         when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
                 .thenReturn(Optional.of(intent), Optional.of(settlementPaymentIntent(PaymentState.PAYMENT_FAILED)));
@@ -597,7 +809,8 @@ class FinancialServiceTest {
         PaymentAttempt attempt = initiatedLocalAttempt();
         PaymentAttempt failedAttempt = failedLocalAttempt("UPI_DECLINED", "UPI provider declined the payment");
         PaymentIntent intent = settlementPaymentIntent(PaymentState.PAYMENT_PENDING);
-        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID))
+        when(paymentAttemptRepository.findByIdForProvider(
+                PAYMENT_ATTEMPT_ID, LocalPaymentStrategy.PROVIDER_CODE))
                 .thenReturn(Optional.of(attempt), Optional.of(failedAttempt));
         when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
                 .thenReturn(Optional.of(intent), Optional.of(settlementPaymentIntent(PaymentState.PAYMENT_FAILED)));
@@ -642,7 +855,8 @@ class FinancialServiceTest {
         PaymentAttempt attempt = initiatedLocalAttempt();
         PaymentAttempt failedAttempt = failedLocalAttempt("UPI_DECLINED", "UPI provider declined the payment");
         PaymentIntent intent = settlementPaymentIntent(PaymentState.PAYMENT_PENDING);
-        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID))
+        when(paymentAttemptRepository.findByIdForProvider(
+                PAYMENT_ATTEMPT_ID, LocalPaymentStrategy.PROVIDER_CODE))
                 .thenReturn(Optional.of(attempt), Optional.of(failedAttempt));
         when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
                 .thenReturn(Optional.of(intent), Optional.of(settlementPaymentIntent(PaymentState.PAYMENT_CONFIRMED)));
@@ -671,19 +885,21 @@ class FinancialServiceTest {
 
     @Test
     void providerCallbackRejectsFailureProviderMismatchBeforeFailingState() {
-        PaymentAttempt attempt = initiatedLocalAttempt();
-        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID)).thenReturn(Optional.of(attempt));
+        when(paymentAttemptRepository.findByIdForProvider(PAYMENT_ATTEMPT_ID, "CARD"))
+                .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.failProviderPaymentAttempt(
-                "CARD",
-                PAYMENT_ATTEMPT_ID,
-                "CARD_DECLINED",
-                "Card provider declined the payment"
-        ))
-                .isInstanceOf(UnsupportedPaymentMethodException.class)
-                .hasMessageContaining("Payment attempt does not belong to this provider");
+        assertPaymentFailure(
+                () -> service.failProviderPaymentAttempt(
+                        "CARD",
+                        PAYMENT_ATTEMPT_ID,
+                        "CARD_DECLINED",
+                        "Card provider declined the payment"
+                ),
+                PAYMENT_ATTEMPT_NOT_FOUND
+        );
 
         verify(paymentIntentRepository, never()).findById(any());
+        verify(paymentAttemptRepository, never()).findById(any());
         verify(paymentAttemptRepository, never()).failActive(any(), any(), any(), any());
         verify(paymentIntentRepository, never()).failActive(any(), any(), any(), any());
     }
@@ -800,6 +1016,28 @@ class FinancialServiceTest {
                 .initiatedAt(now().minusSeconds(10))
                 .providerPayload("{\"mode\":\"LOCAL\"}")
                 .build();
+    }
+
+    private static PaymentAttempt paymentAttempt(String providerCode, PaymentAttemptState state) {
+        return PaymentAttempt.builder()
+                .paymentAttemptId(PAYMENT_ATTEMPT_ID)
+                .paymentIntentId(PAYMENT_INTENT_ID)
+                .providerCode(providerCode)
+                .methodType(PaymentMethodType.OTHER)
+                .attemptState(state)
+                .createdAt(now().minusSeconds(20))
+                .build();
+    }
+
+    private static void assertPaymentFailure(
+            org.assertj.core.api.ThrowableAssert.ThrowingCallable operation,
+            ErrorDescriptor descriptor
+    ) {
+        assertThatThrownBy(operation)
+                .isInstanceOfSatisfying(
+                        ApplicationException.class,
+                        failure -> assertThat(failure.descriptor()).isSameAs(descriptor)
+                );
     }
 
     private static PaymentAttempt confirmedLocalAttempt() {

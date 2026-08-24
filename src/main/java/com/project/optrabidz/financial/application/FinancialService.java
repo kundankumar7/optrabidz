@@ -16,7 +16,6 @@ import com.project.optrabidz.financial.application.dto.response.RepaymentProgres
 import com.project.optrabidz.financial.application.dto.response.RepaymentResponse;
 import com.project.optrabidz.financial.application.dto.response.SettlementResponse;
 import com.project.optrabidz.financial.application.exception.FinancialAccessException;
-import com.project.optrabidz.financial.application.exception.InvalidPaymentStateException;
 import com.project.optrabidz.financial.application.exception.InvalidRepaymentStateException;
 import com.project.optrabidz.financial.application.exception.InvalidSettlementStateException;
 import com.project.optrabidz.financial.application.exception.PaymentAlreadyConfirmedException;
@@ -24,6 +23,8 @@ import com.project.optrabidz.financial.application.exception.PaymentAttemptNotFo
 import com.project.optrabidz.financial.application.exception.PaymentIntentExpiredException;
 import com.project.optrabidz.financial.application.exception.PaymentIntentNotFoundException;
 import com.project.optrabidz.financial.application.exception.PaymentIntentNotActiveException;
+import com.project.optrabidz.financial.application.exception.PaymentProviderMismatchException;
+import com.project.optrabidz.financial.application.exception.PaymentStateConflictException;
 import com.project.optrabidz.financial.application.exception.RepaymentInstallmentNotFoundException;
 import com.project.optrabidz.financial.application.exception.RepaymentInstallmentNotPayableException;
 import com.project.optrabidz.financial.application.exception.RepaymentNotFoundException;
@@ -84,6 +85,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -316,8 +318,7 @@ public class FinancialService {
 
     @Transactional(readOnly = true)
     public PaymentIntentResponse getPaymentIntent(Long accountId, RoleType roleType, Long paymentIntentId) {
-        PaymentIntent paymentIntent = getPaymentIntent(paymentIntentId);
-        ensurePaymentIntentVisible(accountId, roleType, paymentIntent);
+        PaymentIntent paymentIntent = getVisiblePaymentIntent(accountId, roleType, paymentIntentId);
         return toPaymentIntentResponse(paymentIntent);
     }
 
@@ -326,8 +327,7 @@ public class FinancialService {
                                                        RoleType roleType,
                                                        Long paymentIntentId,
                                                        CreatePaymentAttemptRequest request) {
-        PaymentIntent paymentIntent = getPaymentIntent(paymentIntentId);
-        ensurePaymentActor(accountId, roleType, paymentIntent);
+        PaymentIntent paymentIntent = getActionablePaymentIntent(accountId, roleType, paymentIntentId);
         ensurePaymentIntentActive(paymentIntent);
 
         String providerCode = normalizeProviderCode(request == null ? null : request.providerCode());
@@ -370,24 +370,25 @@ public class FinancialService {
     }
 
     private PaymentAttemptResponse confirmPaymentAttempt(PaymentAttemptConfirmationCommand command) {
-        PaymentAttempt attempt = getPaymentAttempt(command.paymentAttemptId());
-        ensureProviderAttempt(attempt, command.providerCode());
-        PaymentIntent paymentIntent = getPaymentIntent(attempt.getPaymentIntentId());
+        PaymentAttempt attempt = getPaymentAttempt(command);
         if (command.authenticatedActorRequired()) {
-            ensurePaymentActor(command.actorAccountId(), command.actorRole(), paymentIntent);
+            ensureLocalAttempt(attempt);
         }
+        PaymentIntent paymentIntent = getPaymentIntent(attempt.getPaymentIntentId());
         Instant now = Instant.now();
         int confirmedAttemptCount = paymentAttemptRepository.confirmActive(
                 command.paymentAttemptId(),
                 command.providerPaymentId(),
                 now
         );
-        PaymentAttempt confirmedAttempt = getPaymentAttempt(command.paymentAttemptId());
+        PaymentAttempt confirmedAttempt = getPaymentAttempt(command);
         if (confirmedAttemptCount == 0) {
             if (confirmedAttempt.getAttemptState() == PaymentAttemptState.CONFIRMED) {
                 return toPaymentAttemptResponse(confirmedAttempt);
             }
-            throw new InvalidPaymentStateException("Payment attempt is not active");
+            throw new PaymentStateConflictException(
+                    "Payment attempt cannot be confirmed from its current state"
+            );
         }
 
         int confirmedIntentCount = paymentIntentRepository.confirmActive(paymentIntent.getPaymentIntentId(), now);
@@ -423,12 +424,11 @@ public class FinancialService {
     }
 
     private PaymentAttemptResponse failPaymentAttempt(PaymentAttemptFailureCommand command) {
-        PaymentAttempt attempt = getPaymentAttempt(command.paymentAttemptId());
-        ensureProviderAttempt(attempt, command.providerCode());
-        PaymentIntent paymentIntent = getPaymentIntent(attempt.getPaymentIntentId());
+        PaymentAttempt attempt = getPaymentAttempt(command);
         if (command.authenticatedActorRequired()) {
-            ensurePaymentActor(command.actorAccountId(), command.actorRole(), paymentIntent);
+            ensureLocalAttempt(attempt);
         }
+        PaymentIntent paymentIntent = getPaymentIntent(attempt.getPaymentIntentId());
         Instant now = Instant.now();
         int failedAttemptCount = paymentAttemptRepository.failActive(
                 command.paymentAttemptId(),
@@ -436,12 +436,14 @@ public class FinancialService {
                 command.failureMessage(),
                 now
         );
-        PaymentAttempt failedAttempt = getPaymentAttempt(command.paymentAttemptId());
+        PaymentAttempt failedAttempt = getPaymentAttempt(command);
         if (failedAttemptCount == 0) {
             if (failedAttempt.getAttemptState() == PaymentAttemptState.FAILED) {
                 return toPaymentAttemptResponse(failedAttempt);
             }
-            throw new InvalidPaymentStateException("Payment attempt is not active");
+            throw new PaymentStateConflictException(
+                    "Payment attempt cannot be failed from its current state"
+            );
         }
 
         int failedIntentCount = paymentIntentRepository.failActive(
@@ -736,21 +738,6 @@ public class FinancialService {
         throw new FinancialAccessException("You are not authorized to view this agreement repayment progress");
     }
 
-    private void ensurePaymentIntentVisible(Long accountId, RoleType roleType, PaymentIntent paymentIntent) {
-        if (roleType == RoleType.ADMIN || paymentIntent.getPayerAccountId().equals(accountId)
-                || paymentIntent.getPayeeAccountId().equals(accountId)) {
-            return;
-        }
-        throw new FinancialAccessException("You are not authorized to view this payment intent");
-    }
-
-    private void ensurePaymentActor(Long accountId, RoleType roleType, PaymentIntent paymentIntent) {
-        if (roleType == RoleType.ADMIN || paymentIntent.getPayerAccountId().equals(accountId)) {
-            return;
-        }
-        throw new FinancialAccessException("Only payer can perform this payment action");
-    }
-
     private void ensureSettlementPayable(Settlement settlement) {
         if (settlement.getSettlementState() != SettlementState.SETTLEMENT_PENDING) {
             throw new SettlementNotPayableException("Settlement is not pending");
@@ -804,17 +791,10 @@ public class FinancialService {
     }
 
     private void ensureLocalAttempt(PaymentAttempt attempt) {
-        ensureProviderAttempt(attempt, LocalPaymentStrategy.PROVIDER_CODE);
-    }
-
-    private void ensureProviderAttempt(PaymentAttempt attempt, String providerCode) {
         if (!LocalPaymentStrategy.PROVIDER_CODE.equalsIgnoreCase(attempt.getProviderCode())) {
-            if (LocalPaymentStrategy.PROVIDER_CODE.equalsIgnoreCase(providerCode)) {
-                throw new UnsupportedPaymentMethodException("Only LOCAL payment attempts can use this local endpoint");
-            }
-        }
-        if (!attempt.getProviderCode().equalsIgnoreCase(providerCode)) {
-            throw new UnsupportedPaymentMethodException("Payment attempt does not belong to this provider");
+            throw new PaymentProviderMismatchException(
+                    "Local endpoint received a non-local payment attempt"
+            );
         }
     }
 
@@ -863,9 +843,52 @@ public class FinancialService {
                 .orElseThrow(() -> new PaymentIntentNotFoundException("Payment intent not found"));
     }
 
-    private PaymentAttempt getPaymentAttempt(Long paymentAttemptId) {
-        return paymentAttemptRepository.findById(paymentAttemptId)
-                .orElseThrow(() -> new PaymentAttemptNotFoundException("Payment attempt not found"));
+    private PaymentIntent getVisiblePaymentIntent(Long accountId, RoleType roleType, Long paymentIntentId) {
+        Optional<PaymentIntent> result = roleType == RoleType.ADMIN
+                ? paymentIntentRepository.findById(paymentIntentId)
+                : paymentIntentRepository.findByIdForParticipant(paymentIntentId, accountId);
+        return result.orElseThrow(() -> new PaymentIntentNotFoundException(
+                "Payment intent unavailable for participant lookup"
+        ));
+    }
+
+    private PaymentIntent getActionablePaymentIntent(Long accountId, RoleType roleType, Long paymentIntentId) {
+        Optional<PaymentIntent> result = roleType == RoleType.ADMIN
+                ? paymentIntentRepository.findById(paymentIntentId)
+                : paymentIntentRepository.findByIdForPayer(paymentIntentId, accountId);
+        return result.orElseThrow(() -> new PaymentIntentNotFoundException(
+                "Payment intent unavailable for payer lookup"
+        ));
+    }
+
+    private PaymentAttempt getPaymentAttempt(PaymentAttemptConfirmationCommand command) {
+        return command.authenticatedActorRequired()
+                ? getActorPaymentAttempt(
+                        command.actorAccountId(), command.actorRole(), command.paymentAttemptId())
+                : getProviderPaymentAttempt(command.providerCode(), command.paymentAttemptId());
+    }
+
+    private PaymentAttempt getPaymentAttempt(PaymentAttemptFailureCommand command) {
+        return command.authenticatedActorRequired()
+                ? getActorPaymentAttempt(
+                        command.actorAccountId(), command.actorRole(), command.paymentAttemptId())
+                : getProviderPaymentAttempt(command.providerCode(), command.paymentAttemptId());
+    }
+
+    private PaymentAttempt getActorPaymentAttempt(Long accountId, RoleType roleType, Long paymentAttemptId) {
+        Optional<PaymentAttempt> result = roleType == RoleType.ADMIN
+                ? paymentAttemptRepository.findById(paymentAttemptId)
+                : paymentAttemptRepository.findByIdForPayer(paymentAttemptId, accountId);
+        return result.orElseThrow(() -> new PaymentAttemptNotFoundException(
+                "Payment attempt unavailable for payer lookup"
+        ));
+    }
+
+    private PaymentAttempt getProviderPaymentAttempt(String providerCode, Long paymentAttemptId) {
+        return paymentAttemptRepository.findByIdForProvider(paymentAttemptId, providerCode)
+                .orElseThrow(() -> new PaymentAttemptNotFoundException(
+                        "Payment attempt unavailable for provider lookup"
+                ));
     }
 
     private Agreement getAgreement(Long agreementId) {
@@ -919,7 +942,10 @@ public class FinancialService {
         try {
             transition.run();
         } catch (IllegalStateException exception) {
-            throw new InvalidPaymentStateException(exception.getMessage());
+            throw new PaymentStateConflictException(
+                    "Payment intent transition rejected for current state",
+                    exception
+            );
         }
     }
 
@@ -927,7 +953,10 @@ public class FinancialService {
         try {
             return transition.apply();
         } catch (IllegalStateException exception) {
-            throw new InvalidPaymentStateException(exception.getMessage());
+            throw new PaymentStateConflictException(
+                    "Payment attempt transition rejected for current state",
+                    exception
+            );
         }
     }
 
