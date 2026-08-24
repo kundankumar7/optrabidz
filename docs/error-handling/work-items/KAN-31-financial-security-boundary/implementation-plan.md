@@ -1,6 +1,6 @@
 # KAN-31 — Financial Security Boundary Implementation Plan
 
-**Status:** Awaiting implementation-plan review
+**Status:** Implemented and locally verified; awaiting pull-request review
 
 **Goal:** Require authentication at the Spring Security boundary for every
 financial user route, then remove controller-local authentication guards while
@@ -78,7 +78,7 @@ Spring Security Test dependency, and shared RFC 9457 security contract.
 **Produces:** A focused integration-test class that fails while financial user
 routes still reach controller-local legacy authentication guards.
 
-- [ ] **Step 1: Verify the isolated baseline**
+- [x] **Step 1: Verify the isolated baseline**
 
   ```powershell
   git status --short --branch
@@ -94,7 +94,7 @@ routes still reach controller-local legacy authentication guards.
   `bc7727b0b2e09ebbfef8b9c6c5dc729cd4aab4fb`; and `HEAD` contains only the
   approved KAN-31 documentation after that develop base.
 
-- [ ] **Step 2: Create the focused anonymous-read contract test**
+- [x] **Step 2: Create the focused anonymous-read contract test**
 
   Create `FinancialSecurityApiIT` in package
   `com.project.optrabidz.security.api`, extending
@@ -105,6 +105,7 @@ routes still reach controller-local legacy authentication guards.
 
   import com.project.optrabidz.identity.domain.model.RoleType;
   import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
+  import jakarta.servlet.http.Cookie;
   import org.junit.jupiter.api.Test;
   import org.junit.jupiter.params.ParameterizedTest;
   import org.junit.jupiter.params.provider.MethodSource;
@@ -114,7 +115,6 @@ routes still reach controller-local legacy authentication guards.
   import java.util.stream.Stream;
 
   import static org.assertj.core.api.Assertions.assertThat;
-  import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
   import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
   import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
   import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -160,18 +160,26 @@ routes still reach controller-local legacy authentication guards.
   }
   ```
 
-- [ ] **Step 3: Add an unsafe-route authentication test with valid test CSRF**
+- [x] **Step 3: Add an unsafe-route authentication test with valid application CSRF**
 
-  Add this method to the same class. Supplying a valid test CSRF token isolates
-  authentication from CSRF-filter ordering:
+  Add this method to the same class. Prime the application's cookie-based CSRF
+  repository, then echo the token through the configured request header to
+  isolate authentication from CSRF-filter ordering:
 
   ```java
   @Test
   void paymentAttemptActionRequiresAuthenticationAfterCsrfValidation()
           throws Exception {
+      MvcResult csrfPrimingResult = mockMvc.perform(get("/api/v1/funding-listings"))
+              .andExpect(status().isOk())
+              .andReturn();
+      Cookie xsrfCookie = csrfPrimingResult.getResponse().getCookie("XSRF-TOKEN");
+      assertThat(xsrfCookie).isNotNull();
+
       mockMvc.perform(post(
                       "/api/v1/payment-attempts/1/actions/local-confirm")
-                      .with(csrf())
+                      .cookie(xsrfCookie)
+                      .header("X-CSRF-TOKEN", xsrfCookie.getValue())
                       .header("X-Request-Id", REQUEST_ID))
               .andExpect(status().isUnauthorized())
               .andExpect(content().contentType(
@@ -184,7 +192,7 @@ routes still reach controller-local legacy authentication guards.
   }
   ```
 
-- [ ] **Step 4: Run the focused tests and preserve meaningful RED evidence**
+- [x] **Step 4: Run the focused tests and preserve meaningful RED evidence**
 
   ```powershell
   .\mvnw.cmd -B -Pintegration-tests `
@@ -196,7 +204,7 @@ routes still reach controller-local legacy authentication guards.
   RFC 9457 response. There must be no compilation, container, or unrelated
   application-startup failure.
 
-- [ ] **Step 5: Commit the RED contract**
+- [x] **Step 5: Commit the RED contract**
 
   ```powershell
   git add src/test/java/com/project/optrabidz/security/api/FinancialSecurityApiIT.java
@@ -223,7 +231,7 @@ routes still reach controller-local legacy authentication guards.
 user route families, ordered after the provider-webhook `permitAll` rule and
 before `.anyRequest().permitAll()`.
 
-- [ ] **Step 1: Add the minimal route matcher**
+- [x] **Step 1: Add the minimal route matcher**
 
   In `SecurityConfig.authorizeHttpRequests`, immediately after the provider
   webhook `permitAll` matcher, add:
@@ -241,7 +249,7 @@ before `.anyRequest().permitAll()`.
   Do not broaden this to `/api/v1/**`. Do not change the existing webhook,
   marketplace, profile, classification, admin, or fallback matchers.
 
-- [ ] **Step 2: Run the focused authentication contract**
+- [x] **Step 2: Run the focused authentication contract**
 
   ```powershell
   .\mvnw.cmd -B -Pintegration-tests `
@@ -251,7 +259,7 @@ before `.anyRequest().permitAll()`.
   Expected GREEN: 5 tests pass; each request is stopped by Spring Security and
   uses `application/problem+json` without the legacy envelope.
 
-- [ ] **Step 3: Run shared security regressions**
+- [x] **Step 3: Run shared security regressions**
 
   ```powershell
   .\mvnw.cmd -B -Pintegration-tests `
@@ -263,7 +271,7 @@ before `.anyRequest().permitAll()`.
   reachable without a browser session or CSRF token and fails through provider
   signature verification when the signature is missing.
 
-- [ ] **Step 4: Commit the security policy change**
+- [x] **Step 4: Commit the security policy change**
 
   ```powershell
   git add src/main/java/com/project/optrabidz/security/infrastructure/config/SecurityConfig.java
@@ -291,7 +299,7 @@ before `.anyRequest().permitAll()`.
 **Produces:** Financial user controllers that map requests and delegate but do
 not authenticate callers or construct authentication failures.
 
-- [ ] **Step 1: Add a focused architecture rule first**
+- [x] **Step 1: Add a focused architecture rule first**
 
   Add the following rule to `ExceptionArchitectureTest`:
 
@@ -300,8 +308,8 @@ not authenticate callers or construct authentication failures.
   static final ArchRule FINANCIAL_USER_CONTROLLERS_DO_NOT_USE_LEGACY_ERRORS =
           noClasses()
                   .that().resideInAPackage("..financial.api..")
-                  .and().haveSimpleNameMatching(
-                          "FinancialController|LocalPaymentSimulationController"
+                  .and().haveNameMatching(
+                          ".*\\.(FinancialController|LocalPaymentSimulationController)"
                   )
                   .should().dependOnClassesThat().resideInAPackage(
                           "..common.api.exception.."
@@ -309,7 +317,7 @@ not authenticate callers or construct authentication failures.
                   .as("financial user controllers must delegate authentication to Spring Security");
   ```
 
-- [ ] **Step 2: Run the architecture rule and verify RED**
+- [x] **Step 2: Run the architecture rule and verify RED**
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=ExceptionArchitectureTest" test
@@ -320,7 +328,7 @@ not authenticate callers or construct authentication failures.
   `LocalPaymentSimulationController`. It must not report
   `PaymentProviderWebhookController`, which remains outside this prerequisite.
 
-- [ ] **Step 3: Remove authentication construction from `FinancialController`**
+- [x] **Step 3: Remove authentication construction from `FinancialController`**
 
   Remove these imports:
 
@@ -353,13 +361,13 @@ not authenticate callers or construct authentication failures.
   paths, request parameters, response wrappers, status behavior, or service
   signatures.
 
-- [ ] **Step 4: Remove authentication construction from the local simulator**
+- [x] **Step 4: Remove authentication construction from the local simulator**
 
   Apply the same import, local-variable, and private-helper removal to
   `LocalPaymentSimulationController`. Preserve `@ConditionalOnProperty` and its
   current property name, expected value, and default behavior exactly.
 
-- [ ] **Step 5: Run architecture and focused security tests**
+- [x] **Step 5: Run architecture and focused security tests**
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=ExceptionArchitectureTest" test
@@ -371,7 +379,7 @@ not authenticate callers or construct authentication failures.
   still stop at Spring Security; neither controller depends on the legacy error
   package.
 
-- [ ] **Step 6: Confirm the source boundary mechanically**
+- [x] **Step 6: Confirm the source boundary mechanically**
 
   ```powershell
   rg -n "requirePrincipal|ApiException|ErrorCode" `
@@ -383,7 +391,7 @@ not authenticate callers or construct authentication failures.
   controller or the complete financial module; KAN-30 will migrate those
   remaining legacy dependencies.
 
-- [ ] **Step 7: Commit the controller cleanup**
+- [x] **Step 7: Commit the controller cleanup**
 
   ```powershell
   git add `
@@ -411,7 +419,7 @@ not authenticate callers or construct authentication failures.
 **Produces:** Proof that authentication moved without altering application,
 CSRF, local-simulation, or provider-webhook behavior.
 
-- [ ] **Step 1: Add an authenticated continuation test**
+- [x] **Step 1: Add an authenticated continuation test**
 
   Add this method to `FinancialSecurityApiIT`:
 
@@ -434,7 +442,7 @@ CSRF, local-simulation, or provider-webhook behavior.
   authenticated request passed Spring Security and reached the unchanged
   financial service. KAN-30 will migrate that business response separately.
 
-- [ ] **Step 2: Add authenticated CSRF-pass and CSRF-reject tests**
+- [x] **Step 2: Add authenticated CSRF-pass and CSRF-reject tests**
 
   Add these methods:
 
@@ -474,7 +482,7 @@ CSRF, local-simulation, or provider-webhook behavior.
   }
   ```
 
-- [ ] **Step 3: Run focused boundary tests**
+- [x] **Step 3: Run focused boundary tests**
 
   ```powershell
   .\mvnw.cmd -B -Pintegration-tests `
@@ -484,7 +492,7 @@ CSRF, local-simulation, or provider-webhook behavior.
   Expected: the complete focused authentication, CSRF, disclosure, and webhook
   set passes. No request leaks the bearer marker or security internals.
 
-- [ ] **Step 4: Run existing financial API regressions**
+- [x] **Step 4: Run existing financial API regressions**
 
   ```powershell
   .\mvnw.cmd -B -Pintegration-tests `
@@ -495,7 +503,7 @@ CSRF, local-simulation, or provider-webhook behavior.
   payment attempt, ownership, provider webhook, and local simulation flows pass
   unchanged against PostgreSQL and Flyway V1.
 
-- [ ] **Step 5: Commit the boundary regression coverage**
+- [x] **Step 5: Commit the boundary regression coverage**
 
   ```powershell
   git add src/test/java/com/project/optrabidz/security/api/FinancialSecurityApiIT.java
@@ -517,7 +525,7 @@ CSRF, local-simulation, or provider-webhook behavior.
 **Produces:** Exact verification evidence, a clean review branch, and a pull
 request targeting `develop` without any merge.
 
-- [ ] **Step 1: Run the complete unit and architecture suite**
+- [x] **Step 1: Run the complete unit and architecture suite**
 
   ```powershell
   .\mvnw.cmd -B test
@@ -526,7 +534,7 @@ request targeting `develop` without any merge.
   Expected: every unit, documentation, and architecture test passes with zero
   failures and errors.
 
-- [ ] **Step 2: Run the complete PostgreSQL integration suite**
+- [x] **Step 2: Run the complete PostgreSQL integration suite**
 
   ```powershell
   .\mvnw.cmd -B -Pintegration-tests verify
@@ -535,7 +543,7 @@ request targeting `develop` without any merge.
   Expected: all Testcontainers PostgreSQL integration tests pass against
   unchanged Flyway V1. Record exact test totals and duration in this plan.
 
-- [ ] **Step 3: Inspect the final scope and repository state**
+- [x] **Step 3: Inspect the final scope and repository state**
 
   ```powershell
   git status --short --branch
@@ -550,7 +558,7 @@ request targeting `develop` without any merge.
   financial user controllers, and the scoped architecture test differ from
   `develop`; the worktree is clean; `main` remains unchanged.
 
-- [ ] **Step 4: Record final evidence in this plan**
+- [x] **Step 4: Record final evidence in this plan**
 
   Change the plan status to `Implemented and locally verified; awaiting
   pull-request review`. Check completed steps and append exact focused/full
@@ -558,7 +566,7 @@ request targeting `develop` without any merge.
   scope. Do not add machine-specific paths, credentials, internal process
   commentary, raw logs, or temporary files.
 
-- [ ] **Step 5: Commit and push the evidence**
+- [x] **Step 5: Commit and push the evidence**
 
   ```powershell
   git add docs/error-handling/work-items/KAN-31-financial-security-boundary/implementation-plan.md
@@ -609,3 +617,36 @@ KAN-31 is ready for pull-request review only when:
   change;
 - the remote branch and Jira evidence reference the exact reviewed head; and
 - `main` remains unchanged.
+
+## Verification evidence
+
+- Meaningful RED: 5 focused requests reached the two financial controllers and
+  returned the legacy JSON error envelope instead of the shared RFC 9457
+  authentication response. Container and application startup were successful.
+- Route-policy GREEN: `FinancialSecurityApiIT` passed 5/5 and the existing
+  `SecurityApiIT` passed 10/10.
+- Controller-boundary RED: the architecture rule reported exactly four legacy
+  dependency accesses from `FinancialController.requirePrincipal` and
+  `LocalPaymentSimulationController.requirePrincipal`.
+- Controller-boundary GREEN: all 4 architecture rules passed, and the source
+  scan found no `requirePrincipal`, `ApiException`, or `ErrorCode` in the two
+  financial user controllers.
+- Focused final security regression: 18/18 passed in one application context
+  (`FinancialSecurityApiIT` 8/8 and `SecurityApiIT` 10/10).
+- Existing financial API regression: 14/14 passed.
+- Complete unit, documentation, and architecture suite: 258/258 passed with no
+  failures, errors, or skips in 24.374 seconds.
+- Complete PostgreSQL/Testcontainers integration suite: 97/97 passed with no
+  failures, errors, or skips in 2 minutes 1 second; Flyway V1 remained
+  unchanged.
+- Verified implementation head before this evidence commit: `ab72218`.
+- Verified base: `origin/develop` at
+  `71a252b3a8f4d7cca40ff1e44da94deb171f90d4`.
+- Verified protected production baseline: `origin/main` at
+  `bc7727b0b2e09ebbfef8b9c6c5dc729cd4aab4fb`.
+- Final scope contains only KAN-31 documentation and diagram assets, the five
+  financial route matchers, the two financial user-controller cleanups, the
+  scoped architecture rule, and focused financial security tests.
+- The test plan uses the application's cookie/header CSRF flow instead of the
+  session-based test request processor, preventing repository contamination
+  when security integration classes share one application context.
