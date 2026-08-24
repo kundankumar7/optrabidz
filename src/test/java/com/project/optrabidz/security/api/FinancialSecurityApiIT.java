@@ -83,15 +83,22 @@ class FinancialSecurityApiIT extends ApiIntegrationTestSupport {
     void authenticatedFinancialReadReachesTheApplicationBoundary()
             throws Exception {
         AuthenticatedClient investor = registerAndLogin(RoleType.INVESTOR);
+        createCompleteInvestorProfile(investor);
 
         mockMvc.perform(get("/api/v1/settlements/{settlementId}", Long.MAX_VALUE)
+                        .header("X-Request-Id", REQUEST_ID)
                         .session(investor.session())
                         .cookie(investor.xsrfCookie()))
                 .andExpect(status().isNotFound())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("RESOURCE_NOT_FOUND"))
-                .andExpect(jsonPath("$.error.message").value("Settlement not found"));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Resource not found"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value("SETTLEMENT_NOT_FOUND"))
+                .andExpect(jsonPath("$.detail").value(
+                        "The requested settlement was not found"))
+                .andExpect(jsonPath("$.requestId").value(REQUEST_ID))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
     }
 
     @Test
