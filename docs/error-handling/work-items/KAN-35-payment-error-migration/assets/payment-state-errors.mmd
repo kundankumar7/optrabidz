@@ -1,0 +1,26 @@
+flowchart TD
+    O[Scoped resource found] --> K{Requested operation}
+
+    K -->|Create attempt| I{Intent condition}
+    I -->|Confirmed| AC[PAYMENT_ALREADY_CONFIRMED 409]
+    I -->|Expired| EX[PAYMENT_INTENT_EXPIRED 409]
+    I -->|Other terminal| NA[PAYMENT_INTENT_NOT_ACTIVE 409]
+    I -->|Created or pending| M{Method available?}
+    M -->|No| MU[PAYMENT_METHOD_UNSUPPORTED 422]
+    M -->|Yes| CR[Create attempt and mark pending]
+
+    K -->|Confirm or fail| U[Conditional attempt update]
+    U -->|Updated| V[Conditional intent update]
+    U -->|Already same result| OK[Idempotent success]
+    U -->|Different terminal result| SC[PAYMENT_STATE_CONFLICT 409]
+
+    V -->|Updated| DONE[Commit terminal result]
+    V -->|Not updated| F{Reload intent state}
+    F -->|Confirmed| AC
+    F -->|Expired| EX
+    F -->|Other inactive| NA
+
+    SC --> RB[Transaction rollback]
+    AC --> RB
+    EX --> RB
+    NA --> RB
