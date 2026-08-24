@@ -35,6 +35,26 @@ public class SettlementRepositoryAdapter implements SettlementRepository {
     }
 
     @Override
+    public Optional<Settlement> findByIdForStartup(
+            Long settlementId,
+            Long startupId
+    ) {
+        return jpaSettlementRepository
+                .findBySettlementIdAndStartupId(settlementId, startupId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<Settlement> findByIdForInvestor(
+            Long settlementId,
+            Long investorId
+    ) {
+        return jpaSettlementRepository
+                .findBySettlementIdAndInvestorId(settlementId, investorId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public Optional<Settlement> findByAgreementId(Long agreementId) {
         return jpaSettlementRepository.findByAgreementId(agreementId)
                 .map(mapper::toDomain);
