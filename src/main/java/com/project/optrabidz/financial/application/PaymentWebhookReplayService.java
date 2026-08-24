@@ -3,6 +3,7 @@ package com.project.optrabidz.financial.application;
 import com.project.optrabidz.financial.application.command.PaymentProviderWebhookCommand;
 import com.project.optrabidz.financial.application.dto.response.PaymentAttemptResponse;
 import com.project.optrabidz.financial.application.exception.PaymentWebhookReplayCollisionException;
+import com.project.optrabidz.financial.application.exception.PaymentWebhookReplayStateException;
 import com.project.optrabidz.financial.application.port.PaymentWebhookReplayStore;
 import com.project.optrabidz.financial.application.replay.PaymentWebhookReplayContent;
 import com.project.optrabidz.financial.application.replay.PaymentWebhookReplayEvent;
@@ -60,9 +61,7 @@ public class PaymentWebhookReplayService {
         }
     }
 
-    private IllegalStateException stateInvariant() {
-        return new IllegalStateException(
-                "Payment webhook replay state invariant failed"
-        );
+    private PaymentWebhookReplayStateException stateInvariant() {
+        return new PaymentWebhookReplayStateException();
     }
 }

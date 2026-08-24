@@ -4,6 +4,7 @@ import com.project.optrabidz.financial.application.command.PaymentProviderWebhoo
 import com.project.optrabidz.financial.application.command.PaymentProviderWebhookEventType;
 import com.project.optrabidz.financial.application.dto.response.PaymentAttemptResponse;
 import com.project.optrabidz.financial.application.exception.PaymentWebhookReplayCollisionException;
+import com.project.optrabidz.financial.application.exception.PaymentWebhookReplayStateException;
 import com.project.optrabidz.financial.application.port.PaymentWebhookReplayStore;
 import com.project.optrabidz.financial.application.replay.PaymentWebhookReplayContent;
 import com.project.optrabidz.financial.application.replay.PaymentWebhookReplayEvent;
@@ -134,7 +135,7 @@ class PaymentWebhookReplayServiceTest {
                 )));
 
         assertThatThrownBy(() -> service.handle(command, event))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(PaymentWebhookReplayStateException.class)
                 .hasMessage("Payment webhook replay state invariant failed");
         verifyNoInteractions(webhookService);
     }
@@ -147,7 +148,7 @@ class PaymentWebhookReplayServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.handle(command, event))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(PaymentWebhookReplayStateException.class)
                 .hasMessage("Payment webhook replay state invariant failed");
         verifyNoInteractions(webhookService);
     }
