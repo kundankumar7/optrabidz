@@ -6,11 +6,13 @@ import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +30,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class FinancialApiIT extends ApiIntegrationTestSupport {
+    private static final String UPI_WEBHOOK_SECRET =
+            "test-only-upi-webhook-secret-material-001";
+    private static final String CARD_WEBHOOK_SECRET =
+            "test-only-card-webhook-secret-material-001";
 
     @Test
     void investorSettlementPaymentCreatesRepaymentAndStartupCanConfirmRepaymentPayment() throws Exception {
@@ -222,10 +228,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 "providerEventId", "evt-upi-" + paymentAttemptId
         ));
 
-        mockMvc.perform(post("/api/v1/payment-providers/UPI/webhooks")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-PAYMENT-SIGNATURE", paymentSignature(rawPayload, "test-upi-webhook-secret"))
-                        .content(rawPayload))
+        mockMvc.perform(signedWebhook("UPI", rawPayload, UPI_WEBHOOK_SECRET))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.paymentAttemptId").value(paymentAttemptId.intValue()))
                 .andExpect(jsonPath("$.data.providerCode").value("UPI"))
@@ -233,10 +236,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.data.attemptState").value("CONFIRMED"))
                 .andExpect(jsonPath("$.data.providerPaymentId").value("UPI-PAYMENT-" + paymentAttemptId));
 
-        mockMvc.perform(post("/api/v1/payment-providers/UPI/webhooks")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-PAYMENT-SIGNATURE", paymentSignature(rawPayload, "test-upi-webhook-secret"))
-                        .content(rawPayload))
+        mockMvc.perform(signedWebhook("UPI", rawPayload, UPI_WEBHOOK_SECRET))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.paymentAttemptId").value(paymentAttemptId.intValue()))
                 .andExpect(jsonPath("$.data.attemptState").value("CONFIRMED"))
@@ -289,10 +289,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 "providerPaymentId", "UPI-PAYMENT-" + upiAttemptId,
                 "providerEventId", "evt-upi-winning-" + upiAttemptId
         ));
-        mockMvc.perform(post("/api/v1/payment-providers/UPI/webhooks")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-PAYMENT-SIGNATURE", paymentSignature(upiPayload, "test-upi-webhook-secret"))
-                        .content(upiPayload))
+        mockMvc.perform(signedWebhook("UPI", upiPayload, UPI_WEBHOOK_SECRET))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.attemptState").value("CONFIRMED"));
 
@@ -302,10 +299,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 "providerPaymentId", "CARD-PAYMENT-" + cardAttemptId,
                 "providerEventId", "evt-card-late-" + cardAttemptId
         ));
-        mockMvc.perform(post("/api/v1/payment-providers/CARD/webhooks")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-PAYMENT-SIGNATURE", paymentSignature(cardPayload, "test-card-webhook-secret"))
-                        .content(cardPayload))
+        mockMvc.perform(signedWebhook("CARD", cardPayload, CARD_WEBHOOK_SECRET))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("PAYMENT_ALREADY_CONFIRMED"))
@@ -352,10 +346,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 "providerEventId", "evt-card-" + paymentAttemptId
         ));
 
-        mockMvc.perform(post("/api/v1/payment-providers/CARD/webhooks")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-PAYMENT-SIGNATURE", paymentSignature(rawPayload, "test-card-webhook-secret"))
-                        .content(rawPayload))
+        mockMvc.perform(signedWebhook("CARD", rawPayload, CARD_WEBHOOK_SECRET))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.paymentAttemptId").value(paymentAttemptId.intValue()))
                 .andExpect(jsonPath("$.data.providerCode").value("CARD"))
@@ -1056,12 +1047,34 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         return node.asText();
     }
 
-    private String paymentSignature(String rawPayload, String secret) {
+    private MockHttpServletRequestBuilder signedWebhook(String providerCode,
+                                                        String rawPayload,
+                                                        String secret) {
+        String timestamp = String.valueOf(Instant.now().getEpochSecond());
+        return post(
+                "/api/v1/payment-providers/{providerCode}/webhooks",
+                providerCode
+        )
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-PAYMENT-TIMESTAMP", timestamp)
+                .header(
+                        "X-PAYMENT-SIGNATURE",
+                        paymentSignature(timestamp, rawPayload, secret)
+                )
+                .content(rawPayload);
+    }
+
+    private String paymentSignature(String timestamp,
+                                    String rawPayload,
+                                    String secret) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             return "sha256=" + HexFormat.of()
-                    .formatHex(mac.doFinal(rawPayload.getBytes(StandardCharsets.UTF_8)));
+                    .formatHex(mac.doFinal(
+                            (timestamp + "." + rawPayload)
+                                    .getBytes(StandardCharsets.UTF_8)
+                    ));
         } catch (Exception exception) {
             throw new IllegalStateException(exception);
         }

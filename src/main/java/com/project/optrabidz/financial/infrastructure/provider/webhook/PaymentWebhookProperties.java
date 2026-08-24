@@ -7,7 +7,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -55,25 +54,6 @@ public class PaymentWebhookProperties {
                     normalized.put(normalize(providerCode), configuration));
         }
         this.providers = normalized;
-    }
-
-    public Optional<String> secretForProvider(String providerCode) {
-        return enabledProvider(providerCode)
-                .map(ProviderConfiguration::getActiveSecret)
-                .filter(secret -> !secret.isBlank());
-    }
-
-    public void setHmacSecrets(Map<String, String> hmacSecrets) {
-        Map<String, ProviderConfiguration> compatibilityProviders = new HashMap<>();
-        if (hmacSecrets != null) {
-            hmacSecrets.forEach((providerCode, secret) -> {
-                ProviderConfiguration provider = new ProviderConfiguration();
-                provider.setEnabled(true);
-                provider.setActiveSecret(secret);
-                compatibilityProviders.put(providerCode, provider);
-            });
-        }
-        setProviders(compatibilityProviders);
     }
 
     private static String normalize(String providerCode) {

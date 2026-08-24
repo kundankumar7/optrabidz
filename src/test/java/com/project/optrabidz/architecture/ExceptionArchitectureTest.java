@@ -66,4 +66,36 @@ class ExceptionArchitectureTest {
                             "jakarta.servlet.."
                     )
                     .as("domain and application exceptions must remain transport-neutral"));
+
+    @ArchTest
+    static final ArchRule WEBHOOK_CONTROLLER_HAS_NO_PARSER_OR_PORT_DEPENDENCY =
+            noClasses()
+                    .that().haveSimpleName("PaymentProviderWebhookController")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "com.fasterxml.jackson..",
+                            "..financial.application.port.."
+                    )
+                    .as("the webhook controller may only map HTTP and delegate to its ingress boundary");
+
+    @ArchTest
+    static final ArchRule WEBHOOK_COMMAND_IS_TRANSPORT_NEUTRAL =
+            noClasses()
+                    .that().haveSimpleName("PaymentProviderWebhookCommand")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "jakarta.servlet..",
+                            "org.springframework.http..",
+                            "org.springframework.web.."
+                    )
+                    .as("the webhook business command must not carry HTTP transport types");
+
+    @ArchTest
+    static final ArchRule WEBHOOK_EXCEPTIONS_USE_NEUTRAL_ERROR_CONTRACT =
+            noClasses()
+                    .that().haveNameMatching(
+                            ".*\\.PaymentWebhook(Rejected|PayloadInvalid)Exception"
+                    )
+                    .should().dependOnClassesThat().resideInAPackage(
+                            "..common.api.."
+                    )
+                    .as("webhook exceptions must not depend on API rendering types");
 }
