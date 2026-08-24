@@ -41,6 +41,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/admin/recovery/transfer").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/payment-providers/*/webhooks").permitAll()
                         .requestMatchers(
+                                "/api/v1/settlements/**",
+                                "/api/v1/repayments/**",
+                                "/api/v1/repayment-installments/**",
+                                "/api/v1/payment-intents/**",
+                                "/api/v1/payment-attempts/**"
+                        ).authenticated()
+                        .requestMatchers(
                                 "/api/v1/bids",
                                 "/api/v1/bids/**",
                                 "/api/v1/agreements/**"
