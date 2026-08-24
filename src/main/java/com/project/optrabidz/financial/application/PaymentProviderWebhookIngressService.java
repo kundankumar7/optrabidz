@@ -2,28 +2,32 @@ package com.project.optrabidz.financial.application;
 
 import com.project.optrabidz.financial.application.command.PaymentProviderWebhookCommand;
 import com.project.optrabidz.financial.application.command.PaymentProviderWebhookEnvelope;
-import com.project.optrabidz.financial.application.dto.response.PaymentAttemptResponse;
 import com.project.optrabidz.financial.application.port.PaymentProviderWebhookEventParser;
 import com.project.optrabidz.financial.application.port.PaymentProviderWebhookSignatureVerifier;
 import com.project.optrabidz.financial.application.port.PaymentProviderWebhookSignatureVerifierRegistry;
+import com.project.optrabidz.financial.application.replay.PaymentWebhookReplayEvent;
+import com.project.optrabidz.financial.application.replay.PaymentWebhookReplayFingerprintFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PaymentProviderWebhookIngressService {
     private final PaymentProviderWebhookSignatureVerifierRegistry signatureVerifierRegistry;
     private final PaymentProviderWebhookEventParser eventParser;
-    private final PaymentProviderWebhookService webhookService;
+    private final PaymentWebhookReplayFingerprintFactory fingerprintFactory;
+    private final PaymentWebhookReplayService replayService;
 
     public PaymentProviderWebhookIngressService(
             PaymentProviderWebhookSignatureVerifierRegistry signatureVerifierRegistry,
             PaymentProviderWebhookEventParser eventParser,
-            PaymentProviderWebhookService webhookService) {
+            PaymentWebhookReplayFingerprintFactory fingerprintFactory,
+            PaymentWebhookReplayService replayService) {
         this.signatureVerifierRegistry = signatureVerifierRegistry;
         this.eventParser = eventParser;
-        this.webhookService = webhookService;
+        this.fingerprintFactory = fingerprintFactory;
+        this.replayService = replayService;
     }
 
-    public PaymentAttemptResponse handle(PaymentProviderWebhookEnvelope envelope) {
+    public void handle(PaymentProviderWebhookEnvelope envelope) {
         PaymentProviderWebhookSignatureVerifier verifier =
                 signatureVerifierRegistry.resolve(envelope.providerCode());
         verifier.verify(envelope);
@@ -31,6 +35,7 @@ public class PaymentProviderWebhookIngressService {
                 envelope.providerCode(),
                 envelope.rawBody()
         );
-        return webhookService.handle(command);
+        PaymentWebhookReplayEvent replayEvent = fingerprintFactory.create(command);
+        replayService.handle(command, replayEvent);
     }
 }

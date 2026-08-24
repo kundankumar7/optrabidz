@@ -58,16 +58,18 @@ class SecurityAuditServiceTest {
 
         service.recordPaymentWebhookRejected("UPI", "request-123");
         service.recordPaymentWebhookPayloadInvalid("UPI", "request-456");
+        service.recordPaymentWebhookReplayCollision("UPI", "request-789");
 
         ArgumentCaptor<AuditRecord> records = ArgumentCaptor.forClass(
                 AuditRecord.class
         );
-        verify(auditService, times(2)).save(records.capture());
+        verify(auditService, times(3)).save(records.capture());
         assertThat(records.getAllValues())
                 .extracting(AuditRecord::getAction)
                 .containsExactly(
                         "PAYMENT_WEBHOOK_REJECTED",
-                        "PAYMENT_WEBHOOK_PAYLOAD_INVALID"
+                        "PAYMENT_WEBHOOK_PAYLOAD_INVALID",
+                        "PAYMENT_WEBHOOK_REPLAY_COLLISION"
                 );
         assertThat(records.getAllValues())
                 .allSatisfy(record -> {
@@ -84,7 +86,7 @@ class SecurityAuditServiceTest {
                 });
         assertThat(records.getAllValues())
                 .extracting(AuditRecord::getRequestId)
-                .containsExactly("request-123", "request-456");
+                .containsExactly("request-123", "request-456", "request-789");
     }
 
     @Test

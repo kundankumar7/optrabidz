@@ -1,8 +1,16 @@
 package com.project.optrabidz.financial.api;
 
+import com.project.optrabidz.common.outbox.OutboxDispatcher;
+import com.project.optrabidz.financial.application.command.PaymentProviderWebhookCommand;
+import com.project.optrabidz.financial.application.command.PaymentProviderWebhookEventType;
+import com.project.optrabidz.financial.application.port.PaymentWebhookReplayStore;
+import com.project.optrabidz.financial.application.replay.PaymentWebhookReplayEvent;
+import com.project.optrabidz.financial.application.replay.PaymentWebhookReplayFingerprintFactory;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
+import com.project.optrabidz.testsupport.PostgresTestDataFixture;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MvcResult;
@@ -11,11 +19,22 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.reset;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -28,6 +47,191 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private PaymentWebhookReplayFingerprintFactory fingerprintFactory;
+
+    @Autowired
+    private OutboxDispatcher outboxDispatcher;
+
+    @SpyBean
+    private PaymentWebhookReplayStore replayStore;
+
+    @Test
+    void firstDeliveryAndSequentialDuplicateReturnNoContentAndProcessOnce()
+            throws Exception {
+        PaymentFixture fixture = paymentFixture("sequential");
+        String eventId = uniqueEventId("sequential");
+        String body = confirmedBody(fixture.paymentAttemptId(), eventId, "UPI-payment-1");
+
+        performAuthenticatedWebhook(body).andExpect(status().isNoContent());
+        performAuthenticatedWebhook(body).andExpect(status().isNoContent());
+
+        assertThat(replayCount(eventId)).isEqualTo(1L);
+        assertThat(replayState(eventId)).isEqualTo("PROCESSED");
+        assertThat(paymentAttemptState(fixture.paymentAttemptId())).isEqualTo("CONFIRMED");
+        assertThat(outboxCount(fixture.paymentIntentId())).isEqualTo(1L);
+    }
+
+    @Test
+    void concurrentIdenticalDeliveriesHaveOneOwnerAndOneAcknowledgedDuplicate()
+            throws Exception {
+        PaymentFixture fixture = paymentFixture("concurrent");
+        String eventId = uniqueEventId("concurrent");
+        String body = confirmedBody(fixture.paymentAttemptId(), eventId, "UPI-payment-2");
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            List<Future<Integer>> responses = List.of(
+                    executor.submit(() -> statusAfterSignal(body, ready, start)),
+                    executor.submit(() -> statusAfterSignal(body, ready, start))
+            );
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+
+            assertThat(List.of(
+                    responses.get(0).get(15, TimeUnit.SECONDS),
+                    responses.get(1).get(15, TimeUnit.SECONDS)
+            )).containsExactlyInAnyOrder(204, 204);
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assertThat(replayCount(eventId)).isEqualTo(1L);
+        assertThat(outboxCount(fixture.paymentIntentId())).isEqualTo(1L);
+    }
+
+    @Test
+    void reusedEventIdentityWithDifferentContentIsRejectedAndSafelyAudited()
+            throws Exception {
+        PaymentFixture fixture = paymentFixture("collision");
+        String eventId = uniqueEventId("collision");
+        performAuthenticatedWebhook(confirmedBody(
+                fixture.paymentAttemptId(), eventId, "UPI-payment-winner"
+        )).andExpect(status().isNoContent());
+
+        MvcResult collision = performAuthenticatedWebhook(confirmedBody(
+                fixture.paymentAttemptId(), eventId, "UPI-payment-changed"
+        ))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(
+                        "PAYMENT_WEBHOOK_PAYLOAD_INVALID"
+                ))
+                .andReturn();
+
+        assertDisclosureSafe(collision);
+        assertThat(collision.getResponse().getContentAsString())
+                .doesNotContain(eventId)
+                .doesNotContain("UPI-payment-changed");
+        assertThat(jdbcTemplate.queryForObject("""
+                select count(*) from audit_record
+                where action = 'PAYMENT_WEBHOOK_REPLAY_COLLISION'
+                  and request_id = ?
+                  and object_id = 'UPI'
+                """, Long.class, REQUEST_ID)).isGreaterThanOrEqualTo(1L);
+        assertThat(replayCount(eventId)).isEqualTo(1L);
+    }
+
+    @Test
+    void unexpectedCommittedReceivedStateFailsClosedWithoutFinancialMutation()
+            throws Exception {
+        PaymentFixture fixture = paymentFixture("received-state");
+        String eventId = uniqueEventId("received-state");
+        PaymentProviderWebhookCommand command = confirmedCommand(
+                fixture.paymentAttemptId(), eventId, "UPI-payment-3"
+        );
+        PaymentWebhookReplayEvent replayEvent = fingerprintFactory.create(command);
+        jdbcTemplate.update("""
+                insert into payment_webhook_event (
+                    provider_code, provider_event_id, event_type,
+                    processing_state, received_at, payload_hash, payload
+                ) values ('UPI', ?, 'PAYMENT_CONFIRMED', 'RECEIVED', ?, ?, cast(? as jsonb))
+                """,
+                eventId,
+                Timestamp.from(Instant.now()),
+                replayEvent.payloadHash(),
+                objectMapper.writeValueAsString(replayEvent.content())
+        );
+
+        performAuthenticatedWebhook(confirmedBody(
+                fixture.paymentAttemptId(), eventId, "UPI-payment-3"
+        )).andExpect(status().isInternalServerError());
+
+        assertThat(paymentAttemptState(fixture.paymentAttemptId())).isEqualTo("INITIATED");
+        assertThat(outboxCount(fixture.paymentIntentId())).isZero();
+    }
+
+    @Test
+    void completionFailureRollsBackClaimFinancialMutationAndOutboxThenRetrySucceeds()
+            throws Exception {
+        PaymentFixture fixture = paymentFixture("rollback");
+        String eventId = uniqueEventId("rollback");
+        String body = confirmedBody(fixture.paymentAttemptId(), eventId, "UPI-payment-4");
+        doThrow(new IllegalStateException("forced replay completion failure"))
+                .when(replayStore)
+                .markProcessed(anyLong(), anyLong(), anyLong(), any(Instant.class));
+
+        performAuthenticatedWebhook(body).andExpect(status().isInternalServerError());
+
+        assertThat(replayCount(eventId)).isZero();
+        assertThat(paymentAttemptState(fixture.paymentAttemptId())).isEqualTo("INITIATED");
+        assertThat(outboxCount(fixture.paymentIntentId())).isZero();
+
+        reset(replayStore);
+        performAuthenticatedWebhook(body).andExpect(status().isNoContent());
+        assertThat(replayState(eventId)).isEqualTo("PROCESSED");
+        assertThat(paymentAttemptState(fixture.paymentAttemptId())).isEqualTo("CONFIRMED");
+        assertThat(outboxCount(fixture.paymentIntentId())).isEqualTo(1L);
+    }
+
+    @Test
+    void providerFailureDiagnosticsRemainOutsideBusinessStateAndAudit()
+            throws Exception {
+        PaymentFixture fixture = paymentFixture("provider-failure");
+        String eventId = uniqueEventId("provider-failure");
+        String body = failedBody(
+                fixture.paymentAttemptId(),
+                eventId,
+                "provider-secret-code",
+                "provider diagnostic secret text"
+        );
+
+        performAuthenticatedWebhook(body).andExpect(status().isNoContent());
+
+        assertThat(jdbcTemplate.queryForMap("""
+                select failure_code, failure_message
+                from payment_attempt where payment_attempt_id = ?
+                """, fixture.paymentAttemptId()))
+                .containsEntry("failure_code", "PROVIDER_REPORTED_FAILURE")
+                .containsEntry(
+                        "failure_message",
+                        "Payment provider reported that the payment failed"
+                );
+        String outboxEventId = outboxEventId(fixture.paymentIntentId());
+        assertThat(jdbcTemplate.queryForObject(
+                "select payload::text from event_outbox where event_id = ?",
+                String.class,
+                outboxEventId
+        ))
+                .doesNotContain("provider-secret-code")
+                .doesNotContain("provider diagnostic secret text");
+
+        dispatchUntilProcessed(outboxEventId);
+        outboxDispatcher.dispatchPending();
+        assertThat(jdbcTemplate.queryForObject("""
+                select count(*) from audit_record
+                where event_id = ?
+                  and action = 'REPAYMENT_INSTALLMENT_PAYMENT_FAILED'
+                """, Long.class, outboxEventId)).isEqualTo(1L);
+        assertThat(jdbcTemplate.queryForObject("""
+                select details::text from audit_record
+                where event_id = ?
+                  and action = 'REPAYMENT_INSTALLMENT_PAYMENT_FAILED'
+                """, String.class, outboxEventId))
+                .doesNotContain("provider-secret-code")
+                .doesNotContain("provider diagnostic secret text");
+    }
 
     @Test
     void unauthenticatedWebhookFailuresShareOneDisclosureSafeContract()
@@ -134,6 +338,168 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
         assertThat(paymentAttemptCount()).isEqualTo(attemptsBefore);
     }
 
+    private org.springframework.test.web.servlet.ResultActions
+    performAuthenticatedWebhook(String body) throws Exception {
+        String timestamp = String.valueOf(Instant.now().getEpochSecond());
+        return mockMvc.perform(
+                webhook("UPI", body)
+                        .header("X-Payment-Timestamp", timestamp)
+                        .header("X-Payment-Signature", signature(timestamp, body))
+        );
+    }
+
+    private int statusAfterSignal(
+            String body,
+            CountDownLatch ready,
+            CountDownLatch start) throws Exception {
+        ready.countDown();
+        assertThat(start.await(5, TimeUnit.SECONDS)).isTrue();
+        return performAuthenticatedWebhook(body)
+                .andReturn()
+                .getResponse()
+                .getStatus();
+    }
+
+    private PaymentFixture paymentFixture(String label) {
+        Instant now = Instant.now();
+        PostgresTestDataFixture.PaymentReference reference =
+                new PostgresTestDataFixture(jdbcTemplate, now)
+                        .createRepaymentInstallmentReference(
+                                "kan32-api-" + label + "-" + UUID.randomUUID()
+                        );
+        Long paymentIntentId = jdbcTemplate.queryForObject("""
+                insert into payment_intent (
+                    payment_purpose, settlement_id, repayment_installment_id,
+                    payer_account_id, payee_account_id, amount, currency_code,
+                    payment_state, idempotency_key, created_at, expires_at
+                ) values (
+                    'REPAYMENT', null, ?, ?, ?, 550000.00, 'INR',
+                    'PAYMENT_PENDING', ?, ?, ?
+                ) returning payment_intent_id
+                """, Long.class,
+                reference.referenceId(),
+                reference.payerAccountId(),
+                reference.payeeAccountId(),
+                "kan32-api-" + UUID.randomUUID(),
+                Timestamp.from(now.minusSeconds(30)),
+                Timestamp.from(now.plusSeconds(900))
+        );
+        Long paymentAttemptId = jdbcTemplate.queryForObject("""
+                insert into payment_attempt (
+                    payment_intent_id, provider_code, method_type,
+                    provider_order_id, attempt_state, created_at, initiated_at,
+                    provider_payload
+                ) values (
+                    ?, 'UPI', 'UPI', ?, 'INITIATED', ?, ?, cast('{}' as jsonb)
+                ) returning payment_attempt_id
+                """, Long.class,
+                paymentIntentId,
+                "kan32-order-" + UUID.randomUUID(),
+                Timestamp.from(now.minusSeconds(20)),
+                Timestamp.from(now.minusSeconds(10))
+        );
+        return new PaymentFixture(paymentIntentId, paymentAttemptId);
+    }
+
+    private String confirmedBody(
+            long paymentAttemptId,
+            String providerEventId,
+            String providerPaymentId) throws Exception {
+        return objectMapper.writeValueAsString(java.util.Map.of(
+                "eventType", "PAYMENT_CONFIRMED",
+                "paymentAttemptId", paymentAttemptId,
+                "providerPaymentId", providerPaymentId,
+                "providerEventId", providerEventId
+        ));
+    }
+
+    private String failedBody(
+            long paymentAttemptId,
+            String providerEventId,
+            String failureCode,
+            String failureMessage) throws Exception {
+        return objectMapper.writeValueAsString(java.util.Map.of(
+                "eventType", "PAYMENT_FAILED",
+                "paymentAttemptId", paymentAttemptId,
+                "providerEventId", providerEventId,
+                "failureCode", failureCode,
+                "failureMessage", failureMessage
+        ));
+    }
+
+    private PaymentProviderWebhookCommand confirmedCommand(
+            long paymentAttemptId,
+            String providerEventId,
+            String providerPaymentId) {
+        return new PaymentProviderWebhookCommand(
+                "UPI",
+                PaymentProviderWebhookEventType.PAYMENT_CONFIRMED,
+                paymentAttemptId,
+                providerPaymentId,
+                null,
+                null,
+                providerEventId
+        );
+    }
+
+    private String uniqueEventId(String label) {
+        return "kan32-" + label + "-" + UUID.randomUUID();
+    }
+
+    private Long replayCount(String eventId) {
+        return jdbcTemplate.queryForObject("""
+                select count(*) from payment_webhook_event
+                where provider_code = 'UPI' and provider_event_id = ?
+                """, Long.class, eventId);
+    }
+
+    private String replayState(String eventId) {
+        return jdbcTemplate.queryForObject("""
+                select processing_state::text from payment_webhook_event
+                where provider_code = 'UPI' and provider_event_id = ?
+                """, String.class, eventId);
+    }
+
+    private String paymentAttemptState(long paymentAttemptId) {
+        return jdbcTemplate.queryForObject("""
+                select attempt_state::text from payment_attempt
+                where payment_attempt_id = ?
+                """, String.class, paymentAttemptId);
+    }
+
+    private Long outboxCount(long paymentIntentId) {
+        return jdbcTemplate.queryForObject("""
+                select count(*) from event_outbox
+                where payload ->> 'paymentIntentId' = ?
+                """, Long.class, String.valueOf(paymentIntentId));
+    }
+
+    private String outboxEventId(long paymentIntentId) {
+        return jdbcTemplate.queryForObject("""
+                select event_id from event_outbox
+                where payload ->> 'paymentIntentId' = ?
+                """, String.class, String.valueOf(paymentIntentId));
+    }
+
+    private void dispatchUntilProcessed(String eventId) {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            String state = jdbcTemplate.queryForObject(
+                    "select event_status from event_outbox where event_id = ?",
+                    String.class,
+                    eventId
+            );
+            if ("PROCESSED".equals(state)) {
+                return;
+            }
+            assertThat(outboxDispatcher.dispatchPending()).isPositive();
+        }
+        assertThat(jdbcTemplate.queryForObject(
+                "select event_status from event_outbox where event_id = ?",
+                String.class,
+                eventId
+        )).isEqualTo("PROCESSED");
+    }
+
     private MockHttpServletRequestBuilder webhook(String providerCode,
                                                   String body) {
         return post("/api/v1/payment-providers/{providerCode}/webhooks", providerCode)
@@ -180,5 +546,8 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
                 {"eventType":"PAYMENT_CONFIRMED","paymentAttemptId":1001,
                  "providerPaymentId":"UPI-1001","providerEventId":"evt-1001"}
                 """;
+    }
+
+    private record PaymentFixture(long paymentIntentId, long paymentAttemptId) {
     }
 }

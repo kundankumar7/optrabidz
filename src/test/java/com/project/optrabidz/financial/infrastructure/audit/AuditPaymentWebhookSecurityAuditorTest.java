@@ -48,4 +48,14 @@ class AuditPaymentWebhookSecurityAuditorTest {
                 "request-456"
         );
     }
+
+    @Test
+    void recordsReplayCollisionWithOnlySafeProviderAndRequestId() {
+        auditor.recordReplayCollision(" upi ", "request-789");
+
+        verify(securityAuditService).recordPaymentWebhookReplayCollision(
+                "UPI",
+                "request-789"
+        );
+    }
 }

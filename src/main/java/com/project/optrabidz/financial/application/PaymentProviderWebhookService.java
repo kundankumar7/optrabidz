@@ -7,6 +7,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class PaymentProviderWebhookService {
+    private static final String SAFE_PROVIDER_FAILURE_CODE =
+            "PROVIDER_REPORTED_FAILURE";
+    private static final String SAFE_PROVIDER_FAILURE_MESSAGE =
+            "Payment provider reported that the payment failed";
+
     private final FinancialService financialService;
 
     public PaymentProviderWebhookService(FinancialService financialService) {
@@ -25,8 +30,8 @@ public class PaymentProviderWebhookService {
         return financialService.failProviderPaymentAttempt(
                 command.providerCode(),
                 command.paymentAttemptId(),
-                command.failureCode(),
-                command.failureMessage()
+                SAFE_PROVIDER_FAILURE_CODE,
+                SAFE_PROVIDER_FAILURE_MESSAGE
         );
     }
 }

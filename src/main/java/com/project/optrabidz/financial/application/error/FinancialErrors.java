@@ -16,6 +16,12 @@ public final class FinancialErrors {
             "The webhook payload is invalid"
     );
 
+    public static final ErrorDescriptor PAYMENT_WEBHOOK_PROCESSING_FAILED = new ErrorDescriptor(
+            "PAYMENT_WEBHOOK_PROCESSING_FAILED",
+            ErrorCategory.INTERNAL,
+            "The webhook could not be processed"
+    );
+
     private FinancialErrors() {
     }
 }

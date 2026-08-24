@@ -36,6 +36,14 @@ public class AuditPaymentWebhookSecurityAuditor
         );
     }
 
+    @Override
+    public void recordReplayCollision(String providerCode, String requestId) {
+        securityAuditService.recordPaymentWebhookReplayCollision(
+                safeProviderCode(providerCode),
+                requestId
+        );
+    }
+
     private String safeProviderCode(String providerCode) {
         if (providerCode == null) {
             return "UNKNOWN";
