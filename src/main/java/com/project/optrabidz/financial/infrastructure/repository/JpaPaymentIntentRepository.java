@@ -12,6 +12,18 @@ import java.util.List;
 import java.util.Optional;
 
 public interface JpaPaymentIntentRepository extends JpaRepository<PaymentIntent, Long> {
+    @Query("""
+            select paymentIntent
+            from PaymentIntent paymentIntent
+            where paymentIntent.paymentIntentId = :paymentIntentId
+              and (paymentIntent.payerAccountId = :accountId
+                   or paymentIntent.payeeAccountId = :accountId)
+            """)
+    Optional<PaymentIntent> findForParticipant(@Param("paymentIntentId") Long paymentIntentId,
+                                               @Param("accountId") Long accountId);
+
+    Optional<PaymentIntent> findByPaymentIntentIdAndPayerAccountId(Long paymentIntentId, Long payerAccountId);
+
     Optional<PaymentIntent> findFirstBySettlementIdAndPaymentStateInOrderByCreatedAtDesc(
             Long settlementId,
             Collection<com.project.optrabidz.financial.domain.model.PaymentState> paymentStates

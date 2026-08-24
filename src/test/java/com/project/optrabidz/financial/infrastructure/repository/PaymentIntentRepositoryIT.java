@@ -67,6 +67,30 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
     }
 
     @Test
+    void scopedLookupsExposeIntentOnlyToItsParticipantsAndPayer() {
+        PaymentReference settlement = testData.createSettlementReference("payment-scope");
+        PaymentReference unrelated = testData.createSettlementReference("payment-scope-unrelated");
+        PaymentIntent saved = paymentIntentRepository.save(settlementIntent(
+                settlement,
+                PaymentState.CREATED,
+                "payment-scope",
+                NOW,
+                NOW.plusSeconds(900)
+        ));
+
+        assertThat(paymentIntentRepository.findByIdForParticipant(
+                saved.getPaymentIntentId(), settlement.payerAccountId())).isPresent();
+        assertThat(paymentIntentRepository.findByIdForParticipant(
+                saved.getPaymentIntentId(), settlement.payeeAccountId())).isPresent();
+        assertThat(paymentIntentRepository.findByIdForParticipant(
+                saved.getPaymentIntentId(), unrelated.payerAccountId())).isEmpty();
+        assertThat(paymentIntentRepository.findByIdForPayer(
+                saved.getPaymentIntentId(), settlement.payerAccountId())).isPresent();
+        assertThat(paymentIntentRepository.findByIdForPayer(
+                saved.getPaymentIntentId(), settlement.payeeAccountId())).isEmpty();
+    }
+
+    @Test
     void saveNewOrFindActiveBySettlementReturnsExistingActiveIntent() {
         PaymentReference settlement = testData.createSettlementReference("save-settlement");
         PaymentIntent first = paymentIntentRepository.saveNewOrFindActiveBySettlement(settlementIntent(

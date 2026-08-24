@@ -45,6 +45,18 @@ public class PaymentIntentRepositoryAdapter implements PaymentIntentRepository {
     }
 
     @Override
+    public Optional<PaymentIntent> findByIdForParticipant(Long paymentIntentId, Long accountId) {
+        return jpaPaymentIntentRepository.findForParticipant(paymentIntentId, accountId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<PaymentIntent> findByIdForPayer(Long paymentIntentId, Long payerAccountId) {
+        return jpaPaymentIntentRepository.findByPaymentIntentIdAndPayerAccountId(paymentIntentId, payerAccountId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public Optional<PaymentIntent> findActiveBySettlementId(Long settlementId) {
         return jpaPaymentIntentRepository.findFirstBySettlementIdAndPaymentStateInOrderByCreatedAtDesc(
                         settlementId,
