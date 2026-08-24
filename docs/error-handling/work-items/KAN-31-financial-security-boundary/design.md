@@ -1,6 +1,6 @@
 # KAN-31 — Financial Security Boundary
 
-**Status:** Awaiting written specification review
+**Status:** Approved written specification
 
 **Date:** 2026-08-24
 
