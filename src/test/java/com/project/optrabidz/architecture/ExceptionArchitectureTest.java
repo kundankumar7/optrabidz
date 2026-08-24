@@ -42,6 +42,18 @@ class ExceptionArchitectureTest {
                     .as("migrated modules must use the neutral error contract");
 
     @ArchTest
+    static final ArchRule FINANCIAL_USER_CONTROLLERS_DO_NOT_USE_LEGACY_ERRORS =
+            noClasses()
+                    .that().resideInAPackage("..financial.api..")
+                    .and().haveNameMatching(
+                            ".*\\.(FinancialController|LocalPaymentSimulationController)"
+                    )
+                    .should().dependOnClassesThat().resideInAPackage(
+                            "..common.api.exception.."
+                    )
+                    .as("financial user controllers must delegate authentication to Spring Security");
+
+    @ArchTest
     static final ArchRule BUSINESS_EXCEPTIONS_ARE_TRANSPORT_NEUTRAL =
             freeze(noClasses()
                     .that().resideInAnyPackage("..domain..", "..application..")

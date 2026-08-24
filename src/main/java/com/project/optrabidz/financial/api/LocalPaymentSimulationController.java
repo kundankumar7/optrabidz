@@ -1,7 +1,5 @@
 package com.project.optrabidz.financial.api;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.common.api.response.ApiResponse;
 import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.financial.application.FinancialService;
@@ -30,9 +28,8 @@ public class LocalPaymentSimulationController {
             @PathVariable Long paymentAttemptId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.confirmLocalPaymentAttempt(user.getAccountId(), user.getRole(), paymentAttemptId),
+                financialService.confirmLocalPaymentAttempt(principal.getAccountId(), principal.getRole(), paymentAttemptId),
                 httpRequest
         );
     }
@@ -42,17 +39,9 @@ public class LocalPaymentSimulationController {
             @PathVariable Long paymentAttemptId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.failLocalPaymentAttempt(user.getAccountId(), user.getRole(), paymentAttemptId),
+                financialService.failLocalPaymentAttempt(principal.getAccountId(), principal.getRole(), paymentAttemptId),
                 httpRequest
         );
-    }
-
-    private AuthenticatedUserPrincipal requirePrincipal(AuthenticatedUserPrincipal principal) {
-        if (principal == null) {
-            throw new ApiException(ErrorCode.AUTHENTICATION_REQUIRED, "Authentication is required");
-        }
-        return principal;
     }
 }
