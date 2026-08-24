@@ -1,6 +1,7 @@
 package com.project.optrabidz.financial.infrastructure.provider.webhook;
 
 import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,7 @@ public class PaymentWebhookConfigurationPolicy implements SmartInitializingSingl
     private final Environment environment;
     private final Clock clock;
 
+    @Autowired
     public PaymentWebhookConfigurationPolicy(PaymentWebhookProperties properties,
                                              Environment environment) {
         this(properties, environment, Clock.systemUTC());

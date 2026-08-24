@@ -63,6 +63,49 @@ public class SecurityAuditService {
                 )));
     }
 
+    public void recordPaymentWebhookRejected(String providerCode,
+                                             String requestId) {
+        saveWebhookSecurityEvent(
+                "PAYMENT_WEBHOOK_REJECTED",
+                providerCode,
+                requestId
+        );
+    }
+
+    public void recordPaymentWebhookPayloadInvalid(String providerCode,
+                                                   String requestId) {
+        saveWebhookSecurityEvent(
+                "PAYMENT_WEBHOOK_PAYLOAD_INVALID",
+                providerCode,
+                requestId
+        );
+    }
+
+    private void saveWebhookSecurityEvent(String action,
+                                          String providerCode,
+                                          String requestId) {
+        String safeProviderCode = boundedIdentifier(
+                providerCode,
+                "[A-Z0-9_-]{1,32}"
+        );
+        String safeRequestId = boundedIdentifier(
+                requestId,
+                "[A-Za-z0-9._-]{1,100}"
+        );
+        saveSafely(
+                action,
+                "PAYMENT_PROVIDER",
+                safeProviderCode,
+                null,
+                null,
+                AuditOutcome.DENIED,
+                safeRequestId,
+                null,
+                null,
+                details(Map.of("category", "PAYMENT_WEBHOOK"))
+        );
+    }
+
     private void saveSafely(String action,
                             String objectType,
                             String objectId,
@@ -70,6 +113,30 @@ public class SecurityAuditService {
                             String actorRole,
                             AuditOutcome outcome,
                             HttpServletRequest request,
+                            String details) {
+        saveSafely(
+                action,
+                objectType,
+                objectId,
+                actorAccountId,
+                actorRole,
+                outcome,
+                request == null ? null : RequestIdProvider.resolveOrCreate(request),
+                clientIp(request),
+                userAgent(request),
+                details
+        );
+    }
+
+    private void saveSafely(String action,
+                            String objectType,
+                            String objectId,
+                            Long actorAccountId,
+                            String actorRole,
+                            AuditOutcome outcome,
+                            String requestId,
+                            String ipAddress,
+                            String userAgent,
                             String details) {
         try {
             auditService.save(auditRecordFactory.securityRecord(
@@ -79,9 +146,9 @@ public class SecurityAuditService {
                     actorAccountId,
                     actorRole,
                     outcome,
-                    request == null ? null : RequestIdProvider.resolveOrCreate(request),
-                    clientIp(request),
-                    userAgent(request),
+                    requestId,
+                    ipAddress,
+                    userAgent,
                     details,
                     Instant.now()
             ));
@@ -92,6 +159,10 @@ public class SecurityAuditService {
                     exception
             );
         }
+    }
+
+    private String boundedIdentifier(String value, String pattern) {
+        return value != null && value.matches(pattern) ? value : "UNKNOWN";
     }
 
     private String details(Map<String, String> values) {

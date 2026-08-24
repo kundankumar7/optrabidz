@@ -4,6 +4,7 @@ import com.project.optrabidz.financial.application.command.PaymentProviderWebhoo
 import com.project.optrabidz.financial.application.exception.PaymentWebhookRejectedException;
 import com.project.optrabidz.financial.application.exception.PaymentWebhookRejectionReason;
 import com.project.optrabidz.financial.application.port.PaymentProviderWebhookSignatureVerifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Mac;
@@ -24,6 +25,7 @@ public class HmacPaymentProviderWebhookSignatureVerifier implements PaymentProvi
     private final PaymentWebhookProperties properties;
     private final Clock clock;
 
+    @Autowired
     public HmacPaymentProviderWebhookSignatureVerifier(PaymentWebhookProperties properties) {
         this(properties, Clock.systemUTC());
     }
