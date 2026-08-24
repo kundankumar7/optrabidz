@@ -574,7 +574,7 @@ request targeting `develop` without any merge.
   git push origin feature/KAN-31-financial-security-boundary
   ```
 
-- [ ] **Step 6: Create the pull request without merging**
+- [x] **Step 6: Create the pull request without merging**
 
   ```powershell
   $prBody = @"
@@ -644,6 +644,8 @@ KAN-31 is ready for pull-request review only when:
   `71a252b3a8f4d7cca40ff1e44da94deb171f90d4`.
 - Verified protected production baseline: `origin/main` at
   `bc7727b0b2e09ebbfef8b9c6c5dc729cd4aab4fb`.
+- Review pull request: [#27](https://github.com/kundankumar7/optrabidz/pull/27),
+  targeting `develop` without a merge.
 - Final scope contains only KAN-31 documentation and diagram assets, the five
   financial route matchers, the two financial user-controller cleanups, the
   scoped architecture rule, and focused financial security tests.
