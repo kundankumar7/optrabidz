@@ -16,8 +16,6 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.Set;
 
 @Component
@@ -48,11 +46,7 @@ public class StrictPaymentProviderWebhookEventParser implements PaymentProviderW
         try {
             PaymentProviderWebhookRequest request = reader.readValue(rawBody);
             validate(request);
-            return request.toCommand(
-                    providerCode,
-                    new String(rawBody, StandardCharsets.UTF_8),
-                    Map.of()
-            );
+            return request.toCommand(providerCode);
         } catch (PaymentWebhookPayloadInvalidException exception) {
             throw exception;
         } catch (Exception exception) {
