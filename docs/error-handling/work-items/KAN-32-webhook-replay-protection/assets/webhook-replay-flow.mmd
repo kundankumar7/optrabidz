@@ -1,0 +1,51 @@
+flowchart TB
+    Provider[Payment provider]
+
+    subgraph TrustedIngress[Authenticated ingress]
+        direction LR
+        Reader[Bounded HTTP reader]
+        Verify[Timestamp and HMAC verifier]
+        Parse[Strict parser]
+        Fingerprint[Versioned semantic fingerprint]
+    end
+
+    subgraph Transaction[Single PostgreSQL transaction]
+        direction TB
+        Claim[Atomic INSERT ON CONFLICT]
+        Classify{Claim result}
+        Process[Financial transition]
+        Effects[Outbox event]
+        Complete[Mark replay event PROCESSED]
+        Compare{Stored semantic content equal and PROCESSED}
+    end
+
+    Port[Replay-claim application port]
+    Adapter[PostgreSQL replay adapter]
+    Ack[Empty HTTP 204]
+    Audit[Outbox-dispatched business audit]
+    Collision[Generic payload-invalid response]
+    CollisionAudit[Sanitized collision security audit]
+    Fail[Rollback and sanitized internal error]
+
+    Provider --> Reader --> Verify --> Parse --> Fingerprint --> Port --> Adapter --> Claim --> Classify
+    Classify -->|inserted: first delivery| Process --> Effects --> Complete --> Ack
+    Complete -.->|after commit| Audit
+    Classify -->|unique conflict| Compare
+    Compare -->|identical duplicate| Ack
+    Compare -->|different content| CollisionAudit --> Collision
+    Compare -->|unexpected committed state| Fail
+    Process -->|failure| Fail
+    Effects -->|failure| Fail
+    Complete -->|failure| Fail
+
+    classDef ingress fill:#e8f1ff,stroke:#1d4ed8,color:#102a43
+    classDef app fill:#fff4d6,stroke:#b7791f,color:#3d2f00
+    classDef database fill:#e7f8ee,stroke:#2f855a,color:#173f2a
+    classDef success fill:#e6fffa,stroke:#0f766e,color:#134e4a
+    classDef reject fill:#fde8e8,stroke:#c53030,color:#5b1717
+
+    class Reader,Verify,Parse,Fingerprint ingress
+    class Port app
+    class Adapter,Claim,Classify,Process,Effects,Complete,Compare database
+    class Ack,Audit success
+    class Collision,CollisionAudit,Fail reject
