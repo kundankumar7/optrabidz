@@ -1,0 +1,17 @@
+flowchart TD
+    P[Authorized payment confirmation] --> U[Conditional confirm pending settlement]
+    U -->|One row updated| E[Create repayment and publish settlement event]
+    U -->|No row updated| R[Reload trusted settlement]
+
+    R --> C{Observed outcome}
+    C -->|Confirmed by same intent| I[Idempotent success]
+    C -->|Confirmed by another intent| X[SETTLEMENT_STATE_CONFLICT 409]
+    C -->|Expired failed or cancelled| X
+    C -->|Missing| N[SETTLEMENT_NOT_FOUND 404]
+
+    E --> M[Commit payment settlement outbox and audit]
+    I --> K[Commit without duplicate effects]
+    X --> B[Roll back payment attempt and intent]
+    N --> B
+
+    B --> Z[No repayment outbox notification or audit effect]
