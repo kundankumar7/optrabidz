@@ -836,7 +836,7 @@ complete verification passes. Append the exact successful focused and full
 Maven commands, their test totals, and the tested commit hash to this plan.
 Leave unchecked acceptance items unchanged if evidence is missing.
 
-- [ ] **Step 4: Commit and publish the evidence**
+- [x] **Step 4: Commit and publish the evidence**
 
 ```powershell
 git add docs/error-handling/work-items/KAN-35-payment-error-migration
@@ -844,7 +844,7 @@ git commit -m "docs(KAN-35): record verification evidence"
 git push origin feature/KAN-35-payment-error-migration
 ```
 
-- [ ] **Step 5: Prepare the pull request without merging**
+- [x] **Step 5: Prepare the pull request without merging**
 
 Create a pull request from `feature/KAN-35-payment-error-migration` into
 `develop`. Its description must summarize the neutral contract, scoped
