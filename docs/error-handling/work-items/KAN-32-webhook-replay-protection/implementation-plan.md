@@ -1,6 +1,6 @@
 # KAN-32 Payment Webhook Replay Protection Implementation Plan
 
-**Status:** Approved implementation plan; awaiting inline execution approval
+**Status:** Implementation complete; awaiting pull-request review
 
 > **Execution requirement:** Implement this plan task by task with TDD,
 > verification, and review checkpoints. Do not merge this branch into
@@ -63,6 +63,7 @@ JUnit 5, Mockito, MockMvc, ArchUnit, and Testcontainers 1.21.4.
 | `src/main/java/com/project/optrabidz/financial/application/port/PaymentWebhookReplayStore.java` | Application persistence contract |
 | `src/main/java/com/project/optrabidz/financial/application/PaymentWebhookReplayService.java` | Transactional claim, classification, processing, and completion |
 | `src/main/java/com/project/optrabidz/financial/application/exception/PaymentWebhookReplayCollisionException.java` | Typed collision using the existing safe public descriptor |
+| `src/main/java/com/project/optrabidz/financial/application/exception/PaymentWebhookReplayStateException.java` | Typed fail-closed error for unexpected committed replay state |
 | `src/main/java/com/project/optrabidz/financial/infrastructure/repository/PostgresPaymentWebhookReplayStore.java` | PostgreSQL atomic-claim adapter and protected JSONB mapping |
 
 ### Modified production files
@@ -71,6 +72,7 @@ JUnit 5, Mockito, MockMvc, ArchUnit, and Testcontainers 1.21.4.
 |---|---|
 | `src/main/java/com/project/optrabidz/financial/application/PaymentProviderWebhookIngressService.java` | Verify, parse, fingerprint, then call replay service; return `void` |
 | `src/main/java/com/project/optrabidz/financial/application/PaymentProviderWebhookService.java` | Substitute stable safe failure values before financial processing |
+| `src/main/java/com/project/optrabidz/financial/application/error/FinancialErrors.java` | Add the sanitized internal replay-processing descriptor |
 | `src/main/java/com/project/optrabidz/financial/application/port/PaymentWebhookSecurityAuditor.java` | Add sanitized replay-collision operation |
 | `src/main/java/com/project/optrabidz/financial/api/PaymentWebhookHttpIngress.java` | Return `void` and audit collision separately |
 | `src/main/java/com/project/optrabidz/financial/api/PaymentProviderWebhookController.java` | Return empty 204 and remove success envelope/media production |
@@ -147,7 +149,7 @@ public final class PaymentWebhookReplayFingerprintFactory {
 }
 ```
 
-- [ ] **Step 1: Write fingerprint contract tests**
+- [x] **Step 1: Write fingerprint contract tests**
 
 Create tests named:
 
@@ -195,7 +197,7 @@ void providerFailureDiagnosticsAreNormalizedAndFingerprintProtected() {
 }
 ```
 
-- [ ] **Step 2: Run the focused test and confirm RED**
+- [x] **Step 2: Run the focused test and confirm RED**
 
 Run:
 
@@ -205,7 +207,7 @@ Run:
 
 Expected: compilation fails because the replay types and factory do not exist.
 
-- [ ] **Step 3: Implement immutable content and deterministic hashing**
+- [x] **Step 3: Implement immutable content and deterministic hashing**
 
 In `PaymentWebhookReplayFingerprintFactory`, construct version-1 content from
 the already normalized command. Encode every field with an explicit length so
@@ -246,7 +248,7 @@ the declared record order with `writeNullableString`. Use Java's guaranteed
 byte-stream failures in a fixed-message `IllegalStateException` containing no
 event data.
 
-- [ ] **Step 4: Run focused tests and confirm GREEN**
+- [x] **Step 4: Run focused tests and confirm GREEN**
 
 ```powershell
 .\mvnw.cmd -Dtest=PaymentWebhookReplayFingerprintFactoryTest test
@@ -254,7 +256,7 @@ event data.
 
 Expected: all fingerprint tests pass.
 
-- [ ] **Step 5: Commit the semantic boundary**
+- [x] **Step 5: Commit the semantic boundary**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/financial/application/replay src/test/java/com/project/optrabidz/financial/application/replay
@@ -294,7 +296,7 @@ public interface PaymentWebhookReplayStore {
 }
 ```
 
-- [ ] **Step 1: Write real-PostgreSQL adapter tests**
+- [x] **Step 1: Write real-PostgreSQL adapter tests**
 
 Extend `PostgresJpaIntegrationTestSupport`, import the adapter and Jackson
 auto-configuration, inject `PaymentWebhookReplayStore`, `JdbcTemplate`, and
@@ -361,7 +363,7 @@ concurrency tests with
 `@Transactional(propagation = Propagation.NOT_SUPPORTED)` so their explicit
 worker transactions do not join the default test-managed transaction.
 
-- [ ] **Step 2: Run the adapter IT and confirm RED**
+- [x] **Step 2: Run the adapter IT and confirm RED**
 
 ```powershell
 .\mvnw.cmd -Pintegration-tests -Dit.test=PaymentWebhookReplayStoreIT verify
@@ -369,7 +371,7 @@ worker transactions do not join the default test-managed transaction.
 
 Expected: compilation fails because the port and adapter do not exist.
 
-- [ ] **Step 3: Implement the atomic adapter**
+- [x] **Step 3: Implement the atomic adapter**
 
 Use `NamedParameterJdbcTemplate`. The claim SQL must be:
 
@@ -410,7 +412,7 @@ where payment_webhook_event_id = :replayEventId
 Require exactly one updated row; otherwise throw
 `IllegalStateException("Payment webhook replay completion invariant failed")`.
 
-- [ ] **Step 4: Run adapter tests and confirm GREEN**
+- [x] **Step 4: Run adapter tests and confirm GREEN**
 
 ```powershell
 .\mvnw.cmd -Pintegration-tests -Dit.test=PaymentWebhookReplayStoreIT verify
@@ -419,7 +421,7 @@ Require exactly one updated row; otherwise throw
 Expected: first claim, duplicate lookup, concurrency, completion, protected
 payload, and rollback/retry tests pass against Testcontainers PostgreSQL.
 
-- [ ] **Step 5: Commit the persistence adapter**
+- [x] **Step 5: Commit the persistence adapter**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/financial/application/port/PaymentWebhookReplayStore.java src/main/java/com/project/optrabidz/financial/infrastructure/repository/PostgresPaymentWebhookReplayStore.java src/test/java/com/project/optrabidz/financial/infrastructure/repository/PaymentWebhookReplayStoreIT.java
@@ -464,7 +466,7 @@ uses `FinancialErrors.PAYMENT_WEBHOOK_PAYLOAD_INVALID`, diagnostic code
 `FINANCIAL.WEBHOOK.PAYLOAD.REPLAY_COLLISION`, and fixed diagnostic message
 `Authenticated webhook event identity collision`.
 
-- [ ] **Step 1: Write orchestration tests**
+- [x] **Step 1: Write orchestration tests**
 
 Cover the following exact behavior:
 
@@ -514,11 +516,12 @@ void processedIdentityWithDifferentContentThrowsCollision() {
 }
 ```
 
-Also test that `RECEIVED`, `FAILED`, and `IGNORED` committed states each throw
-fixed-message `IllegalStateException`, a missing conflict row fails closed, and
-a financial-service exception prevents `markProcessed`.
+Also test that `RECEIVED`, `FAILED`, and `IGNORED` committed states and a
+missing conflict row each throw the fixed, sanitized
+`PaymentWebhookReplayStateException`, and that a financial-service exception
+prevents `markProcessed`.
 
-- [ ] **Step 2: Run focused tests and confirm RED**
+- [x] **Step 2: Run focused tests and confirm RED**
 
 ```powershell
 .\mvnw.cmd -Dtest=PaymentWebhookReplayServiceTest,PaymentProviderWebhookIngressServiceTest,PaymentProviderWebhookServiceTest test
@@ -527,7 +530,7 @@ a financial-service exception prevents `markProcessed`.
 Expected: compilation or assertions fail because replay orchestration and safe
 failure substitution are absent.
 
-- [ ] **Step 3: Implement transactional classification**
+- [x] **Step 3: Implement transactional classification**
 
 The service algorithm must be:
 
@@ -568,7 +571,7 @@ replayService.handle(command, replayEvent);
 
 Change ingress `handle` to `void`.
 
-- [ ] **Step 4: Separate protected provider diagnostics from business values**
+- [x] **Step 4: Separate protected provider diagnostics from business values**
 
 Keep the original normalized diagnostics in the command for fingerprinting and
 protected replay JSONB. In `PaymentProviderWebhookService`, use:
@@ -591,7 +594,7 @@ Update the failure delegation test to verify the safe constants and explicitly
 verify that `UPI_DECLINED` and `Provider declined` are not passed to
 `FinancialService`.
 
-- [ ] **Step 5: Run focused tests and confirm GREEN**
+- [x] **Step 5: Run focused tests and confirm GREEN**
 
 ```powershell
 .\mvnw.cmd -Dtest=PaymentWebhookReplayServiceTest,PaymentProviderWebhookIngressServiceTest,PaymentProviderWebhookServiceTest test
@@ -599,7 +602,7 @@ verify that `UPI_DECLINED` and `Provider declined` are not passed to
 
 Expected: all replay orchestration, order, invariant, and safe-value tests pass.
 
-- [ ] **Step 6: Commit transactional application processing**
+- [x] **Step 6: Commit transactional application processing**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/financial/application src/test/java/com/project/optrabidz/financial/application
@@ -629,7 +632,7 @@ is `PAYMENT_PROVIDER`, object ID is the allowlisted configured provider or
 `UNKNOWN`, outcome is `DENIED`, and details remain
 `{"category":"PAYMENT_WEBHOOK"}`.
 
-- [ ] **Step 1: Write HTTP and audit RED tests**
+- [x] **Step 1: Write HTTP and audit RED tests**
 
 Controller test:
 
@@ -654,7 +657,7 @@ Audit tests: capture the `AuditRecord` and assert action, provider, request ID,
 fixed category, null IP/user-agent, and absence of event ID, hash, raw payload,
 diagnostic code/message, signature, and exception data.
 
-- [ ] **Step 2: Run focused tests and confirm RED**
+- [x] **Step 2: Run focused tests and confirm RED**
 
 ```powershell
 .\mvnw.cmd -Dtest=PaymentProviderWebhookControllerTest,PaymentWebhookHttpIngressTest,AuditPaymentWebhookSecurityAuditorTest,SecurityAuditServiceTest test
@@ -663,7 +666,7 @@ diagnostic code/message, signature, and exception data.
 Expected: tests fail because the route still returns a success envelope and no
 collision audit operation exists.
 
-- [ ] **Step 3: Implement empty 204 and collision auditing**
+- [x] **Step 3: Implement empty 204 and collision auditing**
 
 Controller contract:
 
@@ -689,7 +692,7 @@ Add `SecurityAuditService.recordPaymentWebhookReplayCollision` through the
 existing bounded `saveWebhookSecurityEvent` helper. Do not pass an event ID,
 hash, exception, reason, body, or header to any audit method.
 
-- [ ] **Step 4: Run focused tests and confirm GREEN**
+- [x] **Step 4: Run focused tests and confirm GREEN**
 
 ```powershell
 .\mvnw.cmd -Dtest=PaymentProviderWebhookControllerTest,PaymentWebhookHttpIngressTest,AuditPaymentWebhookSecurityAuditorTest,SecurityAuditServiceTest test
@@ -697,7 +700,7 @@ hash, exception, reason, body, or header to any audit method.
 
 Expected: empty response and sanitized audit tests pass.
 
-- [ ] **Step 5: Commit the HTTP and security-audit boundary**
+- [x] **Step 5: Commit the HTTP and security-audit boundary**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/financial/api src/main/java/com/project/optrabidz/financial/application/port/PaymentWebhookSecurityAuditor.java src/main/java/com/project/optrabidz/financial/infrastructure/audit src/main/java/com/project/optrabidz/audit/application/SecurityAuditService.java src/test/java/com/project/optrabidz/financial/api src/test/java/com/project/optrabidz/financial/infrastructure/audit src/test/java/com/project/optrabidz/audit/application/SecurityAuditServiceTest.java
@@ -767,7 +770,7 @@ private record PaymentAttemptFixture(
 ) {}
 ```
 
-- [ ] **Step 1: Replace the old success assumptions with empty-204 tests**
+- [x] **Step 1: Replace the old success assumptions with empty-204 tests**
 
 Add a helper returning an authenticated request:
 
@@ -797,7 +800,7 @@ assertThat(stateOfReplay("UPI", providerEventId)).isEqualTo("PROCESSED");
 assertThat(outboxCountForPaymentIntent(paymentIntentId)).isEqualTo(1);
 ```
 
-- [ ] **Step 2: Add sequential and concurrent duplicate tests**
+- [x] **Step 2: Add sequential and concurrent duplicate tests**
 
 For sequential delivery, perform the identical signed semantic body twice and
 assert both responses are empty 204, one replay row exists, and the relevant
@@ -819,7 +822,7 @@ and verify `handle` is called once. Reset the spy with
 `Mockito.reset(webhookService)` in `finally` so context reuse cannot leak
 interactions.
 
-- [ ] **Step 3: Add collision and unexpected-state tests**
+- [x] **Step 3: Add collision and unexpected-state tests**
 
 Process one valid body, then sign and send a body with the same provider event
 ID but a different provider payment ID. Assert HTTP 400,
@@ -831,7 +834,7 @@ Insert a committed `RECEIVED` row with a unique event ID, then send its
 identical authenticated body. Assert sanitized HTTP 500, zero financial/outbox
 change, and absence of the event ID and protected data from the response.
 
-- [ ] **Step 4: Add forced completion-failure rollback and retry test**
+- [x] **Step 4: Add forced completion-failure rollback and retry test**
 
 Declare `@SpyBean private PaymentWebhookReplayStore replayStore;`. Allow real
 claim and lookup behavior, but make the first `markProcessed` call throw the fixed exception
@@ -849,7 +852,7 @@ assertThat(outboxCountForPaymentIntent(paymentIntentId)).isZero();
 Reset the spy and repeat the same authenticated body. Assert empty 204,
 confirmed financial state, one `PROCESSED` replay row, and one outbox event.
 
-- [ ] **Step 5: Add provider-diagnostic separation test**
+- [x] **Step 5: Add provider-diagnostic separation test**
 
 Use a repayment attempt and a `PAYMENT_FAILED` body containing
 `UPI_DECLINED_PRIVATE` and `Provider diagnostic must remain protected`.
@@ -865,7 +868,7 @@ After HTTP 204, assert:
   and
 - `payment_webhook_event.failure_message` is null.
 
-- [ ] **Step 6: Prove downstream audit derives once**
+- [x] **Step 6: Prove downstream audit derives once**
 
 Inject `OutboxDispatcher`, call `dispatchPending()` until the tested outbox
 event is processed, and query `audit_record` joined by that outbox `event_id`.
@@ -874,7 +877,7 @@ again with the loaded outbox event and assert the count remains one, confirming
 the existing application idempotency check backed by
 `UNIQUE (event_id, action)`.
 
-- [ ] **Step 7: Run the API integration class and confirm GREEN**
+- [x] **Step 7: Run the API integration class and confirm GREEN**
 
 ```powershell
 .\mvnw.cmd -Pintegration-tests -Dit.test=PaymentProviderWebhookApiIT verify
@@ -884,7 +887,7 @@ Expected: authentication rejection, strict parsing, first delivery, duplicate,
 concurrency, collision, invariant, rollback/retry, protected diagnostics,
 outbox, audit, and disclosure tests all pass.
 
-- [ ] **Step 8: Commit end-to-end proof**
+- [x] **Step 8: Commit end-to-end proof**
 
 ```powershell
 git add src/test/java/com/project/optrabidz/financial/api/PaymentProviderWebhookApiIT.java
@@ -912,7 +915,7 @@ git commit -m "test(KAN-32): prove replay-safe webhook processing"
 - Replay-store port must not depend on servlet, HTTP, Jackson, Spring Data,
   JDBC, or PostgreSQL packages.
 
-- [ ] **Step 1: Add architecture rules**
+- [x] **Step 1: Add architecture rules**
 
 Add rules equivalent to:
 
@@ -945,7 +948,7 @@ static final ArchRule WEBHOOK_CONTROLLER_DOES_NOT_OWN_REPLAY_POLICY =
 
 Retain all existing architecture rules.
 
-- [ ] **Step 2: Run architecture and focused unit suites**
+- [x] **Step 2: Run architecture and focused unit suites**
 
 ```powershell
 .\mvnw.cmd -Dtest=ExceptionArchitectureTest,PaymentWebhookReplayFingerprintFactoryTest,PaymentWebhookReplayServiceTest,PaymentProviderWebhookIngressServiceTest,PaymentProviderWebhookServiceTest,PaymentProviderWebhookControllerTest,PaymentWebhookHttpIngressTest,AuditPaymentWebhookSecurityAuditorTest,SecurityAuditServiceTest test
@@ -953,7 +956,7 @@ Retain all existing architecture rules.
 
 Expected: all focused unit and architecture tests pass.
 
-- [ ] **Step 3: Run the complete unit suite**
+- [x] **Step 3: Run the complete unit suite**
 
 ```powershell
 .\mvnw.cmd test
@@ -961,7 +964,7 @@ Expected: all focused unit and architecture tests pass.
 
 Expected: all unit and architecture tests pass with no failure or error.
 
-- [ ] **Step 4: Run the complete PostgreSQL integration suite**
+- [x] **Step 4: Run the complete PostgreSQL integration suite**
 
 ```powershell
 .\mvnw.cmd -Pintegration-tests verify
@@ -969,7 +972,7 @@ Expected: all unit and architecture tests pass with no failure or error.
 
 Expected: all Testcontainers integration tests pass with no failure or error.
 
-- [ ] **Step 5: Run disclosure and scope scans**
+- [x] **Step 5: Run disclosure and scope scans**
 
 ```powershell
 rg -n "ApiResponse|SuccessResponse<PaymentAttemptResponse>|produces = MediaType.APPLICATION_JSON_VALUE" src/main/java/com/project/optrabidz/financial/api/PaymentProviderWebhookController.java
@@ -986,7 +989,7 @@ Expected:
 - baseline migration and Maven dependency/version diff is empty; and
 - `git diff --check` reports nothing.
 
-- [ ] **Step 6: Record execution evidence**
+- [x] **Step 6: Record execution evidence**
 
 Mark completed plan checkboxes only after their commands pass. Add the final
 unit/integration counts, Java distribution/version, PostgreSQL container
@@ -994,7 +997,7 @@ version, and tested commit SHA under a new `Execution evidence` section in this
 file. Do not include workstation paths, usernames, secrets, tokens, process
 IDs, heap dumps, or process/tool attribution.
 
-- [ ] **Step 7: Commit architecture and verification records**
+- [x] **Step 7: Commit architecture and verification records**
 
 ```powershell
 git add src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java docs/error-handling/work-items/KAN-32-webhook-replay-protection/implementation-plan.md
@@ -1016,4 +1019,15 @@ After all tasks pass:
 
 ## Execution evidence
 
-Not started. This section is populated only during approved implementation.
+- Tested implementation commit: `6411d96fbe50cce91cdbfbf80c0b832309b9d264`.
+- Complete Maven verification: `311` unit and architecture tests passed;
+  `111` PostgreSQL integration tests passed; zero failures, errors, or skips.
+- Focused replay HTTP integration verification: `8` tests passed.
+- Runtime: Oracle JDK Java `21.0.11` (64-bit Server VM).
+- Database: PostgreSQL `16.14` in Testcontainers, with Flyway baseline
+  validation and migration verification.
+- Disclosure scans found no obsolete response envelope/media declaration in
+  the webhook controller and no protected replay values in the security-audit
+  production paths.
+- Scope comparison confirmed no changes to `V1__baseline.sql` or `pom.xml`.
+- `git diff --check` completed without whitespace errors.
