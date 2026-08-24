@@ -770,6 +770,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.data.totalItems").value(1))
                 .andExpect(jsonPath("$.data.items[0].agreementId").value(scenario.agreementId().intValue()))
                 .andExpect(jsonPath("$.data.items[0].repaymentState").value("NOT_STARTED"));
+
+        assertThat(count("select count(*) from repayment where agreement_id = ?", scenario.agreementId()))
+                .isEqualTo(1);
+        assertThat(count("""
+                select count(*) from event_outbox
+                where event_type = 'SettlementConfirmedEvent'
+                  and payload ->> 'settlementId' = ?
+                """, settlementId.toString())).isEqualTo(1);
     }
 
     @Test
@@ -901,44 +909,244 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
     }
 
     @Test
-    void financeEndpointsRejectWrongActorsAndRoles() throws Exception {
+    void missingAndNonOwnedSettlementsHaveIndistinguishableProblemDetails() throws Exception {
         FinanceScenario scenario = createAcceptedBidScenario(
-                "Finance Access Startup",
-                "Finance Access Investor",
+                "Finance Settlement Scope Startup",
+                "Finance Settlement Scope Investor",
                 new BigDecimal("565432.10")
         );
         Long settlementId = getInvestorSettlementId(scenario.investor());
-        AuthenticatedClient otherInvestor = eligibleInvestor("Finance Other Investor");
+        AuthenticatedClient unrelatedInvestor = eligibleInvestor("Finance Other Settlement Investor");
 
-        mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
-                        .session(otherInvestor.session())
-                        .cookie(otherInvestor.xsrfCookie()))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("You are not authorized to view this settlement"));
+        MvcResult missing = mockMvc.perform(get("/api/v1/settlements/{settlementId}", Long.MAX_VALUE)
+                        .header("X-Request-ID", "kan37-settlement-missing")
+                        .session(unrelatedInvestor.session())
+                        .cookie(unrelatedInvestor.xsrfCookie()))
+                .andExpect(status().isNotFound())
+                .andExpectAll(paymentProblem(
+                        404,
+                        "Resource not found",
+                        "SETTLEMENT_NOT_FOUND",
+                        "The requested settlement was not found",
+                        "kan37-settlement-missing"
+                ))
+                .andReturn();
+        MvcResult nonOwned = mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
+                        .header("X-Request-ID", "kan37-settlement-non-owned")
+                        .session(unrelatedInvestor.session())
+                        .cookie(unrelatedInvestor.xsrfCookie()))
+                .andExpect(status().isNotFound())
+                .andExpectAll(paymentProblem(
+                        404,
+                        "Resource not found",
+                        "SETTLEMENT_NOT_FOUND",
+                        "The requested settlement was not found",
+                        "kan37-settlement-non-owned"
+                ))
+                .andReturn();
 
-        mockMvc.perform(post("/api/v1/settlements/{settlementId}/payment-intents", settlementId)
-                        .session(scenario.startup().session())
-                        .cookie(scenario.startup().xsrfCookie())
-                        .header("X-CSRF-TOKEN", scenario.startup().csrfToken())
+        assertThat(stableProblem(missing)).isEqualTo(stableProblem(nonOwned));
+        assertNoSettlementDetails(missing);
+        assertNoSettlementDetails(nonOwned);
+    }
+
+    @Test
+    void missingAndNonOwnedSettlementIntentCreationHaveIndistinguishableProblemDetails() throws Exception {
+        FinanceScenario scenario = createAcceptedBidScenario(
+                "Finance Intent Scope Startup",
+                "Finance Intent Scope Investor",
+                new BigDecimal("555432.10")
+        );
+        Long settlementId = getInvestorSettlementId(scenario.investor());
+        AuthenticatedClient unrelatedInvestor = eligibleInvestor("Finance Other Intent Investor");
+
+        MvcResult missing = createSettlementIntentFailure(
+                unrelatedInvestor,
+                Long.MAX_VALUE,
+                "kan37-intent-missing",
+                status().isNotFound(),
+                paymentProblem(
+                        404,
+                        "Resource not found",
+                        "SETTLEMENT_NOT_FOUND",
+                        "The requested settlement was not found",
+                        "kan37-intent-missing"
+                )
+        );
+        MvcResult nonOwned = createSettlementIntentFailure(
+                unrelatedInvestor,
+                settlementId,
+                "kan37-intent-non-owned",
+                status().isNotFound(),
+                paymentProblem(
+                        404,
+                        "Resource not found",
+                        "SETTLEMENT_NOT_FOUND",
+                        "The requested settlement was not found",
+                        "kan37-intent-non-owned"
+                )
+        );
+
+        assertThat(stableProblem(missing)).isEqualTo(stableProblem(nonOwned));
+        assertNoSettlementDetails(missing);
+        assertNoSettlementDetails(nonOwned);
+    }
+
+    @Test
+    void owningParticipantsAndAdministratorCanReadSettlement() throws Exception {
+        FinanceScenario scenario = createAcceptedBidScenario(
+                "Finance Settlement Reader Startup",
+                "Finance Settlement Reader Investor",
+                new BigDecimal("545432.10")
+        );
+        Long settlementId = getInvestorSettlementId(scenario.investor());
+        AuthenticatedClient administrator = administrator();
+
+        for (AuthenticatedClient reader : List.of(
+                scenario.startup(),
+                scenario.investor(),
+                administrator
+        )) {
+            mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
+                            .session(reader.session())
+                            .cookie(reader.xsrfCookie()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.settlementId").value(settlementId.intValue()));
+        }
+    }
+
+    @Test
+    void startupSettlementIntentDenialPrecedesSettlementLookup() throws Exception {
+        FinanceScenario scenario = createAcceptedBidScenario(
+                "Finance Role Boundary Startup",
+                "Finance Role Boundary Investor",
+                new BigDecimal("535432.10")
+        );
+        Long settlementId = getInvestorSettlementId(scenario.investor());
+
+        MvcResult realSettlement = createSettlementIntentFailure(
+                scenario.startup(),
+                settlementId,
+                "kan37-startup-real",
+                status().isForbidden(),
+                paymentProblem(
+                        403,
+                        "Access denied",
+                        "FINANCIAL_OPERATION_NOT_ALLOWED",
+                        "This financial operation is not allowed",
+                        "kan37-startup-real"
+                )
+        );
+        MvcResult missingSettlement = createSettlementIntentFailure(
+                scenario.startup(),
+                Long.MAX_VALUE,
+                "kan37-startup-missing",
+                status().isForbidden(),
+                paymentProblem(
+                        403,
+                        "Access denied",
+                        "FINANCIAL_OPERATION_NOT_ALLOWED",
+                        "This financial operation is not allowed",
+                        "kan37-startup-missing"
+                )
+        );
+
+        assertThat(stableProblem(realSettlement)).isEqualTo(stableProblem(missingSettlement));
+    }
+
+    @Test
+    void owningInvestorCannotCreateIntentForInitiallyNonPayableSettlement() throws Exception {
+        FinanceScenario scenario = createAcceptedBidScenario(
+                "Finance Nonpayable Startup",
+                "Finance Nonpayable Investor",
+                new BigDecimal("525432.10")
+        );
+        Long settlementId = getInvestorSettlementId(scenario.investor());
+        jdbcTemplate.update("""
+                update settlement
+                set settlement_state = 'SETTLEMENT_CANCELLED',
+                    cancelled_at = current_timestamp
+                where settlement_id = ?
+                """, settlementId);
+
+        createSettlementIntentFailure(
+                scenario.investor(),
+                settlementId,
+                "kan37-settlement-not-payable",
+                status().isConflict(),
+                paymentProblem(
+                        409,
+                        "Request conflict",
+                        "SETTLEMENT_NOT_PAYABLE",
+                        "The settlement cannot be paid in its current state",
+                        "kan37-settlement-not-payable"
+                )
+        );
+    }
+
+    @Test
+    void conditionalSettlementConflictRollsBackPaymentAndJoinedEffects() throws Exception {
+        FinanceScenario scenario = createAcceptedBidScenario(
+                "Finance Settlement Conflict Startup",
+                "Finance Settlement Conflict Investor",
+                new BigDecimal("515432.10")
+        );
+        Long settlementId = getInvestorSettlementId(scenario.investor());
+        Long paymentIntentId = createSettlementPaymentIntent(scenario.investor(), settlementId);
+        Long paymentAttemptId = createPaymentAttempt(scenario.investor(), paymentIntentId);
+        int cancelled = jdbcTemplate.update("""
+                update settlement
+                set settlement_state = 'SETTLEMENT_CANCELLED',
+                    cancelled_at = current_timestamp
+                where settlement_id = ?
+                  and settlement_state = 'SETTLEMENT_PENDING'
+                """, settlementId);
+        assertThat(cancelled).isEqualTo(1);
+
+        mockMvc.perform(post("/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm", paymentAttemptId)
+                        .header("X-Request-ID", "kan37-settlement-conflict")
+                        .session(scenario.investor().session())
+                        .cookie(scenario.investor().xsrfCookie())
+                        .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("Role is not allowed to perform this finance operation"));
+                .andExpect(status().isConflict())
+                .andExpectAll(paymentProblem(
+                        409,
+                        "Request conflict",
+                        "SETTLEMENT_STATE_CONFLICT",
+                        "The settlement state no longer permits this operation",
+                        "kan37-settlement-conflict"
+                ));
 
-        mockMvc.perform(post("/api/v1/settlements/{settlementId}/payment-intents", settlementId)
-                        .session(otherInvestor.session())
-                        .cookie(otherInvestor.xsrfCookie())
-                        .header("X-CSRF-TOKEN", otherInvestor.csrfToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("Investor can pay only own settlement"));
+        assertThat(jdbcTemplate.queryForObject("""
+                select attempt_state::text from payment_attempt where payment_attempt_id = ?
+                """, String.class, paymentAttemptId)).isEqualTo("INITIATED");
+        assertThat(jdbcTemplate.queryForObject("""
+                select payment_state::text from payment_intent where payment_intent_id = ?
+                """, String.class, paymentIntentId)).isEqualTo("PAYMENT_PENDING");
+        assertThat(jdbcTemplate.queryForObject("""
+                select settlement_state::text from settlement where settlement_id = ?
+                """, String.class, settlementId)).isEqualTo("SETTLEMENT_CANCELLED");
+        assertThat(count("select count(*) from repayment where agreement_id = ?", scenario.agreementId())).isZero();
+        assertThat(count("""
+                select count(*) from event_outbox
+                where event_type = 'SettlementConfirmedEvent'
+                  and payload ->> 'settlementId' = ?
+                """, settlementId.toString())).isZero();
+        assertThat(count("""
+                select count(*) from notification
+                where event_type = 'SettlementConfirmedEvent'
+                  and entity_type = 'SETTLEMENT'
+                  and entity_id = ?
+                """, settlementId)).isZero();
+        assertThat(count("""
+                select count(*) from audit_record
+                where event_type = 'SettlementConfirmedEvent'
+                  and action = 'SETTLEMENT_CONFIRMED'
+                  and object_type = 'SETTLEMENT'
+                  and object_id = ?
+                """, settlementId.toString())).isZero();
     }
 
     @Test
@@ -983,6 +1191,21 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         createCompleteInvestorProfile(investor, publicDisplayName);
         addInvestorPreference(investor, "SECTOR", "FINTECH");
         return investor;
+    }
+
+    private AuthenticatedClient administrator() throws Exception {
+        String email = uniqueEmail("finance-admin");
+        register(email, DEFAULT_PASSWORD, RoleType.INVESTOR)
+                .andExpect(status().isCreated());
+        int updated = jdbcTemplate.update("""
+                update role
+                set role_type = 'ADMIN'
+                where account_id = (
+                    select account_id from credential where email = ?
+                )
+                """, email);
+        assertThat(updated).isEqualTo(1);
+        return login(email, DEFAULT_PASSWORD);
     }
 
     private Long createAndPublishListing(AuthenticatedClient startup, String title, BigDecimal amount) throws Exception {
@@ -1075,6 +1298,25 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.data.paymentState").value("CREATED"))
                 .andReturn();
         return readLong(result, "/data/paymentIntentId");
+    }
+
+    private MvcResult createSettlementIntentFailure(
+            AuthenticatedClient actor,
+            Long settlementId,
+            String requestId,
+            ResultMatcher expectedStatus,
+            ResultMatcher[] problem
+    ) throws Exception {
+        return mockMvc.perform(post("/api/v1/settlements/{settlementId}/payment-intents", settlementId)
+                        .header("X-Request-ID", requestId)
+                        .session(actor.session())
+                        .cookie(actor.xsrfCookie())
+                        .header("X-CSRF-TOKEN", actor.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(expectedStatus)
+                .andExpectAll(problem)
+                .andReturn();
     }
 
     private Long createRepaymentPaymentIntent(AuthenticatedClient startup, Long repaymentId) throws Exception {
@@ -1372,6 +1614,25 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         );
         problem.remove(List.of("requestId", "timestamp", "instance"));
         return problem;
+    }
+
+    private void assertNoSettlementDetails(MvcResult result) throws Exception {
+        String body = result.getResponse().getContentAsString();
+        assertThat(body)
+                .doesNotContain(
+                        "settlementState",
+                        "expiresAt",
+                        "investorId",
+                        "startupId",
+                        "amount",
+                        "agreementId",
+                        "FINANCIAL.SETTLEMENT"
+                );
+    }
+
+    private long count(String sql, Object... arguments) {
+        Long result = jdbcTemplate.queryForObject(sql, Long.class, arguments);
+        return result == null ? 0 : result;
     }
 
     private record FinanceScenario(
