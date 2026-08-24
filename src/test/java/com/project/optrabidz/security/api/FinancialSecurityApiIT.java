@@ -102,14 +102,20 @@ class FinancialSecurityApiIT extends ApiIntegrationTestSupport {
         mockMvc.perform(post("/api/v1/payment-intents/{paymentIntentId}/attempts", Long.MAX_VALUE)
                         .session(investor.session())
                         .cookie(investor.xsrfCookie())
+                        .header("X-Request-Id", REQUEST_ID)
                         .header("X-CSRF-TOKEN", investor.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isNotFound())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("RESOURCE_NOT_FOUND"))
-                .andExpect(jsonPath("$.error.message").value("Payment intent not found"));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Resource not found"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value("PAYMENT_INTENT_NOT_FOUND"))
+                .andExpect(jsonPath("$.detail").value(
+                        "The requested payment intent was not found"))
+                .andExpect(jsonPath("$.requestId").value(REQUEST_ID))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
     }
 
     @Test
