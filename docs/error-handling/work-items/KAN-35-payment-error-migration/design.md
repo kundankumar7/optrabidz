@@ -1,6 +1,6 @@
 # KAN-35 — Payment Intent and Attempt Error Migration
 
-**Status:** Approved written specification
+**Status:** Implemented and verified
 
 **Date:** 2026-08-25
 
@@ -307,19 +307,19 @@ These follow-ups do not weaken the KAN-35 error and ownership guarantees.
 
 ## 15. Acceptance criteria
 
-- [ ] All eight descriptors exactly match the approved KAN-30 catalogue.
-- [ ] Payment intent and attempt failures use typed, transport-neutral
+- [x] All eight descriptors exactly match the approved KAN-30 catalogue.
+- [x] Payment intent and attempt failures use typed, transport-neutral
       `ApplicationException` subclasses.
-- [ ] Missing and non-owned resource requests are publicly indistinguishable.
-- [ ] Wrong-provider callbacks cannot reveal another provider's attempt.
-- [ ] State, method, and provider errors follow the approved precedence.
-- [ ] Duplicate terminal operations remain idempotent and competing outcomes
+- [x] Missing and non-owned resource requests are publicly indistinguishable.
+- [x] Wrong-provider callbacks cannot reveal another provider's attempt.
+- [x] State, method, and provider errors follow the approved precedence.
+- [x] Duplicate terminal operations remain idempotent and competing outcomes
       remain concurrency-safe.
-- [ ] Provider text, protected diagnostics, domain messages, and internal
+- [x] Provider text, protected diagnostics, domain messages, and internal
       implementation details never enter Problem Details.
-- [ ] Migrated payment exceptions no longer depend on `ApiException` or
+- [x] Migrated payment exceptions no longer depend on `ApiException` or
       `ErrorCode`.
-- [ ] Settlement, repayment, webhook, outbox, audit, and security behavior do
+- [x] Settlement, repayment, webhook, outbox, audit, and security behavior do
       not regress.
-- [ ] No Flyway migration is introduced.
-- [ ] Focused and complete verification suites pass before review.
+- [x] No Flyway migration is introduced.
+- [x] Focused and complete verification suites pass before review.

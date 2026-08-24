@@ -133,7 +133,7 @@ Maven Surefire, and Maven Failsafe.
 - Produces: cause-aware constructors on `PaymentStateConflictException` for
   sanitizing caught domain transition failures.
 
-- [ ] **Step 1: Write the failing descriptor and exception contract test**
+- [x] **Step 1: Write the failing descriptor and exception contract test**
 
 Create a parameterized test whose data is exactly:
 
@@ -187,7 +187,7 @@ For every factory, pass `protected-provider-sentinel`, assert the expected
 descriptor and diagnostic code, and assert that the sentinel appears only in
 `getMessage()`, never in `descriptor().publicMessage()`.
 
-- [ ] **Step 2: Run the new contract test and verify failure**
+- [x] **Step 2: Run the new contract test and verify failure**
 
 Run:
 
@@ -198,7 +198,7 @@ Run:
 Expected: compilation fails because the eight payment descriptors and the two
 new exception classes do not yet exist.
 
-- [ ] **Step 3: Add the exact descriptors and transport-neutral exceptions**
+- [x] **Step 3: Add the exact descriptors and transport-neutral exceptions**
 
 Add the descriptor constants exactly as listed in Step 1. Rewrite each
 existing payment exception using this shape:
@@ -235,7 +235,7 @@ Change both `paymentIntentNotActiveException` overloads from the legacy
 `ApiException` return type to `ApplicationException`. This is required for the
 neutral subclasses to compile; do not change their selection logic in Task 1.
 
-- [ ] **Step 4: Add the payment-specific architecture rule**
+- [x] **Step 4: Add the payment-specific architecture rule**
 
 Add an ArchUnit rule matching these migrated exception names and forbidding a
 dependency on `..common.api.exception..`:
@@ -261,7 +261,7 @@ Remove only the frozen legacy violations for the six exception classes
 migrated in this task. Keep `InvalidPaymentStateException` frozen until Task 3
 deletes its final callers.
 
-- [ ] **Step 5: Run contract and architecture tests**
+- [x] **Step 5: Run contract and architecture tests**
 
 Run:
 
@@ -271,7 +271,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit the neutral contract**
+- [x] **Step 6: Commit the neutral contract**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/financial/application/error `
@@ -317,7 +317,7 @@ git commit -m "refactor(KAN-35): define neutral payment errors"
 - Preserves both repositories' existing global `findById` and conditional
   transition methods.
 
-- [ ] **Step 1: Write failing PostgreSQL scope tests**
+- [x] **Step 1: Write failing PostgreSQL scope tests**
 
 Extend `PaymentIntentRepositoryIT` with one saved intent whose payer and payee
 are different accounts, then assert:
@@ -360,7 +360,7 @@ Create the intent references with
 different reference's payer as `unrelatedId`. Rely on the existing
 transactional `@DataJpaTest` rollback for cleanup.
 
-- [ ] **Step 2: Run the repository integration tests and verify failure**
+- [x] **Step 2: Run the repository integration tests and verify failure**
 
 Run:
 
@@ -372,7 +372,7 @@ Run:
 
 Expected: compilation fails because the four scoped port methods do not exist.
 
-- [ ] **Step 3: Add scoped methods to the domain ports and JPA repositories**
+- [x] **Step 3: Add scoped methods to the domain ports and JPA repositories**
 
 Add the four exact port signatures from the Interfaces section. Add these
 Spring Data queries:
@@ -414,14 +414,14 @@ Optional<PaymentAttempt> findByPaymentAttemptIdAndProviderCodeIgnoreCase(
 Map these methods through the repository adapters without adding policy or
 exception translation there.
 
-- [ ] **Step 4: Run the repository integration tests**
+- [x] **Step 4: Run the repository integration tests**
 
 Run the command from Step 2 again.
 
 Expected: PASS, including payer-versus-payee and case-insensitive provider
 scope.
 
-- [ ] **Step 5: Commit the scoped persistence boundary**
+- [x] **Step 5: Commit the scoped persistence boundary**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/financial/domain/repository `
@@ -450,7 +450,7 @@ git commit -m "refactor(KAN-35): scope payment resource lookups"
 - Preserves all public `FinancialService` method signatures.
 - Produces deterministic authority-first payment failure selection.
 
-- [ ] **Step 1: Replace payment unit-test expectations with neutral failures**
+- [x] **Step 1: Replace payment unit-test expectations with neutral failures**
 
 Update Mockito stubs so ordinary intent reads use
 `findByIdForParticipant`, attempt creation uses `findByIdForPayer`, local
@@ -477,7 +477,7 @@ For each failure assert the `ApplicationException.descriptor()` identity, not
 the protected diagnostic message. Verify wrong-provider callback tests never
 invoke the global attempt lookup or load the linked intent.
 
-- [ ] **Step 2: Run the application unit tests and verify failure**
+- [x] **Step 2: Run the application unit tests and verify failure**
 
 Run:
 
@@ -488,7 +488,7 @@ Run:
 Expected: FAIL because `FinancialService` still performs global payment
 lookups and throws legacy ownership/provider errors.
 
-- [ ] **Step 3: Implement authority-first intent selection**
+- [x] **Step 3: Implement authority-first intent selection**
 
 Use explicit administrator and ordinary-caller branches:
 
@@ -520,7 +520,7 @@ Use the first helper for intent reads and the second for attempt creation.
 Remove `ensurePaymentIntentVisible` and the payment-intent use of
 `ensurePaymentActor`; leave unrelated financial authorization methods alone.
 
-- [ ] **Step 4: Implement authority-first attempt selection**
+- [x] **Step 4: Implement authority-first attempt selection**
 
 For local browser actions, load globally only for administrators; otherwise
 use `findByIdForPayer`. For callbacks, use `findByIdForProvider` directly:
@@ -551,7 +551,7 @@ After browser authority is known, reject a local endpoint used for a non-local
 attempt with `PaymentProviderMismatchException`. Never perform this mismatch
 check before callback provider scoping.
 
-- [ ] **Step 5: Migrate state, method, and transition failures**
+- [x] **Step 5: Migrate state, method, and transition failures**
 
 Make state classification return `ApplicationException` and select in this
 order:
@@ -582,7 +582,7 @@ diagnostic such as `Payment attempt transition rejected for current state` and
 retain the original exception only as the cause. Never concatenate
 `exception.getMessage()` into descriptor or diagnostic text.
 
-- [ ] **Step 6: Preserve idempotency and transactional rollback**
+- [x] **Step 6: Preserve idempotency and transactional rollback**
 
 Keep the current conditional SQL call order. If the attempt update affects
 zero rows:
@@ -595,7 +595,7 @@ If the intent update affects zero rows, reload it and classify confirmed,
 expired, or other inactive state. Allow the existing transaction to roll back
 the preceding attempt update and joined side effects.
 
-- [ ] **Step 7: Run payment application and architecture tests**
+- [x] **Step 7: Run payment application and architecture tests**
 
 Run:
 
@@ -613,7 +613,7 @@ rg -n "InvalidPaymentStateException|PaymentIntentNotFoundException extends ApiEx
 
 Expected: no matches.
 
-- [ ] **Step 8: Commit the application migration**
+- [x] **Step 8: Commit the application migration**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/financial/application `
@@ -638,7 +638,7 @@ git commit -m "refactor(KAN-35): migrate payment error selection"
 - Produces integration evidence for exact RFC 9457 fields, uniform ownership
   disclosure, provider scoping, and preserved terminal-state behavior.
 
-- [ ] **Step 1: Add a reusable payment Problem Details assertion**
+- [x] **Step 1: Add a reusable payment Problem Details assertion**
 
 In `FinancialApiIT`, add a helper returning `ResultMatcher[]` with these exact
 assertions:
@@ -662,7 +662,7 @@ private ResultMatcher[] paymentProblem(
 }
 ```
 
-- [ ] **Step 2: Write missing-versus-non-owned API tests**
+- [x] **Step 2: Write missing-versus-non-owned API tests**
 
 For both intent read and attempt mutation, send one missing identifier and one
 existing identifier owned by another authenticated account. Supply different
@@ -685,7 +685,7 @@ code   = PAYMENT_ATTEMPT_NOT_FOUND
 detail = The requested payment attempt was not found
 ```
 
-- [ ] **Step 3: Write state, method, and disclosure API tests**
+- [x] **Step 3: Write state, method, and disclosure API tests**
 
 Cover the exact 409/422 contract rows. Inject a sentinel such as
 `provider-secret-diagnostic-sentinel` into protected provider failure or test
@@ -696,7 +696,7 @@ Update legacy assertions such as `$.success`, `$.error.code`, and
 `$.error.message` only for the migrated payment-intent/attempt failures. Do not
 rewrite unrelated settlement and repayment legacy assertions in KAN-35.
 
-- [ ] **Step 4: Add provider-callback anti-enumeration coverage**
+- [x] **Step 4: Add provider-callback anti-enumeration coverage**
 
 In `PaymentProviderWebhookApiIT`, submit an authenticated, replay-safe event
 whose provider code does not own the referenced attempt. Assert:
@@ -711,7 +711,7 @@ Assert the body does not contain the real attempt provider, provider payment
 ID, event ID, replay hash, signature, payload, or protected diagnostic text.
 Verify the replay claim and financial mutations roll back.
 
-- [ ] **Step 5: Re-run existing concurrent payment scenarios**
+- [x] **Step 5: Re-run existing concurrent payment scenarios**
 
 Keep and execute the current integration tests proving:
 
@@ -725,7 +725,7 @@ For the losing confirm/fail response, additionally assert
 `PAYMENT_STATE_CONFLICT` and its allowlisted detail where the attempt terminal
 state is incompatible.
 
-- [ ] **Step 6: Run focused unit and integration verification**
+- [x] **Step 6: Run focused unit and integration verification**
 
 Run:
 
@@ -738,7 +738,7 @@ Run:
 
 Expected: PASS with no skipped named tests and no leaked sentinel values.
 
-- [ ] **Step 7: Run the complete repository verification**
+- [x] **Step 7: Run the complete repository verification**
 
 Confirm Docker is available, then run:
 
@@ -750,12 +750,38 @@ docker info
 Expected: Docker reports a running engine; every unit, architecture, and
 Testcontainers integration test passes.
 
-- [ ] **Step 8: Commit the API and regression evidence**
+- [x] **Step 8: Commit the API and regression evidence**
 
 ```powershell
 git add src/test/java/com/project/optrabidz/financial/api
 git commit -m "test(KAN-35): verify payment error contracts"
 ```
+
+## Verification evidence
+
+Tested commit: `c791520ab292d5e0f5dee1c92ddbf7f566c8d794`
+
+Focused payment verification:
+
+```powershell
+.\mvnw.cmd -Pintegration-tests `
+  "-Dtest=FinancialPaymentErrorContractTest,FinancialServiceTest,ExceptionArchitectureTest" `
+  "-Dit.test=PaymentIntentRepositoryIT,PaymentAttemptRepositoryIT,FinancialApiIT,PaymentProviderWebhookApiIT" `
+  verify
+```
+
+Result: `BUILD SUCCESS`; 56 unit/architecture tests and 33 PostgreSQL-backed
+integration tests passed with zero failures, errors, or skips.
+
+Complete repository verification:
+
+```powershell
+.\mvnw.cmd verify -Pintegration-tests
+```
+
+Result: `BUILD SUCCESS`; 341 unit/architecture tests and 118 integration tests
+passed with zero failures, errors, or skips. Docker Desktop 29.5.2 and
+PostgreSQL 16 Testcontainers were used; Flyway baseline validation passed.
 
 ---
 
@@ -774,7 +800,7 @@ git commit -m "test(KAN-35): verify payment error contracts"
 - Produces a reviewable evidence record; it does not change production
   behavior.
 
-- [ ] **Step 1: Inspect the complete branch diff**
+- [x] **Step 1: Inspect the complete branch diff**
 
 Run:
 
@@ -787,20 +813,23 @@ git log --oneline develop..HEAD
 
 Expected: no whitespace errors, no unrelated files, and only KAN-35 commits.
 
-- [ ] **Step 2: Verify legacy payment dependencies are absent**
+- [x] **Step 2: Verify legacy payment dependencies are absent**
 
 Run:
 
 ```powershell
 rg -n "extends ApiException|ErrorCode" `
-  src/main/java/com/project/optrabidz/financial/application/exception/Payment*Exception.java `
-  src/main/java/com/project/optrabidz/financial/application/exception/UnsupportedPaymentMethodException.java
+  src/main/java/com/project/optrabidz/financial/application/exception `
+  -g "Payment*Exception.java" `
+  -g "UnsupportedPaymentMethodException.java" `
+  -g "!PaymentWebhookVerificationException.java"
 ```
 
 Expected: no matches. Do not require unrelated settlement and repayment
-exceptions to pass this scoped search.
+exceptions or the separately scoped webhook-verification exception to pass
+this search.
 
-- [ ] **Step 3: Update documentation status and evidence**
+- [x] **Step 3: Update documentation status and evidence**
 
 Change the design status to `Implemented and verified` only after Task 4's
 complete verification passes. Append the exact successful focused and full
