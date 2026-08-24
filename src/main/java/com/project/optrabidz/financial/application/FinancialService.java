@@ -3,6 +3,7 @@ package com.project.optrabidz.financial.application;
 import com.project.optrabidz.common.api.pagination.PageResponse;
 import com.project.optrabidz.common.api.exception.ApiException;
 import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
 import com.project.optrabidz.common.event.EventPublisher;
 import com.project.optrabidz.financial.application.command.PaymentAttemptConfirmationCommand;
 import com.project.optrabidz.financial.application.command.PaymentAttemptFailureCommand;
@@ -777,11 +778,11 @@ public class FinancialService {
         }
     }
 
-    private ApiException paymentIntentNotActiveException(Long paymentIntentId) {
+    private ApplicationException paymentIntentNotActiveException(Long paymentIntentId) {
         return paymentIntentNotActiveException(getPaymentIntent(paymentIntentId));
     }
 
-    private ApiException paymentIntentNotActiveException(PaymentIntent paymentIntent) {
+    private ApplicationException paymentIntentNotActiveException(PaymentIntent paymentIntent) {
         if (paymentIntent.getPaymentState() == PaymentState.PAYMENT_CONFIRMED) {
             return new PaymentAlreadyConfirmedException("Payment is already confirmed");
         }

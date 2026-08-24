@@ -54,6 +54,20 @@ class ExceptionArchitectureTest {
                     .as("financial user controllers must delegate authentication to Spring Security");
 
     @ArchTest
+    static final ArchRule PAYMENT_EXCEPTIONS_USE_NEUTRAL_ERROR_CONTRACT =
+            noClasses()
+                    .that().haveNameMatching(
+                            ".*\\.(PaymentIntentNotFound|PaymentAttemptNotFound|"
+                                    + "PaymentIntentExpired|PaymentIntentNotActive|"
+                                    + "PaymentAlreadyConfirmed|PaymentStateConflict|"
+                                    + "UnsupportedPaymentMethod|PaymentProviderMismatch)Exception"
+                    )
+                    .should().dependOnClassesThat().resideInAPackage(
+                            "..common.api.exception.."
+                    )
+                    .as("migrated payment exceptions must use the neutral error contract");
+
+    @ArchTest
     static final ArchRule BUSINESS_EXCEPTIONS_ARE_TRANSPORT_NEUTRAL =
             freeze(noClasses()
                     .that().resideInAnyPackage("..domain..", "..application..")

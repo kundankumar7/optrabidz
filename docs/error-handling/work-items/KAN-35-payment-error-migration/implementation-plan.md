@@ -119,6 +119,10 @@ Maven Surefire, and Maven Failsafe.
   `src/test/java/com/project/optrabidz/financial/application/FinancialPaymentErrorContractTest.java`
 - Modify:
   `src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java`
+- Modify:
+  `src/test/resources/archunit-store/5c2f7ae8-7609-459a-8ad7-49f65df73f4f`
+- Modify only the payment-state helper return type:
+  `src/main/java/com/project/optrabidz/financial/application/FinancialService.java`
 
 **Interfaces:**
 
@@ -164,7 +168,7 @@ private static Stream<Arguments> descriptors() {
 }
 ```
 
-Assert `code()`, `category()`, and `publicDetail()` for each descriptor. Add a
+Assert `code()`, `category()`, and `publicMessage()` for each descriptor. Add a
 second parameterized source mapping exception factories to these exact
 diagnostic codes:
 
@@ -181,7 +185,7 @@ PaymentProviderMismatchException    FINANCIAL.PAYMENT.PROVIDER.MISMATCH
 
 For every factory, pass `protected-provider-sentinel`, assert the expected
 descriptor and diagnostic code, and assert that the sentinel appears only in
-`getMessage()`, never in `descriptor().publicDetail()`.
+`getMessage()`, never in `descriptor().publicMessage()`.
 
 - [ ] **Step 2: Run the new contract test and verify failure**
 
@@ -227,6 +231,10 @@ public PaymentStateConflictException(String diagnosticMessage, Throwable cause) 
 
 Do not copy a caught exception message into `diagnosticMessage`.
 
+Change both `paymentIntentNotActiveException` overloads from the legacy
+`ApiException` return type to `ApplicationException`. This is required for the
+neutral subclasses to compile; do not change their selection logic in Task 1.
+
 - [ ] **Step 4: Add the payment-specific architecture rule**
 
 Add an ArchUnit rule matching these migrated exception names and forbidding a
@@ -249,13 +257,16 @@ static final ArchRule PAYMENT_EXCEPTIONS_USE_NEUTRAL_ERROR_CONTRACT =
 ```
 
 Do not add `..financial..` to the complete migrated-module rule.
+Remove only the frozen legacy violations for the six exception classes
+migrated in this task. Keep `InvalidPaymentStateException` frozen until Task 3
+deletes its final callers.
 
 - [ ] **Step 5: Run contract and architecture tests**
 
 Run:
 
 ```powershell
-.\mvnw.cmd -Dtest=FinancialPaymentErrorContractTest,ExceptionArchitectureTest test
+.\mvnw.cmd "-Dtest=FinancialPaymentErrorContractTest,ExceptionArchitectureTest" test
 ```
 
 Expected: PASS.
@@ -356,7 +367,7 @@ Run:
 ```powershell
 .\mvnw.cmd -Pintegration-tests `
   -Dtest=FinancialPaymentErrorContractTest `
-  -Dit.test=PaymentIntentRepositoryIT,PaymentAttemptRepositoryIT verify
+  "-Dit.test=PaymentIntentRepositoryIT,PaymentAttemptRepositoryIT" verify
 ```
 
 Expected: compilation fails because the four scoped port methods do not exist.
@@ -471,7 +482,7 @@ invoke the global attempt lookup or load the linked intent.
 Run:
 
 ```powershell
-.\mvnw.cmd -Dtest=FinancialServiceTest,FinancialPaymentErrorContractTest test
+.\mvnw.cmd "-Dtest=FinancialServiceTest,FinancialPaymentErrorContractTest" test
 ```
 
 Expected: FAIL because `FinancialService` still performs global payment
@@ -590,7 +601,7 @@ Run:
 
 ```powershell
 .\mvnw.cmd `
-  -Dtest=FinancialPaymentErrorContractTest,FinancialServiceTest,ExceptionArchitectureTest `
+  "-Dtest=FinancialPaymentErrorContractTest,FinancialServiceTest,ExceptionArchitectureTest" `
   test
 ```
 
@@ -720,8 +731,8 @@ Run:
 
 ```powershell
 .\mvnw.cmd -Pintegration-tests `
-  -Dtest=FinancialPaymentErrorContractTest,FinancialServiceTest,ExceptionArchitectureTest `
-  -Dit.test=PaymentIntentRepositoryIT,PaymentAttemptRepositoryIT,FinancialApiIT,PaymentProviderWebhookApiIT `
+  "-Dtest=FinancialPaymentErrorContractTest,FinancialServiceTest,ExceptionArchitectureTest" `
+  "-Dit.test=PaymentIntentRepositoryIT,PaymentAttemptRepositoryIT,FinancialApiIT,PaymentProviderWebhookApiIT" `
   verify
 ```
 
