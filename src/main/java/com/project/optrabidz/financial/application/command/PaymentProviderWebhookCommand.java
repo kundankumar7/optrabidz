@@ -2,8 +2,6 @@ package com.project.optrabidz.financial.application.command;
 
 import org.springframework.util.Assert;
 
-import java.util.Map;
-
 public record PaymentProviderWebhookCommand(
         String providerCode,
         PaymentProviderWebhookEventType eventType,
@@ -11,16 +9,13 @@ public record PaymentProviderWebhookCommand(
         String providerPaymentId,
         String failureCode,
         String failureMessage,
-        String providerEventId,
-        String rawPayload,
-        Map<String, String> headers
+        String providerEventId
 ) {
     public PaymentProviderWebhookCommand {
         Assert.hasText(providerCode, "providerCode must not be blank");
         Assert.notNull(eventType, "eventType must not be null");
         Assert.notNull(paymentAttemptId, "paymentAttemptId must not be null");
         Assert.hasText(providerEventId, "providerEventId must not be blank");
-        Assert.hasText(rawPayload, "rawPayload must not be blank");
 
         providerCode = providerCode.trim().toUpperCase();
         if (eventType == PaymentProviderWebhookEventType.PAYMENT_CONFIRMED) {
@@ -35,26 +30,5 @@ public record PaymentProviderWebhookCommand(
                     ? "Provider reported payment failure"
                     : failureMessage.trim();
         }
-        headers = headers == null ? Map.of() : Map.copyOf(headers);
-    }
-
-    public PaymentProviderWebhookCommand(String providerCode,
-                                         PaymentProviderWebhookEventType eventType,
-                                         Long paymentAttemptId,
-                                         String providerPaymentId,
-                                         String providerEventId,
-                                         String rawPayload,
-                                         Map<String, String> headers) {
-        this(
-                providerCode,
-                eventType,
-                paymentAttemptId,
-                providerPaymentId,
-                null,
-                null,
-                providerEventId,
-                rawPayload,
-                headers
-        );
     }
 }

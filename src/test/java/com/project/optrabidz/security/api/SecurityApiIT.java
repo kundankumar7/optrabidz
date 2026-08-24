@@ -321,6 +321,7 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
     @Test
     void providerWebhookEndpointDoesNotRequireBrowserSessionOrCsrfToken() throws Exception {
         mockMvc.perform(post("/api/v1/payment-providers/upi/webhooks")
+                        .header("X-Request-Id", REQUEST_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -330,10 +331,19 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
                                   "providerEventId": "evt_1001"
                 }
                 """))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("Webhook signature is missing"));
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(
+                        MediaType.APPLICATION_PROBLEM_JSON
+                ))
+                .andExpect(jsonPath("$.code").value(
+                        "PAYMENT_WEBHOOK_REJECTED"
+                ))
+                .andExpect(jsonPath("$.detail").value(
+                        "The webhook request was rejected"
+                ))
+                .andExpect(jsonPath("$.requestId").value(REQUEST_ID))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
     }
 
     private ResultActions expectSecurityProblem(

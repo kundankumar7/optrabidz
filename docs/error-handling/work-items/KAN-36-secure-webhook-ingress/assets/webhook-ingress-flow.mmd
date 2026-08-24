@@ -1,0 +1,46 @@
+flowchart TB
+    Provider[Payment provider]
+
+    subgraph HttpBoundary[HTTP adapter]
+        direction LR
+        Security[Session-public and CSRF-exempt route]
+        Reader[Bounded exact-byte reader]
+        Headers[Allowlisted protocol headers]
+    end
+
+    subgraph Authentication[Provider authentication boundary]
+        direction LR
+        Registry[Verifier registry]
+        Verifier[Timestamp and HMAC verifier]
+        Secrets[Active and time-limited previous secret]
+    end
+
+    subgraph Application[Financial application boundary]
+        direction LR
+        Parser[Strict post-authentication parser]
+        Event[Authenticated normalized event]
+        Service[Payment webhook application service]
+    end
+
+    Reject[Uniform rejection and sanitized audit]
+    Invalid[Payload-invalid response and sanitized audit]
+    Replay[KAN-32 replay claim and minimal acknowledgement]
+
+    Provider --> Security --> Reader --> Headers --> Registry --> Verifier
+    Secrets --> Verifier
+    Verifier -->|verified exact bytes| Parser --> Event --> Service --> Replay
+
+    Reader -->|body or header limit| Reject
+    Registry -->|unavailable| Reject
+    Verifier -->|missing malformed stale or invalid| Reject
+    Parser -->|strict schema or field failure| Invalid
+
+    classDef trust fill:#e8f1ff,stroke:#1d4ed8,color:#102a43
+    classDef auth fill:#fff4d6,stroke:#b7791f,color:#3d2f00
+    classDef app fill:#e7f8ee,stroke:#2f855a,color:#173f2a
+    classDef reject fill:#fde8e8,stroke:#c53030,color:#5b1717
+
+    class Security,Reader,Headers trust
+    class Registry,Verifier,Secrets auth
+    class Parser,Event,Service,Replay app
+    class Reject,Invalid reject

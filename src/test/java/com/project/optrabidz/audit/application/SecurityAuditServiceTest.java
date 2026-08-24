@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
@@ -41,6 +42,80 @@ class SecurityAuditServiceTest {
     private AuditPolicyRegistry auditPolicyRegistry;
     @Mock
     private OperationalEventLogger operationalEventLogger;
+
+    @Test
+    void webhookSecurityRecordsContainOnlyBoundedMetadata() {
+        AuditService auditService = mock(AuditService.class);
+        SensitiveDataMasker sensitiveDataMasker = new SensitiveDataMasker();
+        ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
+        SecurityAuditService service = new SecurityAuditService(
+                auditService,
+                new AuditRecordFactory(objectMapper, sensitiveDataMasker),
+                sensitiveDataMasker,
+                objectMapper,
+                operationalEventLogger
+        );
+
+        service.recordPaymentWebhookRejected("UPI", "request-123");
+        service.recordPaymentWebhookPayloadInvalid("UPI", "request-456");
+
+        ArgumentCaptor<AuditRecord> records = ArgumentCaptor.forClass(
+                AuditRecord.class
+        );
+        verify(auditService, times(2)).save(records.capture());
+        assertThat(records.getAllValues())
+                .extracting(AuditRecord::getAction)
+                .containsExactly(
+                        "PAYMENT_WEBHOOK_REJECTED",
+                        "PAYMENT_WEBHOOK_PAYLOAD_INVALID"
+                );
+        assertThat(records.getAllValues())
+                .allSatisfy(record -> {
+                    assertThat(record.getObjectType()).isEqualTo(
+                            "PAYMENT_PROVIDER"
+                    );
+                    assertThat(record.getObjectId()).isEqualTo("UPI");
+                    assertThat(record.getOutcome()).isEqualTo("DENIED");
+                    assertThat(record.getDetails()).isEqualTo(
+                            "{\"category\":\"PAYMENT_WEBHOOK\"}"
+                    );
+                    assertThat(record.getIpAddress()).isNull();
+                    assertThat(record.getUserAgent()).isNull();
+                });
+        assertThat(records.getAllValues())
+                .extracting(AuditRecord::getRequestId)
+                .containsExactly("request-123", "request-456");
+    }
+
+    @Test
+    void webhookAuditFailureDoesNotEscape() {
+        AuditService auditService = mock(AuditService.class);
+        RuntimeException persistenceFailure = new IllegalStateException(
+                "database unavailable: secret-token"
+        );
+        doThrow(persistenceFailure).when(auditService).save(any());
+        SensitiveDataMasker sensitiveDataMasker = new SensitiveDataMasker();
+        ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
+        SecurityAuditService service = new SecurityAuditService(
+                auditService,
+                new AuditRecordFactory(objectMapper, sensitiveDataMasker),
+                sensitiveDataMasker,
+                objectMapper,
+                operationalEventLogger
+        );
+
+        assertThatCode(() -> service.recordPaymentWebhookRejected(
+                "UNKNOWN",
+                "request-789"
+        )).doesNotThrowAnyException();
+
+        verify(operationalEventLogger).error(
+                "SECURITY_AUDIT_WRITE_FAILED",
+                "action=PAYMENT_WEBHOOK_REJECTED objectType=PAYMENT_PROVIDER "
+                        + "objectId=UNKNOWN",
+                persistenceFailure
+        );
+    }
 
     @Test
     void containsCommitFailuresAtBothSecurityBoundaries() throws Exception {

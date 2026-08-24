@@ -5,11 +5,13 @@ import com.project.optrabidz.financial.domain.model.PaymentAttempt;
 import com.project.optrabidz.financial.domain.model.PaymentIntent;
 import com.project.optrabidz.financial.domain.model.PaymentMethodType;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 
 @Component
+@Profile({"dev", "test"})
 @ConditionalOnProperty(name = "optrabidz.financial.sandbox-providers.enabled", havingValue = "true")
 public class SandboxUpiPaymentStrategy implements PaymentMethodStrategy {
     @Override

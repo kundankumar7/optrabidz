@@ -1,6 +1,7 @@
 package com.project.optrabidz.financial.application.port;
 
-import com.project.optrabidz.financial.application.exception.UnsupportedPaymentMethodException;
+import com.project.optrabidz.financial.application.exception.PaymentWebhookRejectedException;
+import com.project.optrabidz.financial.application.exception.PaymentWebhookRejectionReason;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -18,8 +19,8 @@ public class PaymentProviderWebhookSignatureVerifierRegistry {
         return verifiers.stream()
                 .filter(verifier -> verifier.supports(normalizedProviderCode))
                 .findFirst()
-                .orElseThrow(() -> new UnsupportedPaymentMethodException(
-                        "No webhook signature verifier configured for provider"
+                .orElseThrow(() -> new PaymentWebhookRejectedException(
+                        PaymentWebhookRejectionReason.PROVIDER_UNAVAILABLE
                 ));
     }
 }
