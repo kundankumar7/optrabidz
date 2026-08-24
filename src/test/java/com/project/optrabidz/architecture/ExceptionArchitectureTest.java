@@ -92,10 +92,37 @@ class ExceptionArchitectureTest {
     static final ArchRule WEBHOOK_EXCEPTIONS_USE_NEUTRAL_ERROR_CONTRACT =
             noClasses()
                     .that().haveNameMatching(
-                            ".*\\.PaymentWebhook(Rejected|PayloadInvalid)Exception"
+                            ".*\\.PaymentWebhook(Rejected|PayloadInvalid|ReplayCollision|ReplayState)Exception"
                     )
                     .should().dependOnClassesThat().resideInAPackage(
                             "..common.api.."
                     )
                     .as("webhook exceptions must not depend on API rendering types");
+
+    @ArchTest
+    static final ArchRule WEBHOOK_REPLAY_PORT_IS_INFRASTRUCTURE_NEUTRAL =
+            noClasses()
+                    .that().resideInAPackage("..financial.application.port..")
+                    .and().haveSimpleName("PaymentWebhookReplayStore")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "jakarta.servlet..",
+                            "org.springframework.http..",
+                            "org.springframework.jdbc..",
+                            "org.springframework.data..",
+                            "com.fasterxml.jackson..",
+                            "org.postgresql.."
+                    )
+                    .as("the webhook replay port must remain independent of transport and persistence frameworks");
+
+    @ArchTest
+    static final ArchRule WEBHOOK_CONTROLLER_DOES_NOT_OWN_REPLAY_POLICY =
+            noClasses()
+                    .that().haveSimpleName("PaymentProviderWebhookController")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "..financial.application.replay..",
+                            "..financial.infrastructure.repository..",
+                            "org.springframework.jdbc..",
+                            "org.springframework.data.."
+                    )
+                    .as("the webhook controller must delegate replay policy to application services");
 }

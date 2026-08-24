@@ -217,7 +217,7 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
                 .doesNotContain("provider-secret-code")
                 .doesNotContain("provider diagnostic secret text");
 
-        outboxDispatcher.dispatchPending();
+        dispatchUntilProcessed(outboxEventId);
         outboxDispatcher.dispatchPending();
         assertThat(jdbcTemplate.queryForObject("""
                 select count(*) from audit_record
@@ -479,6 +479,25 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
                 select event_id from event_outbox
                 where payload ->> 'paymentIntentId' = ?
                 """, String.class, String.valueOf(paymentIntentId));
+    }
+
+    private void dispatchUntilProcessed(String eventId) {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            String state = jdbcTemplate.queryForObject(
+                    "select event_status from event_outbox where event_id = ?",
+                    String.class,
+                    eventId
+            );
+            if ("PROCESSED".equals(state)) {
+                return;
+            }
+            assertThat(outboxDispatcher.dispatchPending()).isPositive();
+        }
+        assertThat(jdbcTemplate.queryForObject(
+                "select event_status from event_outbox where event_id = ?",
+                String.class,
+                eventId
+        )).isEqualTo("PROCESSED");
     }
 
     private MockHttpServletRequestBuilder webhook(String providerCode,

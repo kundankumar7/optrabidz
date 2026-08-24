@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -229,18 +230,12 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         ));
 
         mockMvc.perform(signedWebhook("UPI", rawPayload, UPI_WEBHOOK_SECRET))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentAttemptId").value(paymentAttemptId.intValue()))
-                .andExpect(jsonPath("$.data.providerCode").value("UPI"))
-                .andExpect(jsonPath("$.data.methodType").value("UPI"))
-                .andExpect(jsonPath("$.data.attemptState").value("CONFIRMED"))
-                .andExpect(jsonPath("$.data.providerPaymentId").value("UPI-PAYMENT-" + paymentAttemptId));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(signedWebhook("UPI", rawPayload, UPI_WEBHOOK_SECRET))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentAttemptId").value(paymentAttemptId.intValue()))
-                .andExpect(jsonPath("$.data.attemptState").value("CONFIRMED"))
-                .andExpect(jsonPath("$.data.providerPaymentId").value("UPI-PAYMENT-" + paymentAttemptId));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
                         .session(scenario.investor().session())
@@ -290,8 +285,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 "providerEventId", "evt-upi-winning-" + upiAttemptId
         ));
         mockMvc.perform(signedWebhook("UPI", upiPayload, UPI_WEBHOOK_SECRET))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.attemptState").value("CONFIRMED"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         String cardPayload = json(Map.of(
                 "eventType", "PAYMENT_CONFIRMED",
@@ -347,19 +342,17 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         ));
 
         mockMvc.perform(signedWebhook("CARD", rawPayload, CARD_WEBHOOK_SECRET))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentAttemptId").value(paymentAttemptId.intValue()))
-                .andExpect(jsonPath("$.data.providerCode").value("CARD"))
-                .andExpect(jsonPath("$.data.methodType").value("CARD"))
-                .andExpect(jsonPath("$.data.attemptState").value("FAILED"))
-                .andExpect(jsonPath("$.data.failureCode").value("CARD_DECLINED"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(get("/api/v1/payment-intents/{paymentIntentId}", paymentIntentId)
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.paymentState").value("PAYMENT_FAILED"))
-                .andExpect(jsonPath("$.data.failureCode").value("CARD_DECLINED"));
+                .andExpect(jsonPath("$.data.failureCode").value(
+                        "PROVIDER_REPORTED_FAILURE"
+                ));
 
         mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
                         .session(scenario.investor().session())
