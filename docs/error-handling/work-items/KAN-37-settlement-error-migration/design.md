@@ -1,6 +1,6 @@
 # KAN-37 — Settlement Error Migration
 
-**Status:** Written specification pending review
+**Status:** Approved
 
 **Date:** 2026-08-25
 
