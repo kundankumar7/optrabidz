@@ -4,6 +4,30 @@ import com.project.optrabidz.common.error.ErrorCategory;
 import com.project.optrabidz.common.error.ErrorDescriptor;
 
 public final class FinancialErrors {
+    public static final ErrorDescriptor FINANCIAL_OPERATION_NOT_ALLOWED = new ErrorDescriptor(
+            "FINANCIAL_OPERATION_NOT_ALLOWED",
+            ErrorCategory.AUTHORIZATION,
+            "This financial operation is not allowed"
+    );
+
+    public static final ErrorDescriptor SETTLEMENT_NOT_FOUND = new ErrorDescriptor(
+            "SETTLEMENT_NOT_FOUND",
+            ErrorCategory.NOT_FOUND,
+            "The requested settlement was not found"
+    );
+
+    public static final ErrorDescriptor SETTLEMENT_NOT_PAYABLE = new ErrorDescriptor(
+            "SETTLEMENT_NOT_PAYABLE",
+            ErrorCategory.CONFLICT,
+            "The settlement cannot be paid in its current state"
+    );
+
+    public static final ErrorDescriptor SETTLEMENT_STATE_CONFLICT = new ErrorDescriptor(
+            "SETTLEMENT_STATE_CONFLICT",
+            ErrorCategory.CONFLICT,
+            "The settlement state no longer permits this operation"
+    );
+
     public static final ErrorDescriptor PAYMENT_INTENT_NOT_FOUND = new ErrorDescriptor(
             "PAYMENT_INTENT_NOT_FOUND",
             ErrorCategory.NOT_FOUND,

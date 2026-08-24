@@ -68,6 +68,19 @@ class ExceptionArchitectureTest {
                     .as("migrated payment exceptions must use the neutral error contract");
 
     @ArchTest
+    static final ArchRule SETTLEMENT_EXCEPTIONS_USE_NEUTRAL_ERROR_CONTRACT =
+            noClasses()
+                    .that().haveNameMatching(
+                            ".*\\.(SettlementNotFound|SettlementNotPayable|"
+                                    + "SettlementStateConflict|"
+                                    + "FinancialOperationNotAllowed)Exception"
+                    )
+                    .should().dependOnClassesThat().resideInAPackage(
+                            "..common.api.exception.."
+                    )
+                    .as("migrated settlement exceptions must use the neutral error contract");
+
+    @ArchTest
     static final ArchRule BUSINESS_EXCEPTIONS_ARE_TRANSPORT_NEUTRAL =
             freeze(noClasses()
                     .that().resideInAnyPackage("..domain..", "..application..")
