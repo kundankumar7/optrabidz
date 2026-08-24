@@ -3,13 +3,14 @@ package com.project.optrabidz.financial.application;
 import com.project.optrabidz.financial.application.command.PaymentProviderWebhookCommand;
 import com.project.optrabidz.financial.application.command.PaymentProviderWebhookEnvelope;
 import com.project.optrabidz.financial.application.command.PaymentProviderWebhookEventType;
-import com.project.optrabidz.financial.application.dto.response.PaymentAttemptResponse;
 import com.project.optrabidz.financial.application.exception.PaymentWebhookPayloadInvalidException;
 import com.project.optrabidz.financial.application.exception.PaymentWebhookRejectedException;
 import com.project.optrabidz.financial.application.exception.PaymentWebhookRejectionReason;
 import com.project.optrabidz.financial.application.port.PaymentProviderWebhookEventParser;
 import com.project.optrabidz.financial.application.port.PaymentProviderWebhookSignatureVerifier;
 import com.project.optrabidz.financial.application.port.PaymentProviderWebhookSignatureVerifierRegistry;
+import com.project.optrabidz.financial.application.replay.PaymentWebhookReplayEvent;
+import com.project.optrabidz.financial.application.replay.PaymentWebhookReplayFingerprintFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.eq;
@@ -39,9 +39,11 @@ class PaymentProviderWebhookIngressServiceTest {
     @Mock
     private PaymentProviderWebhookEventParser parser;
     @Mock
-    private PaymentProviderWebhookService webhookService;
+    private PaymentWebhookReplayFingerprintFactory fingerprintFactory;
     @Mock
-    private PaymentAttemptResponse response;
+    private PaymentWebhookReplayService replayService;
+    @Mock
+    private PaymentWebhookReplayEvent replayEvent;
 
     private PaymentProviderWebhookIngressService ingressService;
 
@@ -51,7 +53,8 @@ class PaymentProviderWebhookIngressServiceTest {
         ingressService = new PaymentProviderWebhookIngressService(
                 new PaymentProviderWebhookSignatureVerifierRegistry(List.of(verifier)),
                 parser,
-                webhookService
+                fingerprintFactory,
+                replayService
         );
     }
 
@@ -60,14 +63,15 @@ class PaymentProviderWebhookIngressServiceTest {
         PaymentProviderWebhookEnvelope envelope = envelope();
         PaymentProviderWebhookCommand command = command();
         when(parser.parse(eq("UPI"), aryEq(BODY))).thenReturn(command);
-        when(webhookService.handle(command)).thenReturn(response);
+        when(fingerprintFactory.create(command)).thenReturn(replayEvent);
 
-        assertThat(ingressService.handle(envelope)).isSameAs(response);
+        ingressService.handle(envelope);
 
-        InOrder order = inOrder(verifier, parser, webhookService);
+        InOrder order = inOrder(verifier, parser, fingerprintFactory, replayService);
         order.verify(verifier).verify(envelope);
         order.verify(parser).parse(eq("UPI"), aryEq(BODY));
-        order.verify(webhookService).handle(command);
+        order.verify(fingerprintFactory).create(command);
+        order.verify(replayService).handle(command, replayEvent);
     }
 
     @Test
@@ -80,7 +84,11 @@ class PaymentProviderWebhookIngressServiceTest {
 
         assertThatThrownBy(() -> ingressService.handle(envelope)).isSameAs(rejected);
         verify(parser, never()).parse(eq("UPI"), org.mockito.ArgumentMatchers.any(byte[].class));
-        verify(webhookService, never()).handle(org.mockito.ArgumentMatchers.any());
+        verify(fingerprintFactory, never()).create(org.mockito.ArgumentMatchers.any());
+        verify(replayService, never()).handle(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
     }
 
     @Test
@@ -91,7 +99,11 @@ class PaymentProviderWebhookIngressServiceTest {
         when(parser.parse(eq("UPI"), aryEq(BODY))).thenThrow(invalid);
 
         assertThatThrownBy(() -> ingressService.handle(envelope)).isSameAs(invalid);
-        verify(webhookService, never()).handle(org.mockito.ArgumentMatchers.any());
+        verify(fingerprintFactory, never()).create(org.mockito.ArgumentMatchers.any());
+        verify(replayService, never()).handle(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
     }
 
     private static PaymentProviderWebhookEnvelope envelope() {

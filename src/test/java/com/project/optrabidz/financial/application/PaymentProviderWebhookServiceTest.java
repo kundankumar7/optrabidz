@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,11 +46,19 @@ class PaymentProviderWebhookServiceTest {
                 "UPI", PaymentProviderWebhookEventType.PAYMENT_FAILED,
                 1001L, null, "UPI_DECLINED", "Provider declined", "evt_1001");
         when(financialService.failProviderPaymentAttempt(
-                "UPI", 1001L, "UPI_DECLINED", "Provider declined"))
+                "UPI",
+                1001L,
+                "PROVIDER_REPORTED_FAILURE",
+                "Payment provider reported that the payment failed"))
                 .thenReturn(response);
 
         assertThat(service.handle(command)).isSameAs(response);
         verify(financialService).failProviderPaymentAttempt(
+                "UPI",
+                1001L,
+                "PROVIDER_REPORTED_FAILURE",
+                "Payment provider reported that the payment failed");
+        verify(financialService, never()).failProviderPaymentAttempt(
                 "UPI", 1001L, "UPI_DECLINED", "Provider declined");
     }
 }
