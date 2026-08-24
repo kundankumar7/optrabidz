@@ -81,6 +81,15 @@ public class SecurityAuditService {
         );
     }
 
+    public void recordPaymentWebhookReplayCollision(String providerCode,
+                                                     String requestId) {
+        saveWebhookSecurityEvent(
+                "PAYMENT_WEBHOOK_REPLAY_COLLISION",
+                providerCode,
+                requestId
+        );
+    }
+
     private void saveWebhookSecurityEvent(String action,
                                           String providerCode,
                                           String requestId) {
