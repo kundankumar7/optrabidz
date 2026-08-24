@@ -1,0 +1,19 @@
+flowchart LR
+    User["User client"] --> Chain["Spring Security filter chain"]
+    Chain -->|"anonymous or invalid authentication"| Entry["ProblemAuthenticationEntryPoint"]
+    Entry --> Problem["401 RFC 9457 Problem Details"]
+    Chain -->|"authenticated principal"| Controller["Financial controller"]
+    Controller --> Service["Financial application service"]
+    Service --> Ownership["Resource ownership and business authorization"]
+
+    Provider["Payment provider"] --> Webhook["Webhook controller"]
+    Webhook --> Signature["Provider signature verifier"]
+    Signature -->|"verified"| WebhookService["Webhook application service"]
+    Signature -->|"invalid"| ProviderFailure["Sanitized provider-verification failure"]
+
+    classDef security fill:#e8f0fe,stroke:#2457a7,color:#102a43;
+    classDef financial fill:#e8f5e9,stroke:#2e7d32,color:#17351a;
+    classDef provider fill:#fff3e0,stroke:#a85a00,color:#4a2a00;
+    class Chain,Entry,Problem security;
+    class Controller,Service,Ownership financial;
+    class Provider,Webhook,Signature,WebhookService,ProviderFailure provider;
