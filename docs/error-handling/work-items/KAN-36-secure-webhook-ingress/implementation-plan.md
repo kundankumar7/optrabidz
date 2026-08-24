@@ -869,9 +869,10 @@ Maven Wrapper, and GitHub Actions.
 - `./mvnw.cmd -Pintegration-tests -DskipITs=false verify` — 99 PostgreSQL 16/Testcontainers integration tests passed; Flyway V1 validated; 0 failures, 0 errors, 0 skipped.
 - Focused webhook suites covered configuration/profile isolation, bounded exact-byte capture, timestamped HMAC and rotation, strict parsing, orchestration order, sanitized audit behavior, uniform disclosure, architecture rules, and the existing financial success flow.
 - Runtime implementation commits: `ecb8a65`, `0343593`, `b88ef7c`, `904da79`, `0a7dfcb`, `3768a9f`, and `4726c76`.
+- Review pull request: [#29 — KAN-36: Secure payment webhook ingress](https://github.com/kundankumar7/optrabidz/pull/29), targeting `develop`.
 - Non-blocking build warnings remain limited to existing Byte Buddy dynamic-agent notices and an unreferenced Logback `FILE` appender; neither affected test outcomes.
 
-- [ ] **Step 6: Push and create the review PR**
+- [x] **Step 6: Push and create the review PR**
 
   ```powershell
   git push -u origin feature/KAN-36-secure-webhook-ingress
