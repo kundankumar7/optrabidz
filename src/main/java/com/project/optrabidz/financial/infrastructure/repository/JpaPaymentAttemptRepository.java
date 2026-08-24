@@ -7,8 +7,26 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Optional;
 
 public interface JpaPaymentAttemptRepository extends JpaRepository<PaymentAttempt, Long> {
+    @Query("""
+            select paymentAttempt
+            from PaymentAttempt paymentAttempt
+            where paymentAttempt.paymentAttemptId = :paymentAttemptId
+              and exists (
+                  select paymentIntent.paymentIntentId
+                  from PaymentIntent paymentIntent
+                  where paymentIntent.paymentIntentId = paymentAttempt.paymentIntentId
+                    and paymentIntent.payerAccountId = :payerAccountId
+              )
+            """)
+    Optional<PaymentAttempt> findForPayer(@Param("paymentAttemptId") Long paymentAttemptId,
+                                          @Param("payerAccountId") Long payerAccountId);
+
+    Optional<PaymentAttempt> findByPaymentAttemptIdAndProviderCodeIgnoreCase(Long paymentAttemptId,
+                                                                             String providerCode);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
             update payment_attempt

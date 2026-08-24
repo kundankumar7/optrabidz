@@ -1,10 +1,14 @@
 package com.project.optrabidz.financial.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.financial.application.error.FinancialErrors;
 
-public class PaymentAlreadyConfirmedException extends ApiException {
-    public PaymentAlreadyConfirmedException(String message) {
-        super(ErrorCode.PAYMENT_ALREADY_CONFIRMED, message);
+public final class PaymentAlreadyConfirmedException extends ApplicationException {
+    public PaymentAlreadyConfirmedException(String diagnosticMessage) {
+        super(
+                FinancialErrors.PAYMENT_ALREADY_CONFIRMED,
+                "FINANCIAL.PAYMENT.ALREADY.CONFIRMED",
+                diagnosticMessage
+        );
     }
 }

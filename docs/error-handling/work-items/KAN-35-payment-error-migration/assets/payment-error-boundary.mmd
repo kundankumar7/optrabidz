@@ -1,0 +1,21 @@
+flowchart TD
+    B[Browser caller] --> S[Spring Security]
+    S --> C[Financial HTTP adapter]
+    C --> A[Financial application service]
+    W[Authenticated replay-safe webhook] --> A
+
+    A --> Q{Operation-specific scoped lookup}
+    Q -->|Participant| PI[Intent by payer or payee]
+    Q -->|Payment actor| PA[Intent or attempt by payer]
+    Q -->|Provider callback| PP[Attempt by ID and provider]
+
+    PI --> D{Within scope?}
+    PA --> D
+    PP --> D
+
+    D -->|No| N[Uniform entity-specific 404]
+    D -->|Yes| R[Evaluate state, expiry, method and provider]
+    R --> T[Conditional transactional transition]
+    R --> E[Typed financial exception]
+    E --> H[Shared RFC 9457 adapter]
+    H --> P[Allowlisted Problem Details]

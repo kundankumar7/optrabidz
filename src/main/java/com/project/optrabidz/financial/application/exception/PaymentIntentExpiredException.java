@@ -1,10 +1,14 @@
 package com.project.optrabidz.financial.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.financial.application.error.FinancialErrors;
 
-public class PaymentIntentExpiredException extends ApiException {
-    public PaymentIntentExpiredException(String message) {
-        super(ErrorCode.PAYMENT_INTENT_EXPIRED, message);
+public final class PaymentIntentExpiredException extends ApplicationException {
+    public PaymentIntentExpiredException(String diagnosticMessage) {
+        super(
+                FinancialErrors.PAYMENT_INTENT_EXPIRED,
+                "FINANCIAL.PAYMENT.INTENT.EXPIRED",
+                diagnosticMessage
+        );
     }
 }

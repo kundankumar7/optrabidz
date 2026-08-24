@@ -43,6 +43,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
     private static final String SECRET =
             "test-only-upi-webhook-secret-material-001";
+    private static final String CARD_SECRET =
+            "test-only-card-webhook-secret-material-001";
     private static final String REQUEST_ID = "webhook-security-request-123";
 
     @Autowired
@@ -231,6 +233,48 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
                 """, String.class, outboxEventId))
                 .doesNotContain("provider-secret-code")
                 .doesNotContain("provider diagnostic secret text");
+    }
+
+    @Test
+    void wrongProviderAttemptUsesNeutralNotFoundAndRollsBackReplayClaim() throws Exception {
+        PaymentFixture fixture = paymentFixture("wrong-provider");
+        String eventId = uniqueEventId("wrong-provider");
+        String providerPaymentId = "provider-secret-payment-id";
+        String protectedDiagnostic = "provider-secret-diagnostic-sentinel";
+        String body = confirmedBody(fixture.paymentAttemptId(), eventId, providerPaymentId);
+        String timestamp = String.valueOf(Instant.now().getEpochSecond());
+        String requestSignature = signature(timestamp, body, CARD_SECRET);
+
+        MvcResult result = mockMvc.perform(
+                        webhook("CARD", body)
+                                .header("X-Payment-Timestamp", timestamp)
+                                .header("X-Payment-Signature", requestSignature)
+                                .header("X-Protected-Diagnostic", protectedDiagnostic)
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(
+                        MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Resource not found"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value("PAYMENT_ATTEMPT_NOT_FOUND"))
+                .andExpect(jsonPath("$.detail").value(
+                        "The requested payment attempt was not found"))
+                .andExpect(jsonPath("$.requestId").value(REQUEST_ID))
+                .andExpect(jsonPath("$.diagnosticCode").doesNotExist())
+                .andExpect(jsonPath("$.exception").doesNotExist())
+                .andExpect(jsonPath("$.stackTrace").doesNotExist())
+                .andReturn();
+
+        assertThat(result.getResponse().getContentAsString())
+                .doesNotContain("UPI")
+                .doesNotContain(providerPaymentId)
+                .doesNotContain(eventId)
+                .doesNotContain(requestSignature)
+                .doesNotContain(body)
+                .doesNotContain(protectedDiagnostic);
+        assertThat(replayCount("CARD", eventId)).isZero();
+        assertThat(paymentAttemptState(fixture.paymentAttemptId())).isEqualTo("INITIATED");
+        assertThat(outboxCount(fixture.paymentIntentId())).isZero();
     }
 
     @Test
@@ -447,10 +491,14 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
     }
 
     private Long replayCount(String eventId) {
+        return replayCount("UPI", eventId);
+    }
+
+    private Long replayCount(String providerCode, String eventId) {
         return jdbcTemplate.queryForObject("""
                 select count(*) from payment_webhook_event
-                where provider_code = 'UPI' and provider_event_id = ?
-                """, Long.class, eventId);
+                where provider_code = ? and provider_event_id = ?
+                """, Long.class, providerCode, eventId);
     }
 
     private String replayState(String eventId) {
@@ -509,9 +557,13 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
     }
 
     private String signature(String timestamp, String body) throws Exception {
+        return signature(timestamp, body, SECRET);
+    }
+
+    private String signature(String timestamp, String body, String secret) throws Exception {
         Mac mac = Mac.getInstance("HmacSHA256");
         mac.init(new SecretKeySpec(
-                SECRET.getBytes(StandardCharsets.UTF_8),
+                secret.getBytes(StandardCharsets.UTF_8),
                 "HmacSHA256"
         ));
         byte[] digest = mac.doFinal(

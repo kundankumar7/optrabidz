@@ -31,6 +31,19 @@ public class PaymentAttemptRepositoryAdapter implements PaymentAttemptRepository
     }
 
     @Override
+    public Optional<PaymentAttempt> findByIdForPayer(Long paymentAttemptId, Long payerAccountId) {
+        return jpaPaymentAttemptRepository.findForPayer(paymentAttemptId, payerAccountId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<PaymentAttempt> findByIdForProvider(Long paymentAttemptId, String providerCode) {
+        return jpaPaymentAttemptRepository
+                .findByPaymentAttemptIdAndProviderCodeIgnoreCase(paymentAttemptId, providerCode)
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public int confirmActive(Long paymentAttemptId, String providerPaymentId, Instant now) {
         return jpaPaymentAttemptRepository.confirmActive(paymentAttemptId, providerPaymentId, now);
     }

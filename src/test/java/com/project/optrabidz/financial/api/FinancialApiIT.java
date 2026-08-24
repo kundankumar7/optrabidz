@@ -1,11 +1,15 @@
 package com.project.optrabidz.financial.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import javax.crypto.Mac;
@@ -35,6 +39,256 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
             "test-only-upi-webhook-secret-material-001";
     private static final String CARD_WEBHOOK_SECRET =
             "test-only-card-webhook-secret-material-001";
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Test
+    void missingAndNonOwnedPaymentIntentsHaveIndistinguishableProblemDetails() throws Exception {
+        FinanceScenario scenario = createAcceptedBidScenario(
+                "Finance Intent Scope Startup",
+                "Finance Intent Scope Investor",
+                new BigDecimal("545432.10")
+        );
+        Long settlementId = getInvestorSettlementId(scenario.investor());
+        Long paymentIntentId = createSettlementPaymentIntent(scenario.investor(), settlementId);
+        AuthenticatedClient unrelatedInvestor = eligibleInvestor("Finance Unrelated Intent Investor");
+
+        MvcResult missing = mockMvc.perform(get("/api/v1/payment-intents/{paymentIntentId}", 9_999_999_991L)
+                        .header("X-Request-ID", "kan35-intent-missing")
+                        .session(unrelatedInvestor.session())
+                        .cookie(unrelatedInvestor.xsrfCookie()))
+                .andExpect(status().isNotFound())
+                .andExpectAll(paymentProblem(
+                        404,
+                        "Resource not found",
+                        "PAYMENT_INTENT_NOT_FOUND",
+                        "The requested payment intent was not found",
+                        "kan35-intent-missing"
+                ))
+                .andReturn();
+        MvcResult nonOwned = mockMvc.perform(get("/api/v1/payment-intents/{paymentIntentId}", paymentIntentId)
+                        .header("X-Request-ID", "kan35-intent-non-owned")
+                        .session(unrelatedInvestor.session())
+                        .cookie(unrelatedInvestor.xsrfCookie()))
+                .andExpect(status().isNotFound())
+                .andExpectAll(paymentProblem(
+                        404,
+                        "Resource not found",
+                        "PAYMENT_INTENT_NOT_FOUND",
+                        "The requested payment intent was not found",
+                        "kan35-intent-non-owned"
+                ))
+                .andReturn();
+
+        assertThat(stableProblem(missing)).isEqualTo(stableProblem(nonOwned));
+    }
+
+    @Test
+    void missingAndNonOwnedPaymentAttemptsHaveIndistinguishableProblemDetails() throws Exception {
+        FinanceScenario scenario = createAcceptedBidScenario(
+                "Finance Attempt Scope Startup",
+                "Finance Attempt Scope Investor",
+                new BigDecimal("535432.10")
+        );
+        Long settlementId = getInvestorSettlementId(scenario.investor());
+        Long paymentIntentId = createSettlementPaymentIntent(scenario.investor(), settlementId);
+        Long paymentAttemptId = createPaymentAttempt(scenario.investor(), paymentIntentId);
+        AuthenticatedClient unrelatedInvestor = eligibleInvestor("Finance Unrelated Attempt Investor");
+
+        MvcResult missing = mockMvc.perform(post(
+                                "/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm",
+                                9_999_999_992L)
+                        .header("X-Request-ID", "kan35-attempt-missing")
+                        .session(unrelatedInvestor.session())
+                        .cookie(unrelatedInvestor.xsrfCookie())
+                        .header("X-CSRF-TOKEN", unrelatedInvestor.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNotFound())
+                .andExpectAll(paymentProblem(
+                        404,
+                        "Resource not found",
+                        "PAYMENT_ATTEMPT_NOT_FOUND",
+                        "The requested payment attempt was not found",
+                        "kan35-attempt-missing"
+                ))
+                .andReturn();
+        MvcResult nonOwned = mockMvc.perform(post(
+                                "/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm",
+                                paymentAttemptId)
+                        .header("X-Request-ID", "kan35-attempt-non-owned")
+                        .session(unrelatedInvestor.session())
+                        .cookie(unrelatedInvestor.xsrfCookie())
+                        .header("X-CSRF-TOKEN", unrelatedInvestor.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNotFound())
+                .andExpectAll(paymentProblem(
+                        404,
+                        "Resource not found",
+                        "PAYMENT_ATTEMPT_NOT_FOUND",
+                        "The requested payment attempt was not found",
+                        "kan35-attempt-non-owned"
+                ))
+                .andReturn();
+
+        assertThat(stableProblem(missing)).isEqualTo(stableProblem(nonOwned));
+    }
+
+    @Test
+    void activePaymentRuleFailuresUseAllowlistedProblemDetails() throws Exception {
+        FinanceScenario scenario = createAcceptedBidScenario(
+                "Finance Rule Contract Startup",
+                "Finance Rule Contract Investor",
+                new BigDecimal("525432.10")
+        );
+        Long settlementId = getInvestorSettlementId(scenario.investor());
+        Long paymentIntentId = createSettlementPaymentIntent(scenario.investor(), settlementId);
+        String diagnosticSentinel = "provider-secret-diagnostic-sentinel";
+
+        MvcResult unsupported = mockMvc.perform(post(
+                                "/api/v1/payment-intents/{paymentIntentId}/attempts", paymentIntentId)
+                        .header("X-Request-ID", "kan35-method-unsupported")
+                        .session(scenario.investor().session())
+                        .cookie(scenario.investor().xsrfCookie())
+                        .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "providerCode", diagnosticSentinel,
+                                "methodType", "OTHER"
+                        ))))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpectAll(paymentProblem(
+                        422,
+                        "Business rule violation",
+                        "PAYMENT_METHOD_UNSUPPORTED",
+                        "The selected payment method is not supported",
+                        "kan35-method-unsupported"
+                ))
+                .andReturn();
+        assertThat(unsupported.getResponse().getContentAsString()).doesNotContain(diagnosticSentinel);
+
+        Long providerAttemptId = readLong(createPaymentAttempt(
+                scenario.investor(), paymentIntentId, "UPI", "UPI"), "/data/paymentAttemptId");
+        mockMvc.perform(post("/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm", providerAttemptId)
+                        .header("X-Request-ID", "kan35-provider-mismatch")
+                        .session(scenario.investor().session())
+                        .cookie(scenario.investor().xsrfCookie())
+                        .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpectAll(paymentProblem(
+                        422,
+                        "Business rule violation",
+                        "PAYMENT_PROVIDER_MISMATCH",
+                        "The payment attempt cannot be handled by this provider",
+                        "kan35-provider-mismatch"
+                ));
+
+        Long localAttemptId = createPaymentAttempt(scenario.investor(), paymentIntentId);
+        mockMvc.perform(post("/api/v1/payment-attempts/{paymentAttemptId}/actions/local-fail", localAttemptId)
+                        .session(scenario.investor().session())
+                        .cookie(scenario.investor().xsrfCookie())
+                        .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm", localAttemptId)
+                        .header("X-Request-ID", "kan35-state-conflict")
+                        .session(scenario.investor().session())
+                        .cookie(scenario.investor().xsrfCookie())
+                        .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isConflict())
+                .andExpectAll(paymentProblem(
+                        409,
+                        "Request conflict",
+                        "PAYMENT_STATE_CONFLICT",
+                        "The payment state no longer permits this operation",
+                        "kan35-state-conflict"
+                ));
+        mockMvc.perform(post("/api/v1/payment-intents/{paymentIntentId}/attempts", paymentIntentId)
+                        .header("X-Request-ID", "kan35-intent-not-active")
+                        .session(scenario.investor().session())
+                        .cookie(scenario.investor().xsrfCookie())
+                        .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isConflict())
+                .andExpectAll(paymentProblem(
+                        409,
+                        "Request conflict",
+                        "PAYMENT_INTENT_NOT_ACTIVE",
+                        "The payment intent is not active",
+                        "kan35-intent-not-active"
+                ));
+    }
+
+    @Test
+    void confirmedAndExpiredIntentsUseSpecificConflictContracts() throws Exception {
+        FinanceScenario confirmedScenario = createAcceptedBidScenario(
+                "Finance Confirmed Contract Startup",
+                "Finance Confirmed Contract Investor",
+                new BigDecimal("515432.10")
+        );
+        Long confirmedSettlementId = getInvestorSettlementId(confirmedScenario.investor());
+        Long confirmedIntentId = createSettlementPaymentIntent(
+                confirmedScenario.investor(), confirmedSettlementId);
+        Long confirmedAttemptId = createPaymentAttempt(confirmedScenario.investor(), confirmedIntentId);
+        mockMvc.perform(post("/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm", confirmedAttemptId)
+                        .session(confirmedScenario.investor().session())
+                        .cookie(confirmedScenario.investor().xsrfCookie())
+                        .header("X-CSRF-TOKEN", confirmedScenario.investor().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/payment-intents/{paymentIntentId}/attempts", confirmedIntentId)
+                        .header("X-Request-ID", "kan35-already-confirmed")
+                        .session(confirmedScenario.investor().session())
+                        .cookie(confirmedScenario.investor().xsrfCookie())
+                        .header("X-CSRF-TOKEN", confirmedScenario.investor().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isConflict())
+                .andExpectAll(paymentProblem(
+                        409,
+                        "Request conflict",
+                        "PAYMENT_ALREADY_CONFIRMED",
+                        "The payment has already been confirmed",
+                        "kan35-already-confirmed"
+                ));
+
+        FinanceScenario expiredScenario = createAcceptedBidScenario(
+                "Finance Expired Contract Startup",
+                "Finance Expired Contract Investor",
+                new BigDecimal("505432.10")
+        );
+        Long expiredSettlementId = getInvestorSettlementId(expiredScenario.investor());
+        Long expiredIntentId = createSettlementPaymentIntent(expiredScenario.investor(), expiredSettlementId);
+        jdbcTemplate.update("""
+                update payment_intent
+                set payment_state = 'PAYMENT_EXPIRED', expired_at = now()
+                where payment_intent_id = ?
+                """, expiredIntentId);
+        mockMvc.perform(post("/api/v1/payment-intents/{paymentIntentId}/attempts", expiredIntentId)
+                        .header("X-Request-ID", "kan35-intent-expired")
+                        .session(expiredScenario.investor().session())
+                        .cookie(expiredScenario.investor().xsrfCookie())
+                        .header("X-CSRF-TOKEN", expiredScenario.investor().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isConflict())
+                .andExpectAll(paymentProblem(
+                        409,
+                        "Request conflict",
+                        "PAYMENT_INTENT_EXPIRED",
+                        "The payment intent has expired",
+                        "kan35-intent-expired"
+                ));
+    }
 
     @Test
     void investorSettlementPaymentCreatesRepaymentAndStartupCanConfirmRepaymentPayment() throws Exception {
@@ -294,11 +548,16 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 "providerPaymentId", "CARD-PAYMENT-" + cardAttemptId,
                 "providerEventId", "evt-card-late-" + cardAttemptId
         ));
-        mockMvc.perform(signedWebhook("CARD", cardPayload, CARD_WEBHOOK_SECRET))
+        mockMvc.perform(signedWebhook("CARD", cardPayload, CARD_WEBHOOK_SECRET)
+                        .header("X-Request-ID", "kan35-competing-provider"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("PAYMENT_ALREADY_CONFIRMED"))
-                .andExpect(jsonPath("$.error.message").value("Payment is already confirmed"));
+                .andExpectAll(paymentProblem(
+                        409,
+                        "Request conflict",
+                        "PAYMENT_ALREADY_CONFIRMED",
+                        "The payment has already been confirmed",
+                        "kan35-competing-provider"
+                ));
 
         mockMvc.perform(get("/api/v1/payment-intents/{paymentIntentId}", paymentIntentId)
                         .session(scenario.investor().session())
@@ -584,9 +843,22 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         Long paymentIntentId = createSettlementPaymentIntent(scenario.investor(), settlementId);
         Long paymentAttemptId = createPaymentAttempt(scenario.investor(), paymentIntentId);
 
-        List<Integer> statusCodes = runLocalConfirmAndFailRequests(scenario.investor(), paymentAttemptId);
+        List<MvcResult> terminalResults = runLocalConfirmAndFailRequests(
+                scenario.investor(), paymentAttemptId);
+        List<Integer> statusCodes = terminalResults.stream()
+                .map(result -> result.getResponse().getStatus())
+                .toList();
 
         assertThat(statusCodes).containsExactlyInAnyOrder(200, 409);
+        MvcResult losingResult = terminalResults.stream()
+                .filter(result -> result.getResponse().getStatus() == 409)
+                .findFirst()
+                .orElseThrow();
+        JsonNode losingProblem = objectMapper.readTree(
+                losingResult.getResponse().getContentAsString());
+        assertThat(losingProblem.path("code").asText()).isEqualTo("PAYMENT_STATE_CONFLICT");
+        assertThat(losingProblem.path("detail").asText())
+                .isEqualTo("The payment state no longer permits this operation");
         MvcResult intentResult = mockMvc.perform(get("/api/v1/payment-intents/{paymentIntentId}", paymentIntentId)
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
@@ -957,10 +1229,13 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         }
     }
 
-    private List<Integer> runLocalConfirmAndFailRequests(AuthenticatedClient payer, Long paymentAttemptId) throws Exception {
+    private List<MvcResult> runLocalConfirmAndFailRequests(
+            AuthenticatedClient payer,
+            Long paymentAttemptId
+    ) throws Exception {
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
-        Callable<Integer> confirmRequest = () -> {
+        Callable<MvcResult> confirmRequest = () -> {
             ready.countDown();
             assertThat(start.await(5, TimeUnit.SECONDS)).isTrue();
             return mockMvc.perform(post("/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm", paymentAttemptId)
@@ -969,11 +1244,9 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                             .header("X-CSRF-TOKEN", payer.csrfToken())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{}"))
-                    .andReturn()
-                    .getResponse()
-                    .getStatus();
+                    .andReturn();
         };
-        Callable<Integer> failRequest = () -> {
+        Callable<MvcResult> failRequest = () -> {
             ready.countDown();
             assertThat(start.await(5, TimeUnit.SECONDS)).isTrue();
             return mockMvc.perform(post("/api/v1/payment-attempts/{paymentAttemptId}/actions/local-fail", paymentAttemptId)
@@ -982,15 +1255,13 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                             .header("X-CSRF-TOKEN", payer.csrfToken())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{}"))
-                    .andReturn()
-                    .getResponse()
-                    .getStatus();
+                    .andReturn();
         };
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
-            Future<Integer> confirm = executor.submit(confirmRequest);
-            Future<Integer> fail = executor.submit(failRequest);
+            Future<MvcResult> confirm = executor.submit(confirmRequest);
+            Future<MvcResult> fail = executor.submit(failRequest);
             assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
             start.countDown();
             return List.of(confirm.get(), fail.get());
@@ -1071,6 +1342,36 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         } catch (Exception exception) {
             throw new IllegalStateException(exception);
         }
+    }
+
+    private ResultMatcher[] paymentProblem(
+            int statusCode,
+            String title,
+            String code,
+            String detail,
+            String requestId
+    ) {
+        return new ResultMatcher[]{
+                content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON),
+                jsonPath("$.title").value(title),
+                jsonPath("$.status").value(statusCode),
+                jsonPath("$.detail").value(detail),
+                jsonPath("$.instance").value("urn:optrabidz:request:" + requestId),
+                jsonPath("$.code").value(code),
+                jsonPath("$.requestId").value(requestId),
+                jsonPath("$.timestamp").isString(),
+                jsonPath("$.diagnosticCode").doesNotExist(),
+                jsonPath("$.exception").doesNotExist(),
+                jsonPath("$.stackTrace").doesNotExist()
+        };
+    }
+
+    private JsonNode stableProblem(MvcResult result) throws Exception {
+        ObjectNode problem = (ObjectNode) objectMapper.readTree(
+                result.getResponse().getContentAsString()
+        );
+        problem.remove(List.of("requestId", "timestamp", "instance"));
+        return problem;
     }
 
     private record FinanceScenario(

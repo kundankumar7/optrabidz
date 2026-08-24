@@ -1,10 +1,14 @@
 package com.project.optrabidz.financial.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.financial.application.error.FinancialErrors;
 
-public class UnsupportedPaymentMethodException extends ApiException {
-    public UnsupportedPaymentMethodException(String message) {
-        super(ErrorCode.VALIDATION_ERROR, message);
+public final class UnsupportedPaymentMethodException extends ApplicationException {
+    public UnsupportedPaymentMethodException(String diagnosticMessage) {
+        super(
+                FinancialErrors.PAYMENT_METHOD_UNSUPPORTED,
+                "FINANCIAL.PAYMENT.METHOD.UNSUPPORTED",
+                diagnosticMessage
+        );
     }
 }

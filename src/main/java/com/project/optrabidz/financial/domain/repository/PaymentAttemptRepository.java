@@ -10,6 +10,10 @@ public interface PaymentAttemptRepository {
 
     Optional<PaymentAttempt> findById(Long paymentAttemptId);
 
+    Optional<PaymentAttempt> findByIdForPayer(Long paymentAttemptId, Long payerAccountId);
+
+    Optional<PaymentAttempt> findByIdForProvider(Long paymentAttemptId, String providerCode);
+
     int confirmActive(Long paymentAttemptId, String providerPaymentId, Instant now);
 
     int failActive(Long paymentAttemptId, String failureCode, String failureMessage, Instant now);
