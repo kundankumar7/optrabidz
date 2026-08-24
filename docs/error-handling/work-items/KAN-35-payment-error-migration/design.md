@@ -1,6 +1,6 @@
 # KAN-35 — Payment Intent and Attempt Error Migration
 
-**Status:** Approved design; written specification awaiting approval
+**Status:** Approved written specification
 
 **Date:** 2026-08-25
 
