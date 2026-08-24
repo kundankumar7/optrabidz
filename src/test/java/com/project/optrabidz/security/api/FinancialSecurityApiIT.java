@@ -2,6 +2,7 @@ package com.project.optrabidz.security.api;
 
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -11,7 +12,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -58,15 +58,73 @@ class FinancialSecurityApiIT extends ApiIntegrationTestSupport {
     @Test
     void paymentAttemptActionRequiresAuthenticationAfterCsrfValidation()
             throws Exception {
+        MvcResult csrfPrimingResult = mockMvc.perform(get("/api/v1/funding-listings"))
+                .andExpect(status().isOk())
+                .andReturn();
+        Cookie xsrfCookie = csrfPrimingResult.getResponse().getCookie("XSRF-TOKEN");
+        assertThat(xsrfCookie).isNotNull();
+
         mockMvc.perform(post(
                         "/api/v1/payment-attempts/1/actions/local-confirm")
-                        .with(csrf())
+                        .cookie(xsrfCookie)
+                        .header("X-CSRF-TOKEN", xsrfCookie.getValue())
                         .header("X-Request-Id", REQUEST_ID))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentType(
                         MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.code").value(
                         "AUTHENTICATION_REQUIRED"))
+                .andExpect(jsonPath("$.requestId").value(REQUEST_ID))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
+    }
+
+    @Test
+    void authenticatedFinancialReadReachesTheApplicationBoundary()
+            throws Exception {
+        AuthenticatedClient investor = registerAndLogin(RoleType.INVESTOR);
+
+        mockMvc.perform(get("/api/v1/settlements/{settlementId}", Long.MAX_VALUE)
+                        .session(investor.session())
+                        .cookie(investor.xsrfCookie()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.error.message").value("Settlement not found"));
+    }
+
+    @Test
+    void csrfValidAuthenticatedPaymentMutationReachesFinancialService()
+            throws Exception {
+        AuthenticatedClient investor = registerAndLogin(RoleType.INVESTOR);
+
+        mockMvc.perform(post("/api/v1/payment-intents/{paymentIntentId}/attempts", Long.MAX_VALUE)
+                        .session(investor.session())
+                        .cookie(investor.xsrfCookie())
+                        .header("X-CSRF-TOKEN", investor.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.error.message").value("Payment intent not found"));
+    }
+
+    @Test
+    void authenticatedPaymentMutationStillRequiresCsrf() throws Exception {
+        AuthenticatedClient investor = registerAndLogin(RoleType.INVESTOR);
+
+        mockMvc.perform(post("/api/v1/payment-intents/1/attempts")
+                        .session(investor.session())
+                        .cookie(investor.xsrfCookie())
+                        .header("X-Request-Id", REQUEST_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("CSRF_VALIDATION_FAILED"))
                 .andExpect(jsonPath("$.requestId").value(REQUEST_ID))
                 .andExpect(jsonPath("$.success").doesNotExist())
                 .andExpect(jsonPath("$.error").doesNotExist());
