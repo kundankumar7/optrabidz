@@ -31,7 +31,8 @@ class FrameworkProblemTest {
                 FrameworkProblem.ENDPOINT_NOT_FOUND,
                 FrameworkProblem.METHOD_NOT_ALLOWED,
                 FrameworkProblem.NOT_ACCEPTABLE,
-                FrameworkProblem.UNSUPPORTED_MEDIA_TYPE
+                FrameworkProblem.UNSUPPORTED_MEDIA_TYPE,
+                FrameworkProblem.INTERNAL_SERVER_ERROR
         );
 
         return Stream.of(
@@ -70,6 +71,12 @@ class FrameworkProblemTest {
                         HttpStatus.UNSUPPORTED_MEDIA_TYPE,
                         "Unsupported media type",
                         "The request media type is not supported"
+                ),
+                Arguments.of(
+                        FrameworkProblem.INTERNAL_SERVER_ERROR,
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Internal server error",
+                        "An unexpected error occurred"
                 )
         );
     }

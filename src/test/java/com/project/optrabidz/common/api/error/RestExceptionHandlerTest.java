@@ -2,18 +2,20 @@ package com.project.optrabidz.common.api.error;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.optrabidz.common.api.exception.GlobalExceptionHandler;
 import com.project.optrabidz.common.api.response.RequestMetadataFilter;
 import com.project.optrabidz.common.error.ApplicationException;
 import com.project.optrabidz.common.error.ErrorCategory;
 import com.project.optrabidz.common.error.ErrorDescriptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Clock;
@@ -23,6 +25,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -49,7 +53,6 @@ class RestExceptionHandlerTest {
         mockMvc = MockMvcBuilders
                 .standaloneSetup(new FailureProbeController())
                 .setControllerAdvice(
-                        new GlobalExceptionHandler(),
                         new RestExceptionHandler(
                                 factory,
                                 new ValidationViolationMapper()
@@ -117,22 +120,61 @@ class RestExceptionHandlerTest {
                 .isEqualTo("urn:optrabidz:request:" + headerRequestId);
     }
 
-    @Test
-    void leavesLegacyExceptionsOnTheLegacyEnvelope() throws Exception {
-        mockMvc.perform(get("/test/legacy-error")
-                        .header("X-Request-Id", "legacy-123"))
-                .andExpect(status().isBadRequest())
+    @ParameterizedTest
+    @ValueSource(strings = {"argument", "state", "null", "runtime"})
+    void sanitizesEveryUnexpectedRuntimeFailure(String failure)
+            throws Exception {
+        String requestId = "unexpected-" + failure;
+
+        mockMvc.perform(get("/test/unexpected/{failure}", failure)
+                        .header("X-Request-Id", requestId))
+                .andExpect(status().isInternalServerError())
                 .andExpect(content().contentTypeCompatibleWith(
-                        MediaType.APPLICATION_JSON
+                        MediaType.APPLICATION_PROBLEM_JSON
                 ))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value(
-                        "VALIDATION_ERROR"
+                .andExpect(header().string("X-Request-Id", requestId))
+                .andExpect(jsonPath("$.type").value(
+                        "urn:optrabidz:problem:internal-server-error"
                 ))
-                .andExpect(jsonPath("$.error.message").value(
-                        "legacy request rejected"
+                .andExpect(jsonPath("$.title").value(
+                        "Internal server error"
                 ))
-                .andExpect(jsonPath("$.type").doesNotExist());
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.detail").value(
+                        "An unexpected error occurred"
+                ))
+                .andExpect(jsonPath("$.code").value(
+                        "INTERNAL_SERVER_ERROR"
+                ))
+                .andExpect(jsonPath("$.requestId").value(requestId))
+                .andExpect(jsonPath("$.instance").value(
+                        "urn:optrabidz:request:" + requestId
+                ))
+                .andExpect(jsonPath("$.timestamp").value(
+                        "2026-08-15T04:00:00Z"
+                ))
+                .andExpect(jsonPath("$.violations").doesNotExist())
+                .andExpect(content().string(not(containsString(
+                        "password=hunter2"
+                ))))
+                .andExpect(content().string(not(containsString(
+                        "jdbc:postgresql://private-host"
+                ))))
+                .andExpect(content().string(not(containsString(
+                        "credential was null"
+                ))))
+                .andExpect(content().string(not(containsString(
+                        "provider-secret-value"
+                ))))
+                .andExpect(content().string(not(containsString(
+                        "IllegalArgumentException"
+                ))))
+                .andExpect(content().string(not(containsString(
+                        "IllegalStateException"
+                ))))
+                .andExpect(content().string(not(containsString(
+                        "NullPointerException"
+                ))));
     }
 
     @RestController
@@ -156,9 +198,26 @@ class RestExceptionHandlerTest {
             );
         }
 
-        @GetMapping("/test/legacy-error")
-        void legacyError() {
-            throw new IllegalArgumentException("legacy request rejected");
+        @GetMapping("/test/unexpected/{failure}")
+        void unexpected(@PathVariable String failure) {
+            RuntimeException exception = switch (failure) {
+                case "argument" -> new IllegalArgumentException(
+                        "password=hunter2"
+                );
+                case "state" -> new IllegalStateException(
+                        "jdbc:postgresql://private-host"
+                );
+                case "null" -> new NullPointerException(
+                        "credential was null"
+                );
+                case "runtime" -> new RuntimeException(
+                        "provider-secret-value"
+                );
+                default -> new IllegalArgumentException(
+                        "unknown test failure"
+                );
+            };
+            throw exception;
         }
     }
 }

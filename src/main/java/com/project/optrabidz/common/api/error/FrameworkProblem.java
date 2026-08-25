@@ -44,6 +44,13 @@ enum FrameworkProblem {
                     "Unsupported media type"
             ),
             "The request media type is not supported"
+    ),
+    INTERNAL_SERVER_ERROR(
+            new HttpErrorMapping(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Internal server error"
+            ),
+            "An unexpected error occurred"
     );
 
     private final HttpErrorMapping mapping;
