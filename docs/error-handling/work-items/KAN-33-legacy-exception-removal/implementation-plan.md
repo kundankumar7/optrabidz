@@ -523,7 +523,7 @@ Flyway, PostgreSQL, and Testcontainers.
 - [ ] **Step 3: Run Flyway clean-schema verification against PostgreSQL**
 
   ```powershell
-  .\mvnw.cmd -B -DskipTests=true "-Dit.test=DatabaseMigrationIT,FlywayBaselineMigrationIT" verify -Pintegration-tests
+  .\mvnw.cmd -B "-Dit.test=DatabaseMigrationIT,FlywayBaselineMigrationIT" verify -Pintegration-tests
   ```
 
   Expected: BUILD SUCCESS; Flyway migrations create and validate a clean
