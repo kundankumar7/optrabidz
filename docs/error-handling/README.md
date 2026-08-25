@@ -42,3 +42,4 @@ policy are documented in the [KAN-24 module migration design](work-items/KAN-24-
 | [KAN-34](https://0707manna0895.atlassian.net/browse/KAN-34) | [Repayment and installment error migration design](work-items/KAN-34-repayment-error-migration/design.md) |
 | [KAN-33](https://0707manna0895.atlassian.net/browse/KAN-33) | [Legacy exception-stack removal design](work-items/KAN-33-legacy-exception-removal/design.md) and [implementation plan](work-items/KAN-33-legacy-exception-removal/implementation-plan.md) |
 | [KAN-42](https://0707manna0895.atlassian.net/browse/KAN-42) | [Real-port HTTP Problem Details smoke-verification design](work-items/KAN-42-real-http-smoke/design.md) and [implementation plan](work-items/KAN-42-real-http-smoke/implementation-plan.md) |
+| [KAN-43](https://0707manna0895.atlassian.net/browse/KAN-43) | [OpenAPI Problem Details contract and public error-catalogue design](work-items/KAN-43-openapi-error-catalogue/design.md) |
