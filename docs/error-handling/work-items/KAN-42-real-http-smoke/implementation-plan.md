@@ -67,7 +67,7 @@ Testcontainers PostgreSQL 16, Flyway, Maven Surefire/Failsafe
 - `RealHttpIntegrationTestSupport.readJson(HttpResponse<String>)` parses the
   response with Spring's configured `ObjectMapper`.
 
-- [ ] **Step 1: Add the first real-port test before its support exists**
+- [x] **Step 1: Add the first real-port test before its support exists**
 
 Create `RealHttpProblemDetailsIT` with a successful registration, login, and
 `/me` round trip:
@@ -133,18 +133,18 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
 }
 ```
 
-- [ ] **Step 2: Run the focused test and capture RED**
+- [x] **Step 2: Run the focused test and capture RED**
 
 Run:
 
 ```powershell
-.\mvnw.cmd -q -Dit.test=RealHttpProblemDetailsIT -DskipITs=false verify
+.\mvnw.cmd -q '-Dtest=TestingSetupTest' '-Dit.test=RealHttpProblemDetailsIT' '-DskipITs=false' verify
 ```
 
 Expected: test compilation fails because
 `RealHttpIntegrationTestSupport` and `RealHttpClient` do not exist.
 
-- [ ] **Step 3: Centralize the existing PostgreSQL property registration**
+- [x] **Step 3: Centralize the existing PostgreSQL property registration**
 
 Add this method to `SharedPostgresContainer`:
 
@@ -170,7 +170,7 @@ SharedPostgresContainer.registerProperties(registry);
 Remove the now-unused container field and `PostgreSQLContainer` import from
 `PostgresIntegrationTestSupport`. Do not change its annotations.
 
-- [ ] **Step 4: Implement the real-port transport support**
+- [x] **Step 4: Implement the real-port transport support**
 
 Create `RealHttpIntegrationTestSupport` with these members and exact transport
 defaults:
@@ -203,7 +203,10 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("integration")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "server.address=127.0.0.1"
+)
 @ActiveProfiles("test")
 public abstract class RealHttpIntegrationTestSupport {
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
@@ -316,18 +319,18 @@ public abstract class RealHttpIntegrationTestSupport {
 }
 ```
 
-- [ ] **Step 5: Run focused GREEN and the existing session integration test**
+- [x] **Step 5: Run focused GREEN and the existing session integration test**
 
 Run:
 
 ```powershell
-.\mvnw.cmd -q '-Dit.test=RealHttpProblemDetailsIT,SecurityApiIT' -DskipITs=false verify
+.\mvnw.cmd -q '-Dtest=TestingSetupTest' '-Dit.test=RealHttpProblemDetailsIT,SecurityApiIT' '-DskipITs=false' verify
 ```
 
 Expected: both integration classes pass; logs show the application binding a
 non-zero random port and Flyway validating the PostgreSQL schema.
 
-- [ ] **Step 6: Commit the transport slice**
+- [x] **Step 6: Commit the transport slice**
 
 ```powershell
 git add src/test/java/com/project/optrabidz/testsupport/SharedPostgresContainer.java src/test/java/com/project/optrabidz/testsupport/PostgresIntegrationTestSupport.java src/test/java/com/project/optrabidz/testsupport/RealHttpIntegrationTestSupport.java src/test/java/com/project/optrabidz/common/api/error/RealHttpProblemDetailsIT.java
@@ -347,7 +350,7 @@ git commit -m "test(KAN-42): add real HTTP session harness"
   shared wire-level invariants without moving contract decisions into the
   transport support.
 
-- [ ] **Step 1: Add the shared Problem Details assertion**
+- [x] **Step 1: Add the shared Problem Details assertion**
 
 Add this test-local method:
 
@@ -381,7 +384,7 @@ private JsonNode assertProblem(
 }
 ```
 
-- [ ] **Step 2: Add 400, 401, 403, 404, and 409 tests**
+- [x] **Step 2: Add 400, 401, 403, 404, and 409 tests**
 
 Add five independent tests using unique request IDs and emails:
 
@@ -495,10 +498,10 @@ void duplicateRegistrationUsesConflictProblemDetails() throws Exception {
 }
 ```
 
-- [ ] **Step 3: Run the focused suite**
+- [x] **Step 3: Run the focused suite**
 
 ```powershell
-.\mvnw.cmd -q -Dit.test=RealHttpProblemDetailsIT -DskipITs=false verify
+.\mvnw.cmd -q '-Dtest=TestingSetupTest' '-Dit.test=RealHttpProblemDetailsIT' '-DskipITs=false' verify
 ```
 
 Expected: six tests pass: one successful real session plus the five expected
@@ -506,7 +509,7 @@ failure contracts. If a real boundary exposes a contract mismatch, preserve
 the RED evidence and correct only test transport configuration unless the
 approved production contract is genuinely broken.
 
-- [ ] **Step 4: Commit the expected-failure slice**
+- [x] **Step 4: Commit the expected-failure slice**
 
 ```powershell
 git add src/test/java/com/project/optrabidz/common/api/error/RealHttpProblemDetailsIT.java
@@ -526,7 +529,7 @@ git commit -m "test(KAN-42): verify expected problems over HTTP"
   this test context and is authenticated by the unchanged production security
   chain.
 
-- [ ] **Step 1: Add the 500 test before registering the probe**
+- [x] **Step 1: Add the 500 test before registering the probe**
 
 ```java
 private static final String FAULT_PATH =
@@ -563,16 +566,16 @@ void unexpectedFailureIsSanitizedAcrossTheRealHttpBoundary()
 }
 ```
 
-- [ ] **Step 2: Run RED without the test-only route**
+- [x] **Step 2: Run RED without the test-only route**
 
 ```powershell
-.\mvnw.cmd -q -Dit.test=RealHttpProblemDetailsIT -DskipITs=false verify
+.\mvnw.cmd -q '-Dtest=TestingSetupTest' '-Dit.test=RealHttpProblemDetailsIT' '-DskipITs=false' verify
 ```
 
 Expected: the new test fails with an endpoint-not-found response because the
 fault route has not been registered.
 
-- [ ] **Step 3: Register the isolated fault controller**
+- [x] **Step 3: Register the isolated fault controller**
 
 Annotate the test class with `@Import(FaultProbeConfiguration.class)` and add:
 
@@ -602,7 +605,7 @@ Use imports from `org.springframework.boot.test.context.TestConfiguration`,
 to `SecurityConfig`; the existing `/api/v1/notifications/**` matcher must
 authenticate it.
 
-- [ ] **Step 4: Add and run the anonymous security-boundary check**
+- [x] **Step 4: Add and run the anonymous security-boundary check**
 
 Add this separate test:
 
@@ -625,22 +628,22 @@ void faultProbeRetainsTheProductionAuthenticationBoundary() throws Exception {
 Then run:
 
 ```powershell
-.\mvnw.cmd -q -Dit.test=RealHttpProblemDetailsIT -DskipITs=false verify
+.\mvnw.cmd -q '-Dtest=TestingSetupTest' '-Dit.test=RealHttpProblemDetailsIT' '-DskipITs=false' verify
 ```
 
 Expected: all KAN-42 tests pass; the anonymous probe receives 401 and the
 authenticated probe receives the fixed sanitized 500.
 
-- [ ] **Step 5: Prove the probe cannot enter the production artifact**
+- [x] **Step 5: Prove the probe cannot enter the production artifact**
 
 ```powershell
-.\mvnw.cmd -q -DskipTests package
+.\mvnw.cmd -q '-DskipTests' package
 jar tf target/optrabidz-0.0.1-SNAPSHOT.jar | Select-String -Pattern "RealHttp|FaultProbe"
 ```
 
 Expected: the package succeeds and `Select-String` produces no output.
 
-- [ ] **Step 6: Commit the unexpected-failure slice**
+- [x] **Step 6: Commit the unexpected-failure slice**
 
 ```powershell
 git add src/test/java/com/project/optrabidz/common/api/error/RealHttpProblemDetailsIT.java
@@ -659,16 +662,16 @@ git commit -m "test(KAN-42): verify sanitized 500 over HTTP"
 - Produces an accurate delivered status and checked acceptance criteria; no
   new runtime interface.
 
-- [ ] **Step 1: Run focused test and documentation checks**
+- [x] **Step 1: Run focused test and documentation checks**
 
 ```powershell
-.\mvnw.cmd -q -Dit.test=RealHttpProblemDetailsIT -DskipITs=false verify
+.\mvnw.cmd -q '-Dtest=TestingSetupTest' '-Dit.test=RealHttpProblemDetailsIT' '-DskipITs=false' verify
 .\mvnw.cmd -q '-Dtest=DocumentationLinksTest,DocumentationLinkValidatorTest' test
 ```
 
 Expected: both commands exit successfully.
 
-- [ ] **Step 2: Run the complete unit suite**
+- [x] **Step 2: Run the complete unit suite**
 
 ```powershell
 .\mvnw.cmd -B test
@@ -676,7 +679,7 @@ Expected: both commands exit successfully.
 
 Expected: all unit and architecture tests pass with zero failures and errors.
 
-- [ ] **Step 3: Run the complete PostgreSQL integration profile**
+- [x] **Step 3: Run the complete PostgreSQL integration profile**
 
 ```powershell
 .\mvnw.cmd -B verify -Pintegration-tests
@@ -685,7 +688,7 @@ Expected: all unit and architecture tests pass with zero failures and errors.
 Expected: all Failsafe integration tests pass, including
 `RealHttpProblemDetailsIT`, with zero failures and errors.
 
-- [ ] **Step 4: Run scope and repository checks**
+- [x] **Step 4: Run scope and repository checks**
 
 ```powershell
 git diff --check
@@ -696,7 +699,7 @@ git diff --name-only origin/develop...HEAD
 Expected: no whitespace errors; only the approved test-support, KAN-42 test,
 and KAN-42 documentation files are present.
 
-- [ ] **Step 5: Record exact verification evidence**
+- [x] **Step 5: Record exact verification evidence**
 
 Update `design.md` only after the commands pass:
 
@@ -706,7 +709,7 @@ Update `design.md` only after the commands pass:
 - keep future work, OpenAPI, KAN-41, JWT/OAuth2, and deployed smoke testing out
   of the delivered claims.
 
-- [ ] **Step 6: Commit the verification record**
+- [x] **Step 6: Commit the verification record**
 
 ```powershell
 git add docs/error-handling/work-items/KAN-42-real-http-smoke/design.md

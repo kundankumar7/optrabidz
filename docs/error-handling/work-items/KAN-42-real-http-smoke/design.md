@@ -1,6 +1,6 @@
 # KAN-42 — Real-Port HTTP Problem Details Smoke Verification
 
-**Status:** Written specification approved; implementation planned.
+**Status:** Implemented and locally verified; exact-head CI review pending.
 
 **Date:** 2026-08-25
 
@@ -238,19 +238,35 @@ failure; it must not be manufactured by changing production behavior.
 
 ## 15. Acceptance criteria
 
-- [ ] A Spring Boot test binds a random loopback port and sends real HTTP.
-- [ ] The application uses the shared PostgreSQL Testcontainer and Flyway.
-- [ ] Registration, login, cookies, session authentication, and CSRF operate
+- [x] A Spring Boot test binds a random loopback port and sends real HTTP.
+- [x] The application uses the shared PostgreSQL Testcontainer and Flyway.
+- [x] Registration, login, cookies, session authentication, and CSRF operate
       through the real HTTP client.
-- [ ] Representative 400, 401, 403, 404, 409, and sanitized 500 responses use
+- [x] Representative 400, 401, 403, 404, 409, and sanitized 500 responses use
       the approved Problem Details contracts.
-- [ ] Request-ID header, body, and instance values agree for every sampled
+- [x] Request-ID header, body, and instance values agree for every sampled
       failure.
-- [ ] Secret and diagnostic sentinels are absent from public responses.
-- [ ] The test-only fault probe cannot enter the production artifact.
-- [ ] Existing MockMvc coverage remains the primary detailed API suite.
-- [ ] Existing Maven integration CI discovers the new test without workflow
+- [x] Secret and diagnostic sentinels are absent from public responses.
+- [x] The test-only fault probe cannot enter the production artifact.
+- [x] Existing MockMvc coverage remains the primary detailed API suite.
+- [x] Existing Maven integration CI discovers the new test without workflow
       changes.
 - [ ] Focused, complete local, documentation, and exact-head CI checks pass.
-- [ ] No production API, security policy, business rule, database schema,
+- [x] No production API, security policy, business rule, database schema,
       dependency, or successful response changes are mixed into KAN-42.
+
+## 16. Local verification evidence
+
+The implementation commit verified locally is `4bad719`.
+
+| Verification | Result |
+|---|---|
+| Focused real-HTTP suite | 8 tests passed; 0 failures, errors, or skips |
+| Documentation links and publication checks | Passed |
+| Complete unit suite | 415 tests passed; 0 failures, errors, or skips |
+| Complete PostgreSQL integration profile | 141 tests passed; 0 failures, errors, or skips |
+| Production artifact inspection | No `RealHttp` or `FaultProbe` test class present |
+| Repository scope and whitespace checks | Passed; only approved test and KAN-42 documentation files changed |
+
+Exact-head GitHub checks remain a review gate and will be recorded only after
+the published branch has completed CI.
