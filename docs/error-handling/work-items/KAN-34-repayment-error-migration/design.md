@@ -1,6 +1,6 @@
 # KAN-34 — Repayment and Installment Error Migration
 
-**Status:** Architecture approved; written specification awaiting review
+**Status:** Written specification approved; implementation planning
 
 **Date:** 2026-08-25
 
