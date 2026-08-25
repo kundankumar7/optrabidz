@@ -1,0 +1,47 @@
+%%{init: {"theme":"base","themeVariables":{"fontSize":"22px","fontFamily":"Arial, sans-serif","primaryColor":"#EFF6FF","primaryTextColor":"#0F172A","primaryBorderColor":"#2563EB","lineColor":"#334155","secondaryColor":"#F8FAFC","tertiaryColor":"#FEF2F2","clusterBkg":"#FFFFFF","clusterBorder":"#94A3B8","edgeLabelBackground":"#FFFFFF"},"flowchart":{"htmlLabels":false,"curve":"linear","nodeSpacing":55,"rankSpacing":65}}}%%
+flowchart TB
+    subgraph TRANSPORT[1. Real transport]
+        direction LR
+        J[Java 21 HttpClient<br/>and isolated cookie store]
+        P[Random localhost port]
+        T[Embedded servlet container]
+        J -->|HTTP request| P
+        P --> T
+    end
+
+    subgraph APP[2. Production request path]
+        direction LR
+        F[Request metadata<br/>and security filters]
+        A[Controller and<br/>application service]
+        E[MVC or security<br/>error adapter]
+        F --> A
+        A --> E
+    end
+
+    subgraph EVIDENCE[3. Wire-level evidence]
+        direction LR
+        R[Status, headers, cookies<br/>and serialized JSON]
+        Q[Contract and<br/>disclosure assertions]
+        R --> Q
+    end
+
+    subgraph DATA[Integration infrastructure]
+        direction LR
+        M[Flyway migrations]
+        D[Shared PostgreSQL<br/>Testcontainer]
+        M --> D
+    end
+
+    T --> F
+    A --> D
+    E --> R
+
+    classDef client fill:#EFF6FF,stroke:#2563EB,color:#0F172A,stroke-width:2px;
+    classDef boundary fill:#FFF7ED,stroke:#EA580C,color:#7C2D12,stroke-width:2px;
+    classDef app fill:#F5F3FF,stroke:#7C3AED,color:#2E1065,stroke-width:2px;
+    classDef data fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px;
+    class J client;
+    class P,T boundary;
+    class F,A,E app;
+    class R,Q client;
+    class D,M data;
