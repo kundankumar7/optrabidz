@@ -800,3 +800,40 @@ tests run, and unchanged repayment scope.
 
 Move KAN-37 to the review status and add the PR link plus verification summary
 to Jira. Do not merge until the pull request has been reviewed and approved.
+
+## Execution evidence
+
+**Verified code commit:** `04c83326b5c09b7d22a2a555dd25a889bb974ca1`
+
+- Neutral descriptor and architecture RED evidence: the initial focused run
+  failed to compile because the four KAN-37 descriptors and exception types
+  did not yet exist. After implementation, the focused contract and
+  architecture run passed.
+- Scoped repository RED evidence: `SettlementRepositoryIT` initially failed
+  to compile because participant-scoped lookup methods did not exist. The
+  PostgreSQL test then passed after adding the port and adapter methods.
+- Application RED evidence: 12 failures and 4 errors demonstrated legacy
+  global lookup, legacy access errors, and the old concurrency error. The
+  implemented service contract passed 66 focused unit/architecture tests.
+- Focused verification command:
+  `mvnw.cmd -Pintegration-tests "-Dtest=FinancialSettlementErrorContractTest,FinancialServiceTest,ExceptionArchitectureTest" "-Dit.test=SettlementRepositoryIT,FinancialExpiryRepositoryIT,FinancialApiIT,NotificationApiIT" verify`.
+  Result: 66 unit/architecture tests and 36 integration tests; zero failures,
+  errors, or skips.
+- The first unbounded full local run exposed two independent facts: one stale
+  `FinancialSecurityApiIT` assertion, corrected in `04c8332`, and PostgreSQL's
+  100-connection limit being exhausted by eleven cached Spring contexts using
+  Hikari's ten-connection default. The affected security and marketplace
+  tests subsequently passed 13/13 in isolation.
+- Complete verification command:
+  `mvnw.cmd "-Dspring.datasource.hikari.maximum-pool-size=4" verify -Pintegration-tests`.
+  The pool bound was invocation-only; no test or production configuration was
+  changed. Result: 367 unit/architecture tests and 124 integration tests;
+  zero failures, errors, or skips.
+- The test-only datasource pool configuration is intentionally excluded from
+  KAN-37 and tracked independently as KAN-38.
+- Environment: Docker client/server `29.5.2`, Testcontainers `1.21.4`, and
+  PostgreSQL `16.14` (`postgres:16-alpine`).
+- `git diff --check develop...HEAD` passed. The scoped legacy scan found no
+  `ApiException`, `ErrorCode`, or `InvalidSettlementStateException` dependency.
+  `pom.xml`, CI workflows, Flyway V1, and test datasource configuration remain
+  unchanged.

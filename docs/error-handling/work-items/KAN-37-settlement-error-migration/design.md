@@ -1,6 +1,6 @@
 # KAN-37 — Settlement Error Migration
 
-**Status:** Approved
+**Status:** Implemented and verified
 
 **Date:** 2026-08-25
 
@@ -358,24 +358,24 @@ different trust boundary or business invariant.
 
 ## 18. Acceptance criteria
 
-- [ ] All four descriptors exactly match the approved KAN-30 catalogue.
-- [ ] Settlement failures use typed, transport-neutral
+- [x] All four descriptors exactly match the approved KAN-30 catalogue.
+- [x] Settlement failures use typed, transport-neutral
       `ApplicationException` subclasses.
-- [ ] Disallowed roles receive a neutral 403 before settlement lookup.
-- [ ] Missing and non-owned settlement requests are publicly
+- [x] Disallowed roles receive a neutral 403 before settlement lookup.
+- [x] Missing and non-owned settlement requests are publicly
       indistinguishable.
-- [ ] Administrator reads preserve existing global visibility.
-- [ ] Only the owning investor can create a settlement payment intent.
-- [ ] Initial non-payable state and a conditional-transition conflict use the
+- [x] Administrator reads preserve existing global visibility.
+- [x] Only the owning investor can create a settlement payment intent.
+- [x] Initial non-payable state and a conditional-transition conflict use the
       approved distinct 409 errors.
-- [ ] Same-intent confirmation remains idempotent without duplicate effects.
-- [ ] Competing confirmation rolls back payment and produces no downstream
+- [x] Same-intent confirmation remains idempotent without duplicate effects.
+- [x] Competing confirmation rolls back payment and produces no downstream
       effects.
-- [ ] Protected diagnostics and internal messages never enter Problem
+- [x] Protected diagnostics and internal messages never enter Problem
       Details.
-- [ ] Migrated settlement exceptions no longer depend on `ApiException` or
+- [x] Migrated settlement exceptions no longer depend on `ApiException` or
       `ErrorCode`.
-- [ ] Repayment, payment, outbox, notification, audit, session-security, and
+- [x] Repayment, payment, outbox, notification, audit, session-security, and
       CSRF behavior do not regress.
-- [ ] No dependency or Flyway migration is introduced.
-- [ ] Focused and complete verification suites pass before review.
+- [x] No dependency or Flyway migration is introduced.
+- [x] Focused and complete verification suites pass before review.
