@@ -13,6 +13,10 @@ public interface RepaymentRepository {
 
     Optional<Repayment> findById(Long repaymentId);
 
+    Optional<Repayment> findByIdForStartup(Long repaymentId, Long startupId);
+
+    Optional<Repayment> findByIdForInvestor(Long repaymentId, Long investorId);
+
     Optional<Repayment> findByAgreementId(Long agreementId);
 
     Optional<RepaymentProgress> getProgressByAgreementId(Long agreementId);

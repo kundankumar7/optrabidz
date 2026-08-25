@@ -17,6 +17,10 @@ public interface RepaymentInstallmentRepository {
 
     Optional<RepaymentInstallment> findById(Long installmentId);
 
+    Optional<RepaymentInstallment> findByIdForStartup(Long installmentId, Long startupId);
+
+    Optional<RepaymentInstallment> findByIdForInvestor(Long installmentId, Long investorId);
+
     Page<RepaymentInstallment> findByRepaymentId(Long repaymentId, Pageable pageable);
 
     Page<RepaymentInstallment> findByRepaymentIdAndStates(Long repaymentId,

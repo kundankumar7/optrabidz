@@ -32,6 +32,18 @@ public class AgreementRepositoryAdapter implements AgreementRepository {
     }
 
     @Override
+    public Optional<Agreement> findByIdForStartup(Long agreementId, Long startupId) {
+        return jpaAgreementRepository.findByAgreementIdAndStartupId(agreementId, startupId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<Agreement> findByIdForInvestor(Long agreementId, Long investorId) {
+        return jpaAgreementRepository.findByAgreementIdAndInvestorId(agreementId, investorId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public Optional<Agreement> findByBidId(Long bidId) {
         return jpaAgreementRepository.findByBidId(bidId)
                 .map(mapper::toDomain);

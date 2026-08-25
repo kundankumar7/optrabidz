@@ -11,6 +11,10 @@ public interface AgreementRepository {
 
     Optional<Agreement> findById(Long agreementId);
 
+    Optional<Agreement> findByIdForStartup(Long agreementId, Long startupId);
+
+    Optional<Agreement> findByIdForInvestor(Long agreementId, Long investorId);
+
     Optional<Agreement> findByBidId(Long bidId);
 
     Page<Agreement> findByStartupId(Long startupId, Pageable pageable);

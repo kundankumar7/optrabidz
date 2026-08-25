@@ -12,6 +12,10 @@ import java.time.Instant;
 import java.util.Optional;
 
 public interface JpaRepaymentRepository extends JpaRepository<Repayment, Long> {
+    Optional<Repayment> findByRepaymentIdAndStartupId(Long repaymentId, Long startupId);
+
+    Optional<Repayment> findByRepaymentIdAndInvestorId(Long repaymentId, Long investorId);
+
     Optional<Repayment> findByAgreementId(Long agreementId);
 
     Page<Repayment> findByStartupId(Long startupId, Pageable pageable);

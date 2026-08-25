@@ -35,6 +35,18 @@ public class RepaymentRepositoryAdapter implements RepaymentRepository {
     }
 
     @Override
+    public Optional<Repayment> findByIdForStartup(Long repaymentId, Long startupId) {
+        return jpaRepaymentRepository.findByRepaymentIdAndStartupId(repaymentId, startupId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<Repayment> findByIdForInvestor(Long repaymentId, Long investorId) {
+        return jpaRepaymentRepository.findByRepaymentIdAndInvestorId(repaymentId, investorId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public Optional<Repayment> findByAgreementId(Long agreementId) {
         return jpaRepaymentRepository.findByAgreementId(agreementId)
                 .map(mapper::toDomain);
