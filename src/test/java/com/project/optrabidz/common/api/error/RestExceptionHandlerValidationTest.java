@@ -1,6 +1,5 @@
 package com.project.optrabidz.common.api.error;
 
-import com.project.optrabidz.common.api.exception.GlobalExceptionHandler;
 import com.project.optrabidz.common.api.response.RequestMetadataFilter;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -54,7 +53,6 @@ class RestExceptionHandlerValidationTest {
         mockMvc = MockMvcBuilders
                 .standaloneSetup(new ValidationProbeController())
                 .setControllerAdvice(
-                        new GlobalExceptionHandler(),
                         new RestExceptionHandler(
                                 factory,
                                 new ValidationViolationMapper()

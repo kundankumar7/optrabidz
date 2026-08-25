@@ -1,6 +1,5 @@
 package com.project.optrabidz.common.api.error;
 
-import com.project.optrabidz.common.api.exception.GlobalExceptionHandler;
 import com.project.optrabidz.common.api.response.RequestMetadataFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,7 +42,6 @@ class RestExceptionHandlerFrameworkTest {
         mockMvc = MockMvcBuilders
                 .standaloneSetup(new FrameworkProbeController())
                 .setControllerAdvice(
-                        new GlobalExceptionHandler(),
                         new RestExceptionHandler(
                                 factory,
                                 new ValidationViolationMapper()

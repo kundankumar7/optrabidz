@@ -1,0 +1,27 @@
+%%{init: {"theme":"base","themeVariables":{"fontSize":"24px","fontFamily":"Arial, sans-serif","primaryColor":"#EFF6FF","primaryTextColor":"#0F172A","primaryBorderColor":"#2563EB","lineColor":"#334155","secondaryColor":"#F8FAFC","tertiaryColor":"#FEF2F2","clusterBkg":"#FFFFFF","clusterBorder":"#94A3B8","edgeLabelBackground":"#FFFFFF"},"flowchart":{"htmlLabels":false,"curve":"linear","nodeSpacing":55,"rankSpacing":65}}}%%
+flowchart TB
+    D0[Delete in KAN-33]
+    D0 --> D1[ApiException and ErrorCode]
+    D0 --> D2[Handler, ErrorField, and ErrorResponse]
+    D0 --> D3[Unused webhook exceptions and freeze store]
+
+    D1 --> M0[Modify in KAN-33]
+    D2 --> M0
+    D3 --> M0
+    M0 --> M1[RestExceptionHandler owns sanitized 500]
+    M0 --> M2[ApiResponse loses error factory]
+    M0 --> M3[Architecture rule becomes unconditional]
+
+    M1 --> K0[Preserve until KAN-41]
+    M2 --> K0
+    M3 --> K0
+    K0 --> K1[ApiResponse success factory]
+    K0 --> K2[SuccessResponse and Meta]
+    K0 --> K3[Successful API v1 bodies]
+
+    classDef removed fill:#FEF2F2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px;
+    classDef changed fill:#FFF7ED,stroke:#EA580C,color:#7C2D12,stroke-width:2px;
+    classDef kept fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px;
+    class D0,D1,D2,D3 removed;
+    class M0,M1,M2,M3 changed;
+    class K0,K1,K2,K3 kept;

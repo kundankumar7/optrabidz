@@ -1,0 +1,24 @@
+%%{init: {"theme":"base","themeVariables":{"fontSize":"24px","fontFamily":"Arial, sans-serif","primaryColor":"#EFF6FF","primaryTextColor":"#0F172A","primaryBorderColor":"#2563EB","lineColor":"#334155","secondaryColor":"#F8FAFC","tertiaryColor":"#FEF2F2","clusterBkg":"#FFFFFF","clusterBorder":"#94A3B8","edgeLabelBackground":"#FFFFFF"},"flowchart":{"htmlLabels":false,"curve":"linear","nodeSpacing":55,"rankSpacing":65}}}%%
+flowchart TB
+    R[HTTP request] --> S{Spring Security accepts request?}
+    S -->|No| SP[Security Problem Details adapter]
+    S -->|Yes| C[Controller and application flow]
+
+    C --> E{Failure category}
+    E -->|Expected business| A[ApplicationException mapping]
+    E -->|Request or framework| F[Framework mapping]
+    E -->|Unexpected runtime| U[Sanitized 500 mapping]
+
+    U --> L[Structured internal error log]
+    A --> P[ProblemDetailsFactory]
+    F --> P
+    U --> P
+    SP --> P
+    P --> O[One RFC 9457 public error contract]
+
+    classDef boundary fill:#EFF6FF,stroke:#2563EB,color:#0F172A,stroke-width:2px;
+    classDef unexpected fill:#FEF2F2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px;
+    classDef output fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px;
+    class U,L unexpected;
+    class O output;
+    class R,S,C,E,A,F,SP,P boundary;
