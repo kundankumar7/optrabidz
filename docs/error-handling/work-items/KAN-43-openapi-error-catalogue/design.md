@@ -1,6 +1,6 @@
 # KAN-43 — OpenAPI Problem Details Contract and Public Error Catalogue
 
-**Status:** Proposed
+**Status:** Approved design; implementation not started
 
 **Date:** 2026-08-25
 
@@ -251,7 +251,7 @@ permit-all fallback:
 - `/v3/api-docs`;
 - `/v3/api-docs/**`;
 - `/v3/api-docs.yaml`;
-- `/swagger-ui.html`; and
+- `/swagger-ui.html`;
 - `/swagger-ui/**`; and
 - `/webjars/swagger-ui/**`.
 
@@ -375,7 +375,7 @@ Expected documentation changes:
 - this design and its diagram assets;
 - `docs/error-handling/error-catalogue.md`;
 - error-handling and global documentation indexes; and
-- a focused implementation plan after written-spec review.
+- this focused implementation plan.
 
 No controller success body, exception runtime behavior, database migration,
 CI workflow, authentication mechanism, or business policy changes are
