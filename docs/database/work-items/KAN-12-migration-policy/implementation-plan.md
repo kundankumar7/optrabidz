@@ -101,7 +101,7 @@ Create `docs/database/migrations.md` with these sections and decisions:
 
 Include the environment decision flow from the approved design as a Mermaid
 diagram. Keep node labels about database state and required actions; do not add
-people, assistant, branch, or merge workflow nodes.
+implementation workflow, branch, or merge workflow nodes.
 
 - [ ] **Step 3: Review the guide against current configuration**
 

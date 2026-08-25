@@ -1,6 +1,6 @@
 # KAN-24: Module Error Migration Implementation Plan
 
-**Status:** Pull request #21 ready for review
+**Status:** Implemented, verified, reviewed, and merged into `develop`.
 
 **Goal:** Migrate expected identity, security, and participation failures to
 the transport-neutral `ApplicationException` contract while preserving every

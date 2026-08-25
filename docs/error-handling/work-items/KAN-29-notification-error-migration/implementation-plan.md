@@ -24,9 +24,9 @@ JUnit 5, MockMvc, AssertJ, ArchUnit, Maven Failsafe, Testcontainers, PostgreSQL 
   reviewed `origin/develop` commit containing specification commit
   `8aef4469729f6823273a191af93ee2b1b977684b`.
 - Target `develop`; do not modify or merge into `main`.
-- Keep KAN-29 assigned to Kumar Kundan and under parent KAN-16.
-- Keep KAN-29 **To Do** until inline execution is approved; then move it to
-  **In Progress**. Move it to **In Review** only after the pull request opens.
+- Keep KAN-29 under parent KAN-16.
+- Move KAN-29 from **To Do** to **In Progress** when implementation begins and
+  to **In Review** after the pull request opens.
 - Do not change Spring Security matchers, session policy, CSRF, JWT, OAuth2, or
   role policy.
 - Do not change Flyway V1, database schema, dependencies, runtime properties,
@@ -44,7 +44,7 @@ JUnit 5, MockMvc, AssertJ, ArchUnit, Maven Failsafe, Testcontainers, PostgreSQL 
 - Use `apply_patch` or an IDE for file edits. Do not rewrite production files
   through shell redirection.
 - Each production slice begins with a failing test, ends with focused GREEN
-  evidence, receives a Jira comment, and is committed separately.
+  evidence, records its verification result, and is committed separately.
 
 ---
 
@@ -73,13 +73,13 @@ JUnit 5, MockMvc, AssertJ, ArchUnit, Maven Failsafe, Testcontainers, PostgreSQL 
 
 **Interfaces:**
 - Consumes: approved specification commit
-  `8aef4469729f6823273a191af93ee2b1b977684b` and user inline-execution approval.
+  `8aef4469729f6823273a191af93ee2b1b977684b` and approved implementation plan.
 - Produces: a clean, synchronized feature branch and Jira **In Progress** state.
 
-- [x] **Step 1: Confirm the explicit start gate**
+- [x] **Step 1: Confirm the implementation prerequisites**
 
-Do not execute this task until the user states that the KAN-29 implementation
-plan and inline execution are approved.
+Confirm that the KAN-29 specification and implementation plan are approved
+before starting implementation.
 
 - [x] **Step 2: Verify branch, ancestry, remote head, and clean state**
 
@@ -837,7 +837,7 @@ six-entry removal, source scans, focused API result, and commit SHA to KAN-29.
 **Files:**
 - Modify: `docs/error-handling/README.md`
 - Modify: `docs/error-handling/work-items/KAN-29-notification-error-migration/implementation-plan.md`
-- Temporary, untracked: `.git/KAN-29-pr-body.md`
+- Use: `.github/pull_request_template.md`
 
 **Interfaces:**
 - Consumes: Tasks 1–3, unchanged Flyway V1, and the complete Maven verification
@@ -943,7 +943,8 @@ Verify the worktree is clean and local/remote feature heads match.
 
 - [x] **Step 6: Create the pull request without merging**
 
-Write `.git/KAN-29-pr-body.md` with these sections and exact verified values:
+Complete the versioned pull-request template with these sections and exact
+verified values:
 
 ```markdown
 ## Summary
@@ -977,16 +978,16 @@ gh pr create `
   --base develop `
   --head feature/KAN-29-notification-error-migration `
   --title "KAN-29: Migrate notification failures to the neutral error contract" `
-  --body-file .git/KAN-29-pr-body.md
+  --body-file .github/pull_request_template.md
 ```
 
 Move KAN-29 to **In Review** and add the PR URL, exact base/head SHAs, commit
 list, test totals, intentional API changes, preserved behavior, risk, and
 rollback statement. Do not merge.
 
-- [ ] **Step 7: Wait for explicit PR approval and close safely**
+- [ ] **Step 7: Wait for PR approval and close safely**
 
-After the user explicitly approves the exact PR head:
+After the exact PR head is reviewed and approved:
 
 ```powershell
 git fetch origin

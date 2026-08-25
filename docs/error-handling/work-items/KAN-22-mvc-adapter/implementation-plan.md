@@ -773,8 +773,8 @@ evidence for the pull request into `develop`.
   and rollback statement; do not add a one-use project file.
 
 - [x] Verify the remote PR head equals the locally tested head and wait for
-  `Unit Tests` and `PostgreSQL Integration Tests` on that exact head. Present
-  the PR and exact diff for user review. Do not merge.
+  `Unit Tests` and `PostgreSQL Integration Tests` on that exact head. Make the
+  PR and exact diff available for review before merge.
 
 ## Execution evidence
 
@@ -839,15 +839,13 @@ mergeable and ran the required workflows twice (push and pull-request events):
 both `Unit Tests` runs and both `PostgreSQL Integration Tests` runs passed on
 that head. This documentation-only evidence update changes no production or
 test source; its resulting exact-head CI result is retained by GitHub on PR
-#19. No merge is part of KAN-22 execution.
+#19. PR #19 was subsequently reviewed and merged into `develop`.
 
-## Review gates
+## Delivery controls
 
 1. Written Jira specification approved — complete.
 2. This implementation plan approved — required before creating the branch or
    changing production/test code.
-3. Inline execution approved — required before running RED tests or writing
-   implementation code.
-4. Pull request reviewed and explicitly approved — required before merge into
-   `develop`.
+3. Test-first implementation and verification completed.
+4. Pull request reviewed and approved before merge into `develop`.
 5. `main` remains unchanged throughout KAN-22.

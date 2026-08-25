@@ -583,8 +583,8 @@ steps actually executed and record:
 - protected-path verification; and
 - exact branch head reviewed.
 
-Do not add machine-specific paths, usernames, tokens, AI/tool references, or
-temporary log filenames.
+Do not add machine-specific paths, usernames, tokens, local automation
+metadata, or temporary log filenames.
 
 - [x] **Step 5: Commit documentation evidence**
 
@@ -602,12 +602,11 @@ gh pr create `
     --base develop `
     --head feature/KAN-27-governance-error-migration `
     --title "KAN-27: Migrate governance failures to the neutral error contract" `
-    --body-file .git\KAN-27-pr-body.md
+    --body-file .github/pull_request_template.md
 ```
 
-The PR body contains only a professional summary, intentional response changes,
-verification counts, risk/rollback notes, and the Jira key. Keep the body file
-inside `.git`; never add it to the repository.
+Complete the versioned template with a professional summary, intentional
+response changes, verification counts, risk/rollback notes, and the Jira key.
 
 - [ ] **Step 7: Update Jira to In Review and wait for review**
 

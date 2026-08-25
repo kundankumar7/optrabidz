@@ -44,4 +44,15 @@ their canonical subject directories.
   `<subject>/work-items/<Jira-key>-<slug>/`.
 - Editable diagram sources and rendered images stay beside the document that
   owns them.
-- Repository-relative links and images are validated by the unit test suite.
+- Repository-relative links, images, and command file references are validated
+  by the unit test suite.
+
+Before publication, review every changed document for:
+
+- project-focused language without transient execution or local-workspace
+  instructions;
+- lifecycle status and future-tense statements that match the delivered state;
+- code examples, commands, paths, and test evidence that match the reviewed
+  implementation; and
+- temporary files, machine-specific paths, credentials, or other information
+  that does not belong in the repository.

@@ -1,6 +1,6 @@
 # KAN-31 — Financial Security Boundary Implementation Plan
 
-**Status:** Implemented and locally verified; awaiting pull-request review
+**Status:** Implemented, verified, reviewed, and merged into `develop`.
 
 **Goal:** Require authentication at the Spring Security boundary for every
 financial user route, then remove controller-local authentication guards while

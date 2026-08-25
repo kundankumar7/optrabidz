@@ -1,6 +1,6 @@
 # KAN-32 Payment Webhook Replay Protection Implementation Plan
 
-**Status:** Implementation complete; awaiting pull-request review
+**Status:** Implemented, verified, reviewed, and merged into `develop`.
 
 > **Execution requirement:** Implement this plan task by task with TDD,
 > verification, and review checkpoints. Do not merge this branch into
@@ -46,7 +46,7 @@ JUnit 5, Mockito, MockMvc, ArchUnit, and Testcontainers 1.21.4.
   outbox events.
 - Keep servlet and HTTP types out of financial application replay types and
   PostgreSQL/Jackson details behind the replay-store port.
-- Use the established review gates: plan approval, inline-execution approval,
+- Use the established review controls: plan approval, test-first verification,
   PR approval, then merge into `develop`; never merge into `main`.
 
 ## File map

@@ -1,6 +1,6 @@
 # KAN-36 — Secure Webhook Ingress Implementation Plan
 
-**Status:** Implemented and locally verified; awaiting pull-request review
+**Status:** Implemented, verified, reviewed, and merged into `develop`.
 
 **Goal:** Make payment-provider webhook configuration and ingress secure by
 default while preserving the current successful financial behavior until
@@ -854,9 +854,8 @@ Maven Wrapper, and GitHub Actions.
 - [x] **Step 5: Update documentation evidence and commit**
 
   Record exact test counts, commands, commit SHA, and any non-blocking warning
-  in this plan. Update its status to `Implemented and locally verified;
-  awaiting pull-request review` and ensure the KAN-36 README row links both
-  design and implementation plan.
+  in this plan. Update its status to `Implemented and verified` and ensure the
+  KAN-36 README row links both design and implementation plan.
 
   ```powershell
   git add docs/error-handling/work-items/KAN-36-secure-webhook-ingress docs/error-handling/README.md src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java

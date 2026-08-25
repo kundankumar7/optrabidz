@@ -777,8 +777,8 @@ diff evidence for the exact branch head.
   and rollback statement; do not add a project file solely for one PR.
 
 - [x] Verify the remote PR head equals the locally tested head and wait for both
-  required CI checks. Do not merge. Present the exact diff and PR to the user
-  for review.
+  required CI checks. Make the exact diff and PR available for review before
+  merge.
 
 ## Execution evidence
 
@@ -805,14 +805,14 @@ diff evidence for the exact branch head.
   and applied the single unchanged V1 migration to a clean schema.
 - Scope evidence: protected Maven, runtime configuration, Flyway, legacy error,
   and neutral error paths have no diff. The packaged JAR contains no test probe.
-- Local verification runtime: Java 21.0.11. The required GitHub checks use
-  Temurin 21 and remain pending until the feature branch is pushed.
+- Local verification runtime: Java 21.0.11. The required GitHub checks used
+  Temurin 21 and passed on the reviewed pull-request head.
 - Verified implementation head before this evidence commit:
   `4edf9479e49e198e05da9b851369be5a71544995`.
 - No scope deviation was required. ISO timestamp normalization is a wire-format
   correction inside the approved contract.
-- Pull request: `https://github.com/kundankumar7/optrabidz/pull/18`, open and
-  mergeable against `develop`.
+- Pull request: `https://github.com/kundankumar7/optrabidz/pull/18`, reviewed
+  and merged into `develop`.
 - GitHub exact-head evidence for `4d3f0183c482a4baeb0001c9c1e5f811471b42f8`:
   both push and pull-request runs passed `Unit Tests` and `PostgreSQL
   Integration Tests` under Temurin 21.
@@ -820,11 +820,10 @@ diff evidence for the exact branch head.
   checks on the resulting final PR head; the live PR check status is the
   authoritative exact-head record.
 
-## Review gates
+## Delivery controls
 
 1. Written Jira specification approved — complete.
 2. This implementation plan approved — required before production code.
-3. Inline execution approved — required before tests or implementation.
-4. Pull request reviewed and explicitly approved — required before merge into
-   `develop`.
+3. Test-first implementation and verification completed.
+4. Pull request reviewed and approved before merge into `develop`.
 5. `main` remains unchanged throughout KAN-21.
