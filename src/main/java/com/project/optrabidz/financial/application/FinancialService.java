@@ -14,7 +14,6 @@ import com.project.optrabidz.financial.application.dto.response.RepaymentProgres
 import com.project.optrabidz.financial.application.dto.response.RepaymentResponse;
 import com.project.optrabidz.financial.application.dto.response.SettlementResponse;
 import com.project.optrabidz.financial.application.exception.FinancialOperationNotAllowedException;
-import com.project.optrabidz.financial.application.exception.InvalidRepaymentStateException;
 import com.project.optrabidz.financial.application.exception.PaymentAlreadyConfirmedException;
 import com.project.optrabidz.financial.application.exception.PaymentAttemptNotFoundException;
 import com.project.optrabidz.financial.application.exception.PaymentIntentExpiredException;
@@ -25,6 +24,7 @@ import com.project.optrabidz.financial.application.exception.PaymentStateConflic
 import com.project.optrabidz.financial.application.exception.RepaymentInstallmentNotFoundException;
 import com.project.optrabidz.financial.application.exception.RepaymentInstallmentNotPayableException;
 import com.project.optrabidz.financial.application.exception.RepaymentNotFoundException;
+import com.project.optrabidz.financial.application.exception.RepaymentStateConflictException;
 import com.project.optrabidz.financial.application.exception.SettlementNotFoundException;
 import com.project.optrabidz.financial.application.exception.SettlementNotPayableException;
 import com.project.optrabidz.financial.application.exception.SettlementStateConflictException;
@@ -299,7 +299,11 @@ public class FinancialService {
                     ensureRepaymentInstallmentPayable(installment);
                     Instant now = Instant.now();
                     PaymentIntent intent = createRepaymentInstallmentIntent(repayment, installment);
-                    repaymentInstallmentRepository.markPaymentInProgress(installmentId, now);
+                    int updatedCount = repaymentInstallmentRepository
+                            .markPaymentInProgress(installmentId, now);
+                    if (updatedCount == 0) {
+                        return classifyPaymentInProgressRace(installmentId);
+                    }
                     repaymentRepository.refreshStatus(repayment.getRepaymentId(), now);
                     return toPaymentIntentResponse(intent);
                 });
@@ -605,7 +609,11 @@ public class FinancialService {
                 now
         );
         if (confirmedCount == 0) {
-            ensureAlreadyConfirmedBySameIntent(installment, paymentIntent.getPaymentIntentId());
+            if (alreadyPaidBySameIntent(
+                    installment.getRepaymentInstallmentId(),
+                    paymentIntent.getPaymentIntentId())) {
+                return;
+            }
         }
         repaymentRepository.refreshStatus(installment.getRepaymentId(), now);
         eventPublisher.publish(new RepaymentInstallmentPaidEvent(
@@ -773,13 +781,40 @@ public class FinancialService {
         );
     }
 
-    private void ensureAlreadyConfirmedBySameIntent(RepaymentInstallment installment, Long paymentIntentId) {
-        RepaymentInstallment latestInstallment = getRepaymentInstallment(installment.getRepaymentInstallmentId());
+    private PaymentIntentResponse classifyPaymentInProgressRace(
+            Long installmentId
+    ) {
+        RepaymentInstallment latestInstallment = getRepaymentInstallment(
+                installmentId);
+        if (latestInstallment.getInstallmentState()
+                == RepaymentInstallmentState.PAYMENT_IN_PROGRESS) {
+            PaymentIntent canonicalIntent = paymentIntentRepository
+                    .findActiveByRepaymentInstallmentId(installmentId)
+                    .orElseThrow(() -> repaymentStateConflict(installmentId));
+            return toPaymentIntentResponse(canonicalIntent);
+        }
+        throw repaymentStateConflict(installmentId);
+    }
+
+    private boolean alreadyPaidBySameIntent(
+            Long installmentId,
+            Long paymentIntentId
+    ) {
+        RepaymentInstallment latestInstallment = getRepaymentInstallment(
+                installmentId);
         if (latestInstallment.getInstallmentState() == RepaymentInstallmentState.PAID
                 && paymentIntentId.equals(latestInstallment.getConfirmedPaymentIntentId())) {
-            return;
+            return true;
         }
-        throw new RepaymentInstallmentNotPayableException("Repayment installment is not payable");
+        throw repaymentStateConflict(installmentId);
+    }
+
+    private RepaymentStateConflictException repaymentStateConflict(
+            Long installmentId
+    ) {
+        return new RepaymentStateConflictException(
+                "Repayment installment " + installmentId
+                        + " conditional transition was rejected");
     }
 
     private String normalizeProviderCode(String providerCode) {
@@ -985,14 +1020,6 @@ public class FinancialService {
             throw new FinancialOperationNotAllowedException(
                     "Role " + actualRole + " cannot perform an operation reserved for " + expectedRole
             );
-        }
-    }
-
-    private void applyRepaymentTransition(Runnable transition) {
-        try {
-            transition.run();
-        } catch (IllegalStateException exception) {
-            throw new InvalidRepaymentStateException(exception.getMessage());
         }
     }
 
