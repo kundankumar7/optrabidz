@@ -56,4 +56,57 @@ class DocumentationLinkValidatorTest {
 
         assertThat(DocumentationLinkValidator.findBrokenTargets(repository)).isEmpty();
     }
+
+    @Test
+    void reportsMissingRepositoryFilesUsedByPublishedCommands() throws Exception {
+        Files.createDirectories(repository.resolve("docs"));
+        String fence = "`".repeat(3);
+        Files.writeString(repository.resolve("docs/plan.md"), """
+                %spowershell
+                gh pr create --body-file .github/missing-pr-body.md
+                %s
+                """.formatted(fence, fence));
+
+        assertThat(DocumentationLinkValidator.findBrokenTargets(repository))
+                .singleElement()
+                .satisfies(target -> {
+                    assertThat(target.target())
+                            .isEqualTo(".github/missing-pr-body.md");
+                    assertThat(target.reason())
+                            .isEqualTo("command file does not exist");
+                });
+    }
+
+    @Test
+    void acceptsVersionedRepositoryFilesUsedByPublishedCommands() throws Exception {
+        Files.createDirectories(repository.resolve("docs"));
+        Files.createDirectories(repository.resolve(".github"));
+        Files.writeString(repository.resolve(".github/pull-request.md"), "# PR\n");
+        String fence = "`".repeat(3);
+        Files.writeString(repository.resolve("docs/plan.md"), """
+                %spowershell
+                gh pr create --body-file .github/pull-request.md
+                %s
+                """.formatted(fence, fence));
+
+        assertThat(DocumentationLinkValidator.findBrokenTargets(repository)).isEmpty();
+    }
+
+    @Test
+    void rejectsRepositoryPrivateFilesUsedByPublishedCommands() throws Exception {
+        Files.createDirectories(repository.resolve("docs"));
+        Files.createDirectories(repository.resolve(".git"));
+        Files.writeString(repository.resolve(".git/temporary-pr-body.md"), "# PR\n");
+        String fence = "`".repeat(3);
+        Files.writeString(repository.resolve("docs/plan.md"), """
+                %spowershell
+                gh pr create --body-file .git/temporary-pr-body.md
+                %s
+                """.formatted(fence, fence));
+
+        assertThat(DocumentationLinkValidator.findBrokenTargets(repository))
+                .singleElement()
+                .satisfies(target -> assertThat(target.reason())
+                        .isEqualTo("command file is repository-private"));
+    }
 }

@@ -19,6 +19,8 @@ final class DocumentationLinkValidator {
     private static final Pattern HTML_TARGET = Pattern.compile(
             "(?:href|src)\\s*=\\s*[\\\"']([^\\\"']+)[\\\"']",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern COMMAND_FILE_TARGET = Pattern.compile(
+            "--body-file\\s+(?:\\\"([^\\\"]+)\\\"|'([^']+)'|([^\\s`]+))");
     private static final Pattern FENCED_CODE = Pattern.compile("(?ms)^```.*?^```\\s*$");
 
     private DocumentationLinkValidator() {
@@ -42,11 +44,40 @@ final class DocumentationLinkValidator {
 
         List<BrokenTarget> broken = new ArrayList<>();
         for (Path source : markdownFiles) {
-            String content = FENCED_CODE.matcher(Files.readString(source)).replaceAll("");
+            String rawContent = Files.readString(source);
+            collectCommandFileTargets(
+                    COMMAND_FILE_TARGET.matcher(rawContent), source, root, broken);
+            String content = FENCED_CODE.matcher(rawContent).replaceAll("");
             collectTargets(MARKDOWN_TARGET.matcher(content), source, root, broken, true);
             collectTargets(HTML_TARGET.matcher(content), source, root, broken, false);
         }
         return List.copyOf(broken);
+    }
+
+    private static void collectCommandFileTargets(
+            Matcher matcher,
+            Path source,
+            Path root,
+            List<BrokenTarget> broken) {
+        while (matcher.find()) {
+            String target = matcher.group(1) != null
+                    ? matcher.group(1)
+                    : matcher.group(2) != null
+                    ? matcher.group(2)
+                    : matcher.group(3);
+            Path resolved = root.resolve(target).normalize().toAbsolutePath();
+            if (!resolved.startsWith(root)) {
+                broken.add(new BrokenTarget(
+                        root.relativize(source), target, "escapes repository root"));
+            } else if (resolved.startsWith(root.resolve(".git"))) {
+                broken.add(new BrokenTarget(
+                        root.relativize(source), target,
+                        "command file is repository-private"));
+            } else if (!Files.isRegularFile(resolved)) {
+                broken.add(new BrokenTarget(
+                        root.relativize(source), target, "command file does not exist"));
+            }
+        }
     }
 
     private static void collectTargets(

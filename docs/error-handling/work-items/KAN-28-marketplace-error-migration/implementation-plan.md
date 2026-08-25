@@ -32,15 +32,15 @@ Mockito, AssertJ, MockMvc, ArchUnit, Maven, Testcontainers, PostgreSQL 16
   marketplace conflicts.
 - Every production change begins with a focused failing test and ends with a
   focused passing test before commit.
-- Move KAN-28 to **In Progress** only when inline implementation begins,
-  **In Review** only after the pull request opens with green CI, and **Done**
-  only after approved merge and final verification.
+- Move KAN-28 to **In Progress** when implementation begins, **In Review**
+  after the pull request opens with green CI, and **Done** after approved merge
+  and final verification.
 
 ---
 
-## Execution gate
+## Execution prerequisites
 
-Run only after this plan and inline execution are explicitly approved:
+Run after the implementation plan is approved:
 
 ```powershell
 git fetch origin
@@ -817,16 +817,16 @@ git push origin feature/KAN-28-marketplace-error-migration
 
 - [ ] **Step 6: Open one pull request into `develop`**
 
-Prepare `.git/KAN-28-pr-body.md` with a professional summary, intentional
-response changes, security-boundary matrix, verification counts, risk and
-rollback notes, and Jira key. Then run:
+Complete the versioned pull-request template with a professional summary,
+intentional response changes, security-boundary matrix, verification counts,
+risk and rollback notes, and Jira key. Then run:
 
 ```powershell
 gh pr create `
     --base develop `
     --head feature/KAN-28-marketplace-error-migration `
     --title "KAN-28: Migrate marketplace failures to the neutral error contract" `
-    --body-file .git\KAN-28-pr-body.md
+    --body-file .github/pull_request_template.md
 ```
 
 Verify the PR base is `develop`, the head equals the tested commit, the diff is

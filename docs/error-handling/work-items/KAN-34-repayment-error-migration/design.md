@@ -1,6 +1,6 @@
 # KAN-34 — Repayment and Installment Error Migration
 
-**Status:** Implemented; awaiting review
+**Status:** Implemented, verified, reviewed, and merged into `develop`.
 
 **Date:** 2026-08-25
 
@@ -397,7 +397,8 @@ production application.
 ## 18. Residual risks and follow-up
 
 KAN-33 must still remove the remaining legacy exception handler, error codes,
-envelopes, and unused financial webhook exception classes after KAN-34 merges.
+envelopes, and unused financial webhook exception classes now that KAN-34 has
+merged.
 Administrator financial authority, anonymous marketplace access, real payment
 provider integration, JWT/OAuth2, and repayment business-rule redesign remain
 separate work.

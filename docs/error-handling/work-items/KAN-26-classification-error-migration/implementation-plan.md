@@ -1,6 +1,6 @@
 # KAN-26: Classification Error Migration Implementation Plan
 
-**Status:** Draft pull request open for review
+**Status:** Implemented, verified, reviewed, and merged into `develop`.
 
 **Goal:** Migrate expected classification failures to the neutral
 `ApplicationException` contract while preserving successful startup and

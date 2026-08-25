@@ -60,11 +60,7 @@ docs/design/KAN-14-database-foundation-release-design.md
 docs/design/KAN-14-database-foundation-release-implementation-plan.md
 ```
 
-All commands run from:
-
-```text
-C:\Users\kumar\IdeaProjects\optrabidz
-```
+Run all commands from the repository root.
 
 At the start of every GitHub task, define:
 

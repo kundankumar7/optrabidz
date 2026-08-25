@@ -72,11 +72,11 @@
 - [x] **Step 1: Verify both worktrees are clean**
 
 ```powershell
-git -C C:\Users\kumar\IdeaProjects\optrabidz status --short
 git status --short
 ```
 
-Expected: both commands produce no file entries.
+Run the command from each relevant worktree. Expected: no command produces
+file entries.
 
 - [x] **Step 2: Update the remote baseline**
 
@@ -678,7 +678,7 @@ $body = "## Summary`n- organize documentation by engineering subject`n- separate
 gh pr create --base develop --head docs/KAN-25-information-architecture --title "KAN-25: Establish scalable documentation information architecture" --body $body
 ```
 
-Do not merge until the user reviews and approves the pull request.
+Do not merge until the pull request is reviewed and approved.
 
 ## Execution Evidence
 

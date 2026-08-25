@@ -347,18 +347,23 @@ git commit -m "refactor(KAN-34): scope repayment lookups"
 **Interfaces:**
 
 ```java
+@ValidRepaymentInstallmentFilterSelection
 public record RepaymentInstallmentQuery(
         RepaymentInstallmentState installmentState,
         RepaymentInstallmentPaymentView paymentView,
-        int page,
-        int size
+        Integer page,
+        Integer size
 ) {
-    @AssertTrue(message = "Use either installmentState or paymentView, not both")
-    public boolean isFilterSelectionValid() {
-        return installmentState == null || paymentView == null;
+    public RepaymentInstallmentQuery {
+        page = page == null || page < 1 ? 1 : page;
+        size = size == null || size == 0 ? 20 : size;
     }
 }
 ```
+
+The dedicated class-level validator accepts a missing query object or either
+single filter and rejects only simultaneous `installmentState` and
+`paymentView` values.
 
 - [x] **Step 1: Write the failing query-model test**
 
@@ -409,8 +414,8 @@ component defaults using compact constructor normalization:
 
 ```java
 public RepaymentInstallmentQuery {
-    page = page < 1 ? 1 : page;
-    size = size == 0 ? 20 : size;
+    page = page == null || page < 1 ? 1 : page;
+    size = size == null || size == 0 ? 20 : size;
 }
 ```
 
@@ -783,7 +788,7 @@ only intentional KAN-34 files are present.
 
 - [x] **Step 5: Update completion evidence**
 
-Change the design status to `Implemented; awaiting review`. Check acceptance
+Change the design status to `Implemented and verified`. Check acceptance
 criteria only when supported by the executed tests. Record focused and full
 verification commands and results in the pull-request description and Jira;
 do not claim an unexecuted check passed.
@@ -795,21 +800,15 @@ git add docs/error-handling/work-items/KAN-34-repayment-error-migration
 git commit -m "docs(KAN-34): record repayment migration verification"
 ```
 
-- [x] **Step 7: Push and open the review gate**
+- [x] **Step 7: Publish the verified change for review**
 
 ```powershell
 git push -u origin feature/KAN-34-repayment-error-migration
 gh pr create --base develop `
   --head feature/KAN-34-repayment-error-migration `
   --title "KAN-34: migrate repayment and installment errors" `
-  --body-file .github/pull_request_body.md
+  --body-file .github/pull_request_template.md
 ```
 
 The PR targets `develop`, never `main`. Do not merge it until review approval
 is explicitly recorded.
-
-## Implementation approval gate
-
-No production-code task starts until this implementation plan is reviewed and
-approved. After approval, execution proceeds inline in the current checkout
-with test-first checkpoints and Jira updates after each meaningful stage.

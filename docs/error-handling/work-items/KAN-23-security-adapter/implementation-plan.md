@@ -1,6 +1,6 @@
 # KAN-23: Spring Security Problem Details Implementation Plan
 
-**Status:** Implemented and locally verified; awaiting pull-request review.
+**Status:** Implemented, verified, reviewed, and merged into `develop`.
 
 **Goal:** Replace the legacy Spring Security 401/403 response writer with safe,
 allowlisted RFC 9457 Problem Details adapters while preserving authentication,
@@ -771,13 +771,12 @@ complete test evidence, a clean PR into `develop`, and no `main` mutation.
     --base develop `
     --head feature/KAN-23-security-problem-details `
     --title "KAN-23 Standardize Spring Security problem details" `
-    --body-file .git\KAN-23-pr-body.md
+    --body-file .github/pull_request_template.md
   ```
 
-  Create `.git\KAN-23-pr-body.md` only after verification. It must summarize
-  the three public mappings, separation boundary, RED/GREEN evidence,
-  audit/disclosure policy, full test counts, protected scope, and rollback.
-  Remove it after PR creation; never add it to the project or a commit.
+  Complete the versioned pull-request template with the three public mappings,
+  separation boundary, RED/GREEN evidence, audit/disclosure policy, full test
+  counts, protected scope, and rollback.
 
 - [ ] Verify the remote PR head equals the locally tested head. Wait for exact
   head `Unit Tests` and `PostgreSQL Integration Tests`, move KAN-23 to In Review,
@@ -840,12 +839,11 @@ complete test evidence, a clean PR into `develop`, and no `main` mutation.
   The isolated transaction was moved to the proxied `AuditService.save` boundary
   and verified with a transaction manager that fails during commit.
 
-## Review gates
+## Delivery controls
 
 1. KAN-23 design approved — complete.
 2. KAN-23 written Jira specification approved — complete.
 3. This implementation plan approved — required before production/test edits.
-4. Inline execution approved — required before RED tests or implementation.
-5. Pull request explicitly reviewed and approved — required before merge into
-   `develop`.
+4. Test-first implementation and verification completed.
+5. Pull request reviewed and approved before merge into `develop`.
 6. `main` remains unchanged throughout KAN-23.
