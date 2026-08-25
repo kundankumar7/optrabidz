@@ -1,6 +1,6 @@
 # KAN-42 — Real-Port HTTP Problem Details Smoke Verification
 
-**Status:** Written specification ready for review.
+**Status:** Written specification approved; implementation planned.
 
 **Date:** 2026-08-25
 
