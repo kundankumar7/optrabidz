@@ -5,7 +5,6 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
-import static com.tngtech.archunit.library.freeze.FreezingArchRule.freeze;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
@@ -95,7 +94,7 @@ class ExceptionArchitectureTest {
 
     @ArchTest
     static final ArchRule BUSINESS_EXCEPTIONS_ARE_TRANSPORT_NEUTRAL =
-            freeze(noClasses()
+            noClasses()
                     .that().resideInAnyPackage("..domain..", "..application..")
                     .and().haveSimpleNameEndingWith("Exception")
                     .should().dependOnClassesThat().resideInAnyPackage(
@@ -105,7 +104,27 @@ class ExceptionArchitectureTest {
                             "org.springframework.web..",
                             "jakarta.servlet.."
                     )
-                    .as("domain and application exceptions must remain transport-neutral"));
+                    .as("domain and application exceptions must remain transport-neutral");
+
+    @ArchTest
+    static final ArchRule LEGACY_API_EXCEPTION_PACKAGE_IS_ABSENT =
+            noClasses()
+                    .should().resideInAPackage("..common.api.exception..")
+                    .as("the removed legacy API exception package must stay absent");
+
+    @ArchTest
+    static final ArchRule PRODUCTION_CODE_DOES_NOT_DEPEND_ON_LEGACY_API_EXCEPTIONS =
+            noClasses()
+                    .should().dependOnClassesThat().resideInAPackage(
+                            "..common.api.exception.."
+                    )
+                    .as("production code must use the neutral error contract");
+
+    @ArchTest
+    static final ArchRule COMPETING_GLOBAL_EXCEPTION_HANDLER_IS_ABSENT =
+            noClasses()
+                    .should().haveSimpleName("GlobalExceptionHandler")
+                    .as("RestExceptionHandler is the single MVC error boundary");
 
     @ArchTest
     static final ArchRule WEBHOOK_CONTROLLER_HAS_NO_PARSER_OR_PORT_DEPENDENCY =
