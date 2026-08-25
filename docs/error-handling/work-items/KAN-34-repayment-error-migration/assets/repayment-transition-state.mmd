@@ -1,0 +1,21 @@
+flowchart TD
+    A[Authorized repayment operation] --> P{Initially payable?}
+    P -->|No| N[REPAYMENT_INSTALLMENT_NOT_PAYABLE 409]
+    P -->|Yes| I{Canonical active intent exists?}
+    I -->|Yes| S[Idempotent success]
+    I -->|No| U[Run state qualified installment update]
+
+    U -->|One row updated| E[Publish one repayment event]
+    U -->|No row updated| R[Reload trusted installment state]
+
+    R --> C{Observed result}
+    C -->|Same intent already applied| S
+    C -->|Competing incompatible state| X[REPAYMENT_STATE_CONFLICT 409]
+    C -->|Missing internal resource| M[Entity specific 404]
+
+    E --> K[Commit payment repayment outbox and audit]
+    S --> J[Commit without duplicate effects]
+    X --> B[Roll back transaction]
+    M --> B
+    B --> Z[No repayment event notification or audit effect]
+

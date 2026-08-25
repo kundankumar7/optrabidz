@@ -1,0 +1,32 @@
+flowchart TD
+    U[Authenticated caller] --> S[Spring Security]
+    S --> C[Financial API adapter]
+    C --> V{Query shape valid?}
+    V -->|No| Q[Framework VALIDATION_ERROR 400]
+    V -->|Yes| A[Financial application service]
+
+    A --> R{Role allowed before lookup?}
+    R -->|No| F[FINANCIAL_OPERATION_NOT_ALLOWED 403]
+    R -->|Yes| L{Select lookup by authority}
+
+    L -->|Administrator read| G[Global lookup]
+    L -->|Startup operation| SU[Identifier and startup scoped lookup]
+    L -->|Investor read| IN[Identifier and investor scoped lookup]
+
+    G --> X{Resource found?}
+    SU --> X
+    IN --> X
+    X -->|No repayment| N[REPAYMENT_NOT_FOUND 404]
+    X -->|No installment| NI[REPAYMENT_INSTALLMENT_NOT_FOUND 404]
+    X -->|Yes| B[Evaluate financial state after authority]
+
+    B -->|Initially not payable| P[REPAYMENT_INSTALLMENT_NOT_PAYABLE 409]
+    B -->|Allowed| T[Execute conditional transition]
+
+    Q --> H[Shared RFC 9457 adapter]
+    F --> H
+    N --> H
+    NI --> H
+    P --> H
+    H --> D[Allowlisted Problem Details]
+
