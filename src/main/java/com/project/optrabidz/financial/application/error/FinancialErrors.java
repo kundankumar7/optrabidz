@@ -28,6 +28,30 @@ public final class FinancialErrors {
             "The settlement state no longer permits this operation"
     );
 
+    public static final ErrorDescriptor REPAYMENT_NOT_FOUND = new ErrorDescriptor(
+            "REPAYMENT_NOT_FOUND",
+            ErrorCategory.NOT_FOUND,
+            "The requested repayment was not found"
+    );
+
+    public static final ErrorDescriptor REPAYMENT_INSTALLMENT_NOT_FOUND = new ErrorDescriptor(
+            "REPAYMENT_INSTALLMENT_NOT_FOUND",
+            ErrorCategory.NOT_FOUND,
+            "The requested repayment installment was not found"
+    );
+
+    public static final ErrorDescriptor REPAYMENT_INSTALLMENT_NOT_PAYABLE = new ErrorDescriptor(
+            "REPAYMENT_INSTALLMENT_NOT_PAYABLE",
+            ErrorCategory.CONFLICT,
+            "The repayment installment cannot be paid in its current state"
+    );
+
+    public static final ErrorDescriptor REPAYMENT_STATE_CONFLICT = new ErrorDescriptor(
+            "REPAYMENT_STATE_CONFLICT",
+            ErrorCategory.CONFLICT,
+            "The repayment state no longer permits this operation"
+    );
+
     public static final ErrorDescriptor PAYMENT_INTENT_NOT_FOUND = new ErrorDescriptor(
             "PAYMENT_INTENT_NOT_FOUND",
             ErrorCategory.NOT_FOUND,
