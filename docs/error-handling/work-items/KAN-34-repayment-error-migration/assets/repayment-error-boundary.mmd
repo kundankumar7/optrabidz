@@ -1,32 +1,31 @@
-flowchart TD
-    U[Authenticated caller] --> S[Spring Security]
-    S --> C[Financial API adapter]
-    C --> V{Query shape valid?}
-    V -->|No| Q[Framework VALIDATION_ERROR 400]
-    V -->|Yes| A[Financial application service]
+%%{init: {"theme":"base","themeVariables":{"fontSize":"22px","fontFamily":"Arial, sans-serif","primaryColor":"#EFF6FF","primaryTextColor":"#0F172A","primaryBorderColor":"#2563EB","lineColor":"#334155","secondaryColor":"#F8FAFC","tertiaryColor":"#FEF2F2","clusterBkg":"#FFFFFF","clusterBorder":"#94A3B8","edgeLabelBackground":"#FFFFFF"},"flowchart":{"htmlLabels":false,"curve":"linear","nodeSpacing":45,"rankSpacing":55}}}%%
+flowchart TB
+    subgraph REQUEST[1. Request boundary]
+        direction LR
+        U[Authenticated caller] --> S[Spring Security]
+        S --> C[Financial API adapter]
+        C --> V{Valid query shape?}
+        V -->|No| E1[400 framework validation]
+    end
 
-    A --> R{Role allowed before lookup?}
-    R -->|No| F[FINANCIAL_OPERATION_NOT_ALLOWED 403]
-    R -->|Yes| L{Select lookup by authority}
+    subgraph AUTHORITY[2. Authority before state]
+        direction LR
+        V -->|Yes| R{Role allowed?}
+        R -->|No| E2[403 operation denied]
+        R -->|Yes| Q[Global or participant-scoped lookup]
+        Q --> F{Resource found?}
+        F -->|No| E3[404 missing or non-owned]
+    end
 
-    L -->|Administrator read| G[Global lookup]
-    L -->|Startup operation| SU[Identifier and startup scoped lookup]
-    L -->|Investor read| IN[Identifier and investor scoped lookup]
+    subgraph BUSINESS[3. Financial decision]
+        direction LR
+        F -->|Yes| P{Initially payable?}
+        P -->|No| E4[409 not payable]
+        P -->|Yes| T[Conditional PostgreSQL transition]
+        T --> O[Success or 409 race conflict]
+    end
 
-    G --> X{Resource found?}
-    SU --> X
-    IN --> X
-    X -->|No repayment| N[REPAYMENT_NOT_FOUND 404]
-    X -->|No installment| NI[REPAYMENT_INSTALLMENT_NOT_FOUND 404]
-    X -->|Yes| B[Evaluate financial state after authority]
-
-    B -->|Initially not payable| P[REPAYMENT_INSTALLMENT_NOT_PAYABLE 409]
-    B -->|Allowed| T[Execute conditional transition]
-
-    Q --> H[Shared RFC 9457 adapter]
-    F --> H
-    N --> H
-    NI --> H
-    P --> H
-    H --> D[Allowlisted Problem Details]
-
+    classDef error fill:#FEF2F2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px;
+    classDef success fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px;
+    class E1,E2,E3,E4 error;
+    class O success;

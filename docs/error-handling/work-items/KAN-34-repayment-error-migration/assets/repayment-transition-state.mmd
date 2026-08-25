@@ -1,21 +1,29 @@
-flowchart TD
-    A[Authorized repayment operation] --> P{Initially payable?}
-    P -->|No| N[REPAYMENT_INSTALLMENT_NOT_PAYABLE 409]
-    P -->|Yes| I{Canonical active intent exists?}
-    I -->|Yes| S[Idempotent success]
-    I -->|No| U[Run state qualified installment update]
+%%{init: {"theme":"base","themeVariables":{"fontSize":"22px","fontFamily":"Arial, sans-serif","primaryColor":"#EFF6FF","primaryTextColor":"#0F172A","primaryBorderColor":"#2563EB","lineColor":"#334155","secondaryColor":"#F8FAFC","tertiaryColor":"#FEF2F2","clusterBkg":"#FFFFFF","clusterBorder":"#94A3B8","edgeLabelBackground":"#FFFFFF"},"flowchart":{"htmlLabels":false,"curve":"linear","nodeSpacing":45,"rankSpacing":55}}}%%
+flowchart TB
+    subgraph PRECHECK[1. Precondition]
+        direction LR
+        A[Authorized repayment operation] --> P{Initially payable?}
+        P -->|No| N[409 installment not payable]
+        P -->|Yes| I{Active intent exists?}
+        I -->|Yes| S[Idempotent success; no duplicate effects]
+    end
 
-    U -->|One row updated| E[Publish one repayment event]
-    U -->|No row updated| R[Reload trusted installment state]
+    subgraph WRITE[2. Atomic write]
+        direction LR
+        I -->|No| U[State-qualified installment update]
+        U -->|One row| E[Commit one repayment event]
+        U -->|Zero rows| R[Reload trusted installment state]
+    end
 
-    R --> C{Observed result}
-    C -->|Same intent already applied| S
-    C -->|Competing incompatible state| X[REPAYMENT_STATE_CONFLICT 409]
-    C -->|Missing internal resource| M[Entity specific 404]
+    subgraph CLASSIFY[3. Race classification]
+        direction LR
+        R --> C{Observed result}
+        C -->|Same intent| S2[Idempotent success; no duplicate effects]
+        C -->|Competing state| X[409 conflict; roll back]
+        C -->|Missing internally| M[404; roll back]
+    end
 
-    E --> K[Commit payment repayment outbox and audit]
-    S --> J[Commit without duplicate effects]
-    X --> B[Roll back transaction]
-    M --> B
-    B --> Z[No repayment event notification or audit effect]
-
+    classDef error fill:#FEF2F2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px;
+    classDef success fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px;
+    class N,X,M error;
+    class E,S,S2 success;

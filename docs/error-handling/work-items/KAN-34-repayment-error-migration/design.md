@@ -100,11 +100,13 @@ precedence. Repository ports enforce ownership in queries. PostgreSQL remains
 the state-transition authority. The shared adapter renders only allowlisted
 public descriptors.
 
-<a href="assets/repayment-error-boundary.png">
-  <img src="assets/repayment-error-boundary.png" alt="KAN-34 repayment authorization and error boundary">
+<a href="assets/repayment-error-boundary.svg">
+  <img src="assets/repayment-error-boundary.svg" alt="KAN-34 repayment authorization and error boundary">
 </a>
 
 [Editable architecture source](assets/repayment-error-boundary.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/repayment-error-boundary.png)
 
 Rejected alternatives:
 
@@ -270,11 +272,13 @@ Conditional transition SQL remains authoritative:
 - persistence, connection, mapping, or unexpected runtime failures remain on
   the generic sanitized 500 path.
 
-<a href="assets/repayment-transition-state.png">
-  <img src="assets/repayment-transition-state.png" alt="KAN-34 repayment installment transition outcomes">
+<a href="assets/repayment-transition-state.svg">
+  <img src="assets/repayment-transition-state.svg" alt="KAN-34 repayment installment transition outcomes">
 </a>
 
 [Editable state-flow source](assets/repayment-transition-state.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/repayment-transition-state.png)
 
 Scheduled expiry and overdue workers retain batch semantics. A row that no
 longer matches the worker's conditional update because another transaction
@@ -419,4 +423,3 @@ separate work.
       CSRF behavior do not regress.
 - [ ] No dependency or Flyway migration is introduced.
 - [ ] Focused and complete verification suites pass before review.
-
