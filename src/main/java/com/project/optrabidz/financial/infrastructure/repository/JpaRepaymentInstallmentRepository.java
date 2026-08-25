@@ -15,6 +15,28 @@ import java.util.List;
 import java.util.Optional;
 
 public interface JpaRepaymentInstallmentRepository extends JpaRepository<RepaymentInstallment, Long> {
+    @Query("""
+            select ri
+            from RepaymentInstallment ri
+            join Repayment r on r.repaymentId = ri.repaymentId
+            where ri.repaymentInstallmentId = :installmentId
+              and r.startupId = :startupId
+            """)
+    Optional<RepaymentInstallment> findByIdForStartup(
+            @Param("installmentId") Long installmentId,
+            @Param("startupId") Long startupId);
+
+    @Query("""
+            select ri
+            from RepaymentInstallment ri
+            join Repayment r on r.repaymentId = ri.repaymentId
+            where ri.repaymentInstallmentId = :installmentId
+              and r.investorId = :investorId
+            """)
+    Optional<RepaymentInstallment> findByIdForInvestor(
+            @Param("installmentId") Long installmentId,
+            @Param("investorId") Long investorId);
+
     Page<RepaymentInstallment> findByRepaymentId(Long repaymentId, Pageable pageable);
 
     Page<RepaymentInstallment> findByRepaymentIdAndInstallmentStateIn(Long repaymentId,

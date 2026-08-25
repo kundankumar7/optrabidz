@@ -10,6 +10,7 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.core.MethodParameter;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.validation.method.MethodValidationResult;
 import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -72,6 +73,25 @@ class ValidationViolationMapperTest {
                 .doesNotContain("secret@example.test")
                 .doesNotContain("token-123")
                 .doesNotContain("internal rule");
+    }
+
+    @Test
+    void mapsRepaymentFilterSelectionToItsSafePublicMessage() {
+        BeanPropertyBindingResult result =
+                new BeanPropertyBindingResult(new Object(), "query");
+        result.addError(new ObjectError(
+                "query",
+                new String[]{"ValidRepaymentInstallmentFilterSelection.query"},
+                null,
+                "internal validation detail"
+        ));
+
+        assertThat(mapper.fromBindingResult(result)).containsExactly(
+                new ValidationViolation(
+                        "_request",
+                        "Use either installmentState or paymentView, not both"
+                )
+        );
     }
 
     @Test

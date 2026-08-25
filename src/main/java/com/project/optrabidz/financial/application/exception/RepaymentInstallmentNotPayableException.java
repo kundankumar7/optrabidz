@@ -1,10 +1,14 @@
 package com.project.optrabidz.financial.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.financial.application.error.FinancialErrors;
 
-public class RepaymentInstallmentNotPayableException extends ApiException {
-    public RepaymentInstallmentNotPayableException(String message) {
-        super(ErrorCode.INSTALLMENT_NOT_PAYABLE, message);
+public final class RepaymentInstallmentNotPayableException extends ApplicationException {
+    public RepaymentInstallmentNotPayableException(String diagnosticMessage) {
+        super(
+                FinancialErrors.REPAYMENT_INSTALLMENT_NOT_PAYABLE,
+                "FINANCIAL.REPAYMENT.INSTALLMENT.NOT.PAYABLE",
+                diagnosticMessage
+        );
     }
 }

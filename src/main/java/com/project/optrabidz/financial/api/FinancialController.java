@@ -11,12 +11,12 @@ import com.project.optrabidz.financial.application.dto.response.RepaymentInstall
 import com.project.optrabidz.financial.application.dto.response.RepaymentProgressResponse;
 import com.project.optrabidz.financial.application.dto.response.RepaymentResponse;
 import com.project.optrabidz.financial.application.dto.response.SettlementResponse;
-import com.project.optrabidz.financial.domain.model.RepaymentInstallmentPaymentView;
-import com.project.optrabidz.financial.domain.model.RepaymentInstallmentState;
 import com.project.optrabidz.security.application.AuthenticatedUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -91,14 +91,18 @@ public class FinancialController {
     @GetMapping("/repayments/{repaymentId}/installments")
     public SuccessResponse<PageResponse<RepaymentInstallmentResponse>> getRepaymentInstallments(
             @PathVariable Long repaymentId,
-            @RequestParam(required = false) RepaymentInstallmentState installmentState,
-            @RequestParam(required = false) RepaymentInstallmentPaymentView paymentView,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @Valid @ModelAttribute RepaymentInstallmentQuery query,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
         return ApiResponse.success(
-                financialService.getRepaymentInstallments(principal.getAccountId(), principal.getRole(), repaymentId, installmentState, paymentView, page, size),
+                financialService.getRepaymentInstallments(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        repaymentId,
+                        query.installmentState(),
+                        query.paymentView(),
+                        query.page(),
+                        query.size()),
                 httpRequest
         );
     }
@@ -139,14 +143,17 @@ public class FinancialController {
 
     @GetMapping("/investors/me/repayment-installments")
     public SuccessResponse<PageResponse<RepaymentInstallmentResponse>> getMyInvestorRepaymentInstallments(
-            @RequestParam(required = false) RepaymentInstallmentState installmentState,
-            @RequestParam(required = false) RepaymentInstallmentPaymentView paymentView,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @Valid @ModelAttribute RepaymentInstallmentQuery query,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
         return ApiResponse.success(
-                financialService.getMyInvestorRepaymentInstallments(principal.getAccountId(), principal.getRole(), installmentState, paymentView, page, size),
+                financialService.getMyInvestorRepaymentInstallments(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        query.installmentState(),
+                        query.paymentView(),
+                        query.page(),
+                        query.size()),
                 httpRequest
         );
     }
@@ -165,14 +172,17 @@ public class FinancialController {
 
     @GetMapping("/startups/me/repayment-installments")
     public SuccessResponse<PageResponse<RepaymentInstallmentResponse>> getMyStartupRepaymentInstallments(
-            @RequestParam(required = false) RepaymentInstallmentState installmentState,
-            @RequestParam(required = false) RepaymentInstallmentPaymentView paymentView,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @Valid @ModelAttribute RepaymentInstallmentQuery query,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
         return ApiResponse.success(
-                financialService.getMyStartupRepaymentInstallments(principal.getAccountId(), principal.getRole(), installmentState, paymentView, page, size),
+                financialService.getMyStartupRepaymentInstallments(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        query.installmentState(),
+                        query.paymentView(),
+                        query.page(),
+                        query.size()),
                 httpRequest
         );
     }

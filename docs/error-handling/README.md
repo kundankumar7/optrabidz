@@ -39,3 +39,4 @@ policy are documented in the [KAN-24 module migration design](work-items/KAN-24-
 | [KAN-35](https://0707manna0895.atlassian.net/browse/KAN-35) | [Payment intent and attempt error migration design](work-items/KAN-35-payment-error-migration/design.md) |
 | [KAN-36](https://0707manna0895.atlassian.net/browse/KAN-36) | [Secure webhook-ingress design](work-items/KAN-36-secure-webhook-ingress/design.md) and [implementation plan](work-items/KAN-36-secure-webhook-ingress/implementation-plan.md) |
 | [KAN-37](https://0707manna0895.atlassian.net/browse/KAN-37) | [Settlement error migration design](work-items/KAN-37-settlement-error-migration/design.md) and [implementation plan](work-items/KAN-37-settlement-error-migration/implementation-plan.md) |
+| [KAN-34](https://0707manna0895.atlassian.net/browse/KAN-34) | [Repayment and installment error migration design](work-items/KAN-34-repayment-error-migration/design.md) |
