@@ -25,7 +25,10 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("integration")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "server.address=127.0.0.1"
+)
 @ActiveProfiles("test")
 public abstract class RealHttpIntegrationTestSupport {
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
