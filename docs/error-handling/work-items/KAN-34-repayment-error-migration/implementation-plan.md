@@ -795,7 +795,7 @@ git add docs/error-handling/work-items/KAN-34-repayment-error-migration
 git commit -m "docs(KAN-34): record repayment migration verification"
 ```
 
-- [ ] **Step 7: Push and open the review gate**
+- [x] **Step 7: Push and open the review gate**
 
 ```powershell
 git push -u origin feature/KAN-34-repayment-error-migration
