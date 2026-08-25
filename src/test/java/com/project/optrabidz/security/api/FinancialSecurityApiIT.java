@@ -50,7 +50,9 @@ class FinancialSecurityApiIT extends ApiIntegrationTestSupport {
         return Stream.of(
                 "/api/v1/settlements/1",
                 "/api/v1/repayments/1",
+                "/api/v1/repayments/1/installments",
                 "/api/v1/repayment-installments/1",
+                "/api/v1/agreements/1/repayment-progress",
                 "/api/v1/payment-intents/1"
         );
     }
@@ -137,6 +139,25 @@ class FinancialSecurityApiIT extends ApiIntegrationTestSupport {
                         .content("{}"))
                 .andExpect(status().isForbidden())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("CSRF_VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.requestId").value(REQUEST_ID))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
+    }
+
+    @Test
+    void authenticatedRepaymentMutationStillRequiresCsrf() throws Exception {
+        AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
+
+        mockMvc.perform(post("/api/v1/repayments/1/payment-intents")
+                        .session(startup.session())
+                        .cookie(startup.xsrfCookie())
+                        .header("X-Request-Id", REQUEST_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(
+                        MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.code").value("CSRF_VALIDATION_FAILED"))
                 .andExpect(jsonPath("$.requestId").value(REQUEST_ID))
                 .andExpect(jsonPath("$.success").doesNotExist())

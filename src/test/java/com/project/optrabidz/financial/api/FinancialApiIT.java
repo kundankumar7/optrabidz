@@ -1170,6 +1170,272 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
     }
 
     @Test
+    void repaymentResourcesAndPaymentActionsHideMissingVersusNonOwnedIds()
+            throws Exception {
+        RepaymentScenario scenario = createRepaymentScenario(
+                "KAN34 Disclosure",
+                new BigDecimal("505432.10")
+        );
+        AuthenticatedClient unrelatedStartup = eligibleStartup(
+                "KAN34 Unrelated Startup");
+        long missingId = Long.MAX_VALUE;
+
+        assertEquivalentRepaymentProblems(
+                getRepaymentProblem(
+                        unrelatedStartup,
+                        "/api/v1/repayments/" + missingId,
+                        "kan34-repayment-missing",
+                        "REPAYMENT_NOT_FOUND",
+                        "The requested repayment was not found"),
+                getRepaymentProblem(
+                        unrelatedStartup,
+                        "/api/v1/repayments/" + scenario.repaymentId(),
+                        "kan34-repayment-non-owned",
+                        "REPAYMENT_NOT_FOUND",
+                        "The requested repayment was not found")
+        );
+        assertEquivalentRepaymentProblems(
+                getRepaymentProblem(
+                        unrelatedStartup,
+                        "/api/v1/repayments/" + missingId + "/installments",
+                        "kan34-installments-missing",
+                        "REPAYMENT_NOT_FOUND",
+                        "The requested repayment was not found"),
+                getRepaymentProblem(
+                        unrelatedStartup,
+                        "/api/v1/repayments/" + scenario.repaymentId()
+                                + "/installments",
+                        "kan34-installments-non-owned",
+                        "REPAYMENT_NOT_FOUND",
+                        "The requested repayment was not found")
+        );
+        assertEquivalentRepaymentProblems(
+                getRepaymentProblem(
+                        unrelatedStartup,
+                        "/api/v1/repayment-installments/" + missingId,
+                        "kan34-installment-missing",
+                        "REPAYMENT_INSTALLMENT_NOT_FOUND",
+                        "The requested repayment installment was not found"),
+                getRepaymentProblem(
+                        unrelatedStartup,
+                        "/api/v1/repayment-installments/"
+                                + scenario.installmentId(),
+                        "kan34-installment-non-owned",
+                        "REPAYMENT_INSTALLMENT_NOT_FOUND",
+                        "The requested repayment installment was not found")
+        );
+        assertEquivalentRepaymentProblems(
+                getRepaymentProblem(
+                        unrelatedStartup,
+                        "/api/v1/agreements/" + missingId
+                                + "/repayment-progress",
+                        "kan34-progress-missing",
+                        "REPAYMENT_NOT_FOUND",
+                        "The requested repayment was not found"),
+                getRepaymentProblem(
+                        unrelatedStartup,
+                        "/api/v1/agreements/" + scenario.finance().agreementId()
+                                + "/repayment-progress",
+                        "kan34-progress-non-owned",
+                        "REPAYMENT_NOT_FOUND",
+                        "The requested repayment was not found")
+        );
+        assertEquivalentRepaymentProblems(
+                postRepaymentProblem(
+                        unrelatedStartup,
+                        "/api/v1/repayments/" + missingId + "/payment-intents",
+                        "kan34-repayment-intent-missing",
+                        "REPAYMENT_NOT_FOUND",
+                        "The requested repayment was not found"),
+                postRepaymentProblem(
+                        unrelatedStartup,
+                        "/api/v1/repayments/" + scenario.repaymentId()
+                                + "/payment-intents",
+                        "kan34-repayment-intent-non-owned",
+                        "REPAYMENT_NOT_FOUND",
+                        "The requested repayment was not found")
+        );
+        assertEquivalentRepaymentProblems(
+                postRepaymentProblem(
+                        unrelatedStartup,
+                        "/api/v1/repayment-installments/" + missingId
+                                + "/payment-intents",
+                        "kan34-installment-intent-missing",
+                        "REPAYMENT_INSTALLMENT_NOT_FOUND",
+                        "The requested repayment installment was not found"),
+                postRepaymentProblem(
+                        unrelatedStartup,
+                        "/api/v1/repayment-installments/"
+                                + scenario.installmentId() + "/payment-intents",
+                        "kan34-installment-intent-non-owned",
+                        "REPAYMENT_INSTALLMENT_NOT_FOUND",
+                        "The requested repayment installment was not found")
+        );
+    }
+
+    @Test
+    void repaymentRoleAndInitialStateFailuresUseExactProblemDetails()
+            throws Exception {
+        RepaymentScenario scenario = createRepaymentScenario(
+                "KAN34 Boundary",
+                new BigDecimal("495432.10")
+        );
+
+        MvcResult denied = mockMvc.perform(post(
+                                "/api/v1/repayments/{repaymentId}/payment-intents",
+                                scenario.repaymentId())
+                        .header("X-Request-ID", "kan34-role-denied")
+                        .session(scenario.finance().investor().session())
+                        .cookie(scenario.finance().investor().xsrfCookie())
+                        .header("X-CSRF-TOKEN",
+                                scenario.finance().investor().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden())
+                .andExpectAll(paymentProblem(
+                        403,
+                        "Access denied",
+                        "FINANCIAL_OPERATION_NOT_ALLOWED",
+                        "This financial operation is not allowed",
+                        "kan34-role-denied"
+                ))
+                .andReturn();
+        assertNoRepaymentDiagnostics(denied);
+
+        int cancelled = jdbcTemplate.update("""
+                update repayment_installment
+                set installment_status = 'CANCELLED',
+                    cancelled_at = current_timestamp,
+                    updated_at = current_timestamp
+                where repayment_installment_id = ?
+                  and installment_status = 'NOT_STARTED'
+                """, scenario.installmentId());
+        assertThat(cancelled).isEqualTo(1);
+
+        MvcResult notPayable = mockMvc.perform(post(
+                                "/api/v1/repayment-installments/{installmentId}/payment-intents",
+                                scenario.installmentId())
+                        .header("X-Request-ID", "kan34-not-payable")
+                        .session(scenario.finance().startup().session())
+                        .cookie(scenario.finance().startup().xsrfCookie())
+                        .header("X-CSRF-TOKEN",
+                                scenario.finance().startup().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isConflict())
+                .andExpectAll(paymentProblem(
+                        409,
+                        "Request conflict",
+                        "REPAYMENT_INSTALLMENT_NOT_PAYABLE",
+                        "The repayment installment cannot be paid in its current state",
+                        "kan34-not-payable"
+                ))
+                .andReturn();
+        assertNoRepaymentDiagnostics(notPayable);
+    }
+
+    @Test
+    void conditionalRepaymentConflictRollsBackPaymentAndJoinedEffects()
+            throws Exception {
+        RepaymentScenario scenario = createRepaymentScenario(
+                "KAN34 Rollback",
+                new BigDecimal("485432.10")
+        );
+        Long paymentIntentId = createRepaymentInstallmentPaymentIntent(
+                scenario.finance().startup(), scenario.installmentId());
+        Long paymentAttemptId = createPaymentAttempt(
+                scenario.finance().startup(), paymentIntentId);
+        String repaymentStateBefore = jdbcTemplate.queryForObject("""
+                select repayment_status::text from repayment where repayment_id = ?
+                """, String.class, scenario.repaymentId());
+        long outboxBefore = count("""
+                select count(*) from event_outbox
+                where event_type = 'RepaymentInstallmentPaidEvent'
+                  and payload ->> 'repaymentInstallmentId' = ?
+                """, scenario.installmentId().toString());
+        long notificationBefore = count("""
+                select count(*) from notification
+                where event_type = 'RepaymentInstallmentPaidEvent'
+                  and entity_type = 'REPAYMENT_INSTALLMENT'
+                  and entity_id = ?
+                """, scenario.installmentId());
+        long auditBefore = count("""
+                select count(*) from audit_record
+                where event_type = 'RepaymentInstallmentPaidEvent'
+                  and action = 'REPAYMENT_INSTALLMENT_PAID'
+                  and object_type = 'REPAYMENT_INSTALLMENT'
+                  and object_id = ?
+                """, scenario.installmentId().toString());
+
+        int cancelled = jdbcTemplate.update("""
+                update repayment_installment
+                set installment_status = 'CANCELLED',
+                    cancelled_at = current_timestamp,
+                    updated_at = current_timestamp
+                where repayment_installment_id = ?
+                  and installment_status = 'PAYMENT_IN_PROGRESS'
+                """, scenario.installmentId());
+        assertThat(cancelled).isEqualTo(1);
+
+        MvcResult conflict = mockMvc.perform(post(
+                                "/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm",
+                                paymentAttemptId)
+                        .header("X-Request-ID", "kan34-state-conflict")
+                        .session(scenario.finance().startup().session())
+                        .cookie(scenario.finance().startup().xsrfCookie())
+                        .header("X-CSRF-TOKEN",
+                                scenario.finance().startup().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isConflict())
+                .andExpectAll(paymentProblem(
+                        409,
+                        "Request conflict",
+                        "REPAYMENT_STATE_CONFLICT",
+                        "The repayment state no longer permits this operation",
+                        "kan34-state-conflict"
+                ))
+                .andReturn();
+        assertNoRepaymentDiagnostics(conflict);
+
+        assertThat(jdbcTemplate.queryForObject("""
+                select attempt_state::text from payment_attempt
+                where payment_attempt_id = ?
+                """, String.class, paymentAttemptId)).isEqualTo("INITIATED");
+        assertThat(jdbcTemplate.queryForObject("""
+                select payment_state::text from payment_intent
+                where payment_intent_id = ?
+                """, String.class, paymentIntentId)).isEqualTo("PAYMENT_PENDING");
+        assertThat(jdbcTemplate.queryForObject("""
+                select installment_status::text from repayment_installment
+                where repayment_installment_id = ?
+                """, String.class, scenario.installmentId()))
+                .isEqualTo("CANCELLED");
+        assertThat(jdbcTemplate.queryForObject("""
+                select repayment_status::text from repayment where repayment_id = ?
+                """, String.class, scenario.repaymentId()))
+                .isEqualTo(repaymentStateBefore);
+        assertThat(count("""
+                select count(*) from event_outbox
+                where event_type = 'RepaymentInstallmentPaidEvent'
+                  and payload ->> 'repaymentInstallmentId' = ?
+                """, scenario.installmentId().toString())).isEqualTo(outboxBefore);
+        assertThat(count("""
+                select count(*) from notification
+                where event_type = 'RepaymentInstallmentPaidEvent'
+                  and entity_type = 'REPAYMENT_INSTALLMENT'
+                  and entity_id = ?
+                """, scenario.installmentId())).isEqualTo(notificationBefore);
+        assertThat(count("""
+                select count(*) from audit_record
+                where event_type = 'RepaymentInstallmentPaidEvent'
+                  and action = 'REPAYMENT_INSTALLMENT_PAID'
+                  and object_type = 'REPAYMENT_INSTALLMENT'
+                  and object_id = ?
+                """, scenario.installmentId().toString())).isEqualTo(auditBefore);
+    }
+
+    @Test
     void financeMutationsRequireCsrfHeader() throws Exception {
         FinanceScenario scenario = createAcceptedBidScenario(
                 "Finance CSRF Startup",
@@ -1197,6 +1463,35 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         Long bidId = submitBid(investor, listingId, amount);
         Long agreementId = acceptBid(startup, bidId);
         return new FinanceScenario(startup, investor, listingId, bidId, agreementId);
+    }
+
+    private RepaymentScenario createRepaymentScenario(
+            String namePrefix,
+            BigDecimal amount
+    ) throws Exception {
+        FinanceScenario finance = createAcceptedBidScenario(
+                namePrefix + " Startup",
+                namePrefix + " Investor",
+                amount
+        );
+        Long settlementId = getInvestorSettlementId(finance.investor());
+        Long paymentIntentId = createSettlementPaymentIntent(
+                finance.investor(), settlementId);
+        Long paymentAttemptId = createPaymentAttempt(
+                finance.investor(), paymentIntentId);
+        mockMvc.perform(post(
+                                "/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm",
+                                paymentAttemptId)
+                        .session(finance.investor().session())
+                        .cookie(finance.investor().xsrfCookie())
+                        .header("X-CSRF-TOKEN", finance.investor().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk());
+        Long repaymentId = getStartupRepaymentId(finance.startup());
+        Long installmentId = getFirstRepaymentInstallmentId(
+                finance.startup(), repaymentId);
+        return new RepaymentScenario(finance, repaymentId, installmentId);
     }
 
     private AuthenticatedClient eligibleStartup(String publicDisplayName) throws Exception {
@@ -1318,6 +1613,53 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.data.paymentState").value("CREATED"))
                 .andReturn();
         return readLong(result, "/data/paymentIntentId");
+    }
+
+    private MvcResult getRepaymentProblem(
+            AuthenticatedClient actor,
+            String path,
+            String requestId,
+            String code,
+            String detail
+    ) throws Exception {
+        return mockMvc.perform(get(path)
+                        .header("X-Request-ID", requestId)
+                        .session(actor.session())
+                        .cookie(actor.xsrfCookie()))
+                .andExpect(status().isNotFound())
+                .andExpectAll(paymentProblem(
+                        404,
+                        "Resource not found",
+                        code,
+                        detail,
+                        requestId
+                ))
+                .andReturn();
+    }
+
+    private MvcResult postRepaymentProblem(
+            AuthenticatedClient actor,
+            String path,
+            String requestId,
+            String code,
+            String detail
+    ) throws Exception {
+        return mockMvc.perform(post(path)
+                        .header("X-Request-ID", requestId)
+                        .session(actor.session())
+                        .cookie(actor.xsrfCookie())
+                        .header("X-CSRF-TOKEN", actor.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNotFound())
+                .andExpectAll(paymentProblem(
+                        404,
+                        "Resource not found",
+                        code,
+                        detail,
+                        requestId
+                ))
+                .andReturn();
     }
 
     private MvcResult createSettlementIntentFailure(
@@ -1636,6 +1978,31 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         return problem;
     }
 
+    private void assertEquivalentRepaymentProblems(
+            MvcResult missing,
+            MvcResult nonOwned
+    ) throws Exception {
+        assertThat(missing.getResponse().getContentType())
+                .isEqualTo(nonOwned.getResponse().getContentType());
+        assertThat(stableProblem(missing)).isEqualTo(stableProblem(nonOwned));
+        assertNoRepaymentDiagnostics(missing);
+        assertNoRepaymentDiagnostics(nonOwned);
+    }
+
+    private void assertNoRepaymentDiagnostics(MvcResult result)
+            throws Exception {
+        assertThat(result.getResponse().getContentAsString())
+                .doesNotContain(
+                        "protected-repayment-sentinel",
+                        "RepaymentNotFoundException",
+                        "RepaymentInstallmentNotFoundException",
+                        "RepaymentStateConflictException",
+                        "SQLException",
+                        "select * from",
+                        "FINANCIAL.REPAYMENT"
+                );
+    }
+
     private void assertNoSettlementDetails(MvcResult result) throws Exception {
         String body = result.getResponse().getContentAsString();
         assertThat(body)
@@ -1661,6 +2028,13 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
             Long listingId,
             Long bidId,
             Long agreementId
+    ) {
+    }
+
+    private record RepaymentScenario(
+            FinanceScenario finance,
+            Long repaymentId,
+            Long installmentId
     ) {
     }
 }
