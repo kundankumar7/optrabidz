@@ -395,9 +395,29 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.error.message").value("Use either installmentState or paymentView, not both"));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.violations[0].message")
+                        .value("Use either installmentState or paymentView, not both"));
+
+        mockMvc.perform(get("/api/v1/startups/me/repayment-installments")
+                        .queryParam("installmentState", "NOT_STARTED")
+                        .queryParam("paymentView", "UNPAID")
+                        .session(scenario.startup().session())
+                        .cookie(scenario.startup().xsrfCookie()))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        mockMvc.perform(get("/api/v1/investors/me/repayment-installments")
+                        .queryParam("installmentState", "NOT_STARTED")
+                        .queryParam("paymentView", "UNPAID")
+                        .session(scenario.investor().session())
+                        .cookie(scenario.investor().xsrfCookie()))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
 
         Long repaymentPaymentIntentId = createRepaymentPaymentIntent(scenario.startup(), repaymentId);
         Long repaymentAttemptId = createPaymentAttempt(scenario.startup(), repaymentPaymentIntentId);

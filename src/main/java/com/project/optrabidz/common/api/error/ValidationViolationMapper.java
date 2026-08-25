@@ -46,7 +46,11 @@ public final class ValidationViolationMapper {
             Map.entry("Past", "must be in the past"),
             Map.entry("PastOrPresent", "must be in the past or present"),
             Map.entry("Future", "must be in the future"),
-            Map.entry("FutureOrPresent", "must be in the present or future")
+            Map.entry("FutureOrPresent", "must be in the present or future"),
+            Map.entry(
+                    "ValidRepaymentInstallmentFilterSelection",
+                    "Use either installmentState or paymentView, not both"
+            )
     );
 
     List<ValidationViolation> fromBindingResult(BindingResult result) {

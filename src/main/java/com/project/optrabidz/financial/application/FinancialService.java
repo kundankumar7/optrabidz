@@ -1,8 +1,6 @@
 package com.project.optrabidz.financial.application;
 
 import com.project.optrabidz.common.api.pagination.PageResponse;
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.common.error.ApplicationException;
 import com.project.optrabidz.common.event.EventPublisher;
 import com.project.optrabidz.financial.application.command.PaymentAttemptConfirmationCommand;
@@ -986,12 +984,6 @@ public class FinancialService {
 
     private Collection<RepaymentInstallmentState> resolveInstallmentStates(RepaymentInstallmentState installmentState,
                                                                            RepaymentInstallmentPaymentView paymentView) {
-        if (installmentState != null && paymentView != null) {
-            throw new ApiException(
-                    ErrorCode.VALIDATION_ERROR,
-                    "Use either installmentState or paymentView, not both"
-            );
-        }
         if (installmentState != null) {
             return java.util.List.of(installmentState);
         }
