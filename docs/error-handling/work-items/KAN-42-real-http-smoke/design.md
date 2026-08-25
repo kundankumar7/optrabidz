@@ -1,6 +1,6 @@
 # KAN-42 — Real-Port HTTP Problem Details Smoke Verification
 
-**Status:** Implemented and locally verified; exact-head CI review pending.
+**Status:** Implemented and verified; ready for review.
 
 **Date:** 2026-08-25
 
@@ -251,7 +251,7 @@ failure; it must not be manufactured by changing production behavior.
 - [x] Existing MockMvc coverage remains the primary detailed API suite.
 - [x] Existing Maven integration CI discovers the new test without workflow
       changes.
-- [ ] Focused, complete local, documentation, and exact-head CI checks pass.
+- [x] Focused, complete local, documentation, and exact-head CI checks pass.
 - [x] No production API, security policy, business rule, database schema,
       dependency, or successful response changes are mixed into KAN-42.
 
@@ -268,5 +268,5 @@ The implementation commit verified locally is `4bad719`.
 | Production artifact inspection | No `RealHttp` or `FaultProbe` test class present |
 | Repository scope and whitespace checks | Passed; only approved test and KAN-42 documentation files changed |
 
-Exact-head GitHub checks remain a review gate and will be recorded only after
-the published branch has completed CI.
+GitHub unit and PostgreSQL integration checks passed for the published pull
+request head before review.

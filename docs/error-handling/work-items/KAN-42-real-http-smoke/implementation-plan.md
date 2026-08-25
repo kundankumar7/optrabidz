@@ -716,7 +716,7 @@ git add docs/error-handling/work-items/KAN-42-real-http-smoke/design.md
 git commit -m "docs(KAN-42): record real HTTP verification evidence"
 ```
 
-- [ ] **Step 7: Publish for CI and review exact-head checks**
+- [x] **Step 7: Publish for CI and review exact-head checks**
 
 ```powershell
 git push -u origin HEAD
