@@ -116,7 +116,7 @@ Testcontainers, ArchUnit, Maven Surefire, and Maven Failsafe.
 - Reuses `FINANCIAL_OPERATION_NOT_ALLOWED` and
   `FinancialOperationNotAllowedException`.
 
-- [ ] **Step 1: Write the failing descriptor and exception contract test**
+- [x] **Step 1: Write the failing descriptor and exception contract test**
 
 Create a parameterized source containing these exact values:
 
@@ -151,7 +151,7 @@ RepaymentInstallmentNotPayableException   FINANCIAL.REPAYMENT.INSTALLMENT.NOT.PA
 RepaymentStateConflictException           FINANCIAL.REPAYMENT.STATE.CONFLICT
 ```
 
-- [ ] **Step 2: Run the contract test and verify failure**
+- [x] **Step 2: Run the contract test and verify failure**
 
 ```powershell
 .\mvnw.cmd -Dtest=FinancialRepaymentErrorContractTest test
@@ -160,7 +160,7 @@ RepaymentStateConflictException           FINANCIAL.REPAYMENT.STATE.CONFLICT
 Expected: compilation fails because the four descriptors and conflict
 exception do not exist.
 
-- [ ] **Step 3: Add the descriptors and typed exceptions**
+- [x] **Step 3: Add the descriptors and typed exceptions**
 
 Add the exact descriptors from Step 1. Each exception follows this structure,
 substituting its descriptor and diagnostic code:
@@ -180,7 +180,7 @@ public final class RepaymentNotFoundException extends ApplicationException {
 Do not add constructors that accept public messages, HTTP statuses, or legacy
 `ErrorCode` values.
 
-- [ ] **Step 4: Add the repayment-specific architecture rule**
+- [x] **Step 4: Add the repayment-specific architecture rule**
 
 ```java
 @ArchTest
@@ -200,7 +200,7 @@ static final ArchRule REPAYMENT_EXCEPTIONS_USE_NEUTRAL_ERROR_CONTRACT =
 Remove only obsolete frozen violations for the migrated repayment exception
 classes. Do not declare the complete financial package migrated until KAN-33.
 
-- [ ] **Step 5: Run focused contract and architecture tests**
+- [x] **Step 5: Run focused contract and architecture tests**
 
 ```powershell
 .\mvnw.cmd "-Dtest=FinancialRepaymentErrorContractTest,ExceptionArchitectureTest" test
@@ -208,7 +208,7 @@ classes. Do not declare the complete financial package migrated until KAN-33.
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit the contract boundary**
+- [x] **Step 6: Commit the contract boundary**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/financial/application/error `
@@ -249,7 +249,7 @@ Optional<Agreement> findByIdForStartup(Long agreementId, Long startupId);
 Optional<Agreement> findByIdForInvestor(Long agreementId, Long investorId);
 ```
 
-- [ ] **Step 1: Write failing PostgreSQL ownership tests**
+- [x] **Step 1: Write failing PostgreSQL ownership tests**
 
 Use `PostgresJpaIntegrationTestSupport` and `PostgresTestDataFixture` to create
 two agreements with different startup and investor participants. Persist one
@@ -267,7 +267,7 @@ assertThat(repository.findByIdForStartup(Long.MAX_VALUE, firstStartupId)).isEmpt
 Also prove the existing `findById(resourceId)` remains available for trusted
 administrator and internal paths.
 
-- [ ] **Step 2: Run repository tests and verify failure**
+- [x] **Step 2: Run repository tests and verify failure**
 
 ```powershell
 .\mvnw.cmd -Pintegration-tests `
@@ -278,7 +278,7 @@ administrator and internal paths.
 
 Expected: compilation fails because the scoped methods are absent.
 
-- [ ] **Step 3: Add repayment and agreement lookups**
+- [x] **Step 3: Add repayment and agreement lookups**
 
 Add derived Spring Data methods matching the entity property names:
 
@@ -292,7 +292,7 @@ Optional<Agreement> findByAgreementIdAndInvestorId(Long agreementId, Long invest
 Map their results through the existing persistence mappers. Repository
 adapters must not throw application exceptions or select role policy.
 
-- [ ] **Step 4: Add installment ownership queries**
+- [x] **Step 4: Add installment ownership queries**
 
 Use explicit JPQL joins so the installment query enforces ownership in the
 database:
@@ -313,13 +313,13 @@ Optional<RepaymentInstallment> findByIdForStartup(
 Add the investor equivalent using `r.investorId`. Map both through
 `RepaymentInstallmentRepositoryAdapter`.
 
-- [ ] **Step 5: Run the PostgreSQL ownership tests**
+- [x] **Step 5: Run the PostgreSQL ownership tests**
 
 Run the command from Step 2 again.
 
 Expected: PASS for owned, non-owned, missing, and trusted-global cases.
 
-- [ ] **Step 6: Commit the persistence boundary**
+- [x] **Step 6: Commit the persistence boundary**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/financial/domain/repository `
@@ -360,7 +360,7 @@ public record RepaymentInstallmentQuery(
 }
 ```
 
-- [ ] **Step 1: Write the failing query-model test**
+- [x] **Step 1: Write the failing query-model test**
 
 Use the Jakarta validator and assert zero violations for neither filter and
 each single filter, then assert one violation with the exact message when both
@@ -379,13 +379,13 @@ assertThat(validator.validate(query))
         .isEqualTo("Use either installmentState or paymentView, not both");
 ```
 
-- [ ] **Step 2: Add a failing MockMvc validation test**
+- [x] **Step 2: Add a failing MockMvc validation test**
 
 Call each of the three installment-list endpoint variants with both filters.
 Assert HTTP 400, `application/problem+json`, code `VALIDATION_ERROR`, and no
 financial service interaction. Keep the existing single-filter success tests.
 
-- [ ] **Step 3: Run the focused tests and verify failure**
+- [x] **Step 3: Run the focused tests and verify failure**
 
 ```powershell
 .\mvnw.cmd "-Dtest=RepaymentInstallmentQueryTest,FinancialApiIT" test
@@ -394,7 +394,7 @@ financial service interaction. Keep the existing single-filter success tests.
 Expected: the query model is absent and the current conflict is thrown by the
 application service through the legacy envelope.
 
-- [ ] **Step 4: Bind the immutable query model**
+- [x] **Step 4: Bind the immutable query model**
 
 For all three installment-list methods, replace the four individual query
 parameters with:
@@ -418,13 +418,13 @@ Remove the mutual-exclusion branch and legacy `ApiException`/`ErrorCode`
 imports from `FinancialService.resolveInstallmentStates`. Keep its accepted
 filter-to-state mapping unchanged.
 
-- [ ] **Step 5: Run query and API validation tests**
+- [x] **Step 5: Run query and API validation tests**
 
 Run the command from Step 3 again.
 
 Expected: PASS with the shared framework `VALIDATION_ERROR` response.
 
-- [ ] **Step 6: Commit the API validation boundary**
+- [x] **Step 6: Commit the API validation boundary**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/financial/api `
@@ -450,7 +450,7 @@ git commit -m "refactor(KAN-34): validate repayment filters at API boundary"
 - Preserves every public `FinancialService` signature.
 - Produces entity-specific uniform 404 results after permitted-role selection.
 
-- [ ] **Step 1: Write failing role-before-lookup tests**
+- [x] **Step 1: Write failing role-before-lookup tests**
 
 For each list route and both payment-intent creation methods, pass an
 ineligible role and assert `FinancialOperationNotAllowedException`. Verify no
@@ -468,7 +468,7 @@ INVESTOR  -> investor profile, then findByIdForInvestor
 An empty scoped result must throw the relevant typed 404 without calling a
 second unrestricted lookup.
 
-- [ ] **Step 2: Write failing progress and payment-authority tests**
+- [x] **Step 2: Write failing progress and payment-authority tests**
 
 Prove repayment progress selects the agreement by caller role before querying
 the progress projection. Prove only `STARTUP` can create repayment payment
@@ -476,7 +476,7 @@ intents, and that both repayment-level and installment-level creation return
 their entity-specific 404 for another startup's resource before checking
 payable state.
 
-- [ ] **Step 3: Run application tests and verify failure**
+- [x] **Step 3: Run application tests and verify failure**
 
 ```powershell
 .\mvnw.cmd `
@@ -487,7 +487,7 @@ payable state.
 Expected: failures expose global-load-then-authorize behavior and remaining
 `FinancialAccessException` callers.
 
-- [ ] **Step 4: Add role-selected lookup helpers**
+- [x] **Step 4: Add role-selected lookup helpers**
 
 Use this pattern for repayment reads:
 
@@ -513,7 +513,7 @@ unrestricted `getRepayment`, `getRepaymentInstallment`, and `getAgreement` for
 trusted internal flows only. Diagnostic messages may include bounded IDs and
 the fixed phrase `unavailable in permitted scope`.
 
-- [ ] **Step 5: Apply authority-first selection to public operations**
+- [x] **Step 5: Apply authority-first selection to public operations**
 
 Use viewer helpers for reads. Use `ensureFinancialRole` before profile or
 resource lookup in lists and payment-intent creation. For installment payment
@@ -529,13 +529,13 @@ Remove `ensureRepaymentVisible`, `ensureAgreementVisible`, and repayment
 callers of `ensureRole`. Delete `FinancialAccessException` after `rg` confirms
 there are no production callers.
 
-- [ ] **Step 6: Run focused contract, service, and architecture tests**
+- [x] **Step 6: Run focused contract, service, and architecture tests**
 
 Run the command from Step 3 again.
 
 Expected: PASS with role denial before lookup and neutral scoped 404 behavior.
 
-- [ ] **Step 7: Commit authority-first application selection**
+- [x] **Step 7: Commit authority-first application selection**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/financial/application `
@@ -565,7 +565,7 @@ git commit -m "refactor(KAN-34): enforce repayment ownership in queries"
 - An incompatible state throws `RepaymentStateConflictException` inside the
   existing transaction.
 
-- [ ] **Step 1: Write failing creation-race tests**
+- [x] **Step 1: Write failing creation-race tests**
 
 For payment-intent creation, stub `markPaymentInProgress` to return zero.
 Assert:
@@ -580,7 +580,7 @@ For conflict outcomes, verify no repayment refresh or downstream event
 publication. Preserve initial non-payable tests for states observed before an
 intent is created; they must use `REPAYMENT_INSTALLMENT_NOT_PAYABLE`.
 
-- [ ] **Step 2: Write failing confirmation idempotency tests**
+- [x] **Step 2: Write failing confirmation idempotency tests**
 
 When `markPaid` returns zero, reload the installment:
 
@@ -595,7 +595,7 @@ Assert exactly one `RepaymentInstallmentPaidEvent` for the first successful
 transition and zero for same-intent replay. Assert a conflict propagates so
 the transaction can roll back payment state.
 
-- [ ] **Step 3: Run focused tests and verify failure**
+- [x] **Step 3: Run focused tests and verify failure**
 
 ```powershell
 .\mvnw.cmd "-Dtest=FinancialRepaymentErrorContractTest,FinancialServiceTest" test
@@ -604,7 +604,7 @@ the transaction can roll back payment state.
 Expected: current code ignores a zero-row payment-in-progress update and
 continues to publish after a same-intent zero-row paid result.
 
-- [ ] **Step 4: Implement deterministic zero-row classification**
+- [x] **Step 4: Implement deterministic zero-row classification**
 
 After `markPaymentInProgress`, branch on the row count. A zero-row branch must
 reload the installment and the canonical active intent. Return the canonical
@@ -629,14 +629,14 @@ private boolean alreadyPaidBySameIntent(Long installmentId, Long paymentIntentId
 When it returns `true`, return immediately from business confirmation before
 repayment refresh and event publication.
 
-- [ ] **Step 5: Remove legacy transition translation**
+- [x] **Step 5: Remove legacy transition translation**
 
 Remove unused `applyRepaymentTransition` and delete
 `InvalidRepaymentStateException`. Do not catch `IllegalStateException` around
 repository calls. Unexpected failures must propagate to the generic sanitized
 500 adapter.
 
-- [ ] **Step 6: Run service and existing concurrency scenarios**
+- [x] **Step 6: Run service and existing concurrency scenarios**
 
 ```powershell
 .\mvnw.cmd "-Dtest=FinancialRepaymentErrorContractTest,FinancialServiceTest" test
@@ -647,7 +647,7 @@ repository calls. Unexpected failures must propagate to the generic sanitized
 Expected: PASS, including canonical active-intent creation and same-intent
 confirmation without duplicate effects.
 
-- [ ] **Step 7: Commit transition classification**
+- [x] **Step 7: Commit transition classification**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/financial/application `
@@ -675,7 +675,7 @@ git commit -m "fix(KAN-34): classify repayment transition races"
   values; status, code, title, detail, content type, and shape must match.
 - Session authentication and CSRF remain unchanged.
 
-- [ ] **Step 1: Add exact Problem Details tests**
+- [x] **Step 1: Add exact Problem Details tests**
 
 Cover all five descriptors with their approved HTTP mappings:
 
@@ -691,27 +691,27 @@ Assert `application/problem+json`, the exact public detail, and absence of
 `protected-repayment-sentinel`, class names, SQL fragments, and arbitrary
 cause messages.
 
-- [ ] **Step 2: Add disclosure-equivalence tests**
+- [x] **Step 2: Add disclosure-equivalence tests**
 
 For repayment, repayment installments, one installment, repayment progress,
 and both payment-intent creation endpoint families, call one missing ID and
 one other-participant ID. Parse both responses and assert equal public status,
 code, title, detail, content type, and JSON field set.
 
-- [ ] **Step 3: Add rollback and side-effect assertions**
+- [x] **Step 3: Add rollback and side-effect assertions**
 
 Force an incompatible zero-row `markPaid` outcome after payment attempt and
 intent transitions. Assert HTTP 409 and verify database state retains the
 pre-request payment, installment, and repayment values. Assert no new
 repayment outbox, notification, or audit row and no duplicate paid event.
 
-- [ ] **Step 4: Preserve the security boundary**
+- [x] **Step 4: Preserve the security boundary**
 
 Retain tests proving unauthenticated requests are rejected by Spring Security
 and unsafe session-authenticated methods require CSRF. Do not assert JWT or
 OAuth2 behavior in this story.
 
-- [ ] **Step 5: Run HTTP, security, architecture, and PostgreSQL tests**
+- [x] **Step 5: Run HTTP, security, architecture, and PostgreSQL tests**
 
 ```powershell
 .\mvnw.cmd `
@@ -725,7 +725,7 @@ OAuth2 behavior in this story.
 Expected: PASS with neutral disclosure, rollback, session-security, and scoped
 PostgreSQL behavior.
 
-- [ ] **Step 6: Commit the boundary verification**
+- [x] **Step 6: Commit the boundary verification**
 
 ```powershell
 git add src/test/java/com/project/optrabidz/financial `
@@ -744,7 +744,7 @@ git commit -m "test(KAN-34): verify repayment error boundaries"
 - Modify: `docs/error-handling/work-items/KAN-34-repayment-error-migration/design.md`
 - Modify: `docs/error-handling/work-items/KAN-34-repayment-error-migration/implementation-plan.md`
 
-- [ ] **Step 1: Prove legacy repayment dependencies are gone**
+- [x] **Step 1: Prove legacy repayment dependencies are gone**
 
 ```powershell
 rg -n "ApiException|ErrorCode|FinancialAccessException|InvalidRepaymentStateException" `
@@ -754,7 +754,7 @@ rg -n "ApiException|ErrorCode|FinancialAccessException|InvalidRepaymentStateExce
 Expected: no repayment production dependency remains. Any non-repayment
 legacy result must correspond to KAN-33 scope and must not be removed here.
 
-- [ ] **Step 2: Run the complete unit suite**
+- [x] **Step 2: Run the complete unit suite**
 
 ```powershell
 .\mvnw.cmd test
@@ -762,7 +762,7 @@ legacy result must correspond to KAN-33 scope and must not be removed here.
 
 Expected: BUILD SUCCESS.
 
-- [ ] **Step 3: Run the complete integration suite**
+- [x] **Step 3: Run the complete integration suite**
 
 ```powershell
 .\mvnw.cmd -Pintegration-tests verify
@@ -770,7 +770,7 @@ Expected: BUILD SUCCESS.
 
 Expected: BUILD SUCCESS with Docker/Testcontainers available.
 
-- [ ] **Step 4: Validate documentation and patch hygiene**
+- [x] **Step 4: Validate documentation and patch hygiene**
 
 ```powershell
 .\mvnw.cmd -Dtest=DocumentationLinksTest test
@@ -781,14 +781,14 @@ git status --short
 Expected: documentation test passes, `git diff --check` emits no errors, and
 only intentional KAN-34 files are present.
 
-- [ ] **Step 5: Update completion evidence**
+- [x] **Step 5: Update completion evidence**
 
 Change the design status to `Implemented; awaiting review`. Check acceptance
 criteria only when supported by the executed tests. Record focused and full
 verification commands and results in the pull-request description and Jira;
 do not claim an unexecuted check passed.
 
-- [ ] **Step 6: Commit documentation evidence**
+- [x] **Step 6: Commit documentation evidence**
 
 ```powershell
 git add docs/error-handling/work-items/KAN-34-repayment-error-migration

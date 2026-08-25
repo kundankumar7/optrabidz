@@ -1,6 +1,6 @@
 # KAN-34 — Repayment and Installment Error Migration
 
-**Status:** Written specification approved; implementation planning
+**Status:** Implemented; awaiting review
 
 **Date:** 2026-08-25
 
@@ -404,22 +404,38 @@ separate work.
 
 ## 19. Acceptance criteria
 
-- [ ] Approved repayment descriptors exactly match KAN-30.
-- [ ] Repayment failures use typed, transport-neutral exceptions.
-- [ ] Ineligible roles receive a neutral 403 before resource lookup.
-- [ ] Missing and non-owned repayment, installment, and progress requests are
+- [x] Approved repayment descriptors exactly match KAN-30.
+- [x] Repayment failures use typed, transport-neutral exceptions.
+- [x] Ineligible roles receive a neutral 403 before resource lookup.
+- [x] Missing and non-owned repayment, installment, and progress requests are
       publicly indistinguishable within their endpoint families.
-- [ ] Administrator read visibility and participant list behavior remain
+- [x] Administrator read visibility and participant list behavior remain
       unchanged.
-- [ ] Only the owning startup can create repayment payment intents.
-- [ ] Initial non-payable state and a lost conditional transition use the
+- [x] Only the owning startup can create repayment payment intents.
+- [x] Initial non-payable state and a lost conditional transition use the
       approved distinct 409 failures.
-- [ ] Same-intent behavior remains idempotent without duplicate events.
-- [ ] Filter conflict uses framework validation without a new financial code.
-- [ ] Protected diagnostics never enter Problem Details.
-- [ ] Repayment production paths no longer depend on `ApiException` or
+- [x] Same-intent behavior remains idempotent without duplicate events.
+- [x] Filter conflict uses framework validation without a new financial code.
+- [x] Protected diagnostics never enter Problem Details.
+- [x] Repayment production paths no longer depend on `ApiException` or
       `ErrorCode`.
-- [ ] Existing financial, outbox, notification, audit, session-security, and
+- [x] Existing financial, outbox, notification, audit, session-security, and
       CSRF behavior do not regress.
-- [ ] No dependency or Flyway migration is introduced.
-- [ ] Focused and complete verification suites pass before review.
+- [x] No dependency or Flyway migration is introduced.
+- [x] Focused and complete verification suites pass before review.
+
+## 20. Implementation evidence
+
+Verification completed on 2026-08-25 with Temurin Java 21:
+
+- focused repayment service, contract, and architecture suite: 87 tests passed;
+- focused financial and security API suite: 37 tests passed;
+- participant-scoped PostgreSQL repository suite: 3 tests passed;
+- complete unit suite (`.\\mvnw.cmd test`): 401 tests passed;
+- complete integration suite (`.\\mvnw.cmd -Pintegration-tests verify`):
+  133 tests passed against PostgreSQL 16 with Flyway validation; and
+- `DocumentationLinksTest`: 1 test passed.
+
+`git diff --check` reported no patch errors. The remaining legacy exception
+references in the financial module are webhook-specific classes retained for
+KAN-33; repayment production paths no longer use the legacy stack.
