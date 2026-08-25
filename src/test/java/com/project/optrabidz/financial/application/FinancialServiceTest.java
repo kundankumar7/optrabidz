@@ -73,6 +73,8 @@ import static com.project.optrabidz.financial.application.error.FinancialErrors.
 import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_PROVIDER_MISMATCH;
 import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_STATE_CONFLICT;
 import static com.project.optrabidz.financial.application.error.FinancialErrors.FINANCIAL_OPERATION_NOT_ALLOWED;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.REPAYMENT_INSTALLMENT_NOT_FOUND;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.REPAYMENT_NOT_FOUND;
 import static com.project.optrabidz.financial.application.error.FinancialErrors.SETTLEMENT_NOT_FOUND;
 import static com.project.optrabidz.financial.application.error.FinancialErrors.SETTLEMENT_NOT_PAYABLE;
 import static com.project.optrabidz.financial.application.error.FinancialErrors.SETTLEMENT_STATE_CONFLICT;
@@ -81,6 +83,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -97,6 +100,8 @@ class FinancialServiceTest {
     private static final Long SETTLEMENT_ID = 801L;
     private static final Long PAYMENT_INTENT_ID = 901L;
     private static final Long PAYMENT_ATTEMPT_ID = 1001L;
+    private static final Long REPAYMENT_ID = 9001L;
+    private static final Long REPAYMENT_INSTALLMENT_ID = 10001L;
 
     @Mock
     private SettlementRepository settlementRepository;
@@ -262,10 +267,199 @@ class FinancialServiceTest {
     }
 
     @Test
+    void repaymentRoleDenialsHappenBeforeAnyRepositoryLookup() {
+        assertPaymentFailure(
+                () -> service.getMyInvestorRepayments(
+                        STARTUP_ACCOUNT_ID, RoleType.STARTUP, 1, 20),
+                FINANCIAL_OPERATION_NOT_ALLOWED
+        );
+        assertPaymentFailure(
+                () -> service.getMyInvestorRepaymentInstallments(
+                        STARTUP_ACCOUNT_ID, RoleType.STARTUP,
+                        null, null, 1, 20),
+                FINANCIAL_OPERATION_NOT_ALLOWED
+        );
+        assertPaymentFailure(
+                () -> service.getMyStartupRepayments(
+                        INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, 1, 20),
+                FINANCIAL_OPERATION_NOT_ALLOWED
+        );
+        assertPaymentFailure(
+                () -> service.getMyStartupRepaymentInstallments(
+                        INVESTOR_ACCOUNT_ID, RoleType.INVESTOR,
+                        null, null, 1, 20),
+                FINANCIAL_OPERATION_NOT_ALLOWED
+        );
+        assertPaymentFailure(
+                () -> service.createRepaymentInstallmentPaymentIntent(
+                        INVESTOR_ACCOUNT_ID,
+                        RoleType.INVESTOR,
+                        REPAYMENT_INSTALLMENT_ID),
+                FINANCIAL_OPERATION_NOT_ALLOWED
+        );
+        assertPaymentFailure(
+                () -> service.createRepaymentPaymentIntent(
+                        INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, REPAYMENT_ID),
+                FINANCIAL_OPERATION_NOT_ALLOWED
+        );
+
+        verifyNoInteractions(
+                startupRepository,
+                investorRepository,
+                agreementRepository,
+                repaymentRepository,
+                repaymentInstallmentRepository,
+                paymentIntentRepository
+        );
+    }
+
+    @Test
+    void administratorReadsRepaymentResourcesThroughUnrestrictedLookups() {
+        when(repaymentRepository.findById(REPAYMENT_ID))
+                .thenReturn(Optional.of(repayment()));
+        when(repaymentInstallmentRepository.findById(REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(Optional.of(repaymentInstallment()));
+        when(agreementRepository.findById(AGREEMENT_ID))
+                .thenReturn(Optional.of(agreement()));
+
+        assertThat(service.getRepayment(1L, RoleType.ADMIN, REPAYMENT_ID)
+                .repaymentId()).isEqualTo(REPAYMENT_ID);
+        assertThat(service.getRepaymentInstallment(
+                1L, RoleType.ADMIN, REPAYMENT_INSTALLMENT_ID)
+                .repaymentInstallmentId()).isEqualTo(REPAYMENT_INSTALLMENT_ID);
+
+        verify(repaymentRepository).findById(REPAYMENT_ID);
+        verify(repaymentInstallmentRepository)
+                .findById(REPAYMENT_INSTALLMENT_ID);
+        verify(repaymentRepository, never()).findByIdForStartup(any(), any());
+        verify(repaymentRepository, never()).findByIdForInvestor(any(), any());
+        verify(repaymentInstallmentRepository, never())
+                .findByIdForStartup(any(), any());
+        verify(repaymentInstallmentRepository, never())
+                .findByIdForInvestor(any(), any());
+    }
+
+    @Test
+    void startupReadsRepaymentResourcesThroughStartupScopedLookups() {
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(startup()));
+        when(repaymentRepository.findByIdForStartup(REPAYMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.of(repayment()));
+        when(repaymentInstallmentRepository.findByIdForStartup(
+                REPAYMENT_INSTALLMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.of(repaymentInstallment()));
+        when(agreementRepository.findById(AGREEMENT_ID))
+                .thenReturn(Optional.of(agreement()));
+
+        assertThat(service.getRepayment(
+                STARTUP_ACCOUNT_ID, RoleType.STARTUP, REPAYMENT_ID)
+                .repaymentId()).isEqualTo(REPAYMENT_ID);
+        assertThat(service.getRepaymentInstallment(
+                STARTUP_ACCOUNT_ID,
+                RoleType.STARTUP,
+                REPAYMENT_INSTALLMENT_ID
+        ).repaymentInstallmentId()).isEqualTo(REPAYMENT_INSTALLMENT_ID);
+
+        verify(repaymentRepository).findByIdForStartup(REPAYMENT_ID, STARTUP_ID);
+        verify(repaymentInstallmentRepository).findByIdForStartup(
+                REPAYMENT_INSTALLMENT_ID, STARTUP_ID);
+        verify(repaymentRepository, never()).findById(REPAYMENT_ID);
+        verify(repaymentInstallmentRepository, never())
+                .findById(REPAYMENT_INSTALLMENT_ID);
+    }
+
+    @Test
+    void investorReadsRepaymentResourcesThroughInvestorScopedLookups() {
+        when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(investor()));
+        when(repaymentRepository.findByIdForInvestor(REPAYMENT_ID, INVESTOR_ID))
+                .thenReturn(Optional.of(repayment()));
+        when(repaymentInstallmentRepository.findByIdForInvestor(
+                REPAYMENT_INSTALLMENT_ID, INVESTOR_ID))
+                .thenReturn(Optional.of(repaymentInstallment()));
+        when(agreementRepository.findById(AGREEMENT_ID))
+                .thenReturn(Optional.of(agreement()));
+
+        assertThat(service.getRepayment(
+                INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, REPAYMENT_ID)
+                .repaymentId()).isEqualTo(REPAYMENT_ID);
+        assertThat(service.getRepaymentInstallment(
+                INVESTOR_ACCOUNT_ID,
+                RoleType.INVESTOR,
+                REPAYMENT_INSTALLMENT_ID
+        ).repaymentInstallmentId()).isEqualTo(REPAYMENT_INSTALLMENT_ID);
+
+        verify(repaymentRepository).findByIdForInvestor(REPAYMENT_ID, INVESTOR_ID);
+        verify(repaymentInstallmentRepository).findByIdForInvestor(
+                REPAYMENT_INSTALLMENT_ID, INVESTOR_ID);
+        verify(repaymentRepository, never()).findById(REPAYMENT_ID);
+        verify(repaymentInstallmentRepository, never())
+                .findById(REPAYMENT_INSTALLMENT_ID);
+    }
+
+    @Test
+    void missingAndNonOwnedRepaymentResourcesUseNeutralScopedFailures() {
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(startup()));
+        when(repaymentRepository.findByIdForStartup(REPAYMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.empty());
+        when(repaymentInstallmentRepository.findByIdForStartup(
+                REPAYMENT_INSTALLMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.empty());
+
+        assertPaymentFailure(
+                () -> service.getRepayment(
+                        STARTUP_ACCOUNT_ID, RoleType.STARTUP, REPAYMENT_ID),
+                REPAYMENT_NOT_FOUND
+        );
+        assertPaymentFailure(
+                () -> service.getRepaymentInstallment(
+                        STARTUP_ACCOUNT_ID,
+                        RoleType.STARTUP,
+                        REPAYMENT_INSTALLMENT_ID),
+                REPAYMENT_INSTALLMENT_NOT_FOUND
+        );
+
+        verify(repaymentRepository, never()).findById(REPAYMENT_ID);
+        verify(repaymentInstallmentRepository, never())
+                .findById(REPAYMENT_INSTALLMENT_ID);
+    }
+
+    @Test
+    void startupPaymentCreationUsesScopedResourcesBeforeStateChecks() {
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(startup()));
+        when(repaymentInstallmentRepository.findByIdForStartup(
+                REPAYMENT_INSTALLMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.empty());
+        when(repaymentRepository.findByIdForStartup(REPAYMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.empty());
+
+        assertPaymentFailure(
+                () -> service.createRepaymentInstallmentPaymentIntent(
+                        STARTUP_ACCOUNT_ID,
+                        RoleType.STARTUP,
+                        REPAYMENT_INSTALLMENT_ID),
+                REPAYMENT_INSTALLMENT_NOT_FOUND
+        );
+        assertPaymentFailure(
+                () -> service.createRepaymentPaymentIntent(
+                        STARTUP_ACCOUNT_ID, RoleType.STARTUP, REPAYMENT_ID),
+                REPAYMENT_NOT_FOUND
+        );
+
+        verify(paymentIntentRepository, never())
+                .findActiveByRepaymentInstallmentId(any());
+        verify(repaymentInstallmentRepository, never())
+                .findNextPayableByRepaymentId(any());
+    }
+
+    @Test
     void startupCanViewRepaymentProgressForOwnAgreement() {
         Instant nextDueAt = now().plusSeconds(86_400);
-        when(agreementRepository.findById(AGREEMENT_ID)).thenReturn(Optional.of(agreement()));
         when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID)).thenReturn(Optional.of(startup()));
+        when(agreementRepository.findByIdForStartup(AGREEMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.of(agreement()));
         when(repaymentRepository.getProgressByAgreementId(AGREEMENT_ID)).thenReturn(Optional.of(new RepaymentProgress(
                 AGREEMENT_ID,
                 9001L,
@@ -305,12 +499,15 @@ class FinancialServiceTest {
         assertThat(response.nextInstallmentNumber()).isEqualTo(4);
         assertThat(response.nextDueAt()).isEqualTo(nextDueAt);
         assertThat(response.debtTerms().repaymentPlanType()).isEqualTo(RepaymentPlanType.INSTALLMENT_MONTHLY);
+        verify(agreementRepository).findByIdForStartup(AGREEMENT_ID, STARTUP_ID);
+        verify(agreementRepository, never()).findById(AGREEMENT_ID);
     }
 
     @Test
     void repaymentProgressIsZeroBeforeScheduleIsCreated() {
-        when(agreementRepository.findById(AGREEMENT_ID)).thenReturn(Optional.of(agreement()));
         when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID)).thenReturn(Optional.of(investor()));
+        when(agreementRepository.findByIdForInvestor(AGREEMENT_ID, INVESTOR_ID))
+                .thenReturn(Optional.of(agreement()));
         when(repaymentRepository.getProgressByAgreementId(AGREEMENT_ID)).thenReturn(Optional.empty());
         when(settlementRepository.findByAgreementId(AGREEMENT_ID)).thenReturn(Optional.of(settlement()));
 
@@ -327,6 +524,25 @@ class FinancialServiceTest {
         assertThat(response.remainingAmount()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(response.currencyCode()).isEqualTo("INR");
         assertThat(response.nextInstallmentId()).isNull();
+        verify(agreementRepository).findByIdForInvestor(AGREEMENT_ID, INVESTOR_ID);
+        verify(agreementRepository, never()).findById(AGREEMENT_ID);
+    }
+
+    @Test
+    void missingAndNonOwnedRepaymentProgressUsesNeutralScopedFailure() {
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(startup()));
+        when(agreementRepository.findByIdForStartup(AGREEMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.empty());
+
+        assertPaymentFailure(
+                () -> service.getRepaymentProgress(
+                        STARTUP_ACCOUNT_ID, RoleType.STARTUP, AGREEMENT_ID),
+                REPAYMENT_NOT_FOUND
+        );
+
+        verify(agreementRepository, never()).findById(AGREEMENT_ID);
+        verify(repaymentRepository, never()).getProgressByAgreementId(any());
     }
 
     @Test
@@ -1385,6 +1601,38 @@ class FinancialServiceTest {
                 .cancelledAt(intent.getCancelledAt())
                 .failureCode(intent.getFailureCode())
                 .failureMessage(intent.getFailureMessage())
+                .build();
+    }
+
+    private static Repayment repayment() {
+        return Repayment.builder()
+                .repaymentId(REPAYMENT_ID)
+                .agreementId(AGREEMENT_ID)
+                .startupId(STARTUP_ID)
+                .investorId(INVESTOR_ID)
+                .totalRepayableAmount(new BigDecimal("636625.00"))
+                .currencyCode("INR")
+                .totalInstallments(18)
+                .repaymentPlanType(RepaymentPlanType.INSTALLMENT_MONTHLY)
+                .repaymentState(RepaymentState.NOT_STARTED)
+                .startedAt(now())
+                .finalDueAt(now().plus(Duration.ofDays(540)))
+                .createdAt(now())
+                .updatedAt(now())
+                .build();
+    }
+
+    private static RepaymentInstallment repaymentInstallment() {
+        return RepaymentInstallment.builder()
+                .repaymentInstallmentId(REPAYMENT_INSTALLMENT_ID)
+                .repaymentId(REPAYMENT_ID)
+                .installmentNumber(1)
+                .installmentState(RepaymentInstallmentState.NOT_STARTED)
+                .amount(new BigDecimal("35368.06"))
+                .currencyCode("INR")
+                .dueAt(now().plus(Duration.ofDays(30)))
+                .createdAt(now())
+                .updatedAt(now())
                 .build();
     }
 
