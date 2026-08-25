@@ -1,5 +1,7 @@
 # KAN-33 Legacy Exception-Stack Removal Implementation Plan
 
+**Status:** Implemented, verified, and reviewed; approved for merge into `develop`.
+
 **Goal:** Remove the obsolete HTTP-coupled exception stack and make the
 transport-neutral RFC 9457 error path the only production failure contract.
 
@@ -82,7 +84,7 @@ Flyway, PostgreSQL, and Testcontainers.
   HttpServletRequest)` returning `ResponseEntity<Object>` and
   `FrameworkProblem.INTERNAL_SERVER_ERROR`.
 
-- [ ] **Step 1: Replace the legacy-envelope test with failing unexpected-error contract tests**
+- [x] **Step 1: Replace the legacy-envelope test with failing unexpected-error contract tests**
 
   Remove the `GlobalExceptionHandler` import and registration from all three
   standalone handler test classes. In `RestExceptionHandlerTest`, replace
@@ -158,7 +160,7 @@ Flyway, PostgreSQL, and Testcontainers.
   }
   ```
 
-- [ ] **Step 2: Add a failing MVC component-discovery test**
+- [x] **Step 2: Add a failing MVC component-discovery test**
 
   Create `RestExceptionHandlerContextTest` as a Web MVC slice. Import only the
   handler dependencies; allow `@WebMvcTest` to discover the advice itself.
@@ -196,7 +198,7 @@ Flyway, PostgreSQL, and Testcontainers.
   }
   ```
 
-- [ ] **Step 3: Add a failing one-log-event test**
+- [x] **Step 3: Add a failing one-log-event test**
 
   Create `RestExceptionHandlerLoggingTest` with a Logback `ListAppender`. Build
   standalone MockMvc with `RestExceptionHandler` and `RequestMetadataFilter`,
@@ -240,7 +242,7 @@ Flyway, PostgreSQL, and Testcontainers.
   body, exception message, or user input; structured correlation comes from
   MDC and the throwable is retained for internal diagnosis.
 
-- [ ] **Step 4: Run the new tests and capture the RED result**
+- [x] **Step 4: Run the new tests and capture the RED result**
 
   ```powershell
   .\mvnw.cmd -q "-Dtest=RestExceptionHandlerTest,RestExceptionHandlerContextTest,RestExceptionHandlerLoggingTest" test
@@ -249,7 +251,7 @@ Flyway, PostgreSQL, and Testcontainers.
   Expected: FAIL because `RestExceptionHandler` has no generic unexpected
   mapping; the request either propagates or is rendered by the legacy advice.
 
-- [ ] **Step 5: Add the fixed internal descriptor**
+- [x] **Step 5: Add the fixed internal descriptor**
 
   Add the following final entry to `FrameworkProblem`:
 
@@ -263,7 +265,7 @@ Flyway, PostgreSQL, and Testcontainers.
   );
   ```
 
-- [ ] **Step 6: Implement the minimal generic MVC handler**
+- [x] **Step 6: Implement the minimal generic MVC handler**
 
   Add an SLF4J logger and this method to `RestExceptionHandler`:
 
@@ -291,7 +293,7 @@ Flyway, PostgreSQL, and Testcontainers.
   `NullPointerException` handlers. Expected client/business failures must use
   explicit validation/framework mappings or `ApplicationException`.
 
-- [ ] **Step 7: Run focused handler, logging, framework, validation, and factory tests**
+- [x] **Step 7: Run focused handler, logging, framework, validation, and factory tests**
 
   ```powershell
   .\mvnw.cmd -q "-Dtest=RestExceptionHandlerTest,RestExceptionHandlerContextTest,RestExceptionHandlerLoggingTest,RestExceptionHandlerFrameworkTest,RestExceptionHandlerValidationTest,ProblemDetailsFactoryTest" test
@@ -300,7 +302,7 @@ Flyway, PostgreSQL, and Testcontainers.
   Expected: PASS. Application, validation, and framework assertions remain
   byte-for-byte equivalent to their pre-KAN-33 expectations.
 
-- [ ] **Step 8: Commit the unexpected-failure boundary**
+- [x] **Step 8: Commit the unexpected-failure boundary**
 
   ```powershell
   git add -- src/main/java/com/project/optrabidz/common/api/error/FrameworkProblem.java src/main/java/com/project/optrabidz/common/api/error/RestExceptionHandler.java src/test/java/com/project/optrabidz/common/api/error/RestExceptionHandlerTest.java src/test/java/com/project/optrabidz/common/api/error/RestExceptionHandlerContextTest.java src/test/java/com/project/optrabidz/common/api/error/RestExceptionHandlerLoggingTest.java src/test/java/com/project/optrabidz/common/api/error/RestExceptionHandlerFrameworkTest.java src/test/java/com/project/optrabidz/common/api/error/RestExceptionHandlerValidationTest.java
@@ -333,7 +335,7 @@ Flyway, PostgreSQL, and Testcontainers.
 - Produces: `ApiResponse` with only success/meta responsibilities and
   unconditional ArchUnit protection against the removed stack.
 
-- [ ] **Step 1: Add a failing success-preservation and error-removal test**
+- [x] **Step 1: Add a failing success-preservation and error-removal test**
 
   Create `ApiResponseTest`:
 
@@ -364,7 +366,7 @@ Flyway, PostgreSQL, and Testcontainers.
   }
   ```
 
-- [ ] **Step 2: Replace the frozen rule and add failing legacy-stack guards**
+- [x] **Step 2: Replace the frozen rule and add failing legacy-stack guards**
 
   Remove the `FreezingArchRule.freeze` import. Change
   `BUSINESS_EXCEPTIONS_ARE_TRANSPORT_NEUTRAL` to the direct rule:
@@ -409,7 +411,7 @@ Flyway, PostgreSQL, and Testcontainers.
                   .as("RestExceptionHandler is the single MVC error boundary");
   ```
 
-- [ ] **Step 3: Run the deletion guards and capture the RED result**
+- [x] **Step 3: Run the deletion guards and capture the RED result**
 
   ```powershell
   .\mvnw.cmd -q "-Dtest=ApiResponseTest,ExceptionArchitectureTest" test
@@ -419,7 +421,7 @@ Flyway, PostgreSQL, and Testcontainers.
   competing handler, the two transport-coupled webhook exceptions, and the
   frozen violations still exist.
 
-- [ ] **Step 4: Remove only the error factory from `ApiResponse`**
+- [x] **Step 4: Remove only the error factory from `ApiResponse`**
 
   Delete imports for `ErrorCode`, `ErrorField`, and `List`, then delete the
   complete `error(...)` method. Preserve these signatures unchanged:
@@ -436,19 +438,19 @@ Flyway, PostgreSQL, and Testcontainers.
   Keep `REQUEST_ID_ATTRIBUTE` in this class; KAN-41 owns moving that remaining
   metadata responsibility.
 
-- [ ] **Step 5: Delete the obsolete production types atomically**
+- [x] **Step 5: Delete the obsolete production types atomically**
 
   Delete the four files in `common/api/exception`, `ErrorResponse.java`, and
   the two unused webhook exception files listed above. Do not translate those
   unused subclasses into new neutral exceptions: no production reference
   constructs or catches them.
 
-- [ ] **Step 6: Delete the complete freeze-store configuration and data**
+- [x] **Step 6: Delete the complete freeze-store configuration and data**
 
   Delete `archunit.properties`, `stored.rules`, and the single UUID-named
   violation file. No empty directory or replacement waiver is created.
 
-- [ ] **Step 7: Run focused cleanup and architecture tests**
+- [x] **Step 7: Run focused cleanup and architecture tests**
 
   ```powershell
   .\mvnw.cmd -q "-Dtest=ApiResponseTest,ExceptionArchitectureTest,RestExceptionHandlerTest,RestExceptionHandlerContextTest,RestExceptionHandlerLoggingTest,RestExceptionHandlerFrameworkTest,RestExceptionHandlerValidationTest,ProblemDetailsFactoryTest" test
@@ -456,7 +458,7 @@ Flyway, PostgreSQL, and Testcontainers.
 
   Expected: PASS without a freeze-store system property or generated baseline.
 
-- [ ] **Step 8: Run explicit deletion and disclosure scans**
+- [x] **Step 8: Run explicit deletion and disclosure scans**
 
   ```powershell
   $deletedPaths = @(
@@ -481,7 +483,7 @@ Flyway, PostgreSQL, and Testcontainers.
 
   Expected: every path is absent and the reference scan returns no matches.
 
-- [ ] **Step 9: Commit the atomic deletion and enforcement change**
+- [x] **Step 9: Commit the atomic deletion and enforcement change**
 
   ```powershell
   git add -A -- src/main/java/com/project/optrabidz/common/api src/main/java/com/project/optrabidz/financial/application/exception src/test/java/com/project/optrabidz/common/api src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java src/test/resources/archunit.properties src/test/resources/archunit-store
@@ -503,7 +505,7 @@ Flyway, PostgreSQL, and Testcontainers.
 - Produces: reproducible unit, security, Flyway, PostgreSQL, publication, and
   protected-scope evidence for the exact branch head.
 
-- [ ] **Step 1: Run focused common-error and security-adapter tests**
+- [x] **Step 1: Run focused common-error and security-adapter tests**
 
   ```powershell
   .\mvnw.cmd -B "-Dtest=RestExceptionHandlerTest,RestExceptionHandlerContextTest,RestExceptionHandlerLoggingTest,RestExceptionHandlerFrameworkTest,RestExceptionHandlerValidationTest,ProblemDetailsFactoryTest,ApiResponseTest,ExceptionArchitectureTest,ProblemAuthenticationEntryPointTest,ProblemAccessDeniedHandlerTest,SecurityProblemResponseWriterTest" test
@@ -512,7 +514,7 @@ Flyway, PostgreSQL, and Testcontainers.
   Expected: BUILD SUCCESS. MVC failures use Problem Details; Spring Security
   401/403 adapters retain their approved codes and bodies.
 
-- [ ] **Step 2: Run the complete unit suite**
+- [x] **Step 2: Run the complete unit suite**
 
   ```powershell
   .\mvnw.cmd -B test
@@ -520,7 +522,7 @@ Flyway, PostgreSQL, and Testcontainers.
 
   Expected: BUILD SUCCESS with no generated ArchUnit freeze store.
 
-- [ ] **Step 3: Run Flyway clean-schema verification against PostgreSQL**
+- [x] **Step 3: Run Flyway clean-schema verification against PostgreSQL**
 
   ```powershell
   .\mvnw.cmd -B "-Dit.test=DatabaseMigrationIT,FlywayBaselineMigrationIT" verify -Pintegration-tests
@@ -529,7 +531,7 @@ Flyway, PostgreSQL, and Testcontainers.
   Expected: BUILD SUCCESS; Flyway migrations create and validate a clean
   PostgreSQL schema without any KAN-33 database change.
 
-- [ ] **Step 4: Run the complete PostgreSQL integration profile**
+- [x] **Step 4: Run the complete PostgreSQL integration profile**
 
   ```powershell
   .\mvnw.cmd -B verify -Pintegration-tests
@@ -538,7 +540,7 @@ Flyway, PostgreSQL, and Testcontainers.
   Expected: BUILD SUCCESS across API, security, audit, financial, notification,
   repository, outbox, and migration integration tests.
 
-- [ ] **Step 5: Run documentation and repository-quality checks**
+- [x] **Step 5: Run documentation and repository-quality checks**
 
   ```powershell
   .\mvnw.cmd -q "-Dtest=DocumentationLinksTest" test
@@ -549,7 +551,7 @@ Flyway, PostgreSQL, and Testcontainers.
   Expected: documentation links and whitespace checks pass. The status output
   contains only intentional KAN-33 changes or is clean after the two commits.
 
-- [ ] **Step 6: Compare the exact branch head with its remote**
+- [x] **Step 6: Compare the exact branch head with its remote**
 
   ```powershell
   git push

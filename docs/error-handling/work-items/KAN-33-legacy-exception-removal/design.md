@@ -1,6 +1,6 @@
 # KAN-33 — Legacy Exception-Stack Removal
 
-**Status:** Written specification ready for review
+**Status:** Implemented, verified, and reviewed; approved for merge into `develop`.
 
 **Date:** 2026-08-25
 
@@ -333,21 +333,21 @@ unclassified exception to a public client error.
 
 ## 15. Acceptance criteria
 
-- [ ] The legacy exception package, handler, error enum, field type, and error
+- [x] The legacy exception package, handler, error enum, field type, and error
       envelope are absent from production code.
-- [ ] The two unused financial webhook exception classes are deleted.
-- [ ] `ApiResponse` has no error-construction responsibility or legacy import.
-- [ ] Expected application, framework, validation, and security mappings remain
+- [x] The two unused financial webhook exception classes are deleted.
+- [x] `ApiResponse` has no error-construction responsibility or legacy import.
+- [x] Expected application, framework, validation, and security mappings remain
       unchanged.
-- [ ] Unexpected MVC failures return the fixed sanitized 500 Problem Details
+- [x] Unexpected MVC failures return the fixed sanitized 500 Problem Details
       contract and are logged internally once.
-- [ ] No executable legacy-envelope fixture remains.
-- [ ] Business exceptions are transport-neutral under an unconditional
+- [x] No executable legacy-envelope fixture remains.
+- [x] Business exceptions are transport-neutral under an unconditional
       architecture rule.
-- [ ] The ArchUnit freeze store is removed and reintroduction is prevented.
-- [ ] Successful `/api/v1` responses and request-ID correlation remain
+- [x] The ArchUnit freeze store is removed and reintroduction is prevented.
+- [x] Successful `/api/v1` responses and request-ID correlation remain
       unchanged.
-- [ ] Focused, complete unit, Flyway, PostgreSQL, disclosure, documentation, and
+- [x] Focused, complete unit, Flyway, PostgreSQL, disclosure, documentation, and
       exact-head CI verification pass.
-- [ ] The implementation PR contains no unrelated business, security,
+- [x] The implementation PR contains no unrelated business, security,
       successful-response, database, dependency, or configuration redesign.
