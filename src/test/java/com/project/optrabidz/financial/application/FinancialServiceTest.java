@@ -5,7 +5,6 @@ import com.project.optrabidz.financial.application.dto.response.PaymentAttemptRe
 import com.project.optrabidz.financial.application.dto.response.PaymentIntentResponse;
 import com.project.optrabidz.financial.application.dto.response.RepaymentProgressResponse;
 import com.project.optrabidz.financial.application.dto.response.SettlementResponse;
-import com.project.optrabidz.financial.application.exception.FinancialAccessException;
 import com.project.optrabidz.financial.application.exception.PaymentAlreadyConfirmedException;
 import com.project.optrabidz.financial.application.exception.UnsupportedPaymentMethodException;
 import com.project.optrabidz.common.error.ApplicationException;
@@ -50,9 +49,12 @@ import com.project.optrabidz.participation.domain.repository.StartupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataRetrievalFailureException;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -70,6 +72,10 @@ import static com.project.optrabidz.financial.application.error.FinancialErrors.
 import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_METHOD_UNSUPPORTED;
 import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_PROVIDER_MISMATCH;
 import static com.project.optrabidz.financial.application.error.FinancialErrors.PAYMENT_STATE_CONFLICT;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.FINANCIAL_OPERATION_NOT_ALLOWED;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.SETTLEMENT_NOT_FOUND;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.SETTLEMENT_NOT_PAYABLE;
+import static com.project.optrabidz.financial.application.error.FinancialErrors.SETTLEMENT_STATE_CONFLICT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -189,6 +195,73 @@ class FinancialServiceTest {
     }
 
     @Test
+    void administratorReadsSettlementThroughGlobalLookup() {
+        when(settlementRepository.findById(SETTLEMENT_ID)).thenReturn(Optional.of(settlement()));
+        when(agreementRepository.findById(AGREEMENT_ID)).thenReturn(Optional.of(agreement()));
+
+        SettlementResponse response = service.getSettlement(1L, RoleType.ADMIN, SETTLEMENT_ID);
+
+        assertThat(response.settlementId()).isEqualTo(SETTLEMENT_ID);
+        verify(settlementRepository).findById(SETTLEMENT_ID);
+        verify(settlementRepository, never()).findByIdForStartup(any(), any());
+        verify(settlementRepository, never()).findByIdForInvestor(any(), any());
+    }
+
+    @Test
+    void startupReadsSettlementThroughStartupScopedLookup() {
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID)).thenReturn(Optional.of(startup()));
+        when(settlementRepository.findByIdForStartup(SETTLEMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.of(settlement()));
+        when(agreementRepository.findById(AGREEMENT_ID)).thenReturn(Optional.of(agreement()));
+
+        SettlementResponse response = service.getSettlement(STARTUP_ACCOUNT_ID, RoleType.STARTUP, SETTLEMENT_ID);
+
+        assertThat(response.settlementId()).isEqualTo(SETTLEMENT_ID);
+        verify(settlementRepository).findByIdForStartup(SETTLEMENT_ID, STARTUP_ID);
+        verify(settlementRepository, never()).findById(SETTLEMENT_ID);
+    }
+
+    @Test
+    void investorReadsSettlementThroughInvestorScopedLookup() {
+        when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID)).thenReturn(Optional.of(investor()));
+        when(settlementRepository.findByIdForInvestor(SETTLEMENT_ID, INVESTOR_ID))
+                .thenReturn(Optional.of(settlement()));
+        when(agreementRepository.findById(AGREEMENT_ID)).thenReturn(Optional.of(agreement()));
+
+        SettlementResponse response = service.getSettlement(INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, SETTLEMENT_ID);
+
+        assertThat(response.settlementId()).isEqualTo(SETTLEMENT_ID);
+        verify(settlementRepository).findByIdForInvestor(SETTLEMENT_ID, INVESTOR_ID);
+        verify(settlementRepository, never()).findById(SETTLEMENT_ID);
+    }
+
+    @Test
+    void missingAndNonOwnedSettlementUseSameNeutralFailure() {
+        when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID)).thenReturn(Optional.of(investor()));
+        when(settlementRepository.findByIdForInvestor(SETTLEMENT_ID, INVESTOR_ID)).thenReturn(Optional.empty());
+
+        assertPaymentFailure(
+                () -> service.getSettlement(INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, SETTLEMENT_ID),
+                SETTLEMENT_NOT_FOUND
+        );
+
+        verify(settlementRepository, never()).findById(SETTLEMENT_ID);
+    }
+
+    @Test
+    void scopedSettlementLookupDoesNotTranslateUnexpectedRepositoryFailure() {
+        DataRetrievalFailureException repositoryFailure = new DataRetrievalFailureException("database unavailable");
+        when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID)).thenReturn(Optional.of(investor()));
+        when(settlementRepository.findByIdForInvestor(SETTLEMENT_ID, INVESTOR_ID)).thenThrow(repositoryFailure);
+
+        assertThatThrownBy(() -> service.getSettlement(
+                INVESTOR_ACCOUNT_ID,
+                RoleType.INVESTOR,
+                SETTLEMENT_ID
+        )).isSameAs(repositoryFailure);
+    }
+
+    @Test
     void startupCanViewRepaymentProgressForOwnAgreement() {
         Instant nextDueAt = now().plusSeconds(86_400);
         when(agreementRepository.findById(AGREEMENT_ID)).thenReturn(Optional.of(agreement()));
@@ -259,8 +332,8 @@ class FinancialServiceTest {
     @Test
     void investorCanCreateSettlementPaymentIntentForOwnPendingSettlement() {
         Settlement settlement = settlement();
-        when(settlementRepository.findById(SETTLEMENT_ID)).thenReturn(Optional.of(settlement));
         when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID)).thenReturn(Optional.of(investor()));
+        when(settlementRepository.findByIdForInvestor(SETTLEMENT_ID, INVESTOR_ID)).thenReturn(Optional.of(settlement));
         when(startupRepository.findById(STARTUP_ID)).thenReturn(Optional.of(startup()));
         when(investorRepository.findById(INVESTOR_ID)).thenReturn(Optional.of(investor()));
         when(paymentIntentRepository.findActiveBySettlementId(SETTLEMENT_ID)).thenReturn(Optional.empty());
@@ -284,7 +357,6 @@ class FinancialServiceTest {
 
     @Test
     void investorCannotCreatePaymentIntentForAnotherInvestorSettlement() {
-        Settlement settlement = settlement();
         Investor differentInvestor = new Investor(
                 99L,
                 999L,
@@ -293,14 +365,59 @@ class FinancialServiceTest {
                 "Different Investor LLP",
                 List.of("https://different.example.com")
         );
-        when(settlementRepository.findById(SETTLEMENT_ID)).thenReturn(Optional.of(settlement));
         when(investorRepository.findByAccountId(999L)).thenReturn(Optional.of(differentInvestor));
+        when(settlementRepository.findByIdForInvestor(SETTLEMENT_ID, 99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.createSettlementPaymentIntent(999L, RoleType.INVESTOR, SETTLEMENT_ID))
-                .isInstanceOf(FinancialAccessException.class)
-                .hasMessageContaining("Investor can pay only own settlement");
+        assertPaymentFailure(
+                () -> service.createSettlementPaymentIntent(999L, RoleType.INVESTOR, SETTLEMENT_ID),
+                SETTLEMENT_NOT_FOUND
+        );
 
+        verify(settlementRepository, never()).findById(SETTLEMENT_ID);
+        verify(paymentIntentRepository, never()).findActiveBySettlementId(any());
         verify(paymentIntentRepository, never()).saveNewOrFindActiveBySettlement(any());
+    }
+
+    @Test
+    void startupCannotCreateSettlementIntentAndNoParticipantOrSettlementLookupOccurs() {
+        assertPaymentFailure(
+                () -> service.createSettlementPaymentIntent(STARTUP_ACCOUNT_ID, RoleType.STARTUP, SETTLEMENT_ID),
+                FINANCIAL_OPERATION_NOT_ALLOWED
+        );
+
+        verify(startupRepository, never()).findByAccountId(any());
+        verify(investorRepository, never()).findByAccountId(any());
+        verify(settlementRepository, never()).findById(any());
+        verify(settlementRepository, never()).findByIdForInvestor(any(), any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = SettlementState.class, names = {
+            "SETTLEMENT_CONFIRMED", "SETTLEMENT_FAILED", "SETTLEMENT_EXPIRED", "SETTLEMENT_CANCELLED"
+    })
+    void settlementIntentRejectsEveryNonPendingSettlement(SettlementState state) {
+        when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID)).thenReturn(Optional.of(investor()));
+        when(settlementRepository.findByIdForInvestor(SETTLEMENT_ID, INVESTOR_ID))
+                .thenReturn(Optional.of(settlement(state, null, now().plusSeconds(3_600))));
+
+        assertPaymentFailure(
+                () -> service.createSettlementPaymentIntent(INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, SETTLEMENT_ID),
+                SETTLEMENT_NOT_PAYABLE
+        );
+
+        verify(paymentIntentRepository, never()).findActiveBySettlementId(any());
+    }
+
+    @Test
+    void settlementIntentRejectsExpiredPendingSettlement() {
+        when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID)).thenReturn(Optional.of(investor()));
+        when(settlementRepository.findByIdForInvestor(SETTLEMENT_ID, INVESTOR_ID))
+                .thenReturn(Optional.of(settlement(SettlementState.SETTLEMENT_PENDING, null, now().minusSeconds(1))));
+
+        assertPaymentFailure(
+                () -> service.createSettlementPaymentIntent(INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, SETTLEMENT_ID),
+                SETTLEMENT_NOT_PAYABLE
+        );
     }
 
     @Test
@@ -649,6 +766,116 @@ class FinancialServiceTest {
     }
 
     @Test
+    void repeatedConfirmationBySameIntentIsIdempotent() {
+        PaymentAttempt attempt = initiatedLocalAttempt();
+        PaymentAttempt confirmedAttempt = confirmedLocalAttempt();
+        PaymentIntent intent = settlementPaymentIntent(PaymentState.PAYMENT_PENDING);
+        PaymentIntent confirmedIntent = settlementPaymentIntent(PaymentState.PAYMENT_CONFIRMED);
+        Settlement pending = settlement();
+        Settlement alreadyConfirmed = settlement(
+                SettlementState.SETTLEMENT_CONFIRMED,
+                PAYMENT_INTENT_ID,
+                now().plusSeconds(3_600)
+        );
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(attempt), Optional.of(confirmedAttempt));
+        when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
+                .thenReturn(Optional.of(intent), Optional.of(confirmedIntent));
+        when(paymentAttemptRepository.confirmActive(
+                eq(PAYMENT_ATTEMPT_ID), eq("LOCAL-PAYMENT-" + PAYMENT_ATTEMPT_ID), any(Instant.class)))
+                .thenReturn(1);
+        when(paymentIntentRepository.confirmActive(eq(PAYMENT_INTENT_ID), any(Instant.class))).thenReturn(1);
+        when(settlementRepository.findById(SETTLEMENT_ID))
+                .thenReturn(Optional.of(pending), Optional.of(alreadyConfirmed));
+        when(settlementRepository.confirmPending(eq(SETTLEMENT_ID), eq(PAYMENT_INTENT_ID), any(Instant.class)))
+                .thenReturn(0);
+
+        PaymentAttemptResponse response = service.confirmLocalPaymentAttempt(
+                INVESTOR_ACCOUNT_ID,
+                RoleType.INVESTOR,
+                PAYMENT_ATTEMPT_ID
+        );
+
+        assertThat(response.attemptState()).isEqualTo(PaymentAttemptState.CONFIRMED);
+        verify(repaymentRepository, never()).save(any());
+        verify(repaymentInstallmentRepository, never()).saveAll(any());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = SettlementState.class, names = {
+            "SETTLEMENT_CONFIRMED", "SETTLEMENT_FAILED", "SETTLEMENT_EXPIRED", "SETTLEMENT_CANCELLED"
+    })
+    void competingSettlementStateAfterConditionalConfirmationUsesStateConflict(SettlementState state) {
+        PaymentAttempt attempt = initiatedLocalAttempt();
+        PaymentAttempt confirmedAttempt = confirmedLocalAttempt();
+        PaymentIntent intent = settlementPaymentIntent(PaymentState.PAYMENT_PENDING);
+        PaymentIntent confirmedIntent = settlementPaymentIntent(PaymentState.PAYMENT_CONFIRMED);
+        Settlement latest = settlement(
+                state,
+                state == SettlementState.SETTLEMENT_CONFIRMED ? PAYMENT_INTENT_ID + 1 : null,
+                now().plusSeconds(3_600)
+        );
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(attempt), Optional.of(confirmedAttempt));
+        when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
+                .thenReturn(Optional.of(intent), Optional.of(confirmedIntent));
+        when(paymentAttemptRepository.confirmActive(
+                eq(PAYMENT_ATTEMPT_ID), eq("LOCAL-PAYMENT-" + PAYMENT_ATTEMPT_ID), any(Instant.class)))
+                .thenReturn(1);
+        when(paymentIntentRepository.confirmActive(eq(PAYMENT_INTENT_ID), any(Instant.class))).thenReturn(1);
+        when(settlementRepository.findById(SETTLEMENT_ID))
+                .thenReturn(Optional.of(settlement()), Optional.of(latest));
+        when(settlementRepository.confirmPending(eq(SETTLEMENT_ID), eq(PAYMENT_INTENT_ID), any(Instant.class)))
+                .thenReturn(0);
+
+        assertPaymentFailure(
+                () -> service.confirmLocalPaymentAttempt(
+                        INVESTOR_ACCOUNT_ID,
+                        RoleType.INVESTOR,
+                        PAYMENT_ATTEMPT_ID
+                ),
+                SETTLEMENT_STATE_CONFLICT
+        );
+
+        verify(repaymentRepository, never()).save(any());
+        verify(repaymentInstallmentRepository, never()).saveAll(any());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
+    void missingSettlementAfterConditionalConfirmationUsesNeutralNotFoundFailure() {
+        PaymentAttempt attempt = initiatedLocalAttempt();
+        PaymentAttempt confirmedAttempt = confirmedLocalAttempt();
+        PaymentIntent intent = settlementPaymentIntent(PaymentState.PAYMENT_PENDING);
+        PaymentIntent confirmedIntent = settlementPaymentIntent(PaymentState.PAYMENT_CONFIRMED);
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(attempt), Optional.of(confirmedAttempt));
+        when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
+                .thenReturn(Optional.of(intent), Optional.of(confirmedIntent));
+        when(paymentAttemptRepository.confirmActive(
+                eq(PAYMENT_ATTEMPT_ID), eq("LOCAL-PAYMENT-" + PAYMENT_ATTEMPT_ID), any(Instant.class)))
+                .thenReturn(1);
+        when(paymentIntentRepository.confirmActive(eq(PAYMENT_INTENT_ID), any(Instant.class))).thenReturn(1);
+        when(settlementRepository.findById(SETTLEMENT_ID))
+                .thenReturn(Optional.of(settlement()), Optional.empty());
+        when(settlementRepository.confirmPending(eq(SETTLEMENT_ID), eq(PAYMENT_INTENT_ID), any(Instant.class)))
+                .thenReturn(0);
+
+        assertPaymentFailure(
+                () -> service.confirmLocalPaymentAttempt(
+                        INVESTOR_ACCOUNT_ID,
+                        RoleType.INVESTOR,
+                        PAYMENT_ATTEMPT_ID
+                ),
+                SETTLEMENT_NOT_FOUND
+        );
+
+        verify(repaymentRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
     void providerCallbackCanConfirmPaymentAttemptThroughSharedCommandPath() {
         PaymentAttempt attempt = initiatedLocalAttempt();
         PaymentAttempt confirmedAttempt = confirmedLocalAttempt("LOCAL-PROVIDER-PAYMENT-1001");
@@ -974,6 +1201,14 @@ class FinancialServiceTest {
     }
 
     private static Settlement settlement() {
+        return settlement(SettlementState.SETTLEMENT_PENDING, null, now().plusSeconds(3_600));
+    }
+
+    private static Settlement settlement(
+            SettlementState state,
+            Long confirmedPaymentIntentId,
+            Instant expiresAt
+    ) {
         return Settlement.builder()
                 .settlementId(SETTLEMENT_ID)
                 .agreementId(AGREEMENT_ID)
@@ -981,9 +1216,11 @@ class FinancialServiceTest {
                 .investorId(INVESTOR_ID)
                 .amount(new BigDecimal("550000.00"))
                 .currencyCode("INR")
-                .settlementState(SettlementState.SETTLEMENT_PENDING)
+                .settlementState(state)
                 .createdAt(now().minusSeconds(60))
-                .expiresAt(now().plusSeconds(3_600))
+                .expiresAt(expiresAt)
+                .confirmedAt(state == SettlementState.SETTLEMENT_CONFIRMED ? now() : null)
+                .confirmedPaymentIntentId(confirmedPaymentIntentId)
                 .build();
     }
 

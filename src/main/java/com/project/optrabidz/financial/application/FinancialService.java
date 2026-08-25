@@ -16,8 +16,8 @@ import com.project.optrabidz.financial.application.dto.response.RepaymentProgres
 import com.project.optrabidz.financial.application.dto.response.RepaymentResponse;
 import com.project.optrabidz.financial.application.dto.response.SettlementResponse;
 import com.project.optrabidz.financial.application.exception.FinancialAccessException;
+import com.project.optrabidz.financial.application.exception.FinancialOperationNotAllowedException;
 import com.project.optrabidz.financial.application.exception.InvalidRepaymentStateException;
-import com.project.optrabidz.financial.application.exception.InvalidSettlementStateException;
 import com.project.optrabidz.financial.application.exception.PaymentAlreadyConfirmedException;
 import com.project.optrabidz.financial.application.exception.PaymentAttemptNotFoundException;
 import com.project.optrabidz.financial.application.exception.PaymentIntentExpiredException;
@@ -30,6 +30,7 @@ import com.project.optrabidz.financial.application.exception.RepaymentInstallmen
 import com.project.optrabidz.financial.application.exception.RepaymentNotFoundException;
 import com.project.optrabidz.financial.application.exception.SettlementNotFoundException;
 import com.project.optrabidz.financial.application.exception.SettlementNotPayableException;
+import com.project.optrabidz.financial.application.exception.SettlementStateConflictException;
 import com.project.optrabidz.financial.application.exception.UnsupportedPaymentMethodException;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentPaidEvent;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentPaymentFailedEvent;
@@ -144,14 +145,12 @@ public class FinancialService {
 
     @Transactional(readOnly = true)
     public SettlementResponse getSettlement(Long accountId, RoleType roleType, Long settlementId) {
-        Settlement settlement = getSettlement(settlementId);
-        ensureSettlementVisible(accountId, roleType, settlement);
-        return toSettlementResponse(settlement);
+        return toSettlementResponse(getSettlementForViewer(accountId, roleType, settlementId));
     }
 
     @Transactional(readOnly = true)
     public PageResponse<SettlementResponse> getMyInvestorSettlements(Long accountId, RoleType roleType, int page, int size) {
-        ensureRole(roleType, RoleType.INVESTOR);
+        ensureFinancialRole(roleType, RoleType.INVESTOR);
         Investor investor = getInvestorByAccount(accountId);
         Page<SettlementResponse> settlements = settlementRepository
                 .findByInvestorId(investor.getInvestorId(), pageRequest(page, size))
@@ -161,7 +160,7 @@ public class FinancialService {
 
     @Transactional(readOnly = true)
     public PageResponse<SettlementResponse> getMyStartupSettlements(Long accountId, RoleType roleType, int page, int size) {
-        ensureRole(roleType, RoleType.STARTUP);
+        ensureFinancialRole(roleType, RoleType.STARTUP);
         Startup startup = getStartupByAccount(accountId);
         Page<SettlementResponse> settlements = settlementRepository
                 .findByStartupId(startup.getStartupId(), pageRequest(page, size))
@@ -171,12 +170,11 @@ public class FinancialService {
 
     @Transactional
     public PaymentIntentResponse createSettlementPaymentIntent(Long accountId, RoleType roleType, Long settlementId) {
-        ensureRole(roleType, RoleType.INVESTOR);
-        Settlement settlement = getSettlement(settlementId);
+        ensureFinancialRole(roleType, RoleType.INVESTOR);
         Investor investor = getInvestorByAccount(accountId);
-        if (!settlement.getInvestorId().equals(investor.getInvestorId())) {
-            throw new FinancialAccessException("Investor can pay only own settlement");
-        }
+        Settlement settlement = settlementRepository
+                .findByIdForInvestor(settlementId, investor.getInvestorId())
+                .orElseThrow(() -> settlementNotFound(settlementId));
         ensureSettlementPayable(settlement);
 
         return paymentIntentRepository.findActiveBySettlementId(settlementId)
@@ -579,7 +577,7 @@ public class FinancialService {
                     now
             );
             if (confirmedCount == 0) {
-                ensureAlreadyConfirmedBySameIntent(settlement, paymentIntent.getPaymentIntentId());
+                ensureAlreadyConfirmedBySameIntent(settlement.getSettlementId(), paymentIntent.getPaymentIntentId());
                 return;
             }
             createRepaymentScheduleIfMissing(settlement, now);
@@ -699,19 +697,6 @@ public class FinancialService {
                 .toInstant();
     }
 
-    private void ensureSettlementVisible(Long accountId, RoleType roleType, Settlement settlement) {
-        if (roleType == RoleType.ADMIN) {
-            return;
-        }
-        if (roleType == RoleType.STARTUP && getStartupByAccount(accountId).getStartupId().equals(settlement.getStartupId())) {
-            return;
-        }
-        if (roleType == RoleType.INVESTOR && getInvestorByAccount(accountId).getInvestorId().equals(settlement.getInvestorId())) {
-            return;
-        }
-        throw new FinancialAccessException("You are not authorized to view this settlement");
-    }
-
     private void ensureRepaymentVisible(Long accountId, RoleType roleType, Repayment repayment) {
         if (roleType == RoleType.ADMIN) {
             return;
@@ -798,13 +783,16 @@ public class FinancialService {
         }
     }
 
-    private void ensureAlreadyConfirmedBySameIntent(Settlement settlement, Long paymentIntentId) {
-        Settlement latestSettlement = getSettlement(settlement.getSettlementId());
+    private void ensureAlreadyConfirmedBySameIntent(Long settlementId, Long paymentIntentId) {
+        Settlement latestSettlement = getSettlement(settlementId);
         if (latestSettlement.getSettlementState() == SettlementState.SETTLEMENT_CONFIRMED
                 && paymentIntentId.equals(latestSettlement.getConfirmedPaymentIntentId())) {
             return;
         }
-        throw new SettlementNotPayableException("Settlement is not pending");
+        throw new SettlementStateConflictException(
+                "Settlement " + settlementId + " changed before payment intent " + paymentIntentId
+                        + " could confirm it"
+        );
     }
 
     private void ensureAlreadyConfirmedBySameIntent(RepaymentInstallment installment, Long paymentIntentId) {
@@ -825,7 +813,26 @@ public class FinancialService {
 
     private Settlement getSettlement(Long settlementId) {
         return settlementRepository.findById(settlementId)
-                .orElseThrow(() -> new SettlementNotFoundException("Settlement not found"));
+                .orElseThrow(() -> settlementNotFound(settlementId));
+    }
+
+    private Settlement getSettlementForViewer(Long accountId, RoleType roleType, Long settlementId) {
+        Optional<Settlement> settlement = switch (roleType) {
+            case ADMIN -> settlementRepository.findById(settlementId);
+            case STARTUP -> settlementRepository.findByIdForStartup(
+                    settlementId,
+                    getStartupByAccount(accountId).getStartupId()
+            );
+            case INVESTOR -> settlementRepository.findByIdForInvestor(
+                    settlementId,
+                    getInvestorByAccount(accountId).getInvestorId()
+            );
+        };
+        return settlement.orElseThrow(() -> settlementNotFound(settlementId));
+    }
+
+    private SettlementNotFoundException settlementNotFound(Long settlementId) {
+        return new SettlementNotFoundException("Settlement " + settlementId + " was not found in the permitted scope");
     }
 
     private Repayment getRepayment(Long repaymentId) {
@@ -922,11 +929,11 @@ public class FinancialService {
         }
     }
 
-    private void applySettlementTransition(Runnable transition) {
-        try {
-            transition.run();
-        } catch (IllegalStateException exception) {
-            throw new InvalidSettlementStateException(exception.getMessage());
+    private void ensureFinancialRole(RoleType actualRole, RoleType expectedRole) {
+        if (actualRole != expectedRole) {
+            throw new FinancialOperationNotAllowedException(
+                    "Role " + actualRole + " cannot perform an operation reserved for " + expectedRole
+            );
         }
     }
 

@@ -14,8 +14,9 @@ Expected application failures use a transport-neutral core:
 4. clients receive RFC 9457 `application/problem+json` responses without
    internal identifiers, secrets, stack traces, or raw exception messages.
 
-Identity, security, participation, classification, governance, and marketplace
-use the neutral contract. The current module catalogue and login-disclosure
+Identity, security, participation, classification, governance, marketplace,
+notification, and the migrated financial payment and settlement paths use the
+neutral contract. The current module catalogue and login-disclosure
 policy are documented in the [KAN-24 module migration design](work-items/KAN-24-module-migration/design.md).
 
 ## Work-item History
@@ -37,3 +38,4 @@ policy are documented in the [KAN-24 module migration design](work-items/KAN-24-
 | [KAN-32](https://0707manna0895.atlassian.net/browse/KAN-32) | [Payment webhook replay-protection design](work-items/KAN-32-webhook-replay-protection/design.md) and [implementation plan](work-items/KAN-32-webhook-replay-protection/implementation-plan.md) |
 | [KAN-35](https://0707manna0895.atlassian.net/browse/KAN-35) | [Payment intent and attempt error migration design](work-items/KAN-35-payment-error-migration/design.md) |
 | [KAN-36](https://0707manna0895.atlassian.net/browse/KAN-36) | [Secure webhook-ingress design](work-items/KAN-36-secure-webhook-ingress/design.md) and [implementation plan](work-items/KAN-36-secure-webhook-ingress/implementation-plan.md) |
+| [KAN-37](https://0707manna0895.atlassian.net/browse/KAN-37) | [Settlement error migration design](work-items/KAN-37-settlement-error-migration/design.md) and [implementation plan](work-items/KAN-37-settlement-error-migration/implementation-plan.md) |

@@ -1,0 +1,26 @@
+flowchart TD
+    U[Authenticated caller] --> S[Spring Security]
+    S --> C[Financial controller]
+    C --> A[Financial application service]
+
+    A --> R{Role allowed for operation?}
+    R -->|No| F[FINANCIAL_OPERATION_NOT_ALLOWED 403]
+    R -->|Yes| Q{Select trusted lookup}
+
+    Q -->|Administrator read| G[Global settlement lookup]
+    Q -->|Startup read| SU[Lookup by settlement and startup]
+    Q -->|Investor read or pay| IN[Lookup by settlement and investor]
+
+    G --> X{Settlement found?}
+    SU --> X
+    IN --> X
+    X -->|No| N[SETTLEMENT_NOT_FOUND 404]
+    X -->|Yes| O[Evaluate state after authority]
+
+    O -->|Initially not payable| P[SETTLEMENT_NOT_PAYABLE 409]
+    O -->|Allowed| B[Execute financial use case]
+
+    F --> H[Shared RFC 9457 adapter]
+    N --> H
+    P --> H
+    H --> D[Allowlisted Problem Details]

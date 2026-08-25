@@ -1,10 +1,14 @@
 package com.project.optrabidz.financial.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.financial.application.error.FinancialErrors;
 
-public class SettlementNotFoundException extends ApiException {
-    public SettlementNotFoundException(String message) {
-        super(ErrorCode.RESOURCE_NOT_FOUND, message);
+public final class SettlementNotFoundException extends ApplicationException {
+    public SettlementNotFoundException(String diagnosticMessage) {
+        super(
+                FinancialErrors.SETTLEMENT_NOT_FOUND,
+                "FINANCIAL.SETTLEMENT.NOT.FOUND",
+                diagnosticMessage
+        );
     }
 }

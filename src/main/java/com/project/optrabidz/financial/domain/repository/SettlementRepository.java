@@ -12,6 +12,10 @@ public interface SettlementRepository {
 
     Optional<Settlement> findById(Long settlementId);
 
+    Optional<Settlement> findByIdForStartup(Long settlementId, Long startupId);
+
+    Optional<Settlement> findByIdForInvestor(Long settlementId, Long investorId);
+
     Optional<Settlement> findByAgreementId(Long agreementId);
 
     Page<Settlement> findByStartupId(Long startupId, Pageable pageable);
