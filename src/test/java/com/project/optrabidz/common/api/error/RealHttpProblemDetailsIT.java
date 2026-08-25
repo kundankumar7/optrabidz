@@ -3,6 +3,11 @@ package com.project.optrabidz.common.api.error;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.project.optrabidz.testsupport.RealHttpIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.http.HttpResponse;
 import java.util.Map;
@@ -10,8 +15,13 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Import(RealHttpProblemDetailsIT.FaultProbeConfiguration.class)
 class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
     private static final String PASSWORD = "Password01";
+    private static final String FAULT_PATH =
+            "/api/v1/notifications/__test/problem-details-fault";
+    private static final String FAULT_SENTINEL =
+            "kan-42-password=secret jdbc:postgresql://private-host";
 
     @Test
     void registrationLoginAndMeUseARealPortAndCookieStore() throws Exception {
@@ -165,6 +175,52 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
         );
     }
 
+    @Test
+    void unexpectedFailureIsSanitizedAcrossTheRealHttpBoundary()
+            throws Exception {
+        RealHttpClient client = newClient();
+        String email = uniqueEmail("real-http-fault");
+        assertThat(register(client, email).statusCode()).isEqualTo(201);
+        assertThat(login(client, email).statusCode()).isEqualTo(200);
+        String requestId = "kan-42-internal-server-error";
+
+        HttpResponse<String> response = client.get(
+                FAULT_PATH,
+                Map.of("X-Request-Id", requestId)
+        );
+
+        JsonNode body = assertProblem(
+                response,
+                500,
+                "INTERNAL_SERVER_ERROR",
+                requestId,
+                FAULT_SENTINEL,
+                "RuntimeException",
+                "private-host",
+                "password=secret"
+        );
+        assertThat(body.path("title").asText())
+                .isEqualTo("Internal server error");
+        assertThat(body.path("detail").asText())
+                .isEqualTo("An unexpected error occurred");
+        assertThat(body.has("violations")).isFalse();
+    }
+
+    @Test
+    void faultProbeRetainsTheProductionAuthenticationBoundary()
+            throws Exception {
+        String requestId = "kan-42-fault-auth";
+        assertProblem(
+                newClient().get(
+                        FAULT_PATH,
+                        Map.of("X-Request-Id", requestId)
+                ),
+                401,
+                "AUTHENTICATION_REQUIRED",
+                requestId
+        );
+    }
+
     private HttpResponse<String> register(RealHttpClient client, String email)
             throws Exception {
         return client.post("/api/v1/auth/register", Map.of(
@@ -212,5 +268,21 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
             assertThat(response.body()).doesNotContain(excludedValue);
         }
         return body;
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class FaultProbeConfiguration {
+        @Bean
+        FaultProbeController faultProbeController() {
+            return new FaultProbeController();
+        }
+    }
+
+    @RestController
+    static final class FaultProbeController {
+        @GetMapping(FAULT_PATH)
+        void fail() {
+            throw new RuntimeException(FAULT_SENTINEL);
+        }
     }
 }
