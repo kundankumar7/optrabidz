@@ -1,6 +1,6 @@
 # KAN-43 — OpenAPI Problem Details Contract and Public Error Catalogue
 
-**Status:** Approved design; implementation not started
+**Status:** Implemented and locally verified
 
 **Date:** 2026-08-25
 
@@ -11,6 +11,20 @@ production exception-handling foundation
 
 **Depends on:** KAN-33 — legacy exception-stack removal; KAN-42 — real-port
 HTTP Problem Details verification
+
+**Verification evidence (2026-08-27):**
+
+- verified implementation head: `b470edd`;
+- 69 unique public error codes composed from 61 module descriptors, seven
+  framework problems, and three Spring Security problems;
+- 439 unit tests passed with zero failures, errors, or skips;
+- 145 PostgreSQL integration tests passed with zero failures, errors, or
+  skips;
+- deterministic catalogue snapshot and repository documentation links passed;
+- base-disabled, test-public JSON, authenticated JSON, and UI-disabled
+  exposure modes passed; and
+- OpenAPI components and representative operation references matched real
+  invalid-registration and missing-listing Problem Details responses.
 
 ## 1. Purpose
 
@@ -434,31 +448,32 @@ publication story.
 
 ## 17. Acceptance criteria
 
-- [ ] All module, framework, and security public errors appear in one validated
+- [x] All module, framework, and security public errors appear in one validated
       normalized catalogue.
-- [ ] Module catalogues expose explicit immutable collections and test-only
+- [x] Module catalogues expose explicit immutable collections and test-only
       reflection detects omissions.
-- [ ] Exact duplicate definitions merge source owners; conflicting duplicate
+- [x] Exact duplicate definitions merge source owners; conflicting duplicate
       codes fail.
-- [ ] OpenAPI publishes the approved base and validation Problem Details
+- [x] OpenAPI publishes the approved base and validation Problem Details
       schemas with exhaustive unique error codes.
-- [ ] Separate base and validation 400 components plus reusable 401, 403, 404,
+- [x] Separate base and validation 400 components plus reusable 401, 403, 404,
       405, 406, 409, 415, 422, and sanitized 500 responses use
       `application/problem+json` and document `X-Request-Id`.
-- [ ] Representative operations reference reusable failures without changing
+- [x] Representative operations reference reusable failures without changing
       successful responses or adding a custom annotation framework.
-- [ ] Base and production defaults expose neither OpenAPI JSON nor Swagger UI.
-- [ ] Development exposes both; tests expose JSON only; explicitly enabled
+- [x] Base and production defaults expose neither OpenAPI JSON nor Swagger UI.
+- [x] Development exposes both; tests expose JSON only; explicitly enabled
       production JSON requires authentication and production UI stays disabled.
-- [ ] Every known JSON, YAML, Swagger configuration, redirect, WebJar, static
+- [x] Every known JSON, YAML, Swagger configuration, redirect, WebJar, static
       UI, and management-port route follows the exposure policy.
-- [ ] The checked-in Markdown catalogue is deterministic, complete, sorted,
+- [x] The checked-in Markdown catalogue is deterministic, complete, sorted,
       safe, and byte-for-byte protected against drift.
-- [ ] Architecture tests preserve inward dependency direction.
-- [ ] OpenAPI, repository catalogue, and representative real HTTP failures
+- [x] Architecture tests preserve inward dependency direction.
+- [x] OpenAPI, repository catalogue, and representative real HTTP failures
       agree on the public contract.
-- [ ] Focused, complete unit, PostgreSQL integration, documentation, and
-      exact-head CI verification pass before review.
-- [ ] No business rule, authentication mechanism, database schema, runtime
+- [x] Focused, complete unit, PostgreSQL integration, and documentation
+      verification pass before review.
+- [ ] Exact-head CI verification passes for the published review branch.
+- [x] No business rule, authentication mechanism, database schema, runtime
       failure behavior, successful response, or unrelated dependency change is
       mixed into KAN-43.

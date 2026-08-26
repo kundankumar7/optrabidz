@@ -119,7 +119,7 @@ Surefire/Failsafe, Testcontainers PostgreSQL 16, Flyway
 - The inventory test invokes `descriptors()` reflectively only under
   `src/test`.
 
-- [ ] **Step 1: Write the type-URN and module-inventory tests**
+- [x] **Step 1: Write the type-URN and module-inventory tests**
 
 Create `ProblemTypeUriTest`:
 
@@ -181,7 +181,7 @@ For each class, collect fields that are `public static` and exactly
 Also assert the total declared field count is 61 so accidental test-scope
 reduction is visible.
 
-- [ ] **Step 2: Run the focused tests and capture RED**
+- [x] **Step 2: Run the focused tests and capture RED**
 
 Run:
 
@@ -192,7 +192,7 @@ Run:
 Expected: test compilation fails because `ProblemTypeUri` and the eleven
 `descriptors()` methods do not exist.
 
-- [ ] **Step 3: Add the explicit immutable module collections**
+- [x] **Step 3: Add the explicit immutable module collections**
 
 Each method returns `List.of(...)` in declaration order. Use this exact
 inventory:
@@ -225,7 +225,7 @@ public static List<ErrorDescriptor> descriptors() {
 
 Import only `java.util.List`; do not add Spring or documentation dependencies.
 
-- [ ] **Step 4: Add the shared type-URN function and safe framework access**
+- [x] **Step 4: Add the shared type-URN function and safe framework access**
 
 Create:
 
@@ -255,7 +255,7 @@ Replace the private slug construction in `ProblemDetailsFactory` with
 and private method. Make `FrameworkProblem` and its three accessors public;
 leave values, mappings, titles, and details byte-for-byte unchanged.
 
-- [ ] **Step 5: Run the focused and existing factory tests**
+- [x] **Step 5: Run the focused and existing factory tests**
 
 Run:
 
@@ -265,7 +265,7 @@ Run:
 
 Expected: all tests pass; inventory reports exactly 61 module fields.
 
-- [ ] **Step 6: Commit the complete source inventory**
+- [x] **Step 6: Commit the complete source inventory**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/common/api/error `
@@ -300,7 +300,7 @@ git commit -m "refactor(KAN-43): expose complete public error sources"
   conflict tests.
 - `entries()` returns an immutable list sorted by code.
 
-- [ ] **Step 1: Write normalization, duplicate, conflict, and aggregate tests**
+- [x] **Step 1: Write normalization, duplicate, conflict, and aggregate tests**
 
 Use exact assertions:
 
@@ -361,7 +361,7 @@ void rejectsTwoMeaningsForOneCode() {
 Also assert unique codes, sorted codes, immutable entries, immutable sources,
 all seven `FrameworkProblem` values, and all three `SecurityProblem` values.
 
-- [ ] **Step 2: Run the catalogue tests and capture RED**
+- [x] **Step 2: Run the catalogue tests and capture RED**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=PublicErrorCatalogueTest,ErrorCatalogueInventoryTest" test
@@ -370,7 +370,7 @@ all seven `FrameworkProblem` values, and all three `SecurityProblem` values.
 Expected: compilation fails because the normalized catalogue types do not
 exist.
 
-- [ ] **Step 3: Implement the safe normalized record**
+- [x] **Step 3: Implement the safe normalized record**
 
 Use this exact shape:
 
@@ -497,7 +497,7 @@ For `SecurityProblem`, map `AUTHENTICATION_REQUIRED` to
 `CSRF_VALIDATION_FAILED` to `ErrorCategory.AUTHORIZATION`. Framework problems
 use `Optional.empty()` because 405, 406, and 415 have no neutral category.
 
-- [ ] **Step 4: Implement explicit composition and conflict detection**
+- [x] **Step 4: Implement explicit composition and conflict detection**
 
 `createDefault()` must call every module's `descriptors()` explicitly, then
 append `FrameworkProblem.values()` and `SecurityProblem.values()`. Use these
@@ -526,7 +526,7 @@ Return `List.copyOf(...)`.
 No `Class`, `Field`, classpath scanner, Spring bean scan, or reflection API may
 appear under `src/main`.
 
-- [ ] **Step 5: Add aggregate inventory and architecture enforcement**
+- [x] **Step 5: Add aggregate inventory and architecture enforcement**
 
 Extend `ErrorCatalogueInventoryTest` to compare the union of all declared
 module fields plus all framework/security values with the sources represented
@@ -544,7 +544,7 @@ static final ArchRule PRODUCTION_CODE_DOES_NOT_DEPEND_INWARD_ON_DOCUMENTATION =
                 .as("documentation is an outer adapter, never an inward dependency");
 ```
 
-- [ ] **Step 6: Run focused and architecture tests**
+- [x] **Step 6: Run focused and architecture tests**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=PublicErrorCatalogueTest,ErrorCatalogueInventoryTest,ExceptionArchitectureTest" test
@@ -552,7 +552,7 @@ static final ArchRule PRODUCTION_CODE_DOES_NOT_DEPEND_INWARD_ON_DOCUMENTATION =
 
 Expected: all tests pass and the default catalogue has 69 unique codes.
 
-- [ ] **Step 7: Commit the catalogue boundary**
+- [x] **Step 7: Commit the catalogue boundary**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/documentation/error `
@@ -580,7 +580,7 @@ git commit -m "feat(KAN-43): compose the public error catalogue"
   the snapshot test to rewrite the checked-in catalogue before comparison.
 - With the property absent, the test is read-only and fails on any byte drift.
 
-- [ ] **Step 1: Write the renderer and snapshot tests first**
+- [x] **Step 1: Write the renderer and snapshot tests first**
 
 The renderer test must assert the exact header and escaping behavior:
 
@@ -619,7 +619,7 @@ void checkedInCatalogueMatchesTheRuntimeDefinitions() throws Exception {
 }
 ```
 
-- [ ] **Step 2: Run the snapshot test and capture RED**
+- [x] **Step 2: Run the snapshot test and capture RED**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=ErrorCatalogueMarkdownSnapshotTest" test
@@ -628,7 +628,7 @@ void checkedInCatalogueMatchesTheRuntimeDefinitions() throws Exception {
 Expected: compilation fails until the renderer exists, then the snapshot fails
 because `docs/error-handling/error-catalogue.md` is absent.
 
-- [ ] **Step 3: Implement deterministic rendering**
+- [x] **Step 3: Implement deterministic rendering**
 
 Sort defensively by code even though the catalogue is already sorted. Escape
 backslash, pipe, carriage return, and newline in Markdown cells. Render absent
@@ -636,7 +636,7 @@ category as `TRANSPORT`. Join sorted sources with `, ` inside one code span.
 Do not add a generation timestamp, local path, commit hash, or environment
 value because those would make the snapshot non-deterministic.
 
-- [ ] **Step 4: Generate the checked-in catalogue explicitly**
+- [x] **Step 4: Generate the checked-in catalogue explicitly**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=ErrorCatalogueMarkdownSnapshotTest" `
@@ -645,14 +645,14 @@ value because those would make the snapshot non-deterministic.
 
 Expected: the test writes 69 sorted rows and passes the immediate comparison.
 
-- [ ] **Step 5: Link the stable reference and regeneration command**
+- [x] **Step 5: Link the stable reference and regeneration command**
 
 Add `error-catalogue.md` under the current-system section of
 `docs/error-handling/README.md`, not only under work-item history. Document the
 same Maven command from Step 4. Add the catalogue to the `Start Here` or task
 lookup table in `docs/README.md`.
 
-- [ ] **Step 6: Verify snapshot, links, and disclosure text**
+- [x] **Step 6: Verify snapshot, links, and disclosure text**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=ErrorCatalogueMarkdownSnapshotTest,DocumentationLinksTest,DocumentationLinkValidatorTest" test
@@ -667,7 +667,7 @@ not legitimate client-facing error semantics. A descriptive introductory
 warning may contain the word `secret` only if it is not part of the generated
 table.
 
-- [ ] **Step 7: Commit the stable catalogue**
+- [x] **Step 7: Commit the stable catalogue**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/documentation/error/ErrorCatalogueMarkdownRenderer.java `
@@ -698,7 +698,7 @@ git commit -m "docs(KAN-43): publish the public error catalogue"
 - Every response uses `application/problem+json` and the reusable
   `X-Request-Id` header.
 
-- [ ] **Step 1: Write the component-level OpenAPI test**
+- [x] **Step 1: Write the component-level OpenAPI test**
 
 Construct an empty `OpenAPI`, run the customizer, and assert:
 
@@ -730,7 +730,7 @@ their names, content type, schema reference, and header reference. Scan all
 schema/property/example names for `exception`, `trace`, `stack`, `diagnostic`,
 `secret`, `password`, `signature`, and `databaseId`.
 
-- [ ] **Step 2: Run the component test and capture RED**
+- [x] **Step 2: Run the component test and capture RED**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=OpenApiProblemDetailsComponentsTest" test
@@ -738,7 +738,7 @@ schema/property/example names for `exception`, `trace`, `stack`, `diagnostic`,
 
 Expected: compilation fails because the OpenAPI configuration does not exist.
 
-- [ ] **Step 3: Build the three schemas from the real wire contract**
+- [x] **Step 3: Build the three schemas from the real wire contract**
 
 Use Swagger model `Schema` objects, not runtime DTOs. Required formats:
 
@@ -753,7 +753,7 @@ Leave `additionalProperties` unspecified on the base schema. Setting it to
 `violations` property. Instead, component tests assert the exact named
 properties and runtime disclosure tests assert the actual serialized allowlist.
 
-- [ ] **Step 4: Build reusable headers and responses**
+- [x] **Step 4: Build reusable headers and responses**
 
 Create one component header named `RequestIdHeader` with a non-blank string
 schema. Every response header uses
@@ -764,7 +764,7 @@ The base 400 response remains valid for malformed and module validation
 problems. Operation annotations may select the stricter validation response
 only when that operation's documented 400 case is request validation.
 
-- [ ] **Step 5: Run the component and catalogue tests**
+- [x] **Step 5: Run the component and catalogue tests**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=OpenApiProblemDetailsComponentsTest,PublicErrorCatalogueTest,ErrorCatalogueMarkdownSnapshotTest" test
@@ -773,7 +773,7 @@ only when that operation's documented 400 case is request validation.
 Expected: all tests pass with exactly 69 allowable codes and eleven reusable
 responses.
 
-- [ ] **Step 6: Commit the OpenAPI components**
+- [x] **Step 6: Commit the OpenAPI components**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/documentation/openapi `
@@ -809,7 +809,7 @@ git commit -m "feat(KAN-43): publish reusable Problem Details components"
   authenticated documentation follows existing session validity, audit, MDC,
   and Problem Details behavior.
 
-- [ ] **Step 1: Write the policy validation test matrix**
+- [x] **Step 1: Write the policy validation test matrix**
 
 Test this complete table by constructing the properties and validator directly:
 
@@ -828,7 +828,7 @@ Test this complete table by constructing the properties and validator directly:
 
 Every invalid case must assert a message naming the contradictory properties.
 
-- [ ] **Step 2: Write actual route tests before configuration exists**
+- [x] **Step 2: Write actual route tests before configuration exists**
 
 In `DocumentationExposureIT`, use focused nested Spring Boot contexts or the
 existing PostgreSQL integration support to assert:
@@ -844,7 +844,7 @@ existing PostgreSQL integration support to assert:
 
 Do not assert only one path; parameterize the full path allowlist.
 
-- [ ] **Step 3: Run policy tests and capture RED**
+- [x] **Step 3: Run policy tests and capture RED**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=DocumentationExposureValidatorTest" `
@@ -854,7 +854,7 @@ Do not assert only one path; parameterize the full path allowlist.
 Expected: compilation fails because exposure properties, validator, and
 security chain do not exist.
 
-- [ ] **Step 4: Add the application-owned properties and exact profile matrix**
+- [x] **Step 4: Add the application-owned properties and exact profile matrix**
 
 Base `application.properties`:
 
@@ -894,7 +894,7 @@ optrabidz.documentation.management-port-enabled=false
 optrabidz.documentation.access=AUTHENTICATED
 ```
 
-- [ ] **Step 5: Implement typed binding and fail-fast validation**
+- [x] **Step 5: Implement typed binding and fail-fast validation**
 
 Use a record annotated with `@ConfigurationProperties` and register it with
 `@EnableConfigurationProperties` from the security configuration. The
@@ -908,7 +908,7 @@ validator rejects:
 
 Disabled JSON with `AUTHENTICATED` access is valid for the production default.
 
-- [ ] **Step 6: Implement the isolated documentation filter chain**
+- [x] **Step 6: Implement the isolated documentation filter chain**
 
 Match these families exactly:
 
@@ -944,7 +944,7 @@ Authorize the families separately:
 Do not add documentation matchers to the existing feature security
 configuration.
 
-- [ ] **Step 7: Run validator, route, security, and existing session tests**
+- [x] **Step 7: Run validator, route, security, and existing session tests**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=DocumentationExposureValidatorTest" `
@@ -955,7 +955,7 @@ configuration.
 Expected: all tests pass; existing application routes still use the original
 security chain.
 
-- [ ] **Step 8: Commit the exposure boundary**
+- [x] **Step 8: Commit the exposure boundary**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/documentation/security `
@@ -985,7 +985,7 @@ git commit -m "feat(KAN-43): secure OpenAPI exposure by environment"
 - `OpenApiProblemDetailsIT` extends `RealHttpIntegrationTestSupport`, retrieves
   `/v3/api-docs`, and compares its components with actual real-port responses.
 
-- [ ] **Step 1: Write the real-port OpenAPI and runtime-parity test**
+- [x] **Step 1: Write the real-port OpenAPI and runtime-parity test**
 
 The test must prove:
 
@@ -1019,7 +1019,7 @@ pointers:
 - `/paths/~1api~1v1~1funding-listings/post/responses/403`; and
 - `/paths/~1api~1v1~1funding-listings/post/responses/422`.
 
-- [ ] **Step 2: Run the real-port test and capture RED**
+- [x] **Step 2: Run the real-port test and capture RED**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=TestingSetupTest" `
@@ -1029,7 +1029,7 @@ pointers:
 Expected: the component schemas exist, but representative operation response
 references are absent.
 
-- [ ] **Step 3: Add explicit standard annotations to the selected methods**
+- [x] **Step 3: Add explicit standard annotations to the selected methods**
 
 Use `@io.swagger.v3.oas.annotations.responses.ApiResponses` and the fully
 qualified nested `ApiResponse`. Example for `getListing`:
@@ -1065,7 +1065,7 @@ Apply the approved representative matrix:
 Do not annotate successful response schemas in KAN-43 and do not import
 Swagger's `ApiResponse` simple name.
 
-- [ ] **Step 4: Run component, real-port, controller, and architecture tests**
+- [x] **Step 4: Run component, real-port, controller, and architecture tests**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=OpenApiProblemDetailsComponentsTest,ExceptionArchitectureTest" `
@@ -1076,7 +1076,7 @@ Swagger's `ApiResponse` simple name.
 Expected: all tests pass; controllers have no dependency on the top-level
 documentation package and success payloads remain untouched.
 
-- [ ] **Step 5: Commit representative operation publication**
+- [x] **Step 5: Commit representative operation publication**
 
 ```powershell
 git add src/main/java/com/project/optrabidz/security/api `
@@ -1104,7 +1104,7 @@ If the real HTTP support did not require a change, omit it from `git add`.
 - The pull request targets `develop` and contains only KAN-43 contract,
   exposure, tests, and documentation changes.
 
-- [ ] **Step 1: Run the complete unit suite**
+- [x] **Step 1: Run the complete unit suite**
 
 ```powershell
 .\mvnw.cmd clean test
@@ -1114,7 +1114,7 @@ Expected: every Surefire test passes, including inventory, catalogue,
 renderer, OpenAPI components, exposure validation, architecture, and existing
 regressions.
 
-- [ ] **Step 2: Run the complete PostgreSQL integration profile**
+- [x] **Step 2: Run the complete PostgreSQL integration profile**
 
 ```powershell
 .\mvnw.cmd verify -Pintegration-tests
@@ -1124,7 +1124,7 @@ Expected: every Failsafe test passes, including documentation exposure,
 real-port OpenAPI parity, real Problem Details, Flyway, security, marketplace,
 financial, notification, and audit integration tests.
 
-- [ ] **Step 3: Verify documentation, generated parity, and diagrams**
+- [x] **Step 3: Verify documentation, generated parity, and diagrams**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=DocumentationLinksTest,DocumentationLinkValidatorTest,ErrorCatalogueMarkdownSnapshotTest" test
@@ -1136,7 +1136,7 @@ Open the checked-in SVG and PNG at original resolution. Expected: every label
 is readable, links resolve, the Markdown snapshot matches, whitespace is clean,
 and only intentional KAN-43 files remain.
 
-- [ ] **Step 4: Verify exposure using packaged profile settings**
+- [x] **Step 4: Verify exposure using packaged profile settings**
 
 Run the focused exposure integration test once more after `clean`:
 
@@ -1150,14 +1150,14 @@ Expected: base/disabled surfaces are unreachable, test JSON is public while UI
 is absent, authenticated JSON rejects anonymous access, and no management-port
 publication exists.
 
-- [ ] **Step 5: Record exact evidence without transient process language**
+- [x] **Step 5: Record exact evidence without transient process language**
 
 Update the design status to implemented and verified only after all commands
 pass. Record commit ID, test counts, profile matrix result, catalogue unique
 code count, and documentation verification. Check completed plan boxes only
 for steps supported by repository or CI evidence.
 
-- [ ] **Step 6: Commit and push final documentation evidence**
+- [x] **Step 6: Commit and push final documentation evidence**
 
 ```powershell
 git add docs/error-handling/work-items/KAN-43-openapi-error-catalogue `
