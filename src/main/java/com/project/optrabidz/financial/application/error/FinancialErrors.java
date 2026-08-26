@@ -3,6 +3,8 @@ package com.project.optrabidz.financial.application.error;
 import com.project.optrabidz.common.error.ErrorCategory;
 import com.project.optrabidz.common.error.ErrorDescriptor;
 
+import java.util.List;
+
 public final class FinancialErrors {
     public static final ErrorDescriptor FINANCIAL_OPERATION_NOT_ALLOWED = new ErrorDescriptor(
             "FINANCIAL_OPERATION_NOT_ALLOWED",
@@ -117,6 +119,30 @@ public final class FinancialErrors {
             ErrorCategory.INTERNAL,
             "The webhook could not be processed"
     );
+
+    public static List<ErrorDescriptor> descriptors() {
+        return List.of(
+                FINANCIAL_OPERATION_NOT_ALLOWED,
+                SETTLEMENT_NOT_FOUND,
+                SETTLEMENT_NOT_PAYABLE,
+                SETTLEMENT_STATE_CONFLICT,
+                REPAYMENT_NOT_FOUND,
+                REPAYMENT_INSTALLMENT_NOT_FOUND,
+                REPAYMENT_INSTALLMENT_NOT_PAYABLE,
+                REPAYMENT_STATE_CONFLICT,
+                PAYMENT_INTENT_NOT_FOUND,
+                PAYMENT_ATTEMPT_NOT_FOUND,
+                PAYMENT_INTENT_EXPIRED,
+                PAYMENT_INTENT_NOT_ACTIVE,
+                PAYMENT_ALREADY_CONFIRMED,
+                PAYMENT_STATE_CONFLICT,
+                PAYMENT_METHOD_UNSUPPORTED,
+                PAYMENT_PROVIDER_MISMATCH,
+                PAYMENT_WEBHOOK_REJECTED,
+                PAYMENT_WEBHOOK_PAYLOAD_INVALID,
+                PAYMENT_WEBHOOK_PROCESSING_FAILED
+        );
+    }
 
     private FinancialErrors() {
     }

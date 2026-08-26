@@ -3,6 +3,8 @@ package com.project.optrabidz.participation.application.error;
 import com.project.optrabidz.common.error.ErrorCategory;
 import com.project.optrabidz.common.error.ErrorDescriptor;
 
+import java.util.List;
+
 public final class AdminErrors {
 
     public static final ErrorDescriptor ACTIVE_ADMIN_ALREADY_EXISTS = descriptor(
@@ -22,6 +24,14 @@ public final class AdminErrors {
             ErrorCategory.NOT_FOUND,
             "No active administrator was found"
     );
+
+    public static List<ErrorDescriptor> descriptors() {
+        return List.of(
+                ACTIVE_ADMIN_ALREADY_EXISTS,
+                ADMIN_AUTHORITY_ALREADY_GRANTED,
+                ACTIVE_ADMIN_NOT_FOUND
+        );
+    }
 
     private AdminErrors() {
     }

@@ -3,6 +3,8 @@ package com.project.optrabidz.marketplace.application.error;
 import com.project.optrabidz.common.error.ErrorCategory;
 import com.project.optrabidz.common.error.ErrorDescriptor;
 
+import java.util.List;
+
 public final class MarketplaceErrors {
     public static final ErrorDescriptor LISTING_NOT_FOUND = new ErrorDescriptor(
             "LISTING_NOT_FOUND",
@@ -49,6 +51,20 @@ public final class MarketplaceErrors {
             ErrorCategory.BUSINESS_RULE,
             "The requested funding model is not supported"
     );
+
+    public static List<ErrorDescriptor> descriptors() {
+        return List.of(
+                LISTING_NOT_FOUND,
+                BID_NOT_FOUND,
+                AGREEMENT_NOT_FOUND,
+                MARKETPLACE_ACCESS_DENIED,
+                LISTING_STATE_CONFLICT,
+                BID_STATE_CONFLICT,
+                BID_ALREADY_EXISTS,
+                BID_ACCEPTANCE_CONFLICT,
+                UNSUPPORTED_FUNDING_MODEL
+        );
+    }
 
     private MarketplaceErrors() {
     }

@@ -2,7 +2,7 @@ package com.project.optrabidz.common.api.error;
 
 import org.springframework.http.HttpStatus;
 
-enum FrameworkProblem {
+public enum FrameworkProblem {
     VALIDATION_ERROR(
             new HttpErrorMapping(
                     HttpStatus.BAD_REQUEST,
@@ -61,15 +61,15 @@ enum FrameworkProblem {
         this.detail = detail;
     }
 
-    String code() {
+    public String code() {
         return name();
     }
 
-    HttpErrorMapping mapping() {
+    public HttpErrorMapping mapping() {
         return mapping;
     }
 
-    String detail() {
+    public String detail() {
         return detail;
     }
 }

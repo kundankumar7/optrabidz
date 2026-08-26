@@ -3,6 +3,8 @@ package com.project.optrabidz.security.application.error;
 import com.project.optrabidz.common.error.ErrorCategory;
 import com.project.optrabidz.common.error.ErrorDescriptor;
 
+import java.util.List;
+
 public final class SecurityErrors {
 
     public static final ErrorDescriptor INVALID_CREDENTIALS = descriptor(
@@ -46,6 +48,18 @@ public final class SecurityErrors {
             ErrorCategory.AUTHORIZATION,
             "You are not authorized to perform this action"
     );
+
+    public static List<ErrorDescriptor> descriptors() {
+        return List.of(
+                INVALID_CREDENTIALS,
+                CURRENT_PASSWORD_INVALID,
+                EMAIL_ALREADY_REGISTERED,
+                CREDENTIAL_NOT_FOUND,
+                PASSWORD_POLICY_VIOLATION,
+                SELF_REGISTRATION_NOT_ALLOWED,
+                AUTHORIZATION_FAILED
+        );
+    }
 
     private SecurityErrors() {
     }

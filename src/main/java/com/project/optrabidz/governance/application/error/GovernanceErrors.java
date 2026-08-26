@@ -4,6 +4,7 @@ import com.project.optrabidz.common.error.ErrorCategory;
 import com.project.optrabidz.common.error.ErrorDescriptor;
 import com.project.optrabidz.governance.application.common.GovernanceRuleCode;
 
+import java.util.List;
 import java.util.Objects;
 
 public final class GovernanceErrors {
@@ -42,6 +43,16 @@ public final class GovernanceErrors {
                     ErrorCategory.CONFLICT,
                     "No active administrator authority is available for transfer"
             );
+
+    public static List<ErrorDescriptor> descriptors() {
+        return List.of(
+                GOVERNANCE_ACTION_NOT_ELIGIBLE,
+                GOVERNANCE_ACTION_NOT_PERMITTED,
+                GOVERNANCE_STATE_CONFLICT,
+                ADMIN_RECOVERY_ACCESS_DENIED,
+                ADMIN_AUTHORITY_UNAVAILABLE
+        );
+    }
 
     private GovernanceErrors() {
     }
