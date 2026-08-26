@@ -121,6 +121,14 @@ class ExceptionArchitectureTest {
                     .as("production code must use the neutral error contract");
 
     @ArchTest
+    static final ArchRule PRODUCTION_CODE_DOES_NOT_DEPEND_INWARD_ON_DOCUMENTATION =
+            noClasses()
+                    .that().resideOutsideOfPackage("..documentation..")
+                    .should().dependOnClassesThat()
+                    .resideInAPackage("..documentation..")
+                    .as("documentation is an outer adapter, never an inward dependency");
+
+    @ArchTest
     static final ArchRule COMPETING_GLOBAL_EXCEPTION_HANDLER_IS_ABSENT =
             noClasses()
                     .should().haveSimpleName("GlobalExceptionHandler")
