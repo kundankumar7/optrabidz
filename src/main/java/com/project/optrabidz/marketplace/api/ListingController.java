@@ -43,6 +43,28 @@ public class ListingController {
     }
 
     @PostMapping("/funding-listings")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    ref = "#/components/responses/ValidationProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    ref = "#/components/responses/UnauthorizedProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    ref = "#/components/responses/ForbiddenProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "422",
+                    ref = "#/components/responses/UnprocessableEntityProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    ref = "#/components/responses/InternalServerProblem"
+            )
+    })
     public SuccessResponse<ListingResponse> createListing(@RequestBody @Valid CreateListingRequest request,
                                                           @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                           HttpServletRequest httpRequest) {
@@ -175,6 +197,20 @@ public class ListingController {
     }
 
     @GetMapping("/funding-listings/{listingId}")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    ref = "#/components/responses/ValidationProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    ref = "#/components/responses/NotFoundProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    ref = "#/components/responses/InternalServerProblem"
+            )
+    })
     public SuccessResponse<ListingResponse> getListing(@PathVariable Long listingId,
                                                        @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                        HttpServletRequest httpRequest) {
