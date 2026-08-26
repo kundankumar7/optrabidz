@@ -656,13 +656,16 @@ lookup table in `docs/README.md`.
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=ErrorCatalogueMarkdownSnapshotTest,DocumentationLinksTest,DocumentationLinkValidatorTest" test
-rg -n "password|credential|secret|signature|stack trace|exception class|database identifier" `
+rg -ni "^\\|.*(password hash|credential value|secret value|signature value|stack trace|raw exception|exception class|diagnostic context|database identifier)" `
   docs/error-handling/error-catalogue.md
 ```
 
-Expected: tests pass and the disclosure scan returns no catalogue rows. A
-descriptive introductory warning may contain the word `secret` only if it is
-not part of the generated table.
+Expected: tests pass and the disclosure scan returns no catalogue rows. Safe
+public authentication descriptions may still use ordinary words such as
+`password` or `credential`; the scan targets internal values and diagnostics,
+not legitimate client-facing error semantics. A descriptive introductory
+warning may contain the word `secret` only if it is not part of the generated
+table.
 
 - [ ] **Step 7: Commit the stable catalogue**
 

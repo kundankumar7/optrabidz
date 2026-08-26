@@ -16,6 +16,7 @@ the work items that introduced it.
 | Understand system boundaries | [Architecture](architecture/README.md) |
 | Change the database safely | [Database migrations](database/migrations.md) |
 | Add or change an API error | [Error handling](error-handling/README.md) |
+| Look up a public API error | [Public error catalogue](error-handling/error-catalogue.md) |
 | Review why a change was made | [Work-item index](#work-item-index) |
 
 ## Work-item Index

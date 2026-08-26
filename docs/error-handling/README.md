@@ -19,6 +19,15 @@ notification, and the migrated financial payment and settlement paths use the
 neutral contract. The current module catalogue and login-disclosure
 policy are documented in the [KAN-24 module migration design](work-items/KAN-24-module-migration/design.md).
 
+The [public error catalogue](error-catalogue.md) is the stable client-facing
+reference for error codes, HTTP mappings, safe details, type URNs, and source
+owners. After changing an application-owned error definition or its explicit
+module collection, regenerate the reference and verify exact parity:
+
+```powershell
+.\mvnw.cmd -q "-Dtest=ErrorCatalogueMarkdownSnapshotTest" "-Doptrabidz.update-error-catalogue=true" test
+```
+
 ## Work-item History
 
 | Jira | Record |
