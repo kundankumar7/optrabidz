@@ -88,11 +88,13 @@ monolith. The financial application service owns role policy, error
 precedence, and orchestration. Repository ports enforce ownership in the
 query. The shared adapter renders only allowlisted descriptors.
 
-<a href="assets/settlement-error-boundary.png">
-  <img src="assets/settlement-error-boundary.png" alt="KAN-37 settlement authorization and error boundary">
+<a href="assets/settlement-error-boundary.svg">
+  <img src="assets/settlement-error-boundary.svg" alt="KAN-37 settlement authorization and error boundary">
 </a>
 
-[Editable architecture source](assets/settlement-error-boundary.mmd)
+[Editable diagram source](assets/settlement-error-boundary.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/settlement-error-boundary.png)
 
 Two alternatives were rejected:
 
@@ -224,11 +226,13 @@ service reloads trusted settlement state:
 - a missing internal settlement returns `SETTLEMENT_NOT_FOUND` without
   exposing payment-provider data.
 
-<a href="assets/settlement-confirmation-state.png">
-  <img src="assets/settlement-confirmation-state.png" alt="KAN-37 settlement confirmation concurrency outcomes">
+<a href="assets/settlement-confirmation-state.svg">
+  <img src="assets/settlement-confirmation-state.svg" alt="KAN-37 settlement confirmation concurrency outcomes">
 </a>
 
-[Editable state-flow source](assets/settlement-confirmation-state.mmd)
+[Editable diagram source](assets/settlement-confirmation-state.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/settlement-confirmation-state.png)
 
 The distinction is deliberate:
 

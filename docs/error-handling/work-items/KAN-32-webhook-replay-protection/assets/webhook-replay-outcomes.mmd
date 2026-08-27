@@ -1,0 +1,37 @@
+flowchart TB
+    accTitle: Payment webhook replay claim outcomes
+    accDescr: The atomic claim distinguishes first delivery, identical duplicate, semantic collision, and unexpected state while keeping processing transactional and business audit dispatch after commit.
+
+    Result{"Atomic claim result"}
+
+    subgraph FirstDelivery["First-delivery transaction"]
+        direction TB
+        Process["Financial transition"] --> Effects["Outbox event"]
+        Effects --> Complete["Mark replay event PROCESSED"]
+        Complete --> FirstAck["Empty HTTP 204"]
+        Complete -. "after commit" .-> Audit["Outbox-dispatched business audit"]
+
+        Process -->|"Failure"| TransactionFailure["Rollback and sanitized internal error"]
+        Effects -->|"Failure"| TransactionFailure
+        Complete -->|"Failure"| TransactionFailure
+    end
+
+    subgraph ExistingClaim["Existing-claim classification"]
+        direction TB
+        Conflict["Unique-conflict claim"] --> Compare{"Stored content equal and PROCESSED?"}
+        Compare -->|"Yes"| DuplicateAck["Empty HTTP 204"]
+        Compare -->|"Different content"| CollisionAudit["Sanitized collision security audit"]
+        CollisionAudit --> Collision["Generic payload-invalid response"]
+        Compare -->|"Unexpected state"| StateFailure["Rollback and sanitized internal error"]
+    end
+
+    Result -->|"Inserted"| Process
+    Result -->|"Unique conflict"| Conflict
+    Audit ~~~ Conflict
+
+    classDef database fill:#E7F8EE,stroke:#2F855A,color:#173F2A,stroke-width:2px
+    classDef success fill:#E6FFFA,stroke:#0F766E,color:#134E4A,stroke-width:2px
+    classDef reject fill:#FDE8E8,stroke:#C53030,color:#5B1717,stroke-width:2px
+    class Result,Process,Effects,Complete,Conflict,Compare database
+    class FirstAck,DuplicateAck,Audit success
+    class Collision,CollisionAudit,TransactionFailure,StateFailure reject

@@ -1,6 +1,9 @@
 flowchart TD
+    accTitle: Module error translation architecture
+    accDescr: A controller delegates to a module application service, which raises a typed module exception and reaches the shared RFC 9457 Problem Details adapter through the neutral error contract.
+
     Controller["Controller"] --> Service["Module application service"]
     Service --> Exception["Typed module exception"]
-    Exception --> Neutral["ApplicationException and ErrorDescriptor"]
-    Neutral --> Handler["RestExceptionHandler"]
+    Exception --> Neutral["Neutral error contract"]
+    Neutral --> Handler["REST exception handler"]
     Handler --> Response["RFC 9457 Problem Details"]

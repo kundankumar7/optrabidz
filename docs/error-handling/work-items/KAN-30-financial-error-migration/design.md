@@ -104,11 +104,25 @@ Webhook requests cross a separate machine-to-machine trust boundary. Exact,
 bounded raw bytes are authenticated before parsing. Authenticated events then
 cross a persistent idempotency boundary before a financial state transition.
 
-<a href="assets/financial-error-flow.png">
-  <img src="assets/financial-error-flow.png" alt="KAN-30 financial error and secure webhook flow">
+### Financial API request path
+
+<a href="assets/financial-request-error-flow.svg">
+  <img src="assets/financial-request-error-flow.svg" alt="KAN-30 financial API request error flow">
 </a>
 
-[Editable diagram source](assets/financial-error-flow.mmd)
+[Editable diagram source](assets/financial-request-error-flow.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/financial-request-error-flow.png)
+
+### Payment-provider webhook path
+
+<a href="assets/financial-webhook-error-flow.svg">
+  <img src="assets/financial-webhook-error-flow.svg" alt="KAN-30 payment-provider webhook error flow">
+</a>
+
+[Editable diagram source](assets/financial-webhook-error-flow.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/financial-webhook-error-flow.png)
 
 This design supersedes the earlier capability-only order. Security hardening
 must not be hidden inside or postponed behind a mechanical exception rewrite.

@@ -1,0 +1,35 @@
+flowchart TB
+    accTitle: Financial provider webhook error flow
+    accDescr: A payment-provider callback is bounded and authenticated before parsing, claimed by persistent event identity, processed once through the financial use case, and acknowledged without exposing sensitive verification details.
+
+    Provider["Payment provider"] --> Bytes["Bounded exact raw bytes"]
+    Bytes --> Verify{"Valid signature and timestamp?"}
+    Verify -->|"No"| Rejected["Safe 400<br/>PAYMENT_WEBHOOK_REJECTED"]
+    Verify -->|"Yes"| Parse["Parse allowlisted event"]
+    Parse --> Valid{"Payload valid?"}
+    Valid -->|"No"| Invalid["Safe 400<br/>PAYMENT_WEBHOOK_PAYLOAD_INVALID"]
+    Valid -->|"Yes"| Identity{"Persistent event identity"}
+    Identity -->|"Duplicate"| Acknowledgement["Minimal 2xx acknowledgement"]
+    Identity -->|"First delivery"| UseCase["Financial use case"]
+    UseCase --> Decision{"Ownership, role, and state allow the operation?"}
+    Decision -->|"No"| Error["Financial application exception"]
+    Error --> Adapter["Shared REST adapter"]
+    Adapter --> Problem["Safe RFC 9457 Problem Details"]
+    Decision -->|"Yes"| Transition["Conditional state transition"]
+    Transition --> Database[("PostgreSQL")]
+    Transition --> Outbox["Outbox event"]
+    Transition --> Audit["Sanitized audit event"]
+    Transition --> Acknowledgement
+
+    Config["Safe provider configuration"] -. "constrains" .-> Bytes
+    Config -. "constrains" .-> Verify
+    Config ~~~ Provider
+    Rejected ~~~ Parse
+    Invalid ~~~ Identity
+    Problem ~~~ Transition
+    Database ~~~ Outbox ~~~ Audit
+
+    classDef error fill:#FEF2F2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px
+    classDef success fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px
+    class Rejected,Invalid,Error,Problem error
+    class Database,Outbox,Audit,Acknowledgement success

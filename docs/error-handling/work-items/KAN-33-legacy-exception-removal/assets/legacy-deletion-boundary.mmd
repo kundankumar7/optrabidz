@@ -1,5 +1,7 @@
-%%{init: {"theme":"base","themeVariables":{"fontSize":"24px","fontFamily":"Arial, sans-serif","primaryColor":"#EFF6FF","primaryTextColor":"#0F172A","primaryBorderColor":"#2563EB","lineColor":"#334155","secondaryColor":"#F8FAFC","tertiaryColor":"#FEF2F2","clusterBkg":"#FFFFFF","clusterBorder":"#94A3B8","edgeLabelBackground":"#FFFFFF"},"flowchart":{"htmlLabels":false,"curve":"linear","nodeSpacing":55,"rankSpacing":65}}}%%
 flowchart TB
+    accTitle: Legacy error contract deletion boundary
+    accDescr: KAN-33 deletes the legacy error model and unused webhook exceptions, updates the shared handler and architecture rule, and preserves successful API response structures for KAN-41.
+
     D0[Delete in KAN-33]
     D0 --> D1[ApiException and ErrorCode]
     D0 --> D2[Handler, ErrorField, and ErrorResponse]

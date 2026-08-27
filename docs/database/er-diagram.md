@@ -28,6 +28,8 @@ available in the executable Flyway migration
   <img src="assets/account-access-security-er.svg" alt="Account access and security context ER diagram">
 </a>
 
+[High-resolution PNG for Jira and offline review](assets/account-access-security-er.png)
+
 This slice focuses only on account-owned access records. `login_attempt` is left
 out because it stores attempted email values and has no database foreign key to
 `account` or `credential`.
@@ -45,6 +47,8 @@ out because it stores attempted email values and has no database foreign key to
 <a href="assets/participant-profile-er.svg">
   <img src="assets/participant-profile-er.svg" alt="Participant profile context ER diagram">
 </a>
+
+[High-resolution PNG for Jira and offline review](assets/participant-profile-er.png)
 
 This slice focuses on account-owned participant records and the detail rows
 attached to startup and investor profiles. `profile`, `startup`, and `investor`
@@ -70,6 +74,8 @@ key from `profile` to either participant table.
   <img src="assets/marketplace-listing-bidding-er.svg" alt="Marketplace listing and bidding context ER diagram">
 </a>
 
+[High-resolution PNG for Jira and offline review](assets/marketplace-listing-bidding-er.png)
+
 This slice focuses only on listings and bids. Agreement acceptance is documented
 separately so the marketplace bidding model stays readable.
 
@@ -89,6 +95,8 @@ separately so the marketplace bidding model stays readable.
 <a href="assets/agreement-acceptance-terms-er.svg">
   <img src="assets/agreement-acceptance-terms-er.svg" alt="Agreement acceptance and debt terms context ER diagram">
 </a>
+
+[High-resolution PNG for Jira and offline review](assets/agreement-acceptance-terms-er.png)
 
 This slice focuses on the accepted agreement record and the final agreed debt
 terms. Triggers require the agreement bid to be accepted and enforce consistency
@@ -110,6 +118,8 @@ between the selected bid, listing, startup, and investor.
   <img src="assets/settlement-context-er.svg" alt="Settlement context ER diagram">
 </a>
 
+[High-resolution PNG for Jira and offline review](assets/settlement-context-er.png)
+
 This slice focuses only on how a settlement belongs to an accepted agreement and
 its participants. Repayment scheduling is documented separately so the settlement
 model stays readable.
@@ -125,6 +135,8 @@ model stays readable.
 <a href="assets/repayment-schedule-er.svg">
   <img src="assets/repayment-schedule-er.svg" alt="Repayment schedule context ER diagram">
 </a>
+
+[High-resolution PNG for Jira and offline review](assets/repayment-schedule-er.png)
 
 This slice focuses only on the repayment schedule created for an accepted
 agreement. Payment execution is documented in the payment diagrams so the
@@ -145,6 +157,8 @@ repayment model stays readable.
   <img src="assets/payment-intent-er.svg" alt="Payment intent context ER diagram">
 </a>
 
+[High-resolution PNG for Jira and offline review](assets/payment-intent-er.png)
+
 This slice focuses only on how a `payment_intent` is sourced and which accounts
 participate. Provider, attempt, and webhook relationships are intentionally left
 out of this diagram so the payment intent model stays readable.
@@ -162,6 +176,8 @@ out of this diagram so the payment intent model stays readable.
   <img src="assets/payment-attempt-provider-er.svg" alt="Payment attempt and provider context ER diagram">
 </a>
 
+[High-resolution PNG for Jira and offline review](assets/payment-attempt-provider-er.png)
+
 This slice focuses on payment attempts and provider configuration. Webhook
 relationships are intentionally left out because webhook events have optional
 references back to both `payment_intent` and `payment_attempt`.
@@ -177,6 +193,8 @@ references back to both `payment_intent` and `payment_attempt`.
 <a href="assets/payment-webhook-er.svg">
   <img src="assets/payment-webhook-er.svg" alt="Payment webhook context ER diagram">
 </a>
+
+[High-resolution PNG for Jira and offline review](assets/payment-webhook-er.png)
 
 This slice focuses on provider webhook idempotency and the optional references a
 webhook event may carry back to payment records.
@@ -195,6 +213,8 @@ webhook event may carry back to payment records.
   <img src="assets/notification-delivery-subscription-er.svg" alt="Notification delivery and subscription context ER diagram">
 </a>
 
+[High-resolution PNG for Jira and offline review](assets/notification-delivery-subscription-er.png)
+
 This slice focuses on notification fan-out, delivery tracking, retry attempts,
 and account subscriptions. Outbox and audit event correlation is documented
 separately because it is not modeled with notification delivery foreign keys.
@@ -212,6 +232,8 @@ separately because it is not modeled with notification delivery foreign keys.
 <a href="assets/outbox-audit-correlation-er.svg">
   <img src="assets/outbox-audit-correlation-er.svg" alt="Outbox and audit correlation context ER diagram">
 </a>
+
+[High-resolution PNG for Jira and offline review](assets/outbox-audit-correlation-er.png)
 
 This slice focuses on `event_id` correlation. The dotted lines are not foreign
 keys; the only solid FK in this slice is the nullable audit actor account.

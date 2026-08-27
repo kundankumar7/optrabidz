@@ -65,11 +65,25 @@ OAuth2, asynchronous webhook processing, or operational recovery tooling.
 The selected design keeps replay policy in the financial application boundary
 and PostgreSQL mechanics behind an application port.
 
-<a href="assets/webhook-replay-flow.png">
-  <img src="assets/webhook-replay-flow.png" alt="KAN-32 payment webhook replay-protection architecture">
+### Authenticated ingress and atomic claim
+
+<a href="assets/webhook-replay-ingress.svg">
+  <img src="assets/webhook-replay-ingress.svg" alt="KAN-32 authenticated payment webhook replay ingress">
 </a>
 
-[Editable diagram source](assets/webhook-replay-flow.mmd)
+[Editable diagram source](assets/webhook-replay-ingress.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/webhook-replay-ingress.png)
+
+### Claim outcomes and transaction boundary
+
+<a href="assets/webhook-replay-outcomes.svg">
+  <img src="assets/webhook-replay-outcomes.svg" alt="KAN-32 payment webhook replay claim outcomes">
+</a>
+
+[Editable diagram source](assets/webhook-replay-outcomes.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/webhook-replay-outcomes.png)
 
 ```text
 Provider

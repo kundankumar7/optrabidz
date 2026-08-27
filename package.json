@@ -1,0 +1,12 @@
+{
+  "name": "optrabidz-documentation-tooling",
+  "private": true,
+  "scripts": {
+    "diagrams:render": "node scripts/render-documentation-diagrams.mjs",
+    "diagrams:check": "node scripts/render-documentation-diagrams.mjs --check"
+  },
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "11.16.0",
+    "sharp": "0.35.4"
+  }
+}

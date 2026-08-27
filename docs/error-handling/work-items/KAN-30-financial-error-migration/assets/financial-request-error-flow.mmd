@@ -1,0 +1,25 @@
+flowchart TB
+    accTitle: Financial API request error flow
+    accDescr: An authenticated financial API request reaches the application decision, maps expected failures through the shared RFC 9457 adapter, and commits allowed state transitions with outbox and audit effects.
+
+    Caller["Authenticated caller"] --> Security["Spring Security"]
+    Security --> Controller["Financial controller"]
+    Controller --> UseCase["Financial use case"]
+    UseCase --> Decision{"Ownership, role, and state allow the operation?"}
+
+    Decision -->|"No"| Error["Financial application exception"]
+    Error --> Adapter["Shared REST adapter"]
+    Adapter --> Problem["Safe RFC 9457 Problem Details"]
+
+    Decision -->|"Yes"| Transition["Conditional state transition"]
+    Transition --> Database[("PostgreSQL")]
+    Transition --> Outbox["Outbox event"]
+    Transition --> Audit["Sanitized audit event"]
+    Transition --> Success["Financial API success"]
+
+    Database ~~~ Outbox ~~~ Audit ~~~ Success
+
+    classDef error fill:#FEF2F2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px
+    classDef success fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px
+    class Error,Problem error
+    class Database,Outbox,Audit,Success success

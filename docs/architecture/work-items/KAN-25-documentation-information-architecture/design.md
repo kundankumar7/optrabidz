@@ -126,10 +126,14 @@ direct links only for the most important onboarding material.
 Diagram source and rendered output will be stored together under the owning
 document's `assets/` directory.
 
+The delivery-format preference below is superseded by the current
+[diagram publication contract](../../diagram-publication.md), introduced by
+KAN-39. KAN-25's ownership, placement, and information-architecture decisions
+remain valid.
+
 - Mermaid `.mmd` is the editable source when Mermaid is appropriate.
-- PNG or SVG is the delivery format embedded in Markdown and Jira.
-- PNG is preferred for Jira and mobile compatibility when SVG support is
-  uncertain.
+- SVG is embedded in GitHub documentation; a high-resolution opaque PNG is
+  retained for Jira and offline review.
 - Filenames describe the diagram within its local work-item context; the parent
   directory supplies the Jira identity.
 - A diagram without a clear owning document is moved to the applicable stable

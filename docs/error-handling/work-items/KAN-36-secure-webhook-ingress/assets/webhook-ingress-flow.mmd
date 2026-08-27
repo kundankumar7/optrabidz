@@ -1,22 +1,25 @@
 flowchart TB
+    accTitle: Secure payment webhook ingress
+    accDescr: Exact request bytes and allowlisted headers cross a bounded HTTP adapter, provider authentication completes before strict parsing, and only an authenticated normalized event reaches payment processing and replay protection.
+
     Provider[Payment provider]
 
     subgraph HttpBoundary[HTTP adapter]
-        direction LR
+        direction TB
         Security[Session-public and CSRF-exempt route]
         Reader[Bounded exact-byte reader]
         Headers[Allowlisted protocol headers]
     end
 
     subgraph Authentication[Provider authentication boundary]
-        direction LR
+        direction TB
         Registry[Verifier registry]
         Verifier[Timestamp and HMAC verifier]
         Secrets[Active and time-limited previous secret]
     end
 
     subgraph Application[Financial application boundary]
-        direction LR
+        direction TB
         Parser[Strict post-authentication parser]
         Event[Authenticated normalized event]
         Service[Payment webhook application service]
@@ -30,10 +33,12 @@ flowchart TB
     Secrets --> Verifier
     Verifier -->|verified exact bytes| Parser --> Event --> Service --> Replay
 
-    Reader -->|body or header limit| Reject
-    Registry -->|unavailable| Reject
-    Verifier -->|missing malformed stale or invalid| Reject
-    Parser -->|strict schema or field failure| Invalid
+    Reader -->|limit exceeded| Reject
+    Registry -->|verifier unavailable| Reject
+    Verifier -->|invalid signature| Reject
+    Parser -->|invalid payload| Invalid
+
+    Replay ~~~ Reject ~~~ Invalid
 
     classDef trust fill:#e8f1ff,stroke:#1d4ed8,color:#102a43
     classDef auth fill:#fff4d6,stroke:#b7791f,color:#3d2f00

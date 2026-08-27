@@ -1,0 +1,320 @@
+{
+  "schemaVersion": 1,
+  "renderer": {
+    "packageName": "@mermaid-js/mermaid-cli",
+    "version": "11.16.0",
+    "config": "docs/architecture/diagram-publication/mermaid-config.json"
+  },
+  "diagrams": [
+    {
+      "id": "architecture-overview",
+      "owner": "docs/architecture/README.md",
+      "source": "docs/architecture/assets/optrabidz-architecture-overview.svg",
+      "sourceType": "HAND_AUTHORED_SVG",
+      "githubSvg": "docs/architecture/assets/optrabidz-architecture-overview.svg",
+      "jiraPng": "docs/architecture/assets/optrabidz-architecture-overview.png",
+      "jiraPngRequired": true,
+      "remediation": "PASS"
+    },
+    {
+      "id": "database-account-access-security",
+      "owner": "docs/database/er-diagram.md",
+      "source": "docs/database/er-diagram-source.md",
+      "sourceType": "HAND_AUTHORED_SVG",
+      "githubSvg": "docs/database/assets/account-access-security-er.svg",
+      "jiraPng": "docs/database/assets/account-access-security-er.png",
+      "jiraPngRequired": true,
+      "remediation": "PASS"
+    },
+    {
+      "id": "database-participant-profile",
+      "owner": "docs/database/er-diagram.md",
+      "source": "docs/database/er-diagram-source.md",
+      "sourceType": "HAND_AUTHORED_SVG",
+      "githubSvg": "docs/database/assets/participant-profile-er.svg",
+      "jiraPng": "docs/database/assets/participant-profile-er.png",
+      "jiraPngRequired": true,
+      "remediation": "PASS"
+    },
+    {
+      "id": "database-marketplace-listing-bidding",
+      "owner": "docs/database/er-diagram.md",
+      "source": "docs/database/er-diagram-source.md",
+      "sourceType": "HAND_AUTHORED_SVG",
+      "githubSvg": "docs/database/assets/marketplace-listing-bidding-er.svg",
+      "jiraPng": "docs/database/assets/marketplace-listing-bidding-er.png",
+      "jiraPngRequired": true,
+      "remediation": "PASS"
+    },
+    {
+      "id": "database-agreement-acceptance-terms",
+      "owner": "docs/database/er-diagram.md",
+      "source": "docs/database/er-diagram-source.md",
+      "sourceType": "HAND_AUTHORED_SVG",
+      "githubSvg": "docs/database/assets/agreement-acceptance-terms-er.svg",
+      "jiraPng": "docs/database/assets/agreement-acceptance-terms-er.png",
+      "jiraPngRequired": true,
+      "remediation": "PASS"
+    },
+    {
+      "id": "database-settlement-context",
+      "owner": "docs/database/er-diagram.md",
+      "source": "docs/database/er-diagram-source.md",
+      "sourceType": "HAND_AUTHORED_SVG",
+      "githubSvg": "docs/database/assets/settlement-context-er.svg",
+      "jiraPng": "docs/database/assets/settlement-context-er.png",
+      "jiraPngRequired": true,
+      "remediation": "PASS"
+    },
+    {
+      "id": "database-repayment-schedule",
+      "owner": "docs/database/er-diagram.md",
+      "source": "docs/database/er-diagram-source.md",
+      "sourceType": "HAND_AUTHORED_SVG",
+      "githubSvg": "docs/database/assets/repayment-schedule-er.svg",
+      "jiraPng": "docs/database/assets/repayment-schedule-er.png",
+      "jiraPngRequired": true,
+      "remediation": "PASS"
+    },
+    {
+      "id": "database-payment-intent",
+      "owner": "docs/database/er-diagram.md",
+      "source": "docs/database/er-diagram-source.md",
+      "sourceType": "HAND_AUTHORED_SVG",
+      "githubSvg": "docs/database/assets/payment-intent-er.svg",
+      "jiraPng": "docs/database/assets/payment-intent-er.png",
+      "jiraPngRequired": true,
+      "remediation": "PASS"
+    },
+    {
+      "id": "database-payment-attempt-provider",
+      "owner": "docs/database/er-diagram.md",
+      "source": "docs/database/er-diagram-source.md",
+      "sourceType": "HAND_AUTHORED_SVG",
+      "githubSvg": "docs/database/assets/payment-attempt-provider-er.svg",
+      "jiraPng": "docs/database/assets/payment-attempt-provider-er.png",
+      "jiraPngRequired": true,
+      "remediation": "PASS"
+    },
+    {
+      "id": "database-payment-webhook",
+      "owner": "docs/database/er-diagram.md",
+      "source": "docs/database/er-diagram-source.md",
+      "sourceType": "HAND_AUTHORED_SVG",
+      "githubSvg": "docs/database/assets/payment-webhook-er.svg",
+      "jiraPng": "docs/database/assets/payment-webhook-er.png",
+      "jiraPngRequired": true,
+      "remediation": "PASS"
+    },
+    {
+      "id": "database-notification-delivery-subscription",
+      "owner": "docs/database/er-diagram.md",
+      "source": "docs/database/er-diagram-source.md",
+      "sourceType": "HAND_AUTHORED_SVG",
+      "githubSvg": "docs/database/assets/notification-delivery-subscription-er.svg",
+      "jiraPng": "docs/database/assets/notification-delivery-subscription-er.png",
+      "jiraPngRequired": true,
+      "remediation": "PASS"
+    },
+    {
+      "id": "database-outbox-audit-correlation",
+      "owner": "docs/database/er-diagram.md",
+      "source": "docs/database/er-diagram-source.md",
+      "sourceType": "HAND_AUTHORED_SVG",
+      "githubSvg": "docs/database/assets/outbox-audit-correlation-er.svg",
+      "jiraPng": "docs/database/assets/outbox-audit-correlation-er.png",
+      "jiraPngRequired": true,
+      "remediation": "PASS"
+    },
+    {
+      "id": "kan-24-module-architecture",
+      "owner": "docs/error-handling/work-items/KAN-24-module-migration/design.md",
+      "source": "docs/error-handling/work-items/KAN-24-module-migration/assets/architecture.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-24-module-migration/assets/architecture.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-24-module-migration/assets/architecture.png",
+      "jiraPngRequired": true,
+      "remediation": "REGENERATE"
+    },
+    {
+      "id": "kan-24-login-flow",
+      "owner": "docs/error-handling/work-items/KAN-24-module-migration/design.md",
+      "source": "docs/error-handling/work-items/KAN-24-module-migration/assets/login-flow.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-24-module-migration/assets/login-flow.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-24-module-migration/assets/login-flow.png",
+      "jiraPngRequired": true,
+      "remediation": "REGENERATE"
+    },
+    {
+      "id": "kan-29-notification-error-flow",
+      "owner": "docs/error-handling/work-items/KAN-29-notification-error-migration/design.md",
+      "source": "docs/error-handling/work-items/KAN-29-notification-error-migration/assets/error-flow.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-29-notification-error-migration/assets/error-flow.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-29-notification-error-migration/assets/error-flow.png",
+      "jiraPngRequired": true,
+      "remediation": "REGENERATE"
+    },
+    {
+      "id": "kan-30-financial-request-error-flow",
+      "owner": "docs/error-handling/work-items/KAN-30-financial-error-migration/design.md",
+      "source": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-request-error-flow.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-request-error-flow.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-request-error-flow.png",
+      "jiraPngRequired": true,
+      "remediation": "SPLIT"
+    },
+    {
+      "id": "kan-30-financial-webhook-error-flow",
+      "owner": "docs/error-handling/work-items/KAN-30-financial-error-migration/design.md",
+      "source": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-webhook-error-flow.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-webhook-error-flow.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-webhook-error-flow.png",
+      "jiraPngRequired": true,
+      "remediation": "SPLIT"
+    },
+    {
+      "id": "kan-31-authentication-flow",
+      "owner": "docs/error-handling/work-items/KAN-31-financial-security-boundary/design.md",
+      "source": "docs/error-handling/work-items/KAN-31-financial-security-boundary/assets/authentication-flow.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-31-financial-security-boundary/assets/authentication-flow.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-31-financial-security-boundary/assets/authentication-flow.png",
+      "jiraPngRequired": true,
+      "remediation": "REDESIGN"
+    },
+    {
+      "id": "kan-32-webhook-replay-ingress",
+      "owner": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/design.md",
+      "source": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-ingress.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-ingress.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-ingress.png",
+      "jiraPngRequired": true,
+      "remediation": "SPLIT"
+    },
+    {
+      "id": "kan-32-webhook-replay-outcomes",
+      "owner": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/design.md",
+      "source": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-outcomes.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-outcomes.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-outcomes.png",
+      "jiraPngRequired": true,
+      "remediation": "SPLIT"
+    },
+    {
+      "id": "kan-33-single-error-contract",
+      "owner": "docs/error-handling/work-items/KAN-33-legacy-exception-removal/design.md",
+      "source": "docs/error-handling/work-items/KAN-33-legacy-exception-removal/assets/single-error-contract.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-33-legacy-exception-removal/assets/single-error-contract.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-33-legacy-exception-removal/assets/single-error-contract.png",
+      "jiraPngRequired": true,
+      "remediation": "REGENERATE"
+    },
+    {
+      "id": "kan-33-legacy-deletion-boundary",
+      "owner": "docs/error-handling/work-items/KAN-33-legacy-exception-removal/design.md",
+      "source": "docs/error-handling/work-items/KAN-33-legacy-exception-removal/assets/legacy-deletion-boundary.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-33-legacy-exception-removal/assets/legacy-deletion-boundary.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-33-legacy-exception-removal/assets/legacy-deletion-boundary.png",
+      "jiraPngRequired": true,
+      "remediation": "REGENERATE"
+    },
+    {
+      "id": "kan-34-repayment-error-boundary",
+      "owner": "docs/error-handling/work-items/KAN-34-repayment-error-migration/design.md",
+      "source": "docs/error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-error-boundary.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-error-boundary.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-error-boundary.png",
+      "jiraPngRequired": true,
+      "remediation": "REGENERATE"
+    },
+    {
+      "id": "kan-34-repayment-transition-state",
+      "owner": "docs/error-handling/work-items/KAN-34-repayment-error-migration/design.md",
+      "source": "docs/error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-transition-state.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-transition-state.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-transition-state.png",
+      "jiraPngRequired": true,
+      "remediation": "REGENERATE"
+    },
+    {
+      "id": "kan-35-payment-error-boundary",
+      "owner": "docs/error-handling/work-items/KAN-35-payment-error-migration/design.md",
+      "source": "docs/error-handling/work-items/KAN-35-payment-error-migration/assets/payment-error-boundary.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-35-payment-error-migration/assets/payment-error-boundary.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-35-payment-error-migration/assets/payment-error-boundary.png",
+      "jiraPngRequired": true,
+      "remediation": "REDESIGN"
+    },
+    {
+      "id": "kan-35-payment-state-errors",
+      "owner": "docs/error-handling/work-items/KAN-35-payment-error-migration/design.md",
+      "source": "docs/error-handling/work-items/KAN-35-payment-error-migration/assets/payment-state-errors.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-35-payment-error-migration/assets/payment-state-errors.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-35-payment-error-migration/assets/payment-state-errors.png",
+      "jiraPngRequired": true,
+      "remediation": "REDESIGN"
+    },
+    {
+      "id": "kan-36-webhook-ingress-flow",
+      "owner": "docs/error-handling/work-items/KAN-36-secure-webhook-ingress/design.md",
+      "source": "docs/error-handling/work-items/KAN-36-secure-webhook-ingress/assets/webhook-ingress-flow.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-36-secure-webhook-ingress/assets/webhook-ingress-flow.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-36-secure-webhook-ingress/assets/webhook-ingress-flow.png",
+      "jiraPngRequired": true,
+      "remediation": "REGENERATE"
+    },
+    {
+      "id": "kan-37-settlement-error-boundary",
+      "owner": "docs/error-handling/work-items/KAN-37-settlement-error-migration/design.md",
+      "source": "docs/error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-error-boundary.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-error-boundary.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-error-boundary.png",
+      "jiraPngRequired": true,
+      "remediation": "REDESIGN"
+    },
+    {
+      "id": "kan-37-settlement-confirmation-state",
+      "owner": "docs/error-handling/work-items/KAN-37-settlement-error-migration/design.md",
+      "source": "docs/error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-confirmation-state.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-confirmation-state.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-confirmation-state.png",
+      "jiraPngRequired": true,
+      "remediation": "REDESIGN"
+    },
+    {
+      "id": "kan-42-real-http-boundary",
+      "owner": "docs/error-handling/work-items/KAN-42-real-http-smoke/design.md",
+      "source": "docs/error-handling/work-items/KAN-42-real-http-smoke/assets/real-http-boundary.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-42-real-http-smoke/assets/real-http-boundary.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-42-real-http-smoke/assets/real-http-boundary.png",
+      "jiraPngRequired": true,
+      "remediation": "REGENERATE"
+    },
+    {
+      "id": "kan-43-error-contract-publication",
+      "owner": "docs/error-handling/work-items/KAN-43-openapi-error-catalogue/design.md",
+      "source": "docs/error-handling/work-items/KAN-43-openapi-error-catalogue/assets/error-contract-publication.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-43-openapi-error-catalogue/assets/error-contract-publication.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-43-openapi-error-catalogue/assets/error-contract-publication.png",
+      "jiraPngRequired": true,
+      "remediation": "REDESIGN"
+    }
+  ]
+}

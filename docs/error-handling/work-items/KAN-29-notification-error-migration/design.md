@@ -67,11 +67,13 @@ notification service remains responsible for resource ownership and lookup.
 The existing REST adapter remains the only component that constructs Problem
 Details.
 
-<a href="assets/error-flow.png">
-  <img src="assets/error-flow.png" alt="KAN-29 notification error and ownership flow">
+<a href="assets/error-flow.svg">
+  <img src="assets/error-flow.svg" alt="KAN-29 notification error and ownership flow">
 </a>
 
 [Editable diagram source](assets/error-flow.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/error-flow.png)
 
 This narrow architecture was selected over:
 

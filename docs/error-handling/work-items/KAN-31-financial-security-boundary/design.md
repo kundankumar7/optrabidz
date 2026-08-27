@@ -86,11 +86,13 @@ Provider webhooks remain a separate trust boundary. They do not represent a
 browser user and therefore do not require a session, JWT, or OAuth2 principal.
 Their authenticity continues to depend on the configured provider signature.
 
-<a href="assets/authentication-flow.png">
-  <img src="assets/authentication-flow.png" alt="KAN-31 financial user and provider authentication boundaries">
+<a href="assets/authentication-flow.svg">
+  <img src="assets/authentication-flow.svg" alt="KAN-31 financial user and provider authentication boundaries">
 </a>
 
 [Editable diagram source](assets/authentication-flow.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/authentication-flow.png)
 
 This design follows the existing marketplace pattern and was selected over:
 

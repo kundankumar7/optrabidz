@@ -1,26 +1,29 @@
-flowchart TD
-    U[Authenticated caller] --> S[Spring Security]
-    S --> C[Financial controller]
-    C --> A[Financial application service]
+flowchart TB
+    accTitle: Settlement authorization and error boundary
+    accDescr: An authenticated settlement request checks role authority before selecting a trusted global, startup-scoped, or investor-scoped lookup, then evaluates payable state and maps safe errors through the shared RFC 9457 adapter.
 
-    A --> R{Role allowed for operation?}
-    R -->|No| F[FINANCIAL_OPERATION_NOT_ALLOWED 403]
-    R -->|Yes| Q{Select trusted lookup}
+    Caller["Authenticated caller"] --> Security["Spring Security"]
+    Security --> Controller["Financial controller"]
+    Controller --> Application["Financial application service"]
 
-    Q -->|Administrator read| G[Global settlement lookup]
-    Q -->|Startup read| SU[Lookup by settlement and startup]
-    Q -->|Investor read or pay| IN[Lookup by settlement and investor]
+    Application --> Role{"Role allowed for operation?"}
+    Role -->|"No"| Forbidden["FINANCIAL_OPERATION_<br/>NOT_ALLOWED · 403"]
+    Role -->|"Yes"| Lookup["Trusted lookup selected by role: global, startup-scoped, or investor-scoped"]
 
-    G --> X{Settlement found?}
-    SU --> X
-    IN --> X
-    X -->|No| N[SETTLEMENT_NOT_FOUND 404]
-    X -->|Yes| O[Evaluate state after authority]
+    Lookup --> Found{"Settlement found in selected scope?"}
+    Found -->|"No"| NotFound["SETTLEMENT_<br/>NOT_FOUND · 404"]
+    Found -->|"Yes"| State{"Settlement initially payable?"}
+    State -->|"No"| NotPayable["SETTLEMENT_<br/>NOT_PAYABLE · 409"]
+    State -->|"Yes"| UseCase["Execute financial use case"]
 
-    O -->|Initially not payable| P[SETTLEMENT_NOT_PAYABLE 409]
-    O -->|Allowed| B[Execute financial use case]
+    Forbidden --> Adapter["Shared RFC 9457 adapter"]
+    NotFound --> Adapter
+    NotPayable --> Adapter
+    Adapter --> Problem["Allowlisted Problem Details"]
 
-    F --> H[Shared RFC 9457 adapter]
-    N --> H
-    P --> H
-    H --> D[Allowlisted Problem Details]
+    Forbidden ~~~ NotFound ~~~ NotPayable ~~~ UseCase
+
+    classDef error fill:#FEF2F2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px
+    classDef success fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px
+    class Forbidden,NotFound,NotPayable,Problem error
+    class UseCase success

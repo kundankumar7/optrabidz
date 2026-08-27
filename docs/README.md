@@ -6,6 +6,7 @@ the work items that introduced it.
 ## Start Here
 
 - [System architecture](architecture/README.md)
+- [Diagram publication guide](architecture/diagram-publication.md)
 - [Database design](database/README.md)
 - [Error handling](error-handling/README.md)
 
@@ -14,6 +15,7 @@ the work items that introduced it.
 | Task | Start here |
 |---|---|
 | Understand system boundaries | [Architecture](architecture/README.md) |
+| Publish or update a diagram | [Diagram publication](architecture/diagram-publication.md) |
 | Change the database safely | [Database migrations](database/migrations.md) |
 | Add or change an API error | [Error handling](error-handling/README.md) |
 | Look up a public API error | [Public error catalogue](error-handling/error-catalogue.md) |
@@ -33,6 +35,7 @@ the work items that introduced it.
 | [KAN-24](https://0707manna0895.atlassian.net/browse/KAN-24) | Module error migration | [Design and implementation plan](error-handling/work-items/KAN-24-module-migration/) |
 | [KAN-25](https://0707manna0895.atlassian.net/browse/KAN-25) | Documentation information architecture | [Design and implementation plan](architecture/work-items/KAN-25-documentation-information-architecture/) |
 | [KAN-31](https://0707manna0895.atlassian.net/browse/KAN-31) | Financial security boundary | [Design and implementation plan](error-handling/work-items/KAN-31-financial-security-boundary/) |
+| [KAN-39](https://0707manna0895.atlassian.net/browse/KAN-39) | Diagram publication quality | [Design and implementation plan](architecture/work-items/KAN-39-diagram-publication-quality/) |
 | [KAN-43](https://0707manna0895.atlassian.net/browse/KAN-43) | OpenAPI Problem Details contract and public error catalogue | [Design and implementation plan](error-handling/work-items/KAN-43-openapi-error-catalogue/) |
 
 Additional work-item records are added here as their existing files move into
