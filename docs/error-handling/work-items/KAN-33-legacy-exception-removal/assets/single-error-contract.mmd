@@ -1,5 +1,7 @@
-%%{init: {"theme":"base","themeVariables":{"fontSize":"24px","fontFamily":"Arial, sans-serif","primaryColor":"#EFF6FF","primaryTextColor":"#0F172A","primaryBorderColor":"#2563EB","lineColor":"#334155","secondaryColor":"#F8FAFC","tertiaryColor":"#FEF2F2","clusterBkg":"#FFFFFF","clusterBorder":"#94A3B8","edgeLabelBackground":"#FFFFFF"},"flowchart":{"htmlLabels":false,"curve":"linear","nodeSpacing":55,"rankSpacing":65}}}%%
 flowchart TB
+    accTitle: Single public error contract
+    accDescr: Security, expected application, framework, and unexpected runtime failures converge on one RFC 9457 public error contract while unexpected details remain in structured internal logs.
+
     R[HTTP request] --> S{Spring Security accepts request?}
     S -->|No| SP[Security Problem Details adapter]
     S -->|Yes| C[Controller and application flow]

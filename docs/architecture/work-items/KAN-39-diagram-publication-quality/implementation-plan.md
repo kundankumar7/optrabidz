@@ -340,25 +340,25 @@ git commit -m "Refresh historical flow diagrams (KAN-39)"
 layout. Replace only deprecated per-diagram label configuration, unsafe SVG
 label output, and inconsistent PNG exports.
 
-- [ ] **Step 1: Add inventory/audit entries and accessibility metadata**
+- [x] **Step 1: Add inventory/audit entries and accessibility metadata**
 
 Use stable IDs based on the existing base filenames. Add `accTitle` and a safe,
 specific `accDescr`; remove duplicated inline theme configuration so the shared
 configuration is authoritative.
 
-- [ ] **Step 2: Render all five pairs with the pinned toolchain**
+- [x] **Step 2: Render all five pairs with the pinned toolchain**
 
 Run `npm run diagrams:render -- --id <id>` for each entry. Expected: the
 accepted topology remains recognizable, SVG output contains no HTML label
 elements, and Jira PNG output is opaque.
 
-- [ ] **Step 3: Verify output equivalence and readability**
+- [x] **Step 3: Verify output equivalence and readability**
 
 Compare source node/edge meaning before and after rendering. Review both KAN-34
 diagrams first as the accepted visual baseline, then KAN-33 and KAN-42 at
 desktop/mobile widths. Update the audit table with exact results.
 
-- [ ] **Step 4: Run documentation tests and commit**
+- [x] **Step 4: Run documentation tests and commit**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=DocumentationLinksTest,DocumentationLinkValidatorTest,DiagramPublicationValidatorTest" test

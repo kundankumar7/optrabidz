@@ -1,5 +1,7 @@
-%%{init: {"theme":"base","themeVariables":{"fontSize":"22px","fontFamily":"Arial, sans-serif","primaryColor":"#EFF6FF","primaryTextColor":"#0F172A","primaryBorderColor":"#2563EB","lineColor":"#334155","secondaryColor":"#F8FAFC","tertiaryColor":"#FEF2F2","clusterBkg":"#FFFFFF","clusterBorder":"#94A3B8","edgeLabelBackground":"#FFFFFF"},"flowchart":{"htmlLabels":false,"curve":"linear","nodeSpacing":55,"rankSpacing":65}}}%%
 flowchart TB
+    accTitle: Real HTTP smoke-test boundary
+    accDescr: A Java HTTP client crosses a random real port and the production servlet, filter, controller, application, database, and error-adapter path before wire-level contract assertions.
+
     subgraph TRANSPORT[1. Real transport]
         direction LR
         J[Java 21 HttpClient<br/>and isolated cookie store]

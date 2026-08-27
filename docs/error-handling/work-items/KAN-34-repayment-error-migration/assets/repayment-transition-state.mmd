@@ -1,5 +1,7 @@
-%%{init: {"theme":"base","themeVariables":{"fontSize":"22px","fontFamily":"Arial, sans-serif","primaryColor":"#EFF6FF","primaryTextColor":"#0F172A","primaryBorderColor":"#2563EB","lineColor":"#334155","secondaryColor":"#F8FAFC","tertiaryColor":"#FEF2F2","clusterBkg":"#FFFFFF","clusterBorder":"#94A3B8","edgeLabelBackground":"#FFFFFF"},"flowchart":{"htmlLabels":false,"curve":"linear","nodeSpacing":45,"rankSpacing":55}}}%%
 flowchart TB
+    accTitle: Repayment transition state classification
+    accDescr: An authorized repayment operation handles existing intents idempotently, performs a state-qualified atomic update, and classifies zero-row races from trusted reloaded state.
+
     subgraph PRECHECK[1. Precondition]
         direction LR
         A[Authorized repayment operation] --> P{Initially payable?}

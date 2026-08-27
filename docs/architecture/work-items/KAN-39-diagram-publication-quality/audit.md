@@ -24,6 +24,16 @@ viewport, and the full 2400-pixel opaque PNG.
 
 ## Remaining inventory
 
+## Accepted Mermaid normalization
+
+| Diagram ID | Initial publication | Initial defect | Class | Desktop | Mobile | Contrast | Jira PNG | Disposition |
+|---|---|---|---|---|---|---|---|---|
+| `kan-33-single-error-contract` | 2532×3164 opaque PNG plus SVG | Per-diagram renderer configuration and inconsistent export | Regenerate | Pass | Pass | Pass | Pass | Regenerated; topology preserved |
+| `kan-33-legacy-deletion-boundary` | 1898×1906 opaque PNG plus SVG | Per-diagram renderer configuration and inconsistent export | Regenerate | Pass | Pass | Pass | Pass | Regenerated; topology preserved |
+| `kan-34-repayment-error-boundary` | 3168×2400 opaque PNG plus accepted SVG | Accepted layout used duplicated renderer configuration | Regenerate | Pass | Pass | Pass | Pass | Accepted layout retained |
+| `kan-34-repayment-transition-state` | 2840×2804 opaque PNG plus accepted SVG | Accepted layout used duplicated renderer configuration | Regenerate | Pass | Pass | Pass | Pass | Accepted layout retained |
+| `kan-42-real-http-boundary` | 2352×1194 opaque PNG plus SVG | Per-diagram renderer configuration and inconsistent export | Regenerate | Pass | Pass | Pass | Pass | Regenerated; topology preserved |
+
 The stable architecture/database diagrams, accepted Mermaid SVGs, and dense
 KAN-30, KAN-32, KAN-35, KAN-37, and KAN-43 flows are added to this record as
 their bounded remediation task begins. Final verification requires one row for

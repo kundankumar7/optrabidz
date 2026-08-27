@@ -1,5 +1,7 @@
-%%{init: {"theme":"base","themeVariables":{"fontSize":"22px","fontFamily":"Arial, sans-serif","primaryColor":"#EFF6FF","primaryTextColor":"#0F172A","primaryBorderColor":"#2563EB","lineColor":"#334155","secondaryColor":"#F8FAFC","tertiaryColor":"#FEF2F2","clusterBkg":"#FFFFFF","clusterBorder":"#94A3B8","edgeLabelBackground":"#FFFFFF"},"flowchart":{"htmlLabels":false,"curve":"linear","nodeSpacing":45,"rankSpacing":55}}}%%
 flowchart TB
+    accTitle: Repayment authorization and error boundary
+    accDescr: An authenticated repayment query is validated, authorized, ownership-scoped, and checked for payable state before a conditional database transition returns success or a classified safe error.
+
     subgraph REQUEST[1. Request boundary]
         direction LR
         U[Authenticated caller] --> S[Spring Security]
