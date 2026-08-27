@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import java.net.URI;
 import java.time.Clock;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 @Component
@@ -93,9 +92,7 @@ public final class ProblemDetailsFactory {
                 detail
         );
 
-        problem.setType(URI.create(
-                "urn:optrabidz:problem:" + toProblemSlug(code)
-        ));
+        problem.setType(ProblemTypeUri.fromCode(code));
         problem.setTitle(mapping.title());
         problem.setInstance(URI.create(
                 "urn:optrabidz:request:" + requestId
@@ -109,7 +106,4 @@ public final class ProblemDetailsFactory {
         return problem;
     }
 
-    private String toProblemSlug(String code) {
-        return code.toLowerCase(Locale.ROOT).replace('_', '-');
-    }
 }

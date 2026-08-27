@@ -3,6 +3,8 @@ package com.project.optrabidz.participation.application.error;
 import com.project.optrabidz.common.error.ErrorCategory;
 import com.project.optrabidz.common.error.ErrorDescriptor;
 
+import java.util.List;
+
 public final class StartupErrors {
 
     public static final ErrorDescriptor STARTUP_ALREADY_EXISTS = descriptor(
@@ -16,6 +18,13 @@ public final class StartupErrors {
             ErrorCategory.NOT_FOUND,
             "The requested startup profile was not found"
     );
+
+    public static List<ErrorDescriptor> descriptors() {
+        return List.of(
+                STARTUP_ALREADY_EXISTS,
+                STARTUP_NOT_FOUND
+        );
+    }
 
     private StartupErrors() {
     }
