@@ -30,6 +30,8 @@ viewport, and the full 2400-pixel opaque PNG.
 |---|---|---|---|---|---|---|---|---|---|
 | `kan-30-financial-error-flow` | 1584×2118 opaque PNG | One canvas mixed API and provider ingress responsibilities and compressed review paths | `kan-30-financial-request-error-flow` | Split | Pass | Pass | Pass | Pass | Focused API request flow published |
 | `kan-30-financial-error-flow` | 1584×2118 opaque PNG | One canvas mixed API and provider ingress responsibilities and compressed review paths | `kan-30-financial-webhook-error-flow` | Split | Pass | Pass | Pass | Pass | Focused provider webhook flow published |
+| `kan-32-webhook-replay-flow` | 2446×4194 transparent PNG | Tall combined ingress, transaction, replay classification, and audit canvas | `kan-32-webhook-replay-ingress` | Split | Pass | Pass | Pass | Pass | Focused ingress and atomic-claim flow published |
+| `kan-32-webhook-replay-flow` | 2446×4194 transparent PNG | Tall combined ingress, transaction, replay classification, and audit canvas | `kan-32-webhook-replay-outcomes` | Split | Pass | Pass | Pass | Pass | Transaction and existing-claim outcomes published |
 
 ## Accepted Mermaid normalization
 

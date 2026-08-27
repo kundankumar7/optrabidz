@@ -429,24 +429,24 @@ git commit -m "Split the financial error flow (KAN-39)"
 delivery, identical duplicate, semantic collision, unexpected committed state,
 rollback, acknowledgement, and post-commit audit behavior.
 
-- [ ] **Step 1: Add the split inventory and initial failure evidence**
+- [x] **Step 1: Add the split inventory and initial failure evidence**
 
 Record the original 2446×4194 transparent output and classify it `SPLIT`.
 
-- [ ] **Step 2: Write and render the two bounded sources**
+- [x] **Step 2: Write and render the two bounded sources**
 
 Use short labels and `TB`; keep signature verification before parsing and
 fingerprinting, and preserve transactional/post-commit boundaries. Render both
 SVG/PNG pairs using their stable IDs.
 
-- [ ] **Step 3: Replace the owner embed and retire obsolete assets**
+- [x] **Step 3: Replace the owner embed and retire obsolete assets**
 
 Publish two clearly titled sections with standard links. Delete the combined
 assets only after `rg -n "webhook-replay-flow" docs` reports no active owner
 reference outside historical implementation commands being intentionally
 updated.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 Run focused documentation tests, complete the four-context visual review, and
 commit:

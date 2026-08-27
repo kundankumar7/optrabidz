@@ -187,12 +187,22 @@
       "remediation": "REDESIGN"
     },
     {
-      "id": "kan-32-webhook-replay-flow",
+      "id": "kan-32-webhook-replay-ingress",
       "owner": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/design.md",
-      "source": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-flow.mmd",
+      "source": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-ingress.mmd",
       "sourceType": "MERMAID_FILE",
-      "githubSvg": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-flow.svg",
-      "jiraPng": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-flow.png",
+      "githubSvg": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-ingress.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-ingress.png",
+      "jiraPngRequired": true,
+      "remediation": "SPLIT"
+    },
+    {
+      "id": "kan-32-webhook-replay-outcomes",
+      "owner": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/design.md",
+      "source": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-outcomes.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-outcomes.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-outcomes.png",
       "jiraPngRequired": true,
       "remediation": "SPLIT"
     },
