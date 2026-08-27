@@ -24,6 +24,13 @@ viewport, and the full 2400-pixel opaque PNG.
 
 ## Remaining inventory
 
+## Dense-flow splits
+
+| Original diagram | Initial publication | Initial defect | Replacement | Class | Desktop | Mobile | Contrast | Jira PNG | Disposition |
+|---|---|---|---|---|---|---|---|---|---|
+| `kan-30-financial-error-flow` | 1584×2118 opaque PNG | One canvas mixed API and provider ingress responsibilities and compressed review paths | `kan-30-financial-request-error-flow` | Split | Pass | Pass | Pass | Pass | Focused API request flow published |
+| `kan-30-financial-error-flow` | 1584×2118 opaque PNG | One canvas mixed API and provider ingress responsibilities and compressed review paths | `kan-30-financial-webhook-error-flow` | Split | Pass | Pass | Pass | Pass | Focused provider webhook flow published |
+
 ## Accepted Mermaid normalization
 
 | Diagram ID | Initial publication | Initial defect | Class | Desktop | Mobile | Contrast | Jira PNG | Disposition |

@@ -157,12 +157,22 @@
       "remediation": "REGENERATE"
     },
     {
-      "id": "kan-30-financial-error-flow",
+      "id": "kan-30-financial-request-error-flow",
       "owner": "docs/error-handling/work-items/KAN-30-financial-error-migration/design.md",
-      "source": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-error-flow.mmd",
+      "source": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-request-error-flow.mmd",
       "sourceType": "MERMAID_FILE",
-      "githubSvg": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-error-flow.svg",
-      "jiraPng": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-error-flow.png",
+      "githubSvg": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-request-error-flow.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-request-error-flow.png",
+      "jiraPngRequired": true,
+      "remediation": "SPLIT"
+    },
+    {
+      "id": "kan-30-financial-webhook-error-flow",
+      "owner": "docs/error-handling/work-items/KAN-30-financial-error-migration/design.md",
+      "source": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-webhook-error-flow.mmd",
+      "sourceType": "MERMAID_FILE",
+      "githubSvg": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-webhook-error-flow.svg",
+      "jiraPng": "docs/error-handling/work-items/KAN-30-financial-error-migration/assets/financial-webhook-error-flow.png",
       "jiraPngRequired": true,
       "remediation": "SPLIT"
     },

@@ -385,25 +385,25 @@ and success. The webhook diagram covers bounded bytes, verification, strict
 parsing, persistent identity, duplicate acknowledgement, first-delivery
 processing, and provider acknowledgement.
 
-- [ ] **Step 1: Record the original combined-canvas failure**
+- [x] **Step 1: Record the original combined-canvas failure**
 
 Capture the original aspect ratio and observed tiny-label/excess-whitespace
 failure in the audit, then add the two replacement inventory entries with
 `SPLIT` remediation.
 
-- [ ] **Step 2: Write two focused Mermaid sources**
+- [x] **Step 2: Write two focused Mermaid sources**
 
 Both sources use `TB`, `accTitle`, `accDescr`, short node labels, and at most
 one responsibility per node. Preserve every original boundary; do not invent
 new application behavior or combine the provider verifier with parsing.
 
-- [ ] **Step 3: Render and embed both diagram pairs**
+- [x] **Step 3: Render and embed both diagram pairs**
 
 Run the renderer for both IDs. Replace the single KAN-30 embed with two titled
 subsections and the standard SVG/source/PNG link pattern. Remove the obsolete
 combined source and PNG after no document references them.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 Run the focused documentation tests, visually review both widths and Jira PNGs,
 update the audit, then commit:
