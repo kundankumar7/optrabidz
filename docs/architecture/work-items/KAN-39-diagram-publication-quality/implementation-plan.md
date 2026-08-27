@@ -470,19 +470,19 @@ git commit -m "Split the webhook replay flow (KAN-39)"
 state evaluation, conditional transitions, typed financial exceptions, and
 idempotent/rollback distinctions.
 
-- [ ] **Step 1: Add RED audit evidence and inventory entries**
+- [x] **Step 1: Add RED audit evidence and inventory entries**
 
 Record transparent-background and tall-layout failures and classify both
 entries `REDESIGN`.
 
-- [ ] **Step 2: Simplify source layout without changing semantics**
+- [x] **Step 2: Simplify source layout without changing semantics**
 
 Group request/scoped lookup/error rendering in the boundary diagram. Group
 creation outcomes separately from confirmation/failure outcomes in the state
 diagram. Use short edge labels and keep each canvas within one reading
 direction.
 
-- [ ] **Step 3: Render, embed, review, and commit**
+- [x] **Step 3: Render, embed, review, and commit**
 
 Generate both pairs, change embeds to SVG, add source/PNG links, run focused
 tests, record desktop/mobile/theme/Jira results, and commit:

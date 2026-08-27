@@ -33,6 +33,13 @@ viewport, and the full 2400-pixel opaque PNG.
 | `kan-32-webhook-replay-flow` | 2446×4194 transparent PNG | Tall combined ingress, transaction, replay classification, and audit canvas | `kan-32-webhook-replay-ingress` | Split | Pass | Pass | Pass | Pass | Focused ingress and atomic-claim flow published |
 | `kan-32-webhook-replay-flow` | 2446×4194 transparent PNG | Tall combined ingress, transaction, replay classification, and audit canvas | `kan-32-webhook-replay-outcomes` | Split | Pass | Pass | Pass | Pass | Transaction and existing-claim outcomes published |
 
+## Payment and settlement redesigns
+
+| Diagram ID | Initial publication | Initial defect | Class | Desktop | Mobile | Contrast | Jira PNG | Disposition |
+|---|---|---|---|---|---|---|---|---|
+| `kan-35-payment-error-boundary` | 868×1576 transparent PNG | Transparent raster and dense scoped-lookup fan-out | Redesign | Pass | Pass | Pass | Pass | Narrow scoped-lookup and error-rendering stages published |
+| `kan-35-payment-state-errors` | 1784×1199 transparent PNG | Wide mixed creation and completion outcomes | Redesign | Pass | Pass | Pass | Pass | Creation and completion outcomes separated |
+
 ## Accepted Mermaid normalization
 
 | Diagram ID | Initial publication | Initial defect | Class | Desktop | Mobile | Contrast | Jira PNG | Disposition |

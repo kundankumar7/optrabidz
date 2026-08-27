@@ -1,26 +1,42 @@
-flowchart TD
-    O[Scoped resource found] --> K{Requested operation}
+flowchart TB
+    accTitle: Payment state and error selection
+    accDescr: Attempt creation classifies intent and payment-method state, while confirmation or failure uses conditional attempt and intent updates to distinguish committed, idempotent, conflicting, and rollback outcomes.
 
-    K -->|Create attempt| I{Intent condition}
-    I -->|Confirmed| AC[PAYMENT_ALREADY_CONFIRMED 409]
-    I -->|Expired| EX[PAYMENT_INTENT_EXPIRED 409]
-    I -->|Other terminal| NA[PAYMENT_INTENT_NOT_ACTIVE 409]
-    I -->|Created or pending| M{Method available?}
-    M -->|No| MU[PAYMENT_METHOD_UNSUPPORTED 422]
-    M -->|Yes| CR[Create attempt and mark pending]
+    subgraph Creation["Attempt creation outcomes"]
+        direction TB
+        Create["Scoped intent for attempt creation"] --> Intent{"Intent condition"}
+        Intent -->|"Confirmed"| AlreadyConfirmed["PAYMENT_ALREADY_<br/>CONFIRMED · 409"]
+        Intent -->|"Expired"| Expired["PAYMENT_INTENT_<br/>EXPIRED · 409"]
+        Intent -->|"Other terminal"| Inactive["PAYMENT_INTENT_<br/>NOT_ACTIVE · 409"]
+        Intent -->|"Created or pending"| Method{"Method available?"}
+        Method -->|"No"| Unsupported["PAYMENT_METHOD_<br/>UNSUPPORTED · 422"]
+        Method -->|"Yes"| Created["Create attempt and mark pending"]
 
-    K -->|Confirm or fail| U[Conditional attempt update]
-    U -->|Updated| V[Conditional intent update]
-    U -->|Already same result| OK[Idempotent success]
-    U -->|Different terminal result| SC[PAYMENT_STATE_CONFLICT 409]
+        AlreadyConfirmed ~~~ Expired ~~~ Inactive
+    end
 
-    V -->|Updated| DONE[Commit terminal result]
-    V -->|Not updated| F{Reload intent state}
-    F -->|Confirmed| AC
-    F -->|Expired| EX
-    F -->|Other inactive| NA
+    subgraph Completion["Confirmation or failure outcomes"]
+        direction TB
+        CompleteRequest["Scoped attempt for confirm or fail"] --> AttemptUpdate["Conditional attempt update"]
+        AttemptUpdate -->|"Updated"| IntentUpdate["Conditional intent update"]
+        AttemptUpdate -->|"Same result"| Idempotent["Idempotent success"]
+        AttemptUpdate -->|"Different result"| Conflict["PAYMENT_STATE_<br/>CONFLICT · 409"]
 
-    SC --> RB[Transaction rollback]
-    AC --> RB
-    EX --> RB
-    NA --> RB
+        IntentUpdate -->|"Updated"| Done["Commit terminal result"]
+        IntentUpdate -->|"Zero rows"| Reload{"Reload intent state"}
+        Reload -->|"Confirmed"| ReloadConfirmed["PAYMENT_ALREADY_<br/>CONFIRMED · 409"]
+        Reload -->|"Expired"| ReloadExpired["PAYMENT_INTENT_<br/>EXPIRED · 409"]
+        Reload -->|"Other inactive"| ReloadInactive["PAYMENT_INTENT_<br/>NOT_ACTIVE · 409"]
+
+        Conflict --> Rollback["Transaction rollback"]
+        ReloadConfirmed --> Rollback
+        ReloadExpired --> Rollback
+        ReloadInactive --> Rollback
+    end
+
+    Inactive ~~~ CompleteRequest
+
+    classDef error fill:#FEF2F2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px
+    classDef success fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px
+    class AlreadyConfirmed,Expired,Inactive,Unsupported,Conflict,ReloadConfirmed,ReloadExpired,ReloadInactive,Rollback error
+    class Created,Idempotent,Done success

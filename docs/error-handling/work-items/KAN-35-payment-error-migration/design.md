@@ -85,11 +85,13 @@ application service keeps the payment orchestration, while neutral errors and
 scoped persistence methods replace transport-coupled exceptions and
 load-then-authorize behavior.
 
-<a href="assets/payment-error-boundary.png">
-  <img src="assets/payment-error-boundary.png" alt="KAN-35 payment ownership and error boundary">
+<a href="assets/payment-error-boundary.svg">
+  <img src="assets/payment-error-boundary.svg" alt="KAN-35 payment ownership and error boundary">
 </a>
 
-[Editable architecture source](assets/payment-error-boundary.mmd)
+[Editable diagram source](assets/payment-error-boundary.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/payment-error-boundary.png)
 
 Two alternatives were rejected:
 
@@ -190,11 +192,13 @@ revealing a resource that the caller is not allowed to know exists.
 
 ## 10. State and concurrency behavior
 
-<a href="assets/payment-state-errors.png">
-  <img src="assets/payment-state-errors.png" alt="KAN-35 payment state and error selection">
+<a href="assets/payment-state-errors.svg">
+  <img src="assets/payment-state-errors.svg" alt="KAN-35 payment state and error selection">
 </a>
 
-[Editable state-flow source](assets/payment-state-errors.mmd)
+[Editable diagram source](assets/payment-state-errors.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/payment-state-errors.png)
 
 Attempt creation requires an owned intent in `CREATED` or
 `PAYMENT_PENDING` whose expiry is still in the future. Selection is:
