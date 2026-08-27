@@ -16,3 +16,4 @@ event, and integration boundaries.
 | Jira | Decision record | Delivery plan |
 |---|---|---|
 | [KAN-25](https://0707manna0895.atlassian.net/browse/KAN-25) | [Documentation information architecture](work-items/KAN-25-documentation-information-architecture/design.md) | [Implementation plan](work-items/KAN-25-documentation-information-architecture/implementation-plan.md) |
+| [KAN-39](https://0707manna0895.atlassian.net/browse/KAN-39) | [Reviewer-quality diagram publication](work-items/KAN-39-diagram-publication-quality/design.md) | [Implementation plan](work-items/KAN-39-diagram-publication-quality/implementation-plan.md) |
