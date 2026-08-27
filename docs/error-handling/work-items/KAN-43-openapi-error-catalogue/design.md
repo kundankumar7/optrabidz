@@ -1,6 +1,6 @@
 # KAN-43 — OpenAPI Problem Details Contract and Public Error Catalogue
 
-**Status:** Implemented and locally verified
+**Status:** Implemented, CI verified, and under review
 
 **Date:** 2026-08-25
 
@@ -14,7 +14,9 @@ HTTP Problem Details verification
 
 **Verification evidence (2026-08-27):**
 
-- verified implementation head: `b470edd`;
+- verified implementation head: `f207f62`;
+- [PR #38](https://github.com/kundankumar7/optrabidz/pull/38) targets
+  `develop`, with exact-head unit and PostgreSQL CI passing;
 - 69 unique public error codes composed from 61 module descriptors, seven
   framework problems, and three Spring Security problems;
 - 445 unit tests passed with zero failures, errors, or skips;
@@ -477,7 +479,7 @@ publication story.
       agree on the public contract.
 - [x] Focused, complete unit, PostgreSQL integration, and documentation
       verification pass before review.
-- [ ] Exact-head CI verification passes for the published review branch.
+- [x] Exact-head CI verification passes for the published review branch.
 - [x] No business rule, authentication mechanism, database schema, runtime
       failure behavior, successful response, or unrelated dependency change is
       mixed into KAN-43.

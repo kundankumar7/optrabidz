@@ -1174,7 +1174,7 @@ git commit -m "docs(KAN-43): record OpenAPI contract verification"
 git push -u origin feature/KAN-43-openapi-error-catalogue
 ```
 
-- [ ] **Step 7: Create the review pull request**
+- [x] **Step 7: Create the review pull request**
 
 ```powershell
 gh pr create `
@@ -1200,7 +1200,7 @@ No successful-response, authentication-mechanism, business-rule, database, depen
 Expected: GitHub creates a pull request from the exact feature head to
 `develop`; Jira associates it through the `KAN-43` key.
 
-- [ ] **Step 8: Confirm exact-head CI and update Jira evidence**
+- [x] **Step 8: Confirm exact-head CI and update Jira evidence**
 
 ```powershell
 $headSha = git rev-parse HEAD
