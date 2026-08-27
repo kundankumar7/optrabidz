@@ -39,6 +39,8 @@ viewport, and the full 2400-pixel opaque PNG.
 |---|---|---|---|---|---|---|---|---|
 | `kan-35-payment-error-boundary` | 868×1576 transparent PNG | Transparent raster and dense scoped-lookup fan-out | Redesign | Pass | Pass | Pass | Pass | Narrow scoped-lookup and error-rendering stages published |
 | `kan-35-payment-state-errors` | 1784×1199 transparent PNG | Wide mixed creation and completion outcomes | Redesign | Pass | Pass | Pass | Pass | Creation and completion outcomes separated |
+| `kan-37-settlement-error-boundary` | 1283×1912 transparent PNG | Dense role/lookup fan-out and transparent publication | Redesign | Pass | Pass | Pass | Pass | Role-first lookup and disclosure-safe error stages published |
+| `kan-37-settlement-confirmation-state` | 986×1044 transparent PNG | Overlapping branch labels and combined effect nodes | Redesign | Pass | Pass | Pass | Pass | Confirmation, reload classification, and effects separated |
 
 ## Accepted Mermaid normalization
 

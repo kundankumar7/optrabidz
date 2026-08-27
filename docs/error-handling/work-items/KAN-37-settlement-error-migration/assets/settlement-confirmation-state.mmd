@@ -1,17 +1,28 @@
-flowchart TD
-    P[Authorized payment confirmation] --> U[Conditional confirm pending settlement]
-    U -->|One row updated| E[Create repayment and publish settlement event]
-    U -->|No row updated| R[Reload trusted settlement]
+flowchart TB
+    accTitle: Settlement confirmation concurrency outcomes
+    accDescr: An authorized confirmation conditionally confirms a pending settlement, creates effects once, and reloads zero-row outcomes to distinguish same-intent idempotency, competing state, and missing resources.
 
-    R --> C{Observed outcome}
-    C -->|Confirmed by same intent| I[Idempotent success]
-    C -->|Confirmed by another intent| X[SETTLEMENT_STATE_CONFLICT 409]
-    C -->|Expired failed or cancelled| X
-    C -->|Missing| N[SETTLEMENT_NOT_FOUND 404]
+    Confirmation["Authorized payment confirmation"] --> Transition["Conditionally confirm pending settlement"]
+    Transition --> Updated{"Row updated?"}
 
-    E --> M[Commit payment settlement outbox and audit]
-    I --> K[Commit without duplicate effects]
-    X --> B[Roll back payment attempt and intent]
-    N --> B
+    Updated -->|"Yes"| Repayment["Create repayment"]
+    Repayment --> Event["Publish settlement event"]
+    Event --> Commit["Commit payment, settlement, outbox, and audit"]
 
-    B --> Z[No repayment outbox notification or audit effect]
+    Updated -->|"No"| Reload["Reload trusted settlement"]
+    Reload --> Outcome{"Observed outcome"}
+    Outcome -->|"Same intent"| Idempotent["Idempotent success"]
+    Idempotent --> NoDuplicate["Commit without duplicate effects"]
+    Outcome -->|"Competing or terminal"| Conflict["SETTLEMENT_<br/>STATE_CONFLICT · 409"]
+    Outcome -->|"Missing"| NotFound["SETTLEMENT_<br/>NOT_FOUND · 404"]
+
+    Conflict --> Rollback["Roll back payment attempt and intent"]
+    NotFound --> Rollback
+    Rollback --> NoEffects["No repayment, outbox, notification, or audit effect"]
+
+    Commit ~~~ Reload
+
+    classDef error fill:#FEF2F2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px
+    classDef success fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px
+    class Conflict,NotFound,Rollback,NoEffects error
+    class Commit,Idempotent,NoDuplicate success

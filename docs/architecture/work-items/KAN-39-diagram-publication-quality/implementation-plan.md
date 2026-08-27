@@ -507,18 +507,18 @@ not-found behavior, payable-state selection, conditional confirmation,
 same-intent idempotency, competing-intent conflict, rollback, and absence of
 duplicate effects.
 
-- [ ] **Step 1: Add RED audit evidence and inventory entries**
+- [x] **Step 1: Add RED audit evidence and inventory entries**
 
 Record the transparent background, clipped/overlapping branch labels, and
 current dimensions; classify both entries `REDESIGN`.
 
-- [ ] **Step 2: Rebuild the layouts around explicit stages**
+- [x] **Step 2: Rebuild the layouts around explicit stages**
 
 Use one top-to-bottom stage per authorization, lookup, state, transition, and
 effect boundary. Move long error codes into terminal nodes rather than edge
 labels and keep branch labels to short state names.
 
-- [ ] **Step 3: Render, embed, review, and commit**
+- [x] **Step 3: Render, embed, review, and commit**
 
 Generate both pairs, publish SVG/source/PNG links, run focused tests, record
 all visual checks, and commit:
