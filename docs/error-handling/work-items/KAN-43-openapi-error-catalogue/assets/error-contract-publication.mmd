@@ -1,42 +1,45 @@
-%%{init: {"theme":"base","themeVariables":{"fontSize":"22px","fontFamily":"Arial, sans-serif","primaryColor":"#EFF6FF","primaryTextColor":"#0F172A","primaryBorderColor":"#2563EB","lineColor":"#334155","secondaryColor":"#F8FAFC","tertiaryColor":"#ECFDF5","clusterBkg":"#FFFFFF","clusterBorder":"#94A3B8","edgeLabelBackground":"#FFFFFF"},"flowchart":{"htmlLabels":false,"curve":"linear","nodeSpacing":55,"rankSpacing":65}}}%%
-flowchart LR
-    subgraph SOURCES[1. Owned public definitions]
+flowchart TB
+    accTitle: Public error contract publication architecture
+    accDescr: Module, framework, and security definitions are normalized and deduplicated, filtered by a fail-closed exposure policy, published to OpenAPI and Markdown, and checked for parity, inventory, exposure, and disclosure.
+
+    subgraph SOURCES["1. Owned public definitions"]
         direction TB
-        M[Module error catalogues<br/>Explicit immutable lists]
-        F[Framework problems<br/>Safe fixed definitions]
-        S[Security problems<br/>Safe fixed definitions]
+        Module["Module error catalogues"]
+        Framework["Framework problem definitions"]
+        Security["Security problem definitions"]
+        Module ~~~ Framework ~~~ Security
     end
 
-    subgraph ADAPTER[2. Outer documentation adapter]
+    subgraph ADAPTER["2. Documentation adapter"]
         direction TB
-        N[Normalize public contract]
-        D[Validate and deduplicate<br/>Preserve all source owners]
-        N --> D
+        Normalize["Normalize public contract"] --> Validate["Validate conflicts and deduplicate"]
     end
 
-    subgraph OUTPUTS[3. Policy-controlled publication]
-        direction LR
-        O[OpenAPI schemas<br/>Reusable error responses]
-        C[Markdown error catalogue<br/>One row per code]
+    Policy["3. Fail-closed exposure policy"]
+
+    subgraph OUTPUTS["4. Published contracts"]
+        direction TB
+        OpenApi["OpenAPI schemas and reusable responses"]
+        Markdown["Markdown catalogue with one row per code"]
+        OpenApi ~~~ Markdown
     end
 
-    P[4. Parity, inventory, exposure<br/>and disclosure tests]
+    Tests["5. Parity, inventory, exposure, and disclosure verification"]
 
-    M --> N
-    F --> N
-    S --> N
-    D --> G
-    G --> O
-    D --> C
-    G[Fail-closed<br/>exposure policy]
-    O -. generated contract .-> P
-    C -. checked-in snapshot .-> P
+    Module --> Normalize
+    Framework --> Normalize
+    Security --> Normalize
+    Validate --> Policy
+    Policy --> OpenApi
+    Policy --> Markdown
+    OpenApi -. "generated contract" .-> Tests
+    Markdown -. "checked-in snapshot" .-> Tests
 
     classDef source fill:#EFF6FF,stroke:#2563EB,color:#0F172A,stroke-width:2px;
     classDef adapter fill:#FFF7ED,stroke:#EA580C,color:#7C2D12,stroke-width:2px;
     classDef output fill:#ECFDF5,stroke:#059669,color:#064E3B,stroke-width:2px;
     classDef security fill:#FEF2F2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px;
-    class M,F,S source;
-    class N,D adapter;
-    class O,C,P output;
-    class G security;
+    class Module,Framework,Security source;
+    class Normalize,Validate adapter;
+    class OpenApi,Markdown,Tests output;
+    class Policy security;

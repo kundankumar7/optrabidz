@@ -42,6 +42,12 @@ viewport, and the full 2400-pixel opaque PNG.
 | `kan-37-settlement-error-boundary` | 1283×1912 transparent PNG | Dense role/lookup fan-out and transparent publication | Redesign | Pass | Pass | Pass | Pass | Role-first lookup and disclosure-safe error stages published |
 | `kan-37-settlement-confirmation-state` | 986×1044 transparent PNG | Overlapping branch labels and combined effect nodes | Redesign | Pass | Pass | Pass | Pass | Confirmation, reload classification, and effects separated |
 
+## Publication pipeline redesign
+
+| Diagram ID | Initial publication | Initial defect | Class | Desktop | Mobile | Contrast | Jira PNG | Disposition |
+|---|---|---|---|---|---|---|---|---|
+| `kan-43-error-contract-publication` | 3568×626 opaque PNG plus SVG | Extremely wide vector layout became unreadable at normal and mobile widths | Redesign | Pass | Pass | Pass | Pass | Five-stage top-to-bottom publication flow published |
+
 ## Accepted Mermaid normalization
 
 | Diagram ID | Initial publication | Initial defect | Class | Desktop | Mobile | Contrast | Jira PNG | Disposition |

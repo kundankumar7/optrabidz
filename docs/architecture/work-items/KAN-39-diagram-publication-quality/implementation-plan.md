@@ -541,18 +541,18 @@ git commit -m "Improve settlement error diagrams (KAN-39)"
 conflict detection, fail-closed exposure, OpenAPI publication, Markdown
 publication, and parity/inventory/disclosure verification.
 
-- [ ] **Step 1: Record the wide-layout defect and inventory entry**
+- [x] **Step 1: Record the wide-layout defect and inventory entry**
 
 Classify the existing wide SVG as `REDESIGN`; vector format does not override
 normal/mobile page-width readability.
 
-- [ ] **Step 2: Change to a layered top-to-bottom publication flow**
+- [x] **Step 2: Change to a layered top-to-bottom publication flow**
 
 Place owned sources, adapter, policy, outputs, and tests in five readable
 stages. Keep OpenAPI and Markdown as sibling outputs without creating a wide
 full-page row.
 
-- [ ] **Step 3: Render, verify, and commit**
+- [x] **Step 3: Render, verify, and commit**
 
 Generate the pair, update the standard links, run focused tests, record visual
 results, and commit:
