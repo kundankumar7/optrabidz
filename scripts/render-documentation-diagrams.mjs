@@ -1,4 +1,4 @@
-import { readFile, access, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, access, mkdir } from 'node:fs/promises';
 import { constants as fsConstants, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -95,6 +95,7 @@ async function renderEntry(entry) {
     if (result.status !== 0) {
       throw new Error(`Mermaid render failed for ${entry.id}`);
     }
+    await preserveNativeLabelSpacing(svgPath);
   }
 
   if (entry.jiraPngRequired) {
@@ -106,6 +107,18 @@ async function renderEntry(entry) {
       .png()
       .toFile(pngPath);
   }
+}
+
+async function preserveNativeLabelSpacing(svgPath) {
+  const svg = await readFile(svgPath, 'utf8');
+  if (svg.includes('xml:space="preserve"')) {
+    return;
+  }
+  const updated = svg.replace(/<svg\b/, '<svg xml:space="preserve"');
+  if (updated === svg) {
+    throw new Error(`Rendered output is not an SVG: ${svgPath}`);
+  }
+  await writeFile(svgPath, updated, 'utf8');
 }
 
 async function validateEntryInputs(entry) {

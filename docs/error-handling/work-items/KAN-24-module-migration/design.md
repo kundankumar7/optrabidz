@@ -45,9 +45,13 @@ Each module owns its public descriptors and typed exceptions. The neutral
 contract remains in `common.error`, and the existing REST adapter remains the
 only HTTP translation boundary.
 
-![Module error translation architecture](assets/architecture.png)
+<a href="assets/architecture.svg">
+  <img src="assets/architecture.svg" alt="Module error translation architecture">
+</a>
 
-Editable source: [architecture.mmd](assets/architecture.mmd)
+[Editable diagram source](assets/architecture.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/architecture.png)
 
 The rejected alternatives are:
 
@@ -128,9 +132,13 @@ suspended or deactivated account all produce the exact same public response:
 - detail `Invalid email or password`;
 - no cause-specific property or message.
 
-![Login disclosure and audit flow](assets/login-flow.png)
+<a href="assets/login-flow.svg">
+  <img src="assets/login-flow.svg" alt="Login disclosure and protected audit flow">
+</a>
 
-Editable source: [login-flow.mmd](assets/login-flow.mmd)
+[Editable diagram source](assets/login-flow.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/login-flow.png)
 
 Protected diagnostics and audits may distinguish stable reasons such as
 `UNKNOWN_IDENTITY`, `INVALID_SECRET`, `CREDENTIAL_LOCKED`,

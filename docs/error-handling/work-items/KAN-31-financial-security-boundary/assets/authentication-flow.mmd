@@ -1,19 +1,31 @@
-flowchart LR
-    User["User client"] --> Chain["Spring Security filter chain"]
-    Chain -->|"anonymous or invalid authentication"| Entry["ProblemAuthenticationEntryPoint"]
-    Entry --> Problem["401 RFC 9457 Problem Details"]
-    Chain -->|"authenticated principal"| Controller["Financial controller"]
-    Controller --> Service["Financial application service"]
-    Service --> Ownership["Resource ownership and business authorization"]
+flowchart TB
+    accTitle: Financial user and payment-provider trust boundaries
+    accDescr: Application users authenticate through Spring Security before financial authorization, while payment providers authenticate separately through webhook signature verification.
 
-    Provider["Payment provider"] --> Webhook["Webhook controller"]
-    Webhook --> Signature["Provider signature verifier"]
-    Signature -->|"verified"| WebhookService["Webhook application service"]
-    Signature -->|"invalid"| ProviderFailure["Sanitized provider-verification failure"]
+    subgraph UserBoundary["Application-user trust boundary"]
+        direction TB
+        User["Application user"] --> Chain["Spring Security filter chain"]
+        Chain --> Authenticated{"Principal authenticated?"}
+        Authenticated -->|"No"| Entry["Authentication entry point"]
+        Entry --> Problem["401 RFC 9457 Problem Details"]
+        Authenticated -->|"Yes"| Controller["Financial controller"]
+        Controller --> Service["Financial application service"]
+        Service --> Ownership["Resource ownership and business authorization"]
+    end
+
+    subgraph ProviderBoundary["Payment-provider trust boundary"]
+        direction TB
+        Provider["Payment provider"] --> Webhook["Webhook controller"]
+        Webhook --> Signature{"Valid provider signature?"}
+        Signature -->|"Yes"| WebhookService["Webhook application service"]
+        Signature -->|"No"| ProviderFailure["Sanitized verification failure"]
+    end
+
+    Ownership ~~~ Provider
 
     classDef security fill:#e8f0fe,stroke:#2457a7,color:#102a43;
     classDef financial fill:#e8f5e9,stroke:#2e7d32,color:#17351a;
     classDef provider fill:#fff3e0,stroke:#a85a00,color:#4a2a00;
-    class Chain,Entry,Problem security;
+    class Chain,Authenticated,Entry,Problem security;
     class Controller,Service,Ownership financial;
     class Provider,Webhook,Signature,WebhookService,ProviderFailure provider;

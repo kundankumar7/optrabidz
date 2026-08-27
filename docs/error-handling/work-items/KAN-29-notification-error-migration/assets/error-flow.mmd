@@ -1,14 +1,19 @@
 flowchart TD
+    accTitle: Notification ownership and error flow
+    accDescr: An authenticated notification request uses an ownership-scoped conditional mutation and maps missing or non-owned resources to a safe notification-specific not-found Problem Details response.
+
     Request["Notification API request"] --> Security{"Authenticated?"}
     Security -->|No| Unauthorized["Existing shared 401 Problem Details"]
     Security -->|Yes| Controller["NotificationController"]
-    Controller --> Service["NotificationService"]
-    Service --> Mutation["Conditional SQL: resource ID + account ID"]
-    Mutation -->|One row| Success["Existing success response"]
-    Mutation -->|Zero rows: notification| NotificationError["NotificationNotFoundException"]
-    Mutation -->|Zero rows: subscription| SubscriptionError["NotificationSubscriptionNotFoundException"]
+    Controller --> Service["Notification service"]
+    Service --> Mutation["Ownership-scoped conditional SQL"]
+    Mutation --> Rows{"Rows affected?"}
+    Rows -->|"One"| Success["Existing success response"]
+    Rows -->|"Zero"| Missing{"Missing resource?"}
+    Rows -->|"Failure"| Internal["Existing generic 500 path"]
+    Missing -->|"Notification"| NotificationError["Notification not found"]
+    Missing -->|"Subscription"| SubscriptionError["Subscription not found"]
     NotificationError --> Neutral["ApplicationException + NotificationErrors"]
     SubscriptionError --> Neutral
-    Neutral --> Adapter["Existing RFC 9457 REST adapter"]
+    Neutral --> Adapter["RFC 9457 REST adapter"]
     Adapter --> Safe404["Ownership-private 404 Problem Details"]
-    Mutation -->|Unexpected failure| Internal["Existing generic 500 path"]

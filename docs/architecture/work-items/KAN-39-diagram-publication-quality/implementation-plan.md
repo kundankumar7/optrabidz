@@ -260,7 +260,7 @@ git commit -m "Add diagram publishing checks (KAN-39)"
 PNG, and links the editable `.mmd` source. Existing architectural meaning and
 error contracts remain unchanged.
 
-- [ ] **Step 1: Add inventory entries and record the initial audit**
+- [x] **Step 1: Add inventory entries and record the initial audit**
 
 Assign stable IDs `kan-24-module-architecture`, `kan-24-login-flow`,
 `kan-29-notification-error-flow`, `kan-31-authentication-flow`, and
@@ -268,13 +268,15 @@ Assign stable IDs `kan-24-module-architecture`, `kan-24-login-flow`,
 embed format, `REGENERATE`/`REDESIGN` classification, and the observed review
 defect in `audit.md`.
 
-- [ ] **Step 2: Add accessibility metadata and mobile-safe layout**
+- [x] **Step 2: Add accessibility metadata and mobile-safe layout**
 
-Add `accTitle` and `accDescr` to every source. Preserve KAN-24, KAN-29, and
-KAN-36 topology. Change only KAN-31 from its wide `LR` direction to `TB`, using
-short labels and no multi-purpose node.
+Add `accTitle` and `accDescr` to every source. Preserve the documented behavior
+and error contracts. Start with topology-preserving regeneration; where the
+required 390-pixel review still fails, use a narrower equivalent decision tree
+or outcome summary. Change KAN-31 from its wide `LR` direction to a stacked
+`TB` layout, using short labels and no multi-purpose node.
 
-- [ ] **Step 3: Render the five SVG/PNG pairs**
+- [x] **Step 3: Render the five SVG/PNG pairs**
 
 Run one pinned command per ID:
 
@@ -289,7 +291,7 @@ npm run diagrams:render -- --id kan-36-webhook-ingress-flow
 Expected: each ID has an opaque SVG with no `foreignObject` plus an opaque
 2400-pixel-wide PNG.
 
-- [ ] **Step 4: Replace owner-document PNG embeds**
+- [x] **Step 4: Replace owner-document PNG embeds**
 
 Use this publication pattern in every owner:
 
@@ -302,7 +304,7 @@ Use this publication pattern in every owner:
 Follow it with links labelled `Editable diagram source` and
 `High-resolution PNG for Jira and offline review`.
 
-- [ ] **Step 5: Verify links and visual quality**
+- [x] **Step 5: Verify links and visual quality**
 
 Run:
 

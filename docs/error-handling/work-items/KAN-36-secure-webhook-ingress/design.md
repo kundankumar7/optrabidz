@@ -71,11 +71,13 @@ The selected design uses a dedicated ingress pipeline. The controller remains
 an HTTP adapter: it extracts the path value and delegates request capture. It
 does not authenticate the provider or parse the business payload.
 
-<a href="assets/webhook-ingress-flow.png">
-  <img src="assets/webhook-ingress-flow.png" alt="KAN-36 secure payment webhook ingress flow">
+<a href="assets/webhook-ingress-flow.svg">
+  <img src="assets/webhook-ingress-flow.svg" alt="KAN-36 secure payment webhook ingress flow">
 </a>
 
 [Editable diagram source](assets/webhook-ingress-flow.mmd)
+
+[High-resolution PNG for Jira and offline review](assets/webhook-ingress-flow.png)
 
 This design was selected over:
 
