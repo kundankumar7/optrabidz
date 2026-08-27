@@ -58,7 +58,15 @@ viewport, and the full 2400-pixel opaque PNG.
 | `kan-34-repayment-transition-state` | 2840×2804 opaque PNG plus accepted SVG | Accepted layout used duplicated renderer configuration | Regenerate | Pass | Pass | Pass | Pass | Accepted layout retained |
 | `kan-42-real-http-boundary` | 2352×1194 opaque PNG plus SVG | Per-diagram renderer configuration and inconsistent export | Regenerate | Pass | Pass | Pass | Pass | Regenerated; topology preserved |
 
-The stable architecture/database diagrams, accepted Mermaid SVGs, and dense
-KAN-30, KAN-32, KAN-35, KAN-37, and KAN-43 flows are added to this record as
-their bounded remediation task begins. Final verification requires one row for
-every ID in `docs/architecture/diagram-publication/inventory.json`.
+## Stable architecture and database exports
+
+| Diagram group | Accepted SVGs | Class | Desktop | Mobile | Contrast | Jira PNG | Disposition |
+|---|---:|---|---|---|---|---|---|
+| Architecture overview | 1 | Pass | Pass | Pass | Pass | Pass | Accepted SVG retained unchanged; opaque 2400-pixel PNG published |
+| Database ER contexts | 11 | Pass | Pass | Pass | Pass | Pass | Accepted SVGs retained unchanged; opaque 2400-pixel PNGs published |
+
+The stable architecture/database diagrams were reviewed at desktop and mobile
+widths using representative narrow, wide, and dense layouts. All 12 raster
+companions were also checked for expected dimensions, opaque backgrounds, and
+valid PNG metadata. Final verification requires one row for every ID in
+`docs/architecture/diagram-publication/inventory.json`.

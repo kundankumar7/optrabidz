@@ -9,8 +9,8 @@
     {
       "id": "architecture-overview",
       "owner": "docs/architecture/README.md",
-      "source": "docs/architecture/overview.mmd",
-      "sourceType": "MERMAID_FILE",
+      "source": "docs/architecture/assets/optrabidz-architecture-overview.svg",
+      "sourceType": "HAND_AUTHORED_SVG",
       "githubSvg": "docs/architecture/assets/optrabidz-architecture-overview.svg",
       "jiraPng": "docs/architecture/assets/optrabidz-architecture-overview.png",
       "jiraPngRequired": true,

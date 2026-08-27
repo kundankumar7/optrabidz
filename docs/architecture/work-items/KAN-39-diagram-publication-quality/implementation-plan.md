@@ -577,26 +577,26 @@ git commit -m "Simplify the error catalogue diagram (KAN-39)"
 source of truth for raster export. The database's editable Mermaid reference
 remains `docs/database/er-diagram-source.md`; no schema relationship changes.
 
-- [ ] **Step 1: Inventory and structurally verify the accepted SVGs**
+- [x] **Step 1: Inventory and structurally verify the accepted SVGs**
 
 Add one architecture and 11 database entries with source type
 `HAND_AUTHORED_SVG`. Require a `viewBox`, title, description, opaque
 background, internal-only references, and a valid owner embed. Record layout
 classification `PASS` before generating companions.
 
-- [ ] **Step 2: Generate opaque high-resolution PNG companions**
+- [x] **Step 2: Generate opaque high-resolution PNG companions**
 
 Use Sharp through the inventory renderer to flatten each SVG on white and
 write a 2400-pixel-wide PNG. Do not regenerate or reformat the accepted SVGs.
 
-- [ ] **Step 3: Add concise PNG links and complete visual review**
+- [x] **Step 3: Add concise PNG links and complete visual review**
 
 Add a labelled Jira/offline PNG link below the architecture diagram and each
 ER diagram without duplicating the SVG embed. Review representative narrow,
 wide, and dense ER contexts at desktop/mobile widths plus every generated PNG
 for clipping and contrast.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=DocumentationLinksTest,DocumentationLinkValidatorTest,DiagramPublicationValidatorTest" test
