@@ -1,6 +1,6 @@
 # KAN-39 — Reviewer-Quality Diagram Publication
 
-**Status:** Written specification approved
+**Status:** Implemented; pull-request review pending
 
 **Date:** 2026-08-27
 
@@ -169,3 +169,17 @@ KAN-39 is complete when:
 - desktop, mobile, theme, and Jira evidence demonstrates practical
   readability; and
 - Jira and repository documentation contain the final verification summary.
+
+## 12. Delivery Evidence
+
+- The inventory contains 31 reviewed diagrams: 12 Pass, 9 Regenerate,
+  6 Redesign, and 4 Split.
+- GitHub documentation embeds accessible SVG output and retains opaque
+  2400-pixel PNG companions for Jira and offline review.
+- The repository-wide publication gate and documentation-link tests pass.
+- A Docker-backed run passed 593 unit and integration tests after excluding the
+  single Windows line-ending snapshot defect tracked separately by KAN-44.
+- The unmodified full unit command ran 451 tests and reproduced only that
+  KAN-44 failure.
+- No production source, runtime dependency, API, database, or security behavior
+  changed in this work item.

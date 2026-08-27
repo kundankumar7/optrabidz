@@ -5,8 +5,12 @@
 ## Current References
 
 - [Editable modular-monolith overview](overview.mmd)
-- [Rendered architecture overview](assets/optrabidz-architecture-overview.svg)
+- [Diagram publication guide](diagram-publication.md)
 - [High-resolution PNG for Jira and offline review](assets/optrabidz-architecture-overview.png)
+
+<a href="assets/optrabidz-architecture-overview.svg">
+  <img src="assets/optrabidz-architecture-overview.svg" alt="OptraBidz modular-monolith architecture overview">
+</a>
 
 The application is deployed as one Spring Boot process while business areas
 remain separated into modules with explicit application, domain, persistence,

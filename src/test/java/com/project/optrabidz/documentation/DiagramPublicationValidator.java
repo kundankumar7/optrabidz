@@ -181,6 +181,14 @@ final class DiagramPublicationValidator {
                 violations.add(new Violation(id, relative(root, svg),
                         "SVG is missing viewBox"));
             }
+            if (!hasNonBlankDirectChild(rootElement, "title")) {
+                violations.add(new Violation(id, relative(root, svg),
+                        "SVG is missing title"));
+            }
+            if (!hasNonBlankDirectChild(rootElement, "desc")) {
+                violations.add(new Violation(id, relative(root, svg),
+                        "SVG is missing description"));
+            }
             if (!hasExplicitBackground(rootElement)) {
                 violations.add(new Violation(id, relative(root, svg),
                         "SVG is missing an explicit background"));
@@ -231,13 +239,91 @@ final class DiagramPublicationValidator {
                     && "rect".equals(element.getLocalName())) {
                 String fill = element.getAttribute("fill").trim()
                         .toLowerCase(Locale.ROOT);
-                if (!fill.isBlank() && !"none".equals(fill)
-                        && !"transparent".equals(fill)) {
+                if (isOpaqueFill(fill)
+                        || hasOpaqueInlineFill(element.getAttribute("style"))
+                        || hasOpaqueClassFill(svg, element)) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    private static boolean hasNonBlankDirectChild(Element parent,
+            String tagName) {
+        NodeList children = parent.getChildNodes();
+        for (int index = 0; index < children.getLength(); index++) {
+            if (children.item(index) instanceof Element element
+                    && tagName.equals(element.getLocalName())
+                    && !element.getTextContent().isBlank()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasOpaqueInlineFill(String style) {
+        Matcher matcher = Pattern.compile(
+                "(?i)(?:^|;)\\s*fill\\s*:\\s*([^;]+)")
+                .matcher(style);
+        return matcher.find() && isOpaqueFill(matcher.group(1));
+    }
+
+    private static boolean hasOpaqueClassFill(Element svg, Element background) {
+        String classNames = background.getAttribute("class").trim();
+        if (classNames.isBlank()) {
+            return false;
+        }
+
+        StringBuilder css = new StringBuilder();
+        NodeList styles = svg.getElementsByTagName("style");
+        for (int index = 0; index < styles.getLength(); index++) {
+            css.append(styles.item(index).getTextContent()).append('\n');
+        }
+
+        for (String className : classNames.split("\\s+")) {
+            Pattern rule = Pattern.compile(
+                    "(?is)\\." + Pattern.quote(className)
+                            + "\\s*\\{[^}]*?\\bfill\\s*:\\s*([^;}]+)");
+            Matcher matcher = rule.matcher(css);
+            if (matcher.find() && isOpaqueFill(matcher.group(1))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isOpaqueFill(String fill) {
+        String normalized = fill == null ? ""
+                : fill.trim().toLowerCase(Locale.ROOT).replace(" ", "");
+        if (normalized.isBlank() || "none".equals(normalized)
+                || "transparent".equals(normalized)) {
+            return false;
+        }
+        if (normalized.matches("#[0-9a-f]{4}")) {
+            return normalized.endsWith("f");
+        }
+        if (normalized.matches("#[0-9a-f]{8}")) {
+            return normalized.endsWith("ff");
+        }
+        if (normalized.startsWith("rgba(")
+                || normalized.startsWith("hsla(")) {
+            int separator = normalized.lastIndexOf(',');
+            return separator >= 0 && isFullyOpaqueAlpha(
+                    normalized.substring(separator + 1,
+                            normalized.length() - 1));
+        }
+        int slash = normalized.lastIndexOf('/');
+        if (slash >= 0 && normalized.endsWith(")")) {
+            return isFullyOpaqueAlpha(
+                    normalized.substring(slash + 1, normalized.length() - 1));
+        }
+        return true;
+    }
+
+    private static boolean isFullyOpaqueAlpha(String alpha) {
+        return "1".equals(alpha) || "1.0".equals(alpha)
+                || "100%".equals(alpha);
     }
 
     private static boolean containsExternalReference(Document document) {
@@ -318,8 +404,7 @@ final class DiagramPublicationValidator {
 
     private static boolean isTemporaryAsset(Path path) {
         String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
-        return name.startsWith("clipboard-")
-                || name.startsWith("codex-clipboard-");
+        return name.contains("clipboard-");
     }
 
     private static void requireFile(Path root, String id, Path path,

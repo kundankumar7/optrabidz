@@ -1,5 +1,7 @@
 # KAN-39 Reviewer-Quality Diagram Publication Implementation Plan
 
+**Status:** Implemented; pull-request review pending
+
 **Goal:** Make every diagram referenced by repository documentation readable,
 scalable, reproducible, safe to embed on GitHub, and available as an opaque
 high-resolution PNG when Jira compatibility requires it.
@@ -176,8 +178,8 @@ Require `viewBox`, an explicit white/neutral root or first background shape,
 and no `script`, `foreignObject`, non-fragment `href`, or non-fragment
 `xlink:href`. Use `ImageIO` to require PNG format, width at least 2000 pixels,
 height at least 600 pixels, and fully opaque pixels. Scan owner Markdown for
-the declared SVG and scan tracked documentation asset names for
-`clipboard-*`/`codex-clipboard-*` patterns.
+the declared SVG and scan tracked documentation asset names for temporary
+`clipboard-` filename patterns.
 
 - [ ] **Step 4: Add the pinned rendering toolchain**
 
@@ -622,7 +624,7 @@ git commit -m "Add PNG copies of stable diagrams (KAN-39)"
 requires an empty result. The stable reference owns renderer commands,
 publication rules, troubleshooting, and the human checklist.
 
-- [ ] **Step 1: Write the failing repository-wide test**
+- [x] **Step 1: Write the failing repository-wide test**
 
 ```java
 package com.project.optrabidz.documentation;
@@ -644,7 +646,7 @@ class DiagramPublicationTest {
 }
 ```
 
-- [ ] **Step 2: Run the gate and correct every reported structural defect**
+- [x] **Step 2: Run the gate and correct every reported structural defect**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=DiagramPublicationTest" test
@@ -653,7 +655,7 @@ class DiagramPublicationTest {
 Expected RED until every manifest entry, embed, SVG, PNG, and temporary-name
 rule is satisfied; then GREEN without allowlisting a known defect.
 
-- [ ] **Step 3: Publish the stable operating reference**
+- [x] **Step 3: Publish the stable operating reference**
 
 Document `npm ci`, inventory selection, `npm run diagrams:render`, the pinned
 versions, SVG/PNG roles, accessibility metadata, minimum dimensions, source
@@ -661,14 +663,14 @@ ownership, visual checklist, and how to classify pass/regenerate/redesign/split.
 State that KAN-39 supersedes only KAN-25's earlier delivery-format preference;
 the rest of KAN-25's information architecture remains valid.
 
-- [ ] **Step 4: Complete the audit and navigation**
+- [x] **Step 4: Complete the audit and navigation**
 
 Every inventory ID must have initial defect/classification, final asset paths,
 desktop result, mobile result, contrast result, Jira result, and disposition.
 Link the stable policy and KAN-39 record from both architecture navigation and
 the documentation portal.
 
-- [ ] **Step 5: Run focused documentation verification**
+- [x] **Step 5: Run focused documentation verification**
 
 ```powershell
 npm run diagrams:check
@@ -679,7 +681,7 @@ git diff --check
 Expected: every command passes and no generated asset differs from its declared
 source/inventory contract.
 
-- [ ] **Step 6: Run full project verification**
+- [x] **Step 6: Run full project verification**
 
 ```powershell
 .\mvnw.cmd -B clean test
@@ -690,7 +692,12 @@ Expected: complete unit and PostgreSQL integration suites pass with Docker
 available. No production source file or runtime dependency appears in the
 KAN-39 diff.
 
-- [ ] **Step 7: Review repository and secret hygiene**
+Windows verification reproduced the separately tracked KAN-44 CRLF snapshot
+failure in the unmodified full unit command (451 tests, one failure). Excluding
+only that known snapshot test produced a successful Docker-backed run of 593
+unit and integration tests with zero failures.
+
+- [x] **Step 7: Review repository and secret hygiene**
 
 ```powershell
 git status --short
@@ -702,7 +709,7 @@ git ls-files | rg "(^|/)(node_modules|target)/|clipboard|\.env$|hs_err_pid|repla
 Expected: only KAN-39 documentation tooling, tests, documentation, and diagram
 assets are present; the final scan returns no forbidden tracked artifact.
 
-- [ ] **Step 8: Commit final governance and verification evidence**
+- [x] **Step 8: Commit final governance and verification evidence**
 
 ```powershell
 git add docs src/test package.json package-lock.json scripts .gitignore
