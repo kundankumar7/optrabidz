@@ -17,7 +17,7 @@ HTTP Problem Details verification
 - verified implementation head: `b470edd`;
 - 69 unique public error codes composed from 61 module descriptors, seven
   framework problems, and three Spring Security problems;
-- 439 unit tests passed with zero failures, errors, or skips;
+- 445 unit tests passed with zero failures, errors, or skips;
 - 145 PostgreSQL integration tests passed with zero failures, errors, or
   skips;
 - deterministic catalogue snapshot and repository documentation links passed;
@@ -274,6 +274,10 @@ validated together at startup. An unsafe or contradictory combination fails
 startup instead of exposing documentation accidentally.
 `springdoc.use-management-port` remains explicitly disabled so documentation
 cannot bypass the application security chain through a second port.
+The application also pins Springdoc to `/v3/api-docs` and
+`/swagger-ui.html`. Direct path overrides or direct management-port enablement
+fail startup, preventing a relocated documentation route from falling through
+to the general application security chain.
 
 ## 11. Repository error catalogue
 

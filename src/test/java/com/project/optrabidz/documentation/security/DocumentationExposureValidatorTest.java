@@ -9,6 +9,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DocumentationExposureValidatorTest {
 
+    private static final String API_DOCS_PATH = "/v3/api-docs";
+    private static final String SWAGGER_UI_PATH = "/swagger-ui.html";
+
     @Test
     void acceptsTheApprovedEnvironmentMatrix() {
         assertValid("base", false, false, false, access("DISABLED"));
@@ -58,6 +61,45 @@ class DocumentationExposureValidatorTest {
         );
     }
 
+    @Test
+    void rejectsADirectSpringdocApiPathOverride() {
+        assertThatThrownBy(() -> validator(
+                properties(true, false, false, access("PUBLIC")),
+                "test",
+                "/internal/openapi",
+                SWAGGER_UI_PATH,
+                false
+        ).validate())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("springdoc.api-docs.path");
+    }
+
+    @Test
+    void rejectsADirectSpringdocUiPathOverride() {
+        assertThatThrownBy(() -> validator(
+                properties(true, true, false, access("PUBLIC")),
+                "dev",
+                API_DOCS_PATH,
+                "/internal/swagger",
+                false
+        ).validate())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("springdoc.swagger-ui.path");
+    }
+
+    @Test
+    void rejectsADirectSpringdocManagementPortOverride() {
+        assertThatThrownBy(() -> validator(
+                properties(true, false, false, access("AUTHENTICATED")),
+                "prod",
+                API_DOCS_PATH,
+                SWAGGER_UI_PATH,
+                true
+        ).validate())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("springdoc.use-management-port");
+    }
+
     private static DocumentationExposureProperties.Access access(String name) {
         return DocumentationExposureProperties.Access.valueOf(name);
     }
@@ -101,9 +143,28 @@ class DocumentationExposureValidatorTest {
             DocumentationExposureProperties properties,
             String profile
     ) {
+        return validator(
+                properties,
+                profile,
+                API_DOCS_PATH,
+                SWAGGER_UI_PATH,
+                false
+        );
+    }
+
+    private static DocumentationExposureValidator validator(
+            DocumentationExposureProperties properties,
+            String profile,
+            String apiDocsPath,
+            String swaggerUiPath,
+            boolean springdocManagementPort
+    ) {
         return new DocumentationExposureValidator(
                 properties,
-                Set.of(profile)
+                Set.of(profile),
+                apiDocsPath,
+                swaggerUiPath,
+                springdocManagementPort
         );
     }
 

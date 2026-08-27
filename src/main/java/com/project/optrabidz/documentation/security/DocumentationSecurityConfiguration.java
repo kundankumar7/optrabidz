@@ -45,7 +45,20 @@ public class DocumentationSecurityConfiguration {
         DocumentationExposureValidator validator =
                 new DocumentationExposureValidator(
                         properties,
-                        Set.of(environment.getActiveProfiles())
+                        Set.of(environment.getActiveProfiles()),
+                        environment.getProperty(
+                                "springdoc.api-docs.path",
+                                DocumentationExposureValidator.API_DOCS_PATH
+                        ),
+                        environment.getProperty(
+                                "springdoc.swagger-ui.path",
+                                DocumentationExposureValidator.SWAGGER_UI_PATH
+                        ),
+                        environment.getProperty(
+                                "springdoc.use-management-port",
+                                Boolean.class,
+                                false
+                        )
                 );
         validator.validate();
         return validator;

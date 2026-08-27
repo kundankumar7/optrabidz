@@ -789,6 +789,7 @@ git commit -m "feat(KAN-43): publish reusable Problem Details components"
 - Create: `src/main/java/com/project/optrabidz/documentation/security/DocumentationExposureValidator.java`
 - Create: `src/main/java/com/project/optrabidz/documentation/security/DocumentationSecurityConfiguration.java`
 - Create: `src/test/java/com/project/optrabidz/documentation/security/DocumentationExposureValidatorTest.java`
+- Create: `src/test/java/com/project/optrabidz/documentation/security/DocumentationSecurityConfigurationTest.java`
 - Create: `src/test/java/com/project/optrabidz/documentation/security/DocumentationExposureIT.java`
 - Modify: `src/main/resources/application.properties`
 - Modify: `src/main/resources/application-dev.properties`
@@ -864,7 +865,9 @@ optrabidz.documentation.swagger-ui-enabled=false
 optrabidz.documentation.management-port-enabled=false
 optrabidz.documentation.access=DISABLED
 springdoc.api-docs.enabled=${optrabidz.documentation.api-docs-enabled}
+springdoc.api-docs.path=/v3/api-docs
 springdoc.swagger-ui.enabled=${optrabidz.documentation.swagger-ui-enabled}
+springdoc.swagger-ui.path=/swagger-ui.html
 springdoc.use-management-port=${optrabidz.documentation.management-port-enabled}
 springdoc.writer-with-order-by-keys=true
 ```
@@ -905,6 +908,11 @@ validator rejects:
 - enabled UI while JSON is disabled;
 - enabled UI with any access other than `PUBLIC`; and
 - enabled UI or public access while the `prod` profile is active.
+
+The validator also reads the effective Springdoc route and management-port
+properties. It rejects direct overrides of `springdoc.api-docs.path`,
+`springdoc.swagger-ui.path`, or `springdoc.use-management-port` so a relocated
+route cannot bypass the dedicated documentation filter chain.
 
 Disabled JSON with `AUTHENTICATED` access is valid for the production default.
 
