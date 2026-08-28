@@ -1,8 +1,8 @@
 # KAN-39 — Documentation Experience and Diagram Publication
 
-**Status:** Draft for renewed review
+**Status:** Schema-driven ER amendment ready for review
 
-**Date:** 2026-08-27
+**Date:** 2026-08-29
 
 **Jira:** [KAN-39](https://0707manna0895.atlassian.net/browse/KAN-39)
 
@@ -134,6 +134,37 @@ template will not be stretched across the repository.
 Large diagrams are split by reader question. An overview links to focused
 details; it does not attempt to contain every class, table, adapter, and event.
 
+### 6.1 Database relationship experience
+
+The database documentation is not accepted merely because every table name is
+present or an old ER layout has been restyled. Its model and navigation are
+derived from the executable Flyway schema. The approved baseline contains 35
+tables, 46 foreign keys, 25 unique constraints, 57 check constraints, 19
+partial indexes, and 12 triggers.
+
+The reader experience has four layers:
+
+1. a mobile-first relational journey shows the main path from account and
+   participants through marketplace, agreement, finance, payment, and
+   post-commit records;
+2. a question-based chooser routes readers to the relevant focused view;
+3. focused views show exact foreign-key columns, nullability, cardinality, and
+   `CASCADE`, `RESTRICT`, or `SET NULL` delete behaviour; and
+4. adjacent invariant panels explain the checks, partial uniqueness, triggers,
+   and intentional non-foreign-key correlations that materially change how the
+   relationship may be used.
+
+One unreadable full-schema image is explicitly rejected. Reference tables that
+appear in more than one focused view are identified as references rather than
+presented as duplicate ownership. Solid connectors mean real foreign keys;
+dashed connectors mean correlation or a trigger-enforced consistency rule.
+Colour is never the only carrier of meaning.
+
+The diagrams use human-curated composition backed by a machine-verifiable
+relationship manifest. Automated tests compare that manifest with the Flyway
+baseline and require all 35 tables and all 46 foreign keys to be represented.
+A generated or restyled PNG does not count as a redesigned model.
+
 ## 7. Mobile Readability Contract
 
 A diagram does not pass merely because SVG can be zoomed.
@@ -231,6 +262,14 @@ Automated checks will verify objective properties:
 - diagrams use the approved token set; and
 - temporary clipboard assets are absent.
 
+Database-specific checks additionally verify:
+
+- every Flyway table is represented in the relationship manifest;
+- every foreign-key child column and referenced parent column is represented;
+- nullability and delete behaviour match the migration; and
+- focused diagrams do not depict correlations or trigger rules as foreign
+  keys.
+
 Visual evidence will verify what automation cannot:
 
 - normal-width label readability;
@@ -264,6 +303,12 @@ KAN-39 is complete when:
 - every reader-facing diagram follows the visual notation approved during the
   prototype review;
 - every diagram has exactly one canonical source;
+- the database page provides an end-to-end overview and question-based view
+  chooser;
+- all 35 Flyway tables and 46 foreign keys are represented and automatically
+  checked;
+- focused database views expose foreign-key columns, nullability, delete
+  behaviour, and material database-enforced invariants;
 - no reader-facing page links Mermaid source;
 - the architecture prototype and converted figures pass desktop, mobile web,
   GitHub Mobile, Jira, and local review;
