@@ -525,19 +525,22 @@ Remove entries whose owner was deleted. Update migrated owner/source/output
 paths. Reject duplicate IDs, duplicate published SVGs, and output paths outside
 the repository in validator fixtures.
 
-- [x] **Step 2: Regenerate straightforward Mermaid diagrams**
+- [x] **Step 2: Redesign the surviving relational views**
 
-Render and preview the complete stable inventory; the renderer itself selects
-Mermaid only for `MERMAID_FILE` entries:
+Redesign every surviving ER asset as a focused relational view using the
+approved KAN-34 visual language. Publish it under a descriptive cache-safe path
+so GitHub Mobile cannot reuse the previous artwork. Render and preview the
+complete stable inventory; the renderer itself selects Mermaid only for
+`MERMAID_FILE` entries:
 
 ```powershell
 npm run diagrams:render
 npm run diagrams:preview
 ```
 
-Preserve existing meaning and accepted appearance. Change layout only when the
-desktop or phone preview demonstrates clipping, overlap, unreadable labels,
-excessive empty canvas, or confusing routing.
+Preserve schema meaning while improving typography, contrast, routing, labels,
+and canvas use. Confirm each replacement differs from its previous SVG and PNG;
+do not count a regenerated fallback as a redesign.
 
 - [x] **Step 3: Derive fallbacks from curated SVG sources**
 

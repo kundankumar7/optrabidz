@@ -1,17 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="880" viewBox="0 0 1400 880" role="img" aria-labelledby="title desc">
-  <title id="title">Participant Profile Context ER diagram</title>
+  <title id="title">Participant profile relational schema</title>
   <desc id="desc">Schema-backed ER slice showing account-owned profile, startup, investor, and participant detail records.</desc>
   <defs>
     <style>
-      .canvas{fill:#F7F3EA}.title{font:700 30px "Segoe UI",Arial,sans-serif;fill:#17212B}.subtitle{font:400 14px "Segoe UI",Arial,sans-serif;fill:#5D6775}
-      .entity{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1.5;rx:8}.identity{fill:#EAF6F1;stroke:#2F7D67}.profile{fill:#EAF1FB;stroke:#4E6F9F}.detail{fill:#F2EAF5;stroke:#6E4A7E}
-      .head{font:700 16px "Segoe UI",Arial,sans-serif;fill:#17212B}.field{font:400 13px "Segoe UI",Arial,sans-serif;fill:#2E3A46}.key{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}
-      .fk{fill:none;stroke:#344253;stroke-width:1.8;stroke-linecap:square;stroke-linejoin:round}.port{fill:#F7F3EA;stroke:#344253;stroke-width:1.6}
-      .card{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}.tagbox{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1}.tag{font:700 12px "Segoe UI",Arial,sans-serif;fill:#17212B}.note{font:400 12px "Segoe UI",Arial,sans-serif;fill:#5D6775}
+      .canvas{fill:#FFFFFF}.title{font:700 30px "Segoe UI",Arial,sans-serif;fill:#0F172A}.subtitle{font:400 16px "Segoe UI",Arial,sans-serif;fill:#475569}
+      .entity,.identity,.profile,.detail{fill:#EFF6FF;stroke:#2563EB;stroke-width:2;rx:12}
+      .head{font:700 18px "Segoe UI",Arial,sans-serif;fill:#0F172A}.field{font:400 15px "Segoe UI",Arial,sans-serif;fill:#334155}.key{font:700 15px "Segoe UI",Arial,sans-serif;fill:#0F172A}
+      .fk{fill:none;stroke:#334155;stroke-width:2.5;stroke-linecap:square;stroke-linejoin:round}.port{fill:#FFFFFF;stroke:#334155;stroke-width:2}
+      .card{font:700 14px "Segoe UI",Arial,sans-serif;fill:#0F172A}.tagbox{fill:#FFFFFF;stroke:#2563EB;stroke-width:1.5}.tag{font:700 13px "Segoe UI",Arial,sans-serif;fill:#1D4ED8}.note{font:400 14px "Segoe UI",Arial,sans-serif;fill:#475569}
     </style>
   </defs>
   <rect class="canvas" width="1400" height="880"/>
-  <text class="title" x="700" y="46" text-anchor="middle">Participant Profile Context</text>
+  <text class="title" x="700" y="46" text-anchor="middle">Participant profiles</text>
   <text class="subtitle" x="700" y="74" text-anchor="middle">Account-owned profile, startup, investor, and participant detail records</text>
 
   <g id="relationships">

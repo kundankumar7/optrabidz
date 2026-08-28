@@ -22,13 +22,13 @@ available in the executable Flyway migration
 
 ## Identity and Access
 
-### Account Access and Security Context
+### Identity and access
 
-<a href="assets/account-access-security-er.svg">
-  <img src="assets/account-access-security-er.svg" alt="Account access and security context ER diagram">
+<a href="assets/identity-access-schema.svg">
+  <img src="assets/identity-access-schema.svg" alt="Identity and access relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/account-access-security-er.png)
+[High-resolution PNG for Jira and offline review](assets/identity-access-schema.png)
 
 This slice includes account-owned access records and the standalone
 `login_attempt` security log. A login attempt stores the submitted email value
@@ -43,13 +43,13 @@ triggers make these records immutable.
 | `R4` | `account` | `1 -> 0..1` | `admin` | `admin.account_id` is `FK`, `NOT NULL`, `UNIQUE` |
 | `R5` | `account` | `0..1 -> 0..N` | `admin` | `admin.revoked_by_account_id` is nullable `FK` |
 
-### Participant Profile Context
+### Participant profiles
 
-<a href="assets/participant-profile-er.svg">
-  <img src="assets/participant-profile-er.svg" alt="Participant profile context ER diagram">
+<a href="assets/participant-profile-schema.svg">
+  <img src="assets/participant-profile-schema.svg" alt="Participant profile relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/participant-profile-er.png)
+[High-resolution PNG for Jira and offline review](assets/participant-profile-schema.png)
 
 This slice focuses on account-owned participant records and the detail rows
 attached to startup and investor profiles. `profile`, `startup`, and `investor`
@@ -69,13 +69,13 @@ key from `profile` to either participant table.
 
 ## Marketplace
 
-### Marketplace Listing and Bidding Context
+### Marketplace and bidding
 
-<a href="assets/marketplace-listing-bidding-er.svg">
-  <img src="assets/marketplace-listing-bidding-er.svg" alt="Marketplace listing and bidding context ER diagram">
+<a href="assets/marketplace-bidding-schema.svg">
+  <img src="assets/marketplace-bidding-schema.svg" alt="Marketplace and bidding relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/marketplace-listing-bidding-er.png)
+[High-resolution PNG for Jira and offline review](assets/marketplace-bidding-schema.png)
 
 This slice focuses only on listings and bids. Agreement acceptance is documented
 separately so the marketplace bidding model stays readable.
@@ -91,13 +91,13 @@ separately so the marketplace bidding model stays readable.
 `uq_one_accepted_bid_per_listing` limits accepted bids per listing, but the base
 `funding_listing -> bid` relationship remains `1 -> 0..N`.
 
-### Agreement Acceptance and Debt Terms Context
+### Agreement acceptance
 
-<a href="assets/agreement-acceptance-terms-er.svg">
-  <img src="assets/agreement-acceptance-terms-er.svg" alt="Agreement acceptance and debt terms context ER diagram">
+<a href="assets/agreement-acceptance-schema.svg">
+  <img src="assets/agreement-acceptance-schema.svg" alt="Agreement acceptance relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/agreement-acceptance-terms-er.png)
+[High-resolution PNG for Jira and offline review](assets/agreement-acceptance-schema.png)
 
 This slice focuses on the accepted agreement record and the final agreed debt
 terms. Triggers require the agreement bid to be accepted and enforce consistency
@@ -113,13 +113,13 @@ between the selected bid, listing, startup, and investor.
 
 ## Finance
 
-### Settlement Context
+### Settlement
 
-<a href="assets/settlement-context-er.svg">
-  <img src="assets/settlement-context-er.svg" alt="Settlement context ER diagram">
+<a href="assets/settlement-schema.svg">
+  <img src="assets/settlement-schema.svg" alt="Settlement relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/settlement-context-er.png)
+[High-resolution PNG for Jira and offline review](assets/settlement-schema.png)
 
 This slice focuses only on how a settlement belongs to an accepted agreement and
 its participants. Repayment scheduling is documented separately so the settlement
@@ -131,13 +131,13 @@ model stays readable.
 | `R2` | `startup` | `1 -> 0..N` | `settlement` | `settlement.startup_id` is `FK`, `NOT NULL` |
 | `R3` | `investor` | `1 -> 0..N` | `settlement` | `settlement.investor_id` is `FK`, `NOT NULL` |
 
-### Repayment Schedule Context
+### Repayment schedule
 
-<a href="assets/repayment-schedule-er.svg">
-  <img src="assets/repayment-schedule-er.svg" alt="Repayment schedule context ER diagram">
+<a href="assets/repayment-schedule-schema.svg">
+  <img src="assets/repayment-schedule-schema.svg" alt="Repayment schedule relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/repayment-schedule-er.png)
+[High-resolution PNG for Jira and offline review](assets/repayment-schedule-schema.png)
 
 This slice focuses only on the repayment schedule created for an accepted
 agreement. Payment execution is documented in the payment diagrams so the
@@ -152,13 +152,13 @@ repayment model stays readable.
 
 ## Payments
 
-### Payment Intent Context
+### Payment intent
 
-<a href="assets/payment-intent-er.svg">
-  <img src="assets/payment-intent-er.svg" alt="Payment intent context ER diagram">
+<a href="assets/payment-intent-schema.svg">
+  <img src="assets/payment-intent-schema.svg" alt="Payment intent relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/payment-intent-er.png)
+[High-resolution PNG for Jira and offline review](assets/payment-intent-schema.png)
 
 This slice focuses only on how a `payment_intent` is sourced and which accounts
 participate. Provider, attempt, and webhook relationships are intentionally left
@@ -171,13 +171,13 @@ out of this diagram so the payment intent model stays readable.
 | `R3` | `account` | `1 -> 0..N` | `payment_intent` | `payment_intent.payer_account_id` is `FK`, `NOT NULL` |
 | `R4` | `account` | `1 -> 0..N` | `payment_intent` | `payment_intent.payee_account_id` is `FK`, `NOT NULL` |
 
-### Payment Attempt and Provider Context
+### Payment processing
 
-<a href="assets/payment-attempt-provider-er.svg">
-  <img src="assets/payment-attempt-provider-er.svg" alt="Payment attempt and provider context ER diagram">
+<a href="assets/payment-processing-schema.svg">
+  <img src="assets/payment-processing-schema.svg" alt="Payment processing relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/payment-attempt-provider-er.png)
+[High-resolution PNG for Jira and offline review](assets/payment-processing-schema.png)
 
 This slice focuses on payment attempts and provider configuration. Webhook
 relationships are intentionally left out because webhook events have optional
@@ -189,13 +189,13 @@ references back to both `payment_intent` and `payment_attempt`.
 | `R2` | `payment_provider` | `1 -> 0..N` | `payment_attempt` | `payment_attempt.provider_code` is `FK`, `NOT NULL` |
 | `R3` | `payment_provider` | `1 -> 0..N` | `payment_provider_method` | `payment_provider_method.provider_code` is `FK`, part of composite `PK` |
 
-### Payment Webhook Context
+### Payment webhooks
 
-<a href="assets/payment-webhook-er.svg">
-  <img src="assets/payment-webhook-er.svg" alt="Payment webhook context ER diagram">
+<a href="assets/payment-webhook-schema.svg">
+  <img src="assets/payment-webhook-schema.svg" alt="Payment webhook relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/payment-webhook-er.png)
+[High-resolution PNG for Jira and offline review](assets/payment-webhook-schema.png)
 
 This slice focuses on provider webhook idempotency and the optional references a
 webhook event may carry back to payment records.
@@ -208,13 +208,13 @@ webhook event may carry back to payment records.
 
 ## Notifications, Outbox, and Audit
 
-### Notification Delivery and Subscription Context
+### Notification delivery
 
-<a href="assets/notification-delivery-subscription-er.svg">
-  <img src="assets/notification-delivery-subscription-er.svg" alt="Notification delivery and subscription context ER diagram">
+<a href="assets/notification-delivery-schema.svg">
+  <img src="assets/notification-delivery-schema.svg" alt="Notification delivery relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/notification-delivery-subscription-er.png)
+[High-resolution PNG for Jira and offline review](assets/notification-delivery-schema.png)
 
 This slice focuses on notification fan-out, delivery tracking, retry attempts,
 and account subscriptions. Outbox and audit event correlation is documented
@@ -228,13 +228,13 @@ separately because it is not modeled with notification delivery foreign keys.
 | `R4` | `notification_delivery` | `1 -> 0..N` | `notification_delivery_attempt` | `notification_delivery_attempt.delivery_id` is `FK`, `NOT NULL`; `UNIQUE (delivery_id, attempt_number)` |
 | `R5` | `account` | `1 -> 0..N` | `notification_subscription` | `notification_subscription.account_id` is `FK`, `NOT NULL`; `UNIQUE (account_id, channel_type, endpoint)` |
 
-### Outbox and Audit Correlation Context
+### Outbox and audit
 
-<a href="assets/outbox-audit-correlation-er.svg">
-  <img src="assets/outbox-audit-correlation-er.svg" alt="Outbox and audit correlation context ER diagram">
+<a href="assets/outbox-audit-schema.svg">
+  <img src="assets/outbox-audit-schema.svg" alt="Outbox and audit relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/outbox-audit-correlation-er.png)
+[High-resolution PNG for Jira and offline review](assets/outbox-audit-schema.png)
 
 This slice focuses on `event_id` correlation. The dotted lines are not foreign
 keys; the only solid FK in this slice is the nullable audit actor account.

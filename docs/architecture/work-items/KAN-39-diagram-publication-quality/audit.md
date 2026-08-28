@@ -76,7 +76,7 @@ named production capability or documentation coverage is incomplete.
 | Session security | `IMPLEMENTED` | `security/infrastructure/config/SecurityConfig.java`; session filters; security HTTP tests | Server-side session, CSRF, matched route rules, security Problem Details, and current public listing reads documented |
 | JWT and OAuth2 | `PLANNED` | No corresponding dependency or production implementation | Described only as possible future adapters |
 | Flyway schema ownership | `IMPLEMENTED` | `db/migration/V1__baseline.sql`; database migration integration tests; JPA configuration | Flyway ownership and Hibernate validation verified |
-| ER diagram coverage | `IMPLEMENTED` | 35 V1 tables compared with 35 unique entities in `database/assets/er-diagram-source.md`; `DatabaseDiagramCoverageTest` | `login_attempt` added as a standalone immutable security log without inventing a foreign-key relationship |
+| ER diagram coverage | `IMPLEMENTED` | 35 V1 tables compared with 35 unique entities in `database/assets/er-diagram-source.md`; `DatabaseDiagramCoverageTest` | Eleven focused relational views use the approved KAN-34 visual language; `login_attempt` is shown as a standalone immutable security log without an invented foreign key |
 | Outbox and audit | `IMPLEMENTED` | `common/event/`; `common/outbox/`; `audit/`; outbox and audit tests | Atomic outbox write, `SKIP LOCKED` dispatch, retry, audit persistence, request correlation, and masking verified |
 | Notifications | `PARTIAL` | `notification/`; dispatcher and API tests | In-app persistence, subscriptions, delivery attempts, retry, sandbox email, and sandbox push exist; no external provider or broker is claimed |
 | Payments and webhooks | `PARTIAL` | `financial/`; financial and webhook integration tests | Local/sandbox strategies, HMAC-style verification, bounded ingress, and database replay claims exist; no real-money provider is claimed |
@@ -101,8 +101,11 @@ named production capability or documentation coverage is incomplete.
 ## Stable diagram review
 
 Every entry was rendered from its declared canonical source. Desktop and phone
-previews use 980- and 390-pixel widths. Dense ER phone previews preserve the
-relationship map; their field detail remains lossless through the embedded SVG.
+previews use 980- and 390-pixel widths. The eleven database views were
+redesigned as focused relational maps rather than republishing the previous ER
+artwork. Their new descriptive asset paths also prevent GitHub Mobile from
+reusing a stale cached image. Dense phone previews preserve the relationship
+map; field detail remains lossless through the linked SVG.
 
 | Diagram | Repository truth reviewed | Desktop | Phone | Dark surround | Jira PNG |
 |---|---|---|---|---|---|
@@ -147,6 +150,7 @@ relationship map; their field detail remains lossless through the embedded SVG.
 | Historical cleanup | Structure, link, publication, and catalogue tests | Pass |
 | Historical cleanup | `npm run diagrams:check` and `git diff --check` | Pass |
 | Stable diagram set | `npm run diagrams:render` and `npm run diagrams:preview` | 13 canonical SVGs, 13 generated 2400-pixel PNGs, and 39 untracked review previews produced |
+| Stable diagram set | Eleven database relational views | Redesigned with the approved KAN-34 white-and-blue visual language, stronger type, restrained relationship labels, and new cache-safe asset paths |
 | Stable diagram set | Desktop, 390-pixel phone, and dark-surround inspection | Pass for all 13 entries; no clipping, collision, ambiguous routing, or transparent canvas |
 | Stable diagram set | Public error-contract architecture | Corrected catalogue generation and HTTP documentation exposure into separate responsibilities |
 | Stable diagram set | `DatabaseDiagramCoverageTest` | Pass: all 35 Flyway V1 tables represented |
