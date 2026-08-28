@@ -118,6 +118,12 @@ named production capability or documentation coverage is incomplete.
 | Truth baseline | Build, profiles, modules, HTTP, security, errors, schema, delivery, integrations, and tests compared with repository sources | 16 topics classified; six stable-guide corrections identified |
 | Truth baseline | V1 table inventory compared with ER source | 35 schema tables; 34 diagram entities; `login_attempt` queued for Task 5 |
 | Truth baseline | Future-infrastructure scan | No production Kafka, Redis, JWT, OAuth2, or `@Aspect` implementation |
+| Historical cleanup | 41 completed work-item Markdown records | Removed after their current guidance was distilled; only the three active KAN-39 records remain |
+| Historical cleanup | 57 historical diagram assets reviewed | 54 obsolete assets removed; the three-file public error-contract set migrated to `docs/api/assets/` |
+| Historical cleanup | Stable Markdown dependency scan | No stable page links to `work-items/`, removed Jira-key paths, Mermaid source files, or inline Mermaid blocks |
+| Historical cleanup | Diagram publication inventory | Reduced to 13 stable reader-facing diagrams with stable owners |
+| Historical cleanup | Structure, link, publication, and catalogue tests | Pass |
+| Historical cleanup | `npm run diagrams:check` and `git diff --check` | Pass |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.

@@ -445,7 +445,7 @@ git commit -m "Organize current engineering guidance (KAN-39)"
 - A `MIGRATE_DIAGRAM` asset must have a stable owner before its historical
   directory is removed.
 
-- [ ] **Step 1: Establish the code-to-documentation truth baseline**
+- [x] **Step 1: Establish the code-to-documentation truth baseline**
 
 Compare every stable topic with its authoritative repository sources:
 
@@ -463,26 +463,26 @@ Future Kafka, Redis, JWT, OAuth2, external notification providers, and
 real-money payment processing remain explicitly unimplemented until code and
 tests prove otherwise.
 
-- [ ] **Step 2: Verify every work-item file has a disposition**
+- [x] **Step 2: Verify every work-item file has a disposition**
 
 Run a PowerShell comparison between `rg --files docs | rg 'work-items'` and the
 audit table. Expected: zero unclassified files. Record counts for each
 disposition in `audit.md`.
 
-- [ ] **Step 3: Migrate approved durable diagrams and explanations**
+- [x] **Step 3: Migrate approved durable diagrams and explanations**
 
 Move each `MIGRATE_DIAGRAM` source and output to its stable topic `assets/`
 directory, rename it for the reader question rather than its Jira key, and
 update the inventory owner. Preserve KAN-34-style flow appearance where the
 source is a flow diagram.
 
-- [ ] **Step 4: Remove distilled historical records and orphan assets**
+- [x] **Step 4: Remove distilled historical records and orphan assets**
 
 Delete only `DISTILL_REMOVE` and completed `MIGRATE_*` files. Do not remove the
 active KAN-39 record. Use `rg` before each directory removal to prove no stable
 Markdown link still targets it.
 
-- [ ] **Step 5: Prove no stable page depends on work-item history**
+- [x] **Step 5: Prove no stable page depends on work-item history**
 
 ```powershell
 rg -n "work-items/|\.mmd(?:[)#?]|$)|```mermaid" README.md docs --glob "*.md"
@@ -491,7 +491,7 @@ rg -n "work-items/|\.mmd(?:[)#?]|$)|```mermaid" README.md docs --glob "*.md"
 
 Expected: `rg` returns only links inside the active KAN-39 record; tests pass.
 
-- [ ] **Step 6: Commit the historical cleanup**
+- [x] **Step 6: Commit the historical cleanup**
 
 ```powershell
 git add -A docs

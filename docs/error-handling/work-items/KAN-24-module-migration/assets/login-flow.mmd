@@ -1,7 +1,0 @@
-flowchart TD
-    accTitle: Login disclosure and protected audit flow
-    accDescr: Different protected authentication causes produce one public invalid-credentials response while a stable reason remains available only to protected audit processing.
-
-    Request["Login request"] --> Cause["Protected causes: unknown identity, wrong password, locked or disabled, restricted account"]
-    Cause --> Public["401 INVALID_CREDENTIALS"]
-    Cause --> Audit["Stable protected audit reason"]

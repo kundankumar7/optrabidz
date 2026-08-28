@@ -6,6 +6,18 @@ OptraBidz returns RFC 9457 Problem Details for HTTP failures. The public error
 descriptor is intentionally separated from internal diagnostics so responses
 remain stable without exposing implementation details.
 
+<a href="assets/public-error-contract-flow.svg">
+  <img src="assets/public-error-contract-flow.svg" alt="Public error definitions flow from module catalogues through the documentation adapter into OpenAPI and the generated Markdown catalogue">
+</a>
+
+[High-resolution PNG for Jira and offline review](assets/public-error-contract-flow.png)
+
+Module catalogues own public descriptors. The documentation adapter adds the
+fixed framework and security problems, normalizes and validates the combined
+set, then publishes the same contract to OpenAPI and the generated Markdown
+catalogue. Runtime exception handling does not query the documentation
+catalogue.
+
 ## Response Shape
 
 Every problem response contains:
