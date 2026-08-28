@@ -1,6 +1,6 @@
 # KAN-39 — Documentation Experience and Diagram Publication
 
-**Status:** Schema-driven ER amendment ready for review
+**Status:** Architecture and schema amendments ready for review
 
 **Date:** 2026-08-29
 
@@ -69,6 +69,79 @@ evidence.
 
 No documentation-site framework is introduced in this phase. Plain Markdown
 and repository assets remain the publication system.
+
+### 3.1 Documentation ownership across tools
+
+The three collaboration surfaces have different responsibilities:
+
+| Surface | Owns | Must not become |
+|---|---|---|
+| GitHub | Current engineering guidance, architecture views, operational instructions, API and database references, ADRs | A Jira activity log or approval transcript |
+| Confluence | Design proposals, review material, meeting decisions, implementation plans, and delivery evidence | A second copy of stable repository documentation |
+| Jira | Assignment, status, acceptance criteria, dependencies, defects, and links to the relevant GitHub or Confluence artifact | The primary architecture document |
+
+An approved design begins in Confluence, is linked from Jira, and is distilled
+after delivery. Durable system truth moves to the relevant GitHub topic or ADR;
+temporary approval and execution records do not remain in the stable repository
+tree. When the Confluence connector is unavailable, the repository work-item
+record remains temporary and must be removed before final integration.
+
+### 3.2 Layered architecture coverage
+
+The architecture documentation must represent all 11 top-level packages:
+`audit`, `classification`, `common`, `documentation`, `financial`,
+`governance`, `identity`, `marketplace`, `notification`, `participation`, and
+`security`. Grouping may aid navigation, but it must not hide a module's
+boundary, responsibility, or dependencies.
+
+The stable architecture hierarchy is:
+
+```text
+docs/architecture/
+  README.md                    architecture map and reading routes
+  system-context.md           actors and trust boundary
+  runtime.md                  Spring Boot, PostgreSQL, scheduling, outbox
+  modules/
+    README.md                  complete module and dependency map
+    identity.md
+    participation.md
+    classification.md
+    marketplace.md
+    governance.md
+    financial.md
+    notification.md
+    audit.md
+    security.md
+    common.md
+    documentation.md
+  flows/
+    request-security.md
+    event-delivery.md
+    error-disclosure.md
+```
+
+Each module page answers the same reviewer questions: purpose, owned concepts,
+public entry points, application use cases, domain rules, persistence, emitted
+or consumed events, outgoing module dependencies, security/error boundaries,
+verification, and known gaps. Statements are checked against code and tests;
+future architecture is labelled rather than mixed with current behaviour.
+
+The diagram set is layered instead of compressed into one picture:
+
+1. system context — people and external boundaries;
+2. runtime view — process, PostgreSQL, scheduled work, and post-commit delivery;
+3. complete module map — all 11 modules and their responsibilities;
+4. module dependency view — meaningful current dependencies, including
+   acknowledged coupling and unenforced boundaries;
+5. cross-cutting flows — request/security, error disclosure, and outbox-driven
+   audit/notification delivery; and
+6. focused module and database views — detail only for the question being
+   answered.
+
+Before diagrams or prose are rewritten, a code-to-documentation inventory maps
+every controller, application service, repository, event boundary, security
+adapter, and test family to its owning module page. This inventory prevents a
+visually tidy architecture from omitting implemented capabilities.
 
 ## 4. Reader Surfaces
 
@@ -299,6 +372,12 @@ desktop, phone-width, and Jira outputs. A human reviewer approves that evidence.
 KAN-39 is complete when:
 
 - the stable documentation hierarchy is complete and navigable;
+- all 11 top-level modules have an owned architecture page backed by current
+  code and tests;
+- the system-context, runtime, complete module, dependency, and cross-cutting
+  views are distinct and mutually consistent;
+- stable GitHub guidance, Confluence review records, and Jira work tracking
+  follow the documented ownership boundary;
 - obsolete work-item documents have been distilled and removed where safe;
 - every reader-facing diagram follows the visual notation approved during the
   prototype review;
