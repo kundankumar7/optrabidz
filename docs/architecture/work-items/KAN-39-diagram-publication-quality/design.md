@@ -1,10 +1,12 @@
 # KAN-39 — Documentation Experience and Diagram Publication
 
-**Status:** Architecture and schema amendments ready for review
+**Status:** Approved; renewed implementation in progress
 
 **Date:** 2026-08-29
 
 **Jira:** [KAN-39](https://0707manna0895.atlassian.net/browse/KAN-39)
+
+**Confluence:** [KAN-39 delivery record](https://0707manna0895.atlassian.net/wiki/spaces/KAN/pages/4390913/KAN-39+Documentation+Experience+and+Diagram+Publication)
 
 ## 1. Why KAN-39 Was Reopened
 

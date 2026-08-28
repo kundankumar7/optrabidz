@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "classification": {
+    "httpBoundaries": "Spring RestController and RestControllerAdvice classes",
+    "applicationServices": "Classes below application whose names end in Service",
+    "repositories": "Domain and infrastructure classes below a repository package",
+    "eventBoundaries": "Event and outbox packages, outbox processors, and transactional event listeners",
+    "securityAdapters": "HTTP-security configuration, filters, handlers, provider signature verifiers, and security auditors",
+    "tests": "Java tests below the module's matching test-package root"
+  },
+  "modules": [
+    {
+      "name": "audit",
+      "purpose": "Persist and query business and security audit records from committed domain-event work.",
+      "sourceRoot": "src/main/java/com/project/optrabidz/audit",
+      "testRoot": "src/test/java/com/project/optrabidz/audit",
+      "ownerPage": "docs/architecture/modules/audit.md",
+      "directDependencies": ["common"],
+      "surfaceCounts": {
+        "sourceFiles": 20,
+        "httpBoundaries": 1,
+        "applicationServices": 2,
+        "repositories": 1,
+        "eventBoundaries": 1,
+        "securityAdapters": 0,
+        "tests": 4
+      }
+    },
+    {
+      "name": "classification",
+      "purpose": "Manage startup classifications and investor preferences with profile, cardinality, integrity, and uniqueness rules.",
+      "sourceRoot": "src/main/java/com/project/optrabidz/classification",
+      "testRoot": "src/test/java/com/project/optrabidz/classification",
+      "ownerPage": "docs/architecture/modules/classification.md",
+      "directDependencies": ["common", "security"],
+      "surfaceCounts": {
+        "sourceFiles": 61,
+        "httpBoundaries": 2,
+        "applicationServices": 2,
+        "repositories": 6,
+        "eventBoundaries": 2,
+        "securityAdapters": 0,
+        "tests": 7
+      }
+    },
+    {
+      "name": "common",
+      "purpose": "Provide shared HTTP contracts, Problem Details mapping, observability helpers, domain-event publication, and transactional outbox infrastructure.",
+      "sourceRoot": "src/main/java/com/project/optrabidz/common",
+      "testRoot": "src/test/java/com/project/optrabidz/common",
+      "ownerPage": "docs/architecture/modules/common.md",
+      "directDependencies": ["identity", "security"],
+      "surfaceCounts": {
+        "sourceFiles": 36,
+        "httpBoundaries": 1,
+        "applicationServices": 0,
+        "repositories": 0,
+        "eventBoundaries": 12,
+        "securityAdapters": 0,
+        "tests": 18
+      }
+    },
+    {
+      "name": "documentation",
+      "purpose": "Assemble public error documentation, publish OpenAPI Problem Details components, and fail closed around documentation exposure.",
+      "sourceRoot": "src/main/java/com/project/optrabidz/documentation",
+      "testRoot": "src/test/java/com/project/optrabidz/documentation",
+      "ownerPage": "docs/architecture/modules/documentation.md",
+      "directDependencies": ["classification", "common", "financial", "governance", "identity", "marketplace", "notification", "participation", "security"],
+      "surfaceCounts": {
+        "sourceFiles": 7,
+        "httpBoundaries": 0,
+        "applicationServices": 0,
+        "repositories": 0,
+        "eventBoundaries": 0,
+        "securityAdapters": 2,
+        "tests": 19
+      }
+    },
+    {
+      "name": "financial",
+      "purpose": "Coordinate settlements, repayments, payment intents and attempts, provider adapters, and replay-safe webhook processing.",
+      "sourceRoot": "src/main/java/com/project/optrabidz/financial",
+      "testRoot": "src/test/java/com/project/optrabidz/financial",
+      "ownerPage": "docs/architecture/modules/financial.md",
+      "directDependencies": ["audit", "common", "governance", "identity", "marketplace", "participation", "security"],
+      "surfaceCounts": {
+        "sourceFiles": 119,
+        "httpBoundaries": 3,
+        "applicationServices": 4,
+        "repositories": 18,
+        "eventBoundaries": 3,
+        "securityAdapters": 5,
+        "tests": 30
+      }
+    },
+    {
+      "name": "governance",
+      "purpose": "Enforce administrative authority, system boundaries, eligibility, neutrality, and lifecycle constraints across business capabilities.",
+      "sourceRoot": "src/main/java/com/project/optrabidz/governance",
+      "testRoot": "src/test/java/com/project/optrabidz/governance",
+      "ownerPage": "docs/architecture/modules/governance.md",
+      "directDependencies": ["classification", "common", "identity", "participation", "security"],
+      "surfaceCounts": {
+        "sourceFiles": 41,
+        "httpBoundaries": 1,
+        "applicationServices": 4,
+        "repositories": 0,
+        "eventBoundaries": 2,
+        "securityAdapters": 0,
+        "tests": 6
+      }
+    },
+    {
+      "name": "identity",
+      "purpose": "Own accounts, roles, account state, profile state, and the application services used to change and query them.",
+      "sourceRoot": "src/main/java/com/project/optrabidz/identity",
+      "testRoot": "src/test/java/com/project/optrabidz/identity",
+      "ownerPage": "docs/architecture/modules/identity.md",
+      "directDependencies": ["common"],
+      "surfaceCounts": {
+        "sourceFiles": 26,
+        "httpBoundaries": 0,
+        "applicationServices": 2,
+        "repositories": 3,
+        "eventBoundaries": 0,
+        "securityAdapters": 0,
+        "tests": 2
+      }
+    },
+    {
+      "name": "marketplace",
+      "purpose": "Own funding listings, recommendation, bids, agreements, and their guarded state transitions.",
+      "sourceRoot": "src/main/java/com/project/optrabidz/marketplace",
+      "testRoot": "src/test/java/com/project/optrabidz/marketplace",
+      "ownerPage": "docs/architecture/modules/marketplace.md",
+      "directDependencies": ["classification", "common", "governance", "identity", "participation", "security"],
+      "surfaceCounts": {
+        "sourceFiles": 110,
+        "httpBoundaries": 3,
+        "applicationServices": 4,
+        "repositories": 9,
+        "eventBoundaries": 7,
+        "securityAdapters": 0,
+        "tests": 11
+      }
+    },
+    {
+      "name": "notification",
+      "purpose": "Persist in-app notifications and subscriptions and coordinate retryable in-app, sandbox email, and sandbox push delivery.",
+      "sourceRoot": "src/main/java/com/project/optrabidz/notification",
+      "testRoot": "src/test/java/com/project/optrabidz/notification",
+      "ownerPage": "docs/architecture/modules/notification.md",
+      "directDependencies": ["common", "security"],
+      "surfaceCounts": {
+        "sourceFiles": 49,
+        "httpBoundaries": 1,
+        "applicationServices": 1,
+        "repositories": 5,
+        "eventBoundaries": 1,
+        "securityAdapters": 0,
+        "tests": 5
+      }
+    },
+    {
+      "name": "participation",
+      "purpose": "Own administrator, startup, and investor records and synchronize participant-profile completeness with account profile state.",
+      "sourceRoot": "src/main/java/com/project/optrabidz/participation",
+      "testRoot": "src/test/java/com/project/optrabidz/participation",
+      "ownerPage": "docs/architecture/modules/participation.md",
+      "directDependencies": ["classification", "common", "identity", "security"],
+      "surfaceCounts": {
+        "sourceFiles": 53,
+        "httpBoundaries": 2,
+        "applicationServices": 3,
+        "repositories": 9,
+        "eventBoundaries": 2,
+        "securityAdapters": 0,
+        "tests": 5
+      }
+    },
+    {
+      "name": "security",
+      "purpose": "Authenticate accounts with server-side sessions, manage credentials and login attempts, enforce CSRF and route policy, and render safe security failures.",
+      "sourceRoot": "src/main/java/com/project/optrabidz/security",
+      "testRoot": "src/test/java/com/project/optrabidz/security",
+      "ownerPage": "docs/architecture/modules/security.md",
+      "directDependencies": ["audit", "common", "identity", "participation"],
+      "surfaceCounts": {
+        "sourceFiles": 49,
+        "httpBoundaries": 2,
+        "applicationServices": 3,
+        "repositories": 9,
+        "eventBoundaries": 0,
+        "securityAdapters": 5,
+        "tests": 8
+      }
+    }
+  ]
+}

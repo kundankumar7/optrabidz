@@ -566,6 +566,60 @@ git commit -m "Publish the stable diagram set (KAN-39)"
 
 ---
 
+## Task 5A: Correct the Architecture Coverage
+
+The first Task 5 publication pass is historical evidence, not final acceptance.
+Review found that it restyled the surviving figures without documenting the
+complete module model.
+
+- [x] **Step 1: Build the code-to-documentation inventory**
+
+  Record all 11 production modules, their owner pages, source/test roots,
+  controller and service surfaces, repositories, events/outbox boundaries,
+  security adapters, tests, and current direct imports. Enforce the inventory
+  against Java source so a new or moved surface fails documentation checks.
+
+- [ ] **Step 2: Publish the layered architecture entry points**
+
+  Add distinct system-context, runtime, complete-module, dependency, and
+  cross-cutting flow pages. Do not compress all concerns into the overview.
+
+- [ ] **Step 3: Publish one owned page for every module**
+
+  Each page must cover purpose, entry points, application/domain rules,
+  persistence, events, dependencies, security/error boundaries, verification,
+  and known gaps using repository evidence.
+
+- [ ] **Step 4: Verify module coverage and navigation**
+
+  Extend documentation tests to require every inventory owner page and its
+  standard reviewer sections, then run structure and link checks.
+
+## Task 5B: Correct the Database Information Model
+
+- [ ] **Step 1: Build the Flyway relationship manifest**
+
+  Capture all 35 tables and 46 foreign keys with child/parent columns,
+  nullability, and delete behaviour. Record material checks, partial indexes,
+  triggers, and intentional non-FK correlations separately.
+
+- [ ] **Step 2: Publish the relational journey and question chooser**
+
+  Provide a mobile-readable overview and route each reviewer question to a
+  focused relationship view.
+
+- [ ] **Step 3: Redesign focused relationship views from the manifest**
+
+  Show exact relationship semantics and adjacent invariants. Never depict a
+  correlation or trigger rule as a foreign key.
+
+- [ ] **Step 4: Verify complete schema semantics and all reader surfaces**
+
+  Compare the manifest with Flyway and verify the published set on desktop,
+  phone, GitHub Mobile, Jira, and local light/dark surroundings.
+
+---
+
 ## Task 6: Complete Repository and Surface Verification
 
 **Files:**
