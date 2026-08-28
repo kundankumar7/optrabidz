@@ -110,6 +110,8 @@ final class DiagramPublicationValidator {
         Path png = entry.jiraPng() == null ? null
                 : resolve(root, entry.jiraPng(), id, violations);
 
+        validateSourceContract(root, id, entry, source, svg, violations);
+
         requireFile(root, id, owner, "owner document does not exist", violations);
         requireFile(root, id, source, "editable source does not exist", violations);
         requireFile(root, id, svg, "declared SVG does not exist", violations);
@@ -136,6 +138,31 @@ final class DiagramPublicationValidator {
             if (Files.isRegularFile(png)) {
                 validatePng(root, id, png, violations);
             }
+        }
+    }
+
+    private static void validateSourceContract(Path root, String id,
+            DiagramEntry entry, Path source, Path svg,
+            List<Violation> violations) {
+        SourceType sourceType;
+        try {
+            sourceType = SourceType.valueOf(entry.sourceType());
+        } catch (RuntimeException exception) {
+            violations.add(new Violation(id, normalize(INVENTORY),
+                    "diagram source type is unsupported"));
+            return;
+        }
+
+        if (sourceType == SourceType.CURATED_SVG && source != null && svg != null
+                && !source.equals(svg)) {
+            violations.add(new Violation(id, relative(root, source),
+                    "curated SVG source must equal the published SVG"));
+        }
+        if (sourceType == SourceType.MERMAID_FILE && source != null
+                && !source.getFileName().toString().toLowerCase(Locale.ROOT)
+                        .endsWith(".mmd")) {
+            violations.add(new Violation(id, relative(root, source),
+                    "Mermaid source must use the .mmd extension"));
         }
     }
 
@@ -462,6 +489,11 @@ final class DiagramPublicationValidator {
     }
 
     record Renderer(String packageName, String version, String config) {
+    }
+
+    enum SourceType {
+        MERMAID_FILE,
+        CURATED_SVG
     }
 
     record DiagramEntry(String id, String owner, String source,

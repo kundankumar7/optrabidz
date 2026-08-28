@@ -145,7 +145,7 @@ class DiagramPublicationValidatorTest {
                     "id": "hand-authored-flow",
                     "owner": "docs/design.md",
                     "source": "docs/assets/hand-authored-flow.svg",
-                    "sourceType": "HAND_AUTHORED_SVG",
+                    "sourceType": "CURATED_SVG",
                     "githubSvg": "docs/assets/hand-authored-flow.svg",
                     "jiraPng": null,
                     "jiraPngRequired": false,
@@ -167,6 +167,71 @@ class DiagramPublicationValidatorTest {
         write("docs/architecture/diagram-publication/mermaid-config.json", "{}\n");
 
         assertThat(DiagramPublicationValidator.findViolations(repository)).isEmpty();
+    }
+
+    @Test
+    void reportsInvalidCanonicalSourceContracts() throws Exception {
+        writeInventory("""
+                {
+                  "schemaVersion": 1,
+                  "renderer": {
+                    "packageName": "@mermaid-js/mermaid-cli",
+                    "version": "11.16.0",
+                    "config": "docs/architecture/diagram-publication/mermaid-config.json"
+                  },
+                  "diagrams": [
+                    {
+                      "id": "split-curated-source",
+                      "owner": "docs/owner.md",
+                      "source": "docs/assets/source.svg",
+                      "sourceType": "CURATED_SVG",
+                      "githubSvg": "docs/assets/published.svg",
+                      "jiraPng": null,
+                      "jiraPngRequired": false,
+                      "remediation": "PASS"
+                    },
+                    {
+                      "id": "wrong-mermaid-extension",
+                      "owner": "docs/owner.md",
+                      "source": "docs/assets/flow.txt",
+                      "sourceType": "MERMAID_FILE",
+                      "githubSvg": "docs/assets/flow.svg",
+                      "jiraPng": null,
+                      "jiraPngRequired": false,
+                      "remediation": "PASS"
+                    },
+                    {
+                      "id": "unknown-source-type",
+                      "owner": "docs/owner.md",
+                      "source": "docs/assets/unknown.svg",
+                      "sourceType": "DRAWING_TOOL",
+                      "githubSvg": "docs/assets/unknown.svg",
+                      "jiraPng": null,
+                      "jiraPngRequired": false,
+                      "remediation": "PASS"
+                    }
+                  ]
+                }
+                """);
+        write("docs/owner.md", """
+                ![Source](assets/source.svg)
+                ![Published](assets/published.svg)
+                ![Flow](assets/flow.svg)
+                ![Unknown](assets/unknown.svg)
+                """);
+        write("docs/assets/source.svg", safeSvg());
+        write("docs/assets/published.svg", safeSvg());
+        write("docs/assets/flow.txt", "flowchart TB\nA --> B\n");
+        write("docs/assets/flow.svg", safeSvg());
+        write("docs/assets/unknown.svg", safeSvg());
+        write("docs/architecture/diagram-publication/mermaid-config.json", "{}\n");
+
+        assertThat(DiagramPublicationValidator.findViolations(repository))
+                .extracting(DiagramPublicationValidator.Violation::reason)
+                .contains(
+                        "curated SVG source must equal the published SVG",
+                        "Mermaid source must use the .mmd extension",
+                        "diagram source type is unsupported");
     }
 
     @Test

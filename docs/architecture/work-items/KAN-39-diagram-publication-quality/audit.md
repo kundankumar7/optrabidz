@@ -1,52 +1,71 @@
-# KAN-39 Diagram Publication Audit
+# KAN-39 Documentation Audit
 
-This record covers all 31 entries in the diagram publication inventory. The
-initial defect and remediation class explain why each entry was retained or
-changed. Desktop, mobile, contrast, and Jira columns record human review of the
-final assets; automated checks validate their structure and source pairing.
+This delivery record classifies every historical Markdown file before the
+stable documentation hierarchy is built. Jira, pull requests, commits, and Git
+retain delivery history; the repository will retain only current guidance.
 
-| Diagram ID | Initial defect | Class | Final SVG / PNG | Desktop | Mobile | Contrast | Jira | Disposition |
-|---|---|---|---|---|---|---|---|---|
-| `architecture-overview` | Accepted scalable SVG; no standard Jira export | Pass | [SVG](../../assets/optrabidz-architecture-overview.svg) · [PNG](../../assets/optrabidz-architecture-overview.png) | Pass | Pass | Pass | Pass | SVG retained; opaque 2400 px PNG added |
-| `database-account-access-security` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/account-access-security-er.svg) · [PNG](../../../database/assets/account-access-security-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-participant-profile` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/participant-profile-er.svg) · [PNG](../../../database/assets/participant-profile-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-marketplace-listing-bidding` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/marketplace-listing-bidding-er.svg) · [PNG](../../../database/assets/marketplace-listing-bidding-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-agreement-acceptance-terms` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/agreement-acceptance-terms-er.svg) · [PNG](../../../database/assets/agreement-acceptance-terms-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-settlement-context` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/settlement-context-er.svg) · [PNG](../../../database/assets/settlement-context-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-repayment-schedule` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/repayment-schedule-er.svg) · [PNG](../../../database/assets/repayment-schedule-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-payment-intent` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/payment-intent-er.svg) · [PNG](../../../database/assets/payment-intent-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-payment-attempt-provider` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/payment-attempt-provider-er.svg) · [PNG](../../../database/assets/payment-attempt-provider-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-payment-webhook` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/payment-webhook-er.svg) · [PNG](../../../database/assets/payment-webhook-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-notification-delivery-subscription` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/notification-delivery-subscription-er.svg) · [PNG](../../../database/assets/notification-delivery-subscription-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-outbox-audit-correlation` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/outbox-audit-correlation-er.svg) · [PNG](../../../database/assets/outbox-audit-correlation-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `kan-24-module-architecture` | 552×1228 low-resolution raster embedded on GitHub | Regenerate | [SVG](../../../error-handling/work-items/KAN-24-module-migration/assets/architecture.svg) · [PNG](../../../error-handling/work-items/KAN-24-module-migration/assets/architecture.png) | Pass | Pass | Pass | Pass | Concise scalable module view published |
-| `kan-24-login-flow` | 1506×884 raster-only publication | Regenerate | [SVG](../../../error-handling/work-items/KAN-24-module-migration/assets/login-flow.svg) · [PNG](../../../error-handling/work-items/KAN-24-module-migration/assets/login-flow.png) | Pass | Pass | Pass | Pass | Protected-cause summary published |
-| `kan-29-notification-error-flow` | 1302×1178 raster-only publication | Regenerate | [SVG](../../../error-handling/work-items/KAN-29-notification-error-migration/assets/error-flow.svg) · [PNG](../../../error-handling/work-items/KAN-29-notification-error-migration/assets/error-flow.png) | Pass | Pass | Pass | Pass | Narrow outcome tree published |
-| `kan-30-financial-request-error-flow` | Combined 1584×2118 flow mixed API and provider ingress | Split | [SVG](../../../error-handling/work-items/KAN-30-financial-error-migration/assets/financial-request-error-flow.svg) · [PNG](../../../error-handling/work-items/KAN-30-financial-error-migration/assets/financial-request-error-flow.png) | Pass | Pass | Pass | Pass | Focused API request flow published |
-| `kan-30-financial-webhook-error-flow` | Combined 1584×2118 flow mixed API and provider ingress | Split | [SVG](../../../error-handling/work-items/KAN-30-financial-error-migration/assets/financial-webhook-error-flow.svg) · [PNG](../../../error-handling/work-items/KAN-30-financial-error-migration/assets/financial-webhook-error-flow.png) | Pass | Pass | Pass | Pass | Focused provider webhook flow published |
-| `kan-31-authentication-flow` | 1729×478 layout shrank trust boundaries on mobile | Redesign | [SVG](../../../error-handling/work-items/KAN-31-financial-security-boundary/assets/authentication-flow.svg) · [PNG](../../../error-handling/work-items/KAN-31-financial-security-boundary/assets/authentication-flow.png) | Pass | Pass | Pass | Pass | Independent trust boundaries stacked |
-| `kan-32-webhook-replay-ingress` | Combined 2446×4194 transparent replay canvas | Split | [SVG](../../../error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-ingress.svg) · [PNG](../../../error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-ingress.png) | Pass | Pass | Pass | Pass | Ingress and atomic claim isolated |
-| `kan-32-webhook-replay-outcomes` | Combined 2446×4194 transparent replay canvas | Split | [SVG](../../../error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-outcomes.svg) · [PNG](../../../error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-outcomes.png) | Pass | Pass | Pass | Pass | Transaction and replay outcomes isolated |
-| `kan-33-single-error-contract` | 2532×3164 output used per-diagram rendering | Regenerate | [SVG](../../../error-handling/work-items/KAN-33-legacy-exception-removal/assets/single-error-contract.svg) · [PNG](../../../error-handling/work-items/KAN-33-legacy-exception-removal/assets/single-error-contract.png) | Pass | Pass | Pass | Pass | Shared rendering applied; topology retained |
-| `kan-33-legacy-deletion-boundary` | 1898×1906 output used per-diagram rendering | Regenerate | [SVG](../../../error-handling/work-items/KAN-33-legacy-exception-removal/assets/legacy-deletion-boundary.svg) · [PNG](../../../error-handling/work-items/KAN-33-legacy-exception-removal/assets/legacy-deletion-boundary.png) | Pass | Pass | Pass | Pass | Shared rendering applied; topology retained |
-| `kan-34-repayment-error-boundary` | Accepted layout used duplicated renderer configuration | Regenerate | [SVG](../../../error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-error-boundary.svg) · [PNG](../../../error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-error-boundary.png) | Pass | Pass | Pass | Pass | Accepted layout retained |
-| `kan-34-repayment-transition-state` | Accepted layout used duplicated renderer configuration | Regenerate | [SVG](../../../error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-transition-state.svg) · [PNG](../../../error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-transition-state.png) | Pass | Pass | Pass | Pass | Accepted layout retained |
-| `kan-35-payment-error-boundary` | 868×1576 transparent PNG and dense lookup fan-out | Redesign | [SVG](../../../error-handling/work-items/KAN-35-payment-error-migration/assets/payment-error-boundary.svg) · [PNG](../../../error-handling/work-items/KAN-35-payment-error-migration/assets/payment-error-boundary.png) | Pass | Pass | Pass | Pass | Scoped lookup and rendering stages separated |
-| `kan-35-payment-state-errors` | 1784×1199 transparent flow mixed creation and completion | Redesign | [SVG](../../../error-handling/work-items/KAN-35-payment-error-migration/assets/payment-state-errors.svg) · [PNG](../../../error-handling/work-items/KAN-35-payment-error-migration/assets/payment-state-errors.png) | Pass | Pass | Pass | Pass | Creation and completion outcomes separated |
-| `kan-36-webhook-ingress-flow` | 1584×898 raster-only flow with wide internal rows | Regenerate | [SVG](../../../error-handling/work-items/KAN-36-secure-webhook-ingress/assets/webhook-ingress-flow.svg) · [PNG](../../../error-handling/work-items/KAN-36-secure-webhook-ingress/assets/webhook-ingress-flow.png) | Pass | Pass | Pass | Pass | Failure outcomes ordered vertically |
-| `kan-37-settlement-error-boundary` | 1283×1912 transparent flow with dense role fan-out | Redesign | [SVG](../../../error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-error-boundary.svg) · [PNG](../../../error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-error-boundary.png) | Pass | Pass | Pass | Pass | Role-first disclosure-safe stages published |
-| `kan-37-settlement-confirmation-state` | 986×1044 flow had overlapping labels and effects | Redesign | [SVG](../../../error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-confirmation-state.svg) · [PNG](../../../error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-confirmation-state.png) | Pass | Pass | Pass | Pass | Classification and effects separated |
-| `kan-42-real-http-boundary` | Output used per-diagram rendering | Regenerate | [SVG](../../../error-handling/work-items/KAN-42-real-http-smoke/assets/real-http-boundary.svg) · [PNG](../../../error-handling/work-items/KAN-42-real-http-smoke/assets/real-http-boundary.png) | Pass | Pass | Pass | Pass | Shared rendering applied; topology retained |
-| `kan-43-error-contract-publication` | 3568×626 publication flow was unreadable at page width | Redesign | [SVG](../../../error-handling/work-items/KAN-43-openapi-error-catalogue/assets/error-contract-publication.svg) · [PNG](../../../error-handling/work-items/KAN-43-openapi-error-catalogue/assets/error-contract-publication.png) | Pass | Pass | Pass | Pass | Five-stage top-to-bottom flow published |
+## Content disposition
 
-## Verification notes
+| File | Disposition | Stable target | Reusable facts | Asset disposition |
+|---|---|---|---|---|
+| `architecture/work-items/KAN-25-documentation-information-architecture/design.md` | `DISTILL_REMOVE` | `docs/README.md` | Task-oriented navigation | Remove after distillation |
+| `architecture/work-items/KAN-25-documentation-information-architecture/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `architecture/work-items/KAN-39-diagram-publication-quality/audit.md` | `ACTIVE_RECORD` | none | Verification evidence | Retain through delivery |
+| `architecture/work-items/KAN-39-diagram-publication-quality/design.md` | `ACTIVE_RECORD` | none | Approved KAN-39 scope | Retain through delivery |
+| `architecture/work-items/KAN-39-diagram-publication-quality/implementation-plan.md` | `ACTIVE_RECORD` | none | Approved execution plan | Retain through delivery |
+| `database/work-items/KAN-12-migration-policy/design.md` | `DISTILL_REMOVE` | `docs/database/migrations.md` | Flyway ownership and migration policy | Remove after distillation |
+| `database/work-items/KAN-12-migration-policy/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `database/work-items/KAN-14-database-foundation-release/design.md` | `DISTILL_REMOVE` | `docs/database/README.md` | Database release boundary | Remove after distillation |
+| `database/work-items/KAN-14-database-foundation-release/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-17-foundation/design.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | Error-system separation | Remove after distillation |
+| `error-handling/work-items/KAN-20-neutral-contract/implementation-plan.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | Transport-neutral error contract | Remove |
+| `error-handling/work-items/KAN-21-rest-adapter/implementation-plan.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | REST mapping responsibility | Remove |
+| `error-handling/work-items/KAN-22-mvc-adapter/implementation-plan.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | MVC boundary responsibility | Remove |
+| `error-handling/work-items/KAN-23-security-adapter/implementation-plan.md` | `DISTILL_REMOVE` | `docs/security/README.md` | Security error adapter boundary | Remove |
+| `error-handling/work-items/KAN-24-module-migration/design.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | Module-owned error definitions | Remove all assets |
+| `error-handling/work-items/KAN-24-module-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-26-classification-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Classification public codes | Remove all assets |
+| `error-handling/work-items/KAN-26-classification-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-27-governance-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Governance public codes | Remove all assets |
+| `error-handling/work-items/KAN-27-governance-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-28-marketplace-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Marketplace public codes | Remove all assets |
+| `error-handling/work-items/KAN-28-marketplace-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-29-notification-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Notification public codes | Remove all assets |
+| `error-handling/work-items/KAN-29-notification-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-30-financial-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Financial public codes and disclosure rule | Remove all assets |
+| `error-handling/work-items/KAN-30-financial-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-31-financial-security-boundary/design.md` | `DISTILL_REMOVE` | `docs/security/README.md` | Authentication resolves at the security boundary | Remove all assets |
+| `error-handling/work-items/KAN-31-financial-security-boundary/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-32-webhook-replay-protection/design.md` | `DISTILL_REMOVE` | `docs/security/README.md` | Webhook verification and replay protection | Remove all assets |
+| `error-handling/work-items/KAN-32-webhook-replay-protection/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-33-legacy-exception-removal/design.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | Single public error contract | Remove all assets |
+| `error-handling/work-items/KAN-33-legacy-exception-removal/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-34-repayment-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Repayment public codes | Remove all assets |
+| `error-handling/work-items/KAN-34-repayment-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-35-payment-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Payment public codes | Remove all assets |
+| `error-handling/work-items/KAN-35-payment-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-36-secure-webhook-ingress/design.md` | `DISTILL_REMOVE` | `docs/security/README.md` | Signed webhook ingress | Remove all assets |
+| `error-handling/work-items/KAN-36-secure-webhook-ingress/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-37-settlement-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Settlement public codes | Remove all assets |
+| `error-handling/work-items/KAN-37-settlement-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-42-real-http-smoke/design.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | Real-port error contract verification | Remove all assets |
+| `error-handling/work-items/KAN-42-real-http-smoke/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-43-openapi-error-catalogue/design.md` | `MIGRATE_DIAGRAM` | `docs/api/errors.md` | Error contract publication flow | Move and rename diagram |
+| `error-handling/work-items/KAN-43-openapi-error-catalogue/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
 
-- Inventory coverage: 31 of 31 entries (12 Pass, 9 Regenerate, 6 Redesign,
-  and 4 Split).
-- Mobile review used a 358-pixel content width inside a 390-pixel viewport.
-- Every Jira companion was reviewed as an opaque 2400-pixel-wide PNG.
-- Representative narrow, wide, and dense layouts were reviewed directly;
-  automated checks do not substitute for the visual result above.
-- The first render exposed lost spaces between Mermaid SVG `tspan` elements.
-  The shared publisher now preserves inherited XML whitespace before PNG
-  rasterization.
+## Disposition totals
+
+- `ACTIVE_RECORD`: 3 Markdown files
+- `MIGRATE_DIAGRAM`: 1 Markdown owner and its diagram set
+- `DISTILL_REMOVE`: 40 Markdown files
+- Unclassified Markdown files: 0
+
+## Execution evidence
+
+| Stage | Evidence | Result |
+|---|---|---|
+| Quality gates | 44 work-item Markdown files compared with the disposition table | 0 unclassified |
+| Quality gates | `DocumentationStructureValidatorTest`, `DiagramPublicationValidatorTest`, and `DiagramPublicationTest` | Pass |
+
+Temporary review sheets remain under `target/documentation-review/` and are
+never committed.

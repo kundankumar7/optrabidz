@@ -1,185 +1,272 @@
-# KAN-39 — Reviewer-Quality Diagram Publication
+# KAN-39 — Documentation Experience and Diagram Publication
 
-**Status:** Implemented; pull-request review pending
+**Status:** Draft for renewed review
 
 **Date:** 2026-08-27
 
 **Jira:** [KAN-39](https://0707manna0895.atlassian.net/browse/KAN-39)
 
-## 1. Problem
+## 1. Why KAN-39 Was Reopened
 
-Repository diagrams do not currently follow one publication standard. Several
-Mermaid diagrams are embedded as low-resolution or transparent PNG files, some
-complex flows are compressed into unreadable layouts, and only part of the
-diagram inventory has scalable SVG output. Existing documentation tests prove
-that links resolve, but they do not protect source/output pairing, contrast,
-Jira export quality, or realistic desktop and mobile readability.
+The first KAN-39 delivery improved file pairing, generated SVG output, PNG
+fallbacks, and automated publication checks. It did not solve the reader's
+experience across the repository.
 
-This is a documentation-quality defect. It does not change application
-behavior or architecture.
+The repository still has three material problems:
 
-## 2. Decision
+1. direct `.mmd` links can open a renderer whose large canvas makes labels
+   unreadable;
+2. technically valid SVG files can still shrink below practical phone size;
+3. stable engineering guidance is buried among historical work-item documents.
 
-Use a controlled dual-format publication model:
+Passing a structural test is therefore not enough. The renewed KAN-39 scope
+must make the complete documentation set navigable, visually consistent, and
+readable on the surfaces where reviewers actually use it.
 
-1. an editable source remains the canonical diagram definition;
-2. GitHub documentation embeds an opaque, scalable SVG;
-3. a high-resolution, opaque PNG is retained for Jira and offline review;
-4. dense diagrams are simplified, reoriented, or split instead of relying on
-   resolution alone; and
-5. automated structural checks and a manual visual review jointly form the
-   quality gate.
+## 2. Outcomes
 
-Native Mermaid Markdown rendering is not the publication target because Jira
-support and renderer behavior are inconsistent. Hand-authored SVG-only assets
-are also rejected because they are expensive to maintain and can drift from
-their editable source.
+KAN-39 will deliver:
 
-## 3. Publication Contract
-
-| Concern | Contract |
-|---|---|
-| Editable source | Mermaid-backed diagrams retain a colocated `.mmd` source. Existing architecture or ER source conventions remain valid when documented. |
-| GitHub asset | Markdown embeds an SVG with a `viewBox`, explicit neutral background, readable labels, and no unsafe external content. |
-| Jira asset | The same source produces a high-resolution PNG with an explicit opaque background. |
-| Placement | Work-item assets remain in that work item's `assets/` directory. Stable architecture and database assets remain in their existing topic asset directories. |
-| Traceability | Source, SVG, and Jira PNG use the same descriptive base filename where the source is Mermaid. |
-| Complexity | A diagram is split or redesigned when normal page-width rendering makes its labels or connectors unreadable. |
-| Existing assets | Compliant architecture and database SVGs are verified and retained rather than rewritten for cosmetic uniformity. |
-
-Vector output is necessary but not sufficient. An oversized SVG that becomes
-unreadable at normal page width still fails this contract.
-
-## 4. Repository Audit Baseline
-
-The initial audit found:
-
-- 17 Mermaid-backed PNG diagrams under error-handling work-item records;
-- only six of those diagrams also have matching SVG output;
-- 11 are currently PNG-only;
-- five PNG assets use transparency, reducing connector contrast in dark mode;
-- multiple tall or dense diagrams scale labels below practical review size;
-- architecture and database SVGs are generally scalable and readable; and
-- existing tests validate links but do not enforce diagram publication
+- a concise repository entry point;
+- a stable topic-based documentation hierarchy;
+- a restrained OptraBidz diagram language;
+- reader-facing SVG diagrams without reader-facing Mermaid source links;
+- deliberate desktop, mobile-web, GitHub Mobile, and Jira verification; and
+- objective publication checks without pretending automation proves visual
   quality.
 
-The audit covers every diagram referenced by repository documentation, not
-only error-handling diagrams.
+KAN-39 does not change production behavior, business rules, APIs, database
+schemas, authentication, or authorization.
 
-## 5. Remediation Classification
+## 3. Documentation Information Architecture
 
-Every referenced diagram receives exactly one classification:
+The durable documentation hierarchy is:
 
-| Classification | Meaning | Action |
+```text
+README.md
+CONTRIBUTING.md
+docs/
+  README.md
+  getting-started/
+  architecture/
+  api/
+  database/
+  security/
+  operations/
+  decisions/
+```
+
+The root README is a concise product and repository entry point. It explains
+what OptraBidz does, states its boundaries, shows one architecture overview,
+and routes readers to stable topic pages.
+
+Durable technical decisions belong in the topic guides or in short decision
+records. Completed implementation plans are not permanent product
+documentation. Before obsolete work-item files are removed, any still-valid
+decision, operational instruction, or contract is distilled into the durable
+hierarchy. Jira, pull requests, commits, and Git history preserve delivery
+evidence.
+
+No documentation-site framework is introduced in this phase. Plain Markdown
+and repository assets remain the publication system.
+
+## 4. Reader Surfaces
+
+Every reader-facing diagram must be considered on all of these surfaces:
+
+| Surface | Publication target |
+|---|---|
+| GitHub desktop website | Embedded SVG at normal README width |
+| GitHub mobile website | The same embedded SVG at phone width |
+| GitHub Mobile app | The same Markdown page, verified on a real device |
+| Jira | Attached high-resolution opaque PNG |
+| Local IDE or checkout | SVG, PNG fallback, and editable source |
+
+GitHub documents support for repository images, including SVG, but do not
+provide a contractual guarantee that every GitHub Mobile release behaves
+identically to the website. A real GitHub Mobile check is therefore an
+acceptance step, not an assumption.
+
+## 5. Visual Policy — Clarity Over Branding
+
+KAN-39 will not introduce a new diagram brand or redesign readable diagrams for
+cosmetic uniformity. The accepted KAN-34 diagrams are the reference for clear
+flow presentation: a light canvas, obvious reading direction, readable labels,
+and restrained outcome colours.
+
+Implementation may improve only the qualities that affect comprehension or
+publication:
+
+- remove excessive empty canvas;
+- enlarge text that becomes unreadable at embedded desktop or phone width;
+- simplify connector routing and eliminate avoidable crossings;
+- group multi-stage flows clearly;
+- split a dense diagram when one canvas cannot remain readable;
+- retain explicit labels so meaning never depends on colour alone;
+- use an opaque background and sufficient contrast; and
+- keep typography, spacing, and node treatment internally consistent within a
+  figure.
+
+The KAN-34 appearance is a reference for flow diagrams, not a template forced
+onto architecture maps, state diagrams, or ER views. Each diagram type keeps
+the smallest notation that answers its reader's question.
+
+Project-specific value comes from the documented architecture, trust
+boundaries, state transitions, and engineering decisions. It does not require
+decorative branding, gradients, stock icons, shadows, or a novel colour palette.
+Any future repository-wide aesthetic change requires a separate visual review
+and explicit approval.
+
+## 6. Diagram Grammar
+
+Different questions require different diagram types. One generic flowchart
+template will not be stretched across the repository.
+
+| Question | Diagram type | Layout rule |
 |---|---|---|
-| Pass | Scalable, opaque, readable, safe, and correctly linked | Retain and record verification |
-| Regenerate | Layout is acceptable but required source/output or background properties are missing | Generate compliant SVG and PNG outputs and update the embed |
-| Redesign | Clipping, weak contrast, excessive whitespace, or branching harms comprehension | Change orientation, grouping, labels, or flow before rendering |
-| Split | One canvas combines independent flows that cannot remain readable at normal width | Publish smaller diagrams with focused responsibilities |
+| Who interacts with the system? | System context | Compact top-to-bottom boundary view |
+| How is the monolith divided? | Module map | Stable grouped modules; dependencies shown selectively |
+| How does one request execute? | Request flow | Numbered stages with a single reading direction |
+| How does state change? | State transition | States first; guards and outcomes on labelled edges |
+| How is data related? | ER view | One bounded data concern per figure |
+| How is an error disclosed? | Boundary/error view | Trust boundary before lookup and disclosure outcome |
 
-The audit is expected to retain most architecture and database SVGs, regenerate
-several straightforward historical flows, and redesign or split the densest
-payment, webhook, and settlement diagrams. Final classification is based on
-rendered evidence rather than filename or format alone.
+Large diagrams are split by reader question. An overview links to focused
+details; it does not attempt to contain every class, table, adapter, and event.
 
-## 6. Automated Validation
+## 7. Mobile Readability Contract
 
-A documentation-focused test will inventory referenced diagram assets and
-enforce objective rules:
+A diagram does not pass merely because SVG can be zoomed.
 
-- every local diagram reference resolves;
-- a Mermaid-backed embedded diagram uses SVG;
-- required `.mmd`, `.svg`, and Jira `.png` siblings exist and share a base
-  filename;
-- SVG output contains a `viewBox` and an explicit background;
-- SVG output does not contain scripts, external resource references, or
-  `foreignObject` content;
-- Jira PNG output is opaque and meets the documented minimum resolution;
-- temporary clipboard assets are not published; and
-- the repository documentation policy describes the same rules.
+For the embedded, normal page-width view:
 
-Existing link-validation tests remain responsible for general Markdown links.
-The new checks complement them rather than duplicate their purpose.
+- overview figures target a view-box width around 720 units;
+- primary labels must remain approximately 12 CSS pixels or larger at a
+  390-pixel viewport;
+- secondary labels must remain approximately 11 CSS pixels or larger;
+- an overview contains no more than seven primary nodes;
+- mobile readers must understand the main relationship without pinch-zoom;
+- dense details move to a separate focused figure; and
+- horizontal scrolling is not the normal reading path.
 
-Automated limits may identify suspicious aspect ratios or dimensions, but they
-must not pretend to prove human readability. Layout quality remains a visual
-review responsibility.
+The exact viewport result is checked from the rendered page. Source font sizes
+alone are not accepted as proof.
 
-## 7. Manual Visual Review
+## 8. Source and Output Strategy
 
-Representative output from every remediation class will be reviewed at:
+There are two supported source paths.
 
-- normal GitHub desktop width;
-- mobile-width GitHub rendering;
-- light and dark surrounding themes; and
-- Jira PNG preview size.
+### 8.1 Constrained Mermaid source
 
-The reviewer confirms that labels can be read without browser zoom, connectors
-remain visible, branch labels do not overlap or clip, and each diagram has a
-clear reading direction. Audit evidence records the checked asset and result.
+Mermaid remains appropriate for simple request flows and state transitions
+when its automatic layout produces a compact result. The repository retains
+the `.mmd` file for maintainers, then deterministically generates SVG and PNG.
 
-## 8. Documentation Changes
+The `.mmd` file is not linked as the reader-facing diagram.
 
-Implementation will:
+### 8.2 Curated SVG source
 
-- update active Markdown embeds from PNG to SVG where required;
-- keep a clearly labelled PNG link for Jira and offline review;
-- revise the earlier diagram-publication guidance introduced by KAN-25;
-- add KAN-39 to the architecture work-item index; and
-- avoid rewriting historical prose or implementation commands unless they
-  conflict with the current publication contract.
+Stable architecture overviews and other composition-sensitive diagrams may use
+a curated SVG as the editable source. This is preferable to forcing a poor
+automatic layout merely to keep every diagram in Mermaid.
 
-The repository remains the durable engineering record. Jira receives concise
-progress, classification, verification, and delivery updates without
-duplicating the complete specification.
+A curated SVG must:
 
-## 9. Scope Boundaries
+- use named classes and shared visual tokens;
+- contain a title and description;
+- avoid scripts, external resources, and `foreignObject`;
+- use meaningful groups and comments so it remains maintainable; and
+- generate its Jira PNG from the same SVG.
 
-KAN-39 includes the repository-wide inventory, diagram remediation, publication
-policy, test-only safeguards, and visual-review evidence.
+The diagram inventory records which source path each figure uses. A diagram
+must never have two competing canonical sources, as happened when an
+architecture `.mmd` file and a separately authored overview SVG represented
+the same figure.
 
-KAN-39 excludes:
+## 9. Reader-Facing Publication Contract
 
-- production Java or runtime behavior changes;
-- business rules, API contracts, authentication, or authorization changes;
-- unrelated documentation restructuring;
-- cosmetic rewriting of diagrams that already pass; and
-- changes to application dependencies unless a build-time rendering tool is
-  separately justified by the implementation plan.
+Every stable Markdown page follows this pattern:
 
-## 10. Delivery and Rollback
+1. a short paragraph explains what question the diagram answers;
+2. the page embeds the SVG using a relative repository path;
+3. meaningful alt text summarizes the relationship;
+4. a clearly labelled high-resolution PNG link is available as fallback; and
+5. a short textual interpretation follows the figure.
 
-Work is isolated on the `docs/KAN-39-diagram-quality` branch and targets
-`develop`. The pull request must present the audit classification, generated
-asset changes, automated test results, and manual visual evidence.
+Reader pages do not contain Mermaid code fences and do not direct readers to
+`.mmd` files. Source files remain discoverable through the maintenance guide
+and inventory.
 
-Because the change is documentation and test focused, rollback uses normal Git
-reversion. Editable sources remain available, so any individual rendered asset
-can also be regenerated or corrected without reconstructing the design.
+## 10. Representative Prototype Gate
 
-## 11. Acceptance Criteria
+The architecture overview is the compatibility fixture for the new system.
+Before repository-wide conversion it will be redesigned as:
+
+- a compact system overview containing clients, application boundary,
+  business core, durable data, and asynchronous delivery;
+- focused module and event-delivery diagrams linked from the overview rather
+  than compressed inside it; and
+- an adjacent textual explanation.
+
+The prototype must be reviewed on:
+
+- GitHub desktop web;
+- GitHub mobile web at approximately 390 pixels;
+- the GitHub Mobile app on the user's phone;
+- Jira PNG preview; and
+- local light and dark surroundings.
+
+Bulk diagram conversion cannot start until this prototype is approved.
+
+## 11. Verification
+
+Automated checks will verify objective properties:
+
+- every local image reference resolves;
+- each inventory entry has exactly one canonical source;
+- reader-facing Markdown does not link `.mmd` files;
+- SVG files contain a `viewBox`, title, description, and explicit background;
+- SVG files contain no unsafe or externally loaded content;
+- generated PNG files are opaque and meet the export dimensions;
+- diagrams use the approved token set; and
+- temporary clipboard assets are absent.
+
+Visual evidence will verify what automation cannot:
+
+- normal-width label readability;
+- connector clarity and reading order;
+- useful whitespace rather than empty canvas;
+- light/dark surrounding contrast;
+- GitHub Mobile rendering; and
+- Jira preview quality.
+
+The implementation will generate a compact review sheet showing representative
+desktop, phone-width, and Jira outputs. A human reviewer approves that evidence.
+
+## 12. Delivery Sequence
+
+1. Discuss and approve the visual direction and this renewed design.
+2. Write and approve the implementation plan.
+3. Redesign the architecture compatibility fixture.
+4. Review the fixture on every required surface.
+5. Distil durable documentation into the approved hierarchy.
+6. Convert, split, or retire the remaining diagrams and historical documents.
+7. Run structural checks and produce visual evidence.
+8. Open a reviewable pull request with documentation, evidence, and Jira
+   updates.
+
+## 13. Acceptance Criteria
 
 KAN-39 is complete when:
 
-- every referenced repository diagram has an audit result;
-- GitHub embeds use compliant, readable SVG assets;
-- Mermaid-backed diagrams retain matching editable sources and Jira PNGs;
-- dense diagrams have been simplified or split where necessary;
-- automated publication checks and existing documentation-link tests pass;
-- desktop, mobile, theme, and Jira evidence demonstrates practical
-  readability; and
-- Jira and repository documentation contain the final verification summary.
-
-## 12. Delivery Evidence
-
-- The inventory contains 31 reviewed diagrams: 12 Pass, 9 Regenerate,
-  6 Redesign, and 4 Split.
-- GitHub documentation embeds accessible SVG output and retains opaque
-  2400-pixel PNG companions for Jira and offline review.
-- The repository-wide publication gate and documentation-link tests pass.
-- A Docker-backed run passed 593 unit and integration tests after excluding the
-  single Windows line-ending snapshot defect tracked separately by KAN-44.
-- The unmodified full unit command ran 451 tests and reproduced only that
-  KAN-44 failure.
-- No production source, runtime dependency, API, database, or security behavior
-  changed in this work item.
+- the stable documentation hierarchy is complete and navigable;
+- obsolete work-item documents have been distilled and removed where safe;
+- every reader-facing diagram follows the visual notation approved during the
+  prototype review;
+- every diagram has exactly one canonical source;
+- no reader-facing page links Mermaid source;
+- the architecture prototype and converted figures pass desktop, mobile web,
+  GitHub Mobile, Jira, and local review;
+- automated documentation checks pass;
+- no production behavior changed; and
+- Jira and the pull request contain concise verification evidence.
