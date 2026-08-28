@@ -3,20 +3,17 @@
   <desc id="desc">Clients enter through the Spring MVC and session-security boundary, invoke business modules in one Spring Boot application, and commit data and outbox records to PostgreSQL. Outbox records are processed into audit records and notification delivery.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-      <path d="M0 0 L10 5 L0 10 Z" fill="#2E3A46" />
+      <path d="M0 0 L10 5 L0 10 Z" fill="#334155" />
     </marker>
     <style>
-      .canvas { fill: #F7F3EA; }
-      .node { fill: #FFFDF8; stroke: #D8CDBD; stroke-width: 2; }
-      .boundary { fill: #E7F3F4; stroke: #146C78; }
-      .core { fill: #F2EAF5; stroke: #6E4A7E; }
-      .data { fill: #EEF4E8; stroke: #4F6F3A; }
-      .event { fill: #FCEBE6; stroke: #B55239; }
-      .title { font: 700 30px "Segoe UI", Arial, sans-serif; fill: #17212B; }
-      .heading { font: 700 23px "Segoe UI", Arial, sans-serif; fill: #17212B; }
-      .body { font: 400 20px "Segoe UI", Arial, sans-serif; fill: #485461; }
-      .wire { fill: none; stroke: #2E3A46; stroke-width: 2.5; marker-end: url(#arrow); }
-      .label { font: 600 18px "Segoe UI", Arial, sans-serif; fill: #485461; }
+      .canvas { fill: #FFFFFF; }
+      .node { fill: #EFF6FF; stroke: #2563EB; stroke-width: 2; }
+      .boundary, .core, .data, .event { fill: #EFF6FF; stroke: #2563EB; }
+      .title { font: 700 30px "Segoe UI", Arial, sans-serif; fill: #0F172A; }
+      .heading { font: 700 23px "Segoe UI", Arial, sans-serif; fill: #0F172A; }
+      .body { font: 400 20px "Segoe UI", Arial, sans-serif; fill: #334155; }
+      .wire { fill: none; stroke: #334155; stroke-width: 2.5; marker-end: url(#arrow); }
+      .label { font: 600 18px "Segoe UI", Arial, sans-serif; fill: #334155; }
     </style>
   </defs>
 
