@@ -55,6 +55,32 @@ class DocumentationStructureValidatorTest {
                 .isEmpty();
     }
 
+    @Test
+    void limitsReaderFacingRulesToStableGuidance() throws Exception {
+        writeRequiredEntries();
+        write("docs/api/work-items/KAN-1/design.md", """
+                # Historical design
+
+                [Source](assets/flow.mmd)
+
+                ```mermaid
+                flowchart TB
+                A --> B
+                ```
+                """);
+        write("docs/database/assets/er-diagram-source.md", """
+                # Diagram source
+
+                ```mermaid
+                erDiagram
+                ACCOUNT ||--o{ SESSION : owns
+                ```
+                """);
+
+        assertThat(DocumentationStructureValidator.findViolations(repository))
+                .isEmpty();
+    }
+
     private void writeRequiredEntries() throws Exception {
         write("docs/README.md", "# Documentation\n");
         write("docs/getting-started/README.md", "# Getting started\n");

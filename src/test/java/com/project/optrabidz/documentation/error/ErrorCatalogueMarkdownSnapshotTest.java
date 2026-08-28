@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ErrorCatalogueMarkdownSnapshotTest {
 
     private static final Path CATALOGUE = Path.of(
-            "docs", "error-handling", "error-catalogue.md"
+            "docs", "api", "error-catalogue.md"
     );
 
     @Test

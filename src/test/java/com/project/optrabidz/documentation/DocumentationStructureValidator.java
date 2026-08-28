@@ -53,6 +53,7 @@ final class DocumentationStructureValidator {
                 paths.filter(Files::isRegularFile)
                         .filter(path -> path.getFileName().toString()
                                 .toLowerCase(Locale.ROOT).endsWith(".md"))
+                        .filter(path -> isReaderFacing(root, path))
                         .forEach(markdown::add);
             }
         }
@@ -65,6 +66,12 @@ final class DocumentationStructureValidator {
                 .sorted(Comparator.comparing(Violation::path)
                         .thenComparing(Violation::reason))
                 .toList();
+    }
+
+    private static boolean isReaderFacing(Path root, Path path) {
+        String relative = "/" + normalize(root.relativize(path)) + "/";
+        return !relative.contains("/work-items/")
+                && !relative.contains("/assets/");
     }
 
     private static void inspect(Path root, Path source,

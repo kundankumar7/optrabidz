@@ -1,6 +1,6 @@
 # OptraBidz ER Diagram Source
 
-The rendered ER diagrams in `assets/` are hand-authored SVGs for reliable
+The rendered ER diagrams in this directory are hand-authored SVGs for reliable
 previewing in GitHub, GitHub mobile, and IDE Markdown viewers. These Mermaid
 references capture the same schema-backed relationships.
 

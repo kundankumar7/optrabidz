@@ -52,22 +52,12 @@ Always let Flyway execute versioned files. Running one directly with `psql`
 changes the schema without recording its version and checksum, leaving the
 database history incomplete.
 
-## Environment Decision Flow
+## Choose the Upgrade Path
 
-```mermaid
-flowchart TD
-    A["Database change required"] --> B{"Does the target database contain data that must be preserved?"}
-    B -->|No| C["Disposable local database"]
-    C --> D["Create the next migration"]
-    D --> E["Recreate an empty PostgreSQL 16 database when a clean test is needed"]
-    E --> F["Start the application and let Flyway apply every migration"]
-    B -->|Yes| G["Populated database"]
-    G --> H["Back up and verify restore capability"]
-    H --> I["Compare schema and Flyway history with the expected state"]
-    I --> J["Resolve drift through a separately reviewed reconciliation plan"]
-    J --> K["Dry-run the upgrade on a restored copy"]
-    K --> L["Approve and execute the release plan"]
-```
+| Database | Required path |
+|---|---|
+| Disposable local data | Create the next migration, recreate an empty PostgreSQL 16 database when needed, and let Flyway apply the complete history |
+| Data must be preserved | Verify backup and restore, inspect schema and Flyway history, reconcile drift, rehearse on a restored copy, and approve the release and recovery plan |
 
 ## Fresh PostgreSQL 16 Database
 
@@ -86,7 +76,7 @@ docker run --name optrabidz-postgres -e POSTGRES_DB=optrabidz -e POSTGRES_USER=p
 Then start the application:
 
 ```powershell
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
 ```
 
 ## Resetting the Disposable Local Database
@@ -188,8 +178,8 @@ Confirm all of the following before accepting a migration:
 Scan for obsolete schema-initialization instructions:
 
 ```powershell
-rg -n "optrabidz-schema\.sql|ddl-auto=update|manual schema initialization" README.md docs/database/README.md docs/database/er-diagram.md docs/database/er-diagram-source.md src
-rg -n "spring\.sql\.init" README.md docs/database/README.md docs/database/er-diagram.md docs/database/er-diagram-source.md src/main
+rg -n "optrabidz-schema\.sql|ddl-auto=update|manual schema initialization" README.md docs/database/README.md docs/database/er-diagram.md docs/database/assets/er-diagram-source.md src
+rg -n "spring\.sql\.init" README.md docs/database/README.md docs/database/er-diagram.md docs/database/assets/er-diagram-source.md src/main
 rg -n "spring\.sql\.init" src/test
 ```
 

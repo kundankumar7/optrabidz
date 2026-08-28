@@ -74,6 +74,9 @@ retain delivery history; the repository will retain only current guidance.
 | Architecture prototype | GitHub Mobile SVG | Pass |
 | Architecture prototype | GitHub Mobile PNG fallback | Pass: cache-safe final filename displays the approved diagram |
 | Architecture prototype | Jira 2400-pixel PNG | Pass: approved fallback is the only KAN-39 attachment |
+| Stable hierarchy | Task-oriented portal and seven topic guides | Pass: current guidance is reachable without Jira-key navigation |
+| Stable hierarchy | Generated public error catalogue | Pass: moved under `docs/api` and snapshot parity verified |
+| Stable hierarchy | Structure and repository link checks | Pass |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.
