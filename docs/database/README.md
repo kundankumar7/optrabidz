@@ -26,6 +26,11 @@ Solid ER relationships represent database foreign keys. Event correlation
 without a foreign key is identified explicitly so diagrams do not imply a
 constraint that the schema does not contain.
 
+The V1 baseline currently defines 35 tables. The published ER set visualizes
+34; `login_attempt` remains schema-backed but is not yet represented in the
+diagram set. Until the diagrams are remediated, use `V1__baseline.sql` as the
+complete relationship reference.
+
 ## Ownership Rules
 
 - Add the next unused version under `src/main/resources/db/migration`.

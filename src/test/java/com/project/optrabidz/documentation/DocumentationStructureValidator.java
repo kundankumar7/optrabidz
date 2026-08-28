@@ -15,6 +15,7 @@ final class DocumentationStructureValidator {
 
     private static final List<String> REQUIRED_ENTRIES = List.of(
             "docs/README.md",
+            "docs/maintenance.md",
             "docs/getting-started/README.md",
             "docs/architecture/README.md",
             "docs/api/README.md",

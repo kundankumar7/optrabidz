@@ -436,31 +436,53 @@ git commit -m "Organize current engineering guidance (KAN-39)"
 **Interfaces:**
 
 - Task 4 consumes the complete disposition table from Task 1.
+- Stable guidance is checked against authoritative code, configuration,
+  migrations, tests, and CI before historical explanations are removed.
+- Each reviewed topic is classified as implemented, partially implemented,
+  planned, or outdated; only implemented facts are stated as current behavior.
 - `ACTIVE_RECORD` protects only the current KAN-39 design, implementation plan,
   and audit until delivery completes.
 - A `MIGRATE_DIAGRAM` asset must have a stable owner before its historical
   directory is removed.
 
-- [ ] **Step 1: Verify every work-item file has a disposition**
+- [ ] **Step 1: Establish the code-to-documentation truth baseline**
+
+Compare every stable topic with its authoritative repository sources:
+
+- Maven build and Java/Spring versions;
+- application profiles and configuration;
+- modules, controllers, and public HTTP routes;
+- session authentication, authorization, and security adapters;
+- exception catalogues and Problem Details mapping;
+- Flyway migrations, entities, and repository relationships;
+- outbox, audit, notification, payment, webhook, and scheduled processing; and
+- unit, integration, CI, and operational constraints.
+
+Record the source paths, classification, and any correction in `audit.md`.
+Future Kafka, Redis, JWT, OAuth2, external notification providers, and
+real-money payment processing remain explicitly unimplemented until code and
+tests prove otherwise.
+
+- [ ] **Step 2: Verify every work-item file has a disposition**
 
 Run a PowerShell comparison between `rg --files docs | rg 'work-items'` and the
 audit table. Expected: zero unclassified files. Record counts for each
 disposition in `audit.md`.
 
-- [ ] **Step 2: Migrate approved durable diagrams and explanations**
+- [ ] **Step 3: Migrate approved durable diagrams and explanations**
 
 Move each `MIGRATE_DIAGRAM` source and output to its stable topic `assets/`
 directory, rename it for the reader question rather than its Jira key, and
 update the inventory owner. Preserve KAN-34-style flow appearance where the
 source is a flow diagram.
 
-- [ ] **Step 3: Remove distilled historical records and orphan assets**
+- [ ] **Step 4: Remove distilled historical records and orphan assets**
 
 Delete only `DISTILL_REMOVE` and completed `MIGRATE_*` files. Do not remove the
 active KAN-39 record. Use `rg` before each directory removal to prove no stable
 Markdown link still targets it.
 
-- [ ] **Step 4: Prove no stable page depends on work-item history**
+- [ ] **Step 5: Prove no stable page depends on work-item history**
 
 ```powershell
 rg -n "work-items/|\.mmd(?:[)#?]|$)|```mermaid" README.md docs --glob "*.md"
@@ -469,7 +491,7 @@ rg -n "work-items/|\.mmd(?:[)#?]|$)|```mermaid" README.md docs --glob "*.md"
 
 Expected: `rg` returns only links inside the active KAN-39 record; tests pass.
 
-- [ ] **Step 5: Commit the historical cleanup**
+- [ ] **Step 6: Commit the historical cleanup**
 
 ```powershell
 git add -A docs

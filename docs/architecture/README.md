@@ -21,12 +21,17 @@ successful business transaction from depending on an external delivery channel.
 | Identity and access | `security`, `identity`, `participation` | Authentication, accounts, sessions, roles, and participant profiles |
 | Marketplace | `classification`, `marketplace`, `governance` | Eligibility, listings, bids, agreements, and lifecycle rules |
 | Finance | `financial` | Settlement, repayment, payment intents, provider attempts, and webhook processing |
-| Supporting capabilities | `notification`, `audit`, `common` | Delivery, traceability, domain events, shared contracts, and outbox infrastructure |
+| Supporting capabilities | `notification`, `audit`, `common`, `documentation` | Delivery, traceability, domain events, shared contracts, outbox infrastructure, and API-document adapters |
 
 Controllers adapt HTTP requests. Application services coordinate use cases;
 domain rules protect state transitions; repositories and integration adapters
 handle infrastructure. Modules should depend on public contracts rather than
 another module's persistence implementation.
+
+The package structure implements these capability boundaries. Automated
+architecture rules currently protect the exception, documentation, and webhook
+boundaries; complete repository-wide module dependency enforcement is not yet
+implemented.
 
 ## Persistence and Event Delivery
 

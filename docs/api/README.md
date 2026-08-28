@@ -9,8 +9,8 @@ HTTP input and output; business rules remain in application services and
 authentication remains in the security boundary.
 
 Swagger UI is available only when explicitly enabled. The development profile
-publishes it at `/swagger-ui/index.html`; production configuration disables it
-by default.
+publishes its configured entry at `/swagger-ui.html`; production configuration
+disables it by default.
 
 ## Response Contracts
 

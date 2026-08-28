@@ -26,9 +26,14 @@ credentials outside local development.
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
 ```
 
-The `dev` profile enables Swagger UI, local notification delivery, and sandbox
-payment providers. Open `http://localhost:8080/swagger-ui/index.html` after the
-application starts.
+The `dev` profile enables Swagger UI, development admin bootstrap, and local
+and sandbox payment providers. Sandbox email and push strategies are enabled
+by baseline configuration and can be disabled by channel properties. Open
+`http://localhost:8080/swagger-ui.html` after the application starts.
+
+Development bootstrap and webhook settings contain local-only defaults. Use
+the corresponding environment variables when overriding them and never reuse
+development values in a shared or production environment.
 
 The default configuration is fail-closed for API documentation and local
 integration adapters. The `prod` profile also requires datasource environment

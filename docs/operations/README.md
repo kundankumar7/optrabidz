@@ -16,6 +16,12 @@ Production requires `OPTRABIDZ_DATASOURCE_URL`,
 Swagger UI remains disabled. This guide names configuration keys only; secret
 values belong in the deployment platform's secret store.
 
+Local development also recognizes admin-bootstrap variables under
+`OPTRABIDZ_ADMIN_BOOTSTRAP_*`, `OPTRABIDZ_ADMIN_RECOVERY_TOKEN`, and provider
+webhook secrets `OPTRABIDZ_UPI_WEBHOOK_SECRET` and
+`OPTRABIDZ_CARD_WEBHOOK_SECRET`. Their development defaults are not suitable
+for a shared or production environment.
+
 ## Database Startup
 
 Flyway validates and applies pending versioned migrations before Hibernate

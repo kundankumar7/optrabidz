@@ -33,6 +33,13 @@ replay checks rather than user sessions.
 Endpoint accessibility is a business and security contract. Review both the
 route rule and the owning service rule before changing it.
 
+The current configuration permits registration, login, the recovery-token
+endpoint, signed provider webhooks, and the standard funding-listing collection
+and detail reads. Recommended-listing and accepted-bid reads are authenticated.
+Other matched application routes require a session or role as defined in
+`SecurityConfig`; service-level ownership rules remain authoritative for
+individual resources.
+
 ## Replaceable Authentication Adapters
 
 Session authentication is the implemented adapter, not a business-domain

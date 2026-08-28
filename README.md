@@ -25,7 +25,7 @@ Start the application with development-only integrations enabled:
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
 ```
 
-Open Swagger UI at `http://localhost:8080/swagger-ui/index.html`. API
+Open Swagger UI at `http://localhost:8080/swagger-ui.html`. API
 documentation is disabled by default outside the development profile.
 
 ## Architecture

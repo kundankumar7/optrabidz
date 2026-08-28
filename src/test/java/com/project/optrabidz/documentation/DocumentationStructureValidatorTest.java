@@ -81,8 +81,20 @@ class DocumentationStructureValidatorTest {
                 .isEmpty();
     }
 
+    @Test
+    void requiresTheDocumentationMaintenanceMap() throws Exception {
+        writeRequiredEntries();
+        Files.delete(repository.resolve("docs/maintenance.md"));
+
+        assertThat(DocumentationStructureValidator.findViolations(repository))
+                .contains(new DocumentationStructureValidator.Violation(
+                        "docs/maintenance.md",
+                        "required documentation entry does not exist"));
+    }
+
     private void writeRequiredEntries() throws Exception {
         write("docs/README.md", "# Documentation\n");
+        write("docs/maintenance.md", "# Documentation maintenance\n");
         write("docs/getting-started/README.md", "# Getting started\n");
         write("docs/architecture/README.md", "# Architecture\n");
         write("docs/api/README.md", "# API\n");

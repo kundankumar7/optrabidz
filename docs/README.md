@@ -16,6 +16,7 @@ pull requests rather than the permanent documentation path.
 | Review authentication and authorization | [Security guide](security/README.md) |
 | Configure or operate the service | [Operations guide](operations/README.md) |
 | Understand an important design choice | [Architecture decisions](decisions/README.md) |
+| Update documentation after a code change | [Documentation maintenance map](maintenance.md) |
 
 ## Documentation Rules
 
