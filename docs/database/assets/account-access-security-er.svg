@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="860" viewBox="0 0 1200 860" role="img" aria-labelledby="title desc">
   <title id="title">Account Access and Security Context ER diagram</title>
-  <desc id="desc">Schema-backed ER slice showing account relationships to role, credential, session, and admin records.</desc>
+  <desc id="desc">Schema-backed ER slice showing account relationships to role, credential, session, and admin records, plus the standalone immutable login attempt log.</desc>
   <defs>
     <style>
       .canvas{fill:#F7F3EA}.title{font:700 28px "Segoe UI",Arial,sans-serif;fill:#17212B}.subtitle{font:400 14px "Segoe UI",Arial,sans-serif;fill:#5D6775}
@@ -10,9 +10,9 @@
       .card{font:700 13px "Segoe UI",Arial,sans-serif;fill:#17212B}.tagbox{fill:#FFFDF8;stroke:#C9BBA7;stroke-width:1}.tag{font:700 12px "Segoe UI",Arial,sans-serif;fill:#17212B}.note{font:400 12px "Segoe UI",Arial,sans-serif;fill:#5D6775}
     </style>
   </defs>
-  <rect class="canvas" width="1200" height="700"/>
+  <rect class="canvas" width="1200" height="860"/>
   <text class="title" x="600" y="44" text-anchor="middle">Account Access and Security Context</text>
-  <text class="subtitle" x="600" y="70" text-anchor="middle">Account-owned role, credential, session, and administrator authority records</text>
+  <text class="subtitle" x="600" y="70" text-anchor="middle">Account-owned access records and the standalone immutable login attempt log</text>
 
   <g id="relationships">
     <path class="fk" d="M510 274 V320 H180 V386"/>
@@ -82,6 +82,15 @@
     <text class="field" x="18" y="146">admin_state</text>
   </g>
 
-  <text class="note" x="60" y="638">login_attempt is not shown because the schema stores it by email only and defines no foreign key to account or credential.</text>
-  <text class="note" x="60" y="662">profile, startup, and investor records are intentionally kept out of this access-focused slice.</text>
+  <g transform="translate(450 610)">
+    <rect class="entity security" width="300" height="170" rx="8"/>
+    <text class="head" x="18" y="32">login_attempt</text>
+    <text class="key" x="18" y="64">login_attempt_id PK</text>
+    <text class="field" x="18" y="94">email, attempted_at</text>
+    <text class="field" x="18" y="120">success, failure_reason</text>
+    <text class="field" x="18" y="146">source_ip · immutable by trigger</text>
+  </g>
+
+  <text class="note" x="470" y="596">Standalone record · no foreign key</text>
+  <text class="note" x="60" y="826">profile, startup, and investor records are intentionally kept out of this access-focused slice.</text>
 </svg>

@@ -26,10 +26,11 @@ Solid ER relationships represent database foreign keys. Event correlation
 without a foreign key is identified explicitly so diagrams do not imply a
 constraint that the schema does not contain.
 
-The V1 baseline currently defines 35 tables. The published ER set visualizes
-34; `login_attempt` remains schema-backed but is not yet represented in the
-diagram set. Until the diagrams are remediated, use `V1__baseline.sql` as the
-complete relationship reference.
+The V1 baseline currently defines 35 tables, and all 35 appear in the published
+ER source. `login_attempt` is shown as a standalone security log because the
+schema deliberately defines no foreign key from it to `account` or
+`credential`. An automated coverage check keeps the Flyway table set and ER
+entity set aligned.
 
 ## Ownership Rules
 

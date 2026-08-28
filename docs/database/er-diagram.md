@@ -30,9 +30,10 @@ available in the executable Flyway migration
 
 [High-resolution PNG for Jira and offline review](assets/account-access-security-er.png)
 
-This slice focuses only on account-owned access records. `login_attempt` is left
-out because it stores attempted email values and has no database foreign key to
-`account` or `credential`.
+This slice includes account-owned access records and the standalone
+`login_attempt` security log. A login attempt stores the submitted email value
+but has no database foreign key to `account` or `credential`; update and delete
+triggers make these records immutable.
 
 | Rel | Parent | Cardinality | Child | Schema basis |
 |---|---|---:|---|---|

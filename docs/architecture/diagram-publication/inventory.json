@@ -129,12 +129,12 @@
     {
       "id": "api-public-error-contract-flow",
       "owner": "docs/api/errors.md",
-      "source": "docs/api/assets/public-error-contract-flow.mmd",
-      "sourceType": "MERMAID_FILE",
+      "source": "docs/api/assets/public-error-contract-flow.svg",
+      "sourceType": "CURATED_SVG",
       "githubSvg": "docs/api/assets/public-error-contract-flow.svg",
       "jiraPng": "docs/api/assets/public-error-contract-flow.png",
       "jiraPngRequired": true,
-      "remediation": "REDESIGN"
+      "remediation": "PASS"
     }
   ]
 }

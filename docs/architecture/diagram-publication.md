@@ -68,8 +68,9 @@ A publication entry passes only when:
 - the PNG is readable, opaque, and at least 2000×600 pixels; and
 - no temporary clipboard image is published under `docs/`.
 
-Structural checks cannot prove readability. Review every changed diagram at
-normal desktop width and at a 358-pixel mobile content width. Confirm that:
+Structural checks cannot prove readability. `npm run diagrams:preview` creates
+980-pixel desktop, 390-pixel phone, and dark-surround previews under the
+untracked `target/documentation-review/` directory. Confirm that:
 
 - the reading direction is obvious;
 - labels remain legible and do not clip or overlap;
@@ -87,8 +88,12 @@ normal desktop width and at a 358-pixel mobile content width. Confirm that:
 | Redesign | The diagram clips, wastes space, branches poorly, or becomes hard to scan | Change grouping, direction, spacing, or labels before rendering |
 | Split | One canvas contains independent flows that cannot remain readable at page width | Publish smaller diagrams with one review responsibility each |
 
-Do not increase resolution to conceal a poor layout. If a reviewer needs zoom
-to understand the normal GitHub embed, redesign or split it.
+Do not increase resolution to conceal a poor layout. Overview and process-flow
+diagrams must remain understandable in the normal phone-width embed. For dense
+ER slices, the entity grouping and cardinality map must remain distinguishable
+at phone width, while field-level detail may use the embedded SVG's lossless
+tap-to-open zoom. If the relationship structure itself needs zoom, redesign or
+split the diagram.
 
 ## Adding a diagram
 

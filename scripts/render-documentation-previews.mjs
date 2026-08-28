@@ -30,6 +30,10 @@ for (const entry of entries) {
   await mkdir(outputDirectory, { recursive: true });
   await renderPreview(svgPath, path.join(outputDirectory, 'desktop-980.png'), 980);
   await renderPreview(svgPath, path.join(outputDirectory, 'phone-390.png'), 390);
+  await renderDarkSurroundPreview(
+    svgPath,
+    path.join(outputDirectory, 'dark-surround-980.png'),
+  );
 }
 
 console.log(`Generated previews for ${entries.length} diagram entries.`);
@@ -38,6 +42,28 @@ async function renderPreview(source, destination, width) {
   await sharp(source, { density: 192 })
     .flatten({ background: '#FFFFFF' })
     .resize({ width, withoutEnlargement: false })
+    .png()
+    .toFile(destination);
+}
+
+async function renderDarkSurroundPreview(source, destination) {
+  const margin = 32;
+  const content = await sharp(source, { density: 192 })
+    .flatten({ background: '#FFFFFF' })
+    .resize({ width: 980 - (margin * 2), withoutEnlargement: false })
+    .png()
+    .toBuffer();
+  const metadata = await sharp(content).metadata();
+
+  await sharp({
+    create: {
+      width: 980,
+      height: metadata.height + (margin * 2),
+      channels: 4,
+      background: '#0D1117',
+    },
+  })
+    .composite([{ input: content, left: margin, top: margin }])
     .png()
     .toFile(destination);
 }

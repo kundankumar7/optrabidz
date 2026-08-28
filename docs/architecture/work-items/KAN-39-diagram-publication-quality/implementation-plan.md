@@ -519,13 +519,13 @@ git commit -m "Remove obsolete delivery records (KAN-39)"
 - Owner Markdown embeds SVG and links PNG; it never links source.
 - Rendering `--check` performs no writes.
 
-- [ ] **Step 1: Make the inventory represent only stable reader questions**
+- [x] **Step 1: Make the inventory represent only stable reader questions**
 
 Remove entries whose owner was deleted. Update migrated owner/source/output
 paths. Reject duplicate IDs, duplicate published SVGs, and output paths outside
 the repository in validator fixtures.
 
-- [ ] **Step 2: Regenerate straightforward Mermaid diagrams**
+- [x] **Step 2: Regenerate straightforward Mermaid diagrams**
 
 Render and preview the complete stable inventory; the renderer itself selects
 Mermaid only for `MERMAID_FILE` entries:
@@ -539,20 +539,20 @@ Preserve existing meaning and accepted appearance. Change layout only when the
 desktop or phone preview demonstrates clipping, overlap, unreadable labels,
 excessive empty canvas, or confusing routing.
 
-- [ ] **Step 3: Derive fallbacks from curated SVG sources**
+- [x] **Step 3: Derive fallbacks from curated SVG sources**
 
 For each `CURATED_SVG`, use Sharp to flatten the same SVG onto an opaque
 background and write a 2400-pixel-wide PNG. Never maintain a separately drawn
 PNG.
 
-- [ ] **Step 4: Complete manual visual evidence**
+- [x] **Step 4: Complete manual visual evidence**
 
 For every surviving diagram, record desktop, 390-pixel preview, dark
 surrounding contrast, and Jira PNG results. The architecture fixture already
 has a separate GitHub Mobile result; repeat device review for any figure whose
 layout materially differs.
 
-- [ ] **Step 5: Run publication tests and commit**
+- [x] **Step 5: Run publication tests and commit**
 
 ```powershell
 npm run diagrams:check

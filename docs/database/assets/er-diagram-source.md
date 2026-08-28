@@ -34,6 +34,14 @@ erDiagram
         bigint account_id FK
         session_status_enum session_status
     }
+    login_attempt {
+        bigint login_attempt_id PK
+        varchar email
+        timestamptz attempted_at
+        boolean success
+        text failure_reason
+        text source_ip
+    }
     admin {
         bigint admin_id PK
         bigint account_id FK_UK

@@ -16,7 +16,8 @@ Module catalogues own public descriptors. The documentation adapter adds the
 fixed framework and security problems, normalizes and validates the combined
 set, then publishes the same contract to OpenAPI and the generated Markdown
 catalogue. Runtime exception handling does not query the documentation
-catalogue.
+catalogue. The fail-closed documentation policy separately controls access to
+the HTTP OpenAPI and Swagger UI endpoints; it does not filter catalogue entries.
 
 ## Response Shape
 

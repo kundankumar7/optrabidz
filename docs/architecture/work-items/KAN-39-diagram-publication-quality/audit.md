@@ -76,7 +76,7 @@ named production capability or documentation coverage is incomplete.
 | Session security | `IMPLEMENTED` | `security/infrastructure/config/SecurityConfig.java`; session filters; security HTTP tests | Server-side session, CSRF, matched route rules, security Problem Details, and current public listing reads documented |
 | JWT and OAuth2 | `PLANNED` | No corresponding dependency or production implementation | Described only as possible future adapters |
 | Flyway schema ownership | `IMPLEMENTED` | `db/migration/V1__baseline.sql`; database migration integration tests; JPA configuration | Flyway ownership and Hibernate validation verified |
-| ER diagram coverage | `PARTIAL` | 35 V1 tables compared with 34 unique entities in `database/assets/er-diagram-source.md` | Missing `login_attempt` recorded; V1 SQL named as complete source until Task 5 remediation |
+| ER diagram coverage | `IMPLEMENTED` | 35 V1 tables compared with 35 unique entities in `database/assets/er-diagram-source.md`; `DatabaseDiagramCoverageTest` | `login_attempt` added as a standalone immutable security log without inventing a foreign-key relationship |
 | Outbox and audit | `IMPLEMENTED` | `common/event/`; `common/outbox/`; `audit/`; outbox and audit tests | Atomic outbox write, `SKIP LOCKED` dispatch, retry, audit persistence, request correlation, and masking verified |
 | Notifications | `PARTIAL` | `notification/`; dispatcher and API tests | In-app persistence, subscriptions, delivery attempts, retry, sandbox email, and sandbox push exist; no external provider or broker is claimed |
 | Payments and webhooks | `PARTIAL` | `financial/`; financial and webhook integration tests | Local/sandbox strategies, HMAC-style verification, bounded ingress, and database replay claims exist; no real-money provider is claimed |
@@ -93,10 +93,32 @@ named production capability or documentation coverage is incomplete.
 - State that general module dependency enforcement remains incomplete.
 - Distinguish development admin and payment configuration from notification
   channel defaults.
-- Add `login_attempt` when the surviving ER set is remediated.
+- Add `login_attempt` when the surviving ER set is remediated. Resolved in Task 5 with automated Flyway-to-ER coverage.
 - Keep Kafka, Redis, JWT, OAuth2, external notification providers, AOP policy,
   centralized observability, and real-money processing out of current-state
   claims.
+
+## Stable diagram review
+
+Every entry was rendered from its declared canonical source. Desktop and phone
+previews use 980- and 390-pixel widths. Dense ER phone previews preserve the
+relationship map; their field detail remains lossless through the embedded SVG.
+
+| Diagram | Repository truth reviewed | Desktop | Phone | Dark surround | Jira PNG |
+|---|---|---|---|---|---|
+| System overview | Runtime boundaries, modules, PostgreSQL, outbox, audit, notification adapters | Pass | Inline readable | Pass | 2400×3000 |
+| Account access and security | V1 account, role, credential, session, admin, and standalone `login_attempt` | Pass | Relationship map + SVG detail | Pass | 2400×1720 |
+| Participant profile | V1 account-owned profile, startup, investor, and detail-table FKs | Pass | Relationship map + SVG detail | Pass | 2400×1509 |
+| Marketplace listing and bidding | V1 listing, debt terms, bid, investor, and partial accepted-bid rule | Pass | Relationship map + SVG detail | Pass | 2400×1520 |
+| Agreement acceptance and terms | V1 agreement FKs, unique bid, debt terms, and consistency triggers | Pass | Relationship map + SVG detail | Pass | 2400×1337 |
+| Settlement | V1 agreement and participant FKs plus consistency trigger | Pass | Relationship map + SVG detail | Pass | 2400×1300 |
+| Repayment schedule | V1 agreement, participant, repayment, and installment relationships | Pass | Relationship map + SVG detail | Pass | 2400×1560 |
+| Payment intent | V1 nullable purpose sources and payer/payee account FKs | Pass | Relationship map + SVG detail | Pass | 2400×1440 |
+| Payment attempt and provider | V1 intent, provider, method, and attempt relationships | Pass | Relationship map + SVG detail | Pass | 2400×1300 |
+| Payment webhook | V1 provider idempotency and nullable payment references | Pass | Relationship map + SVG detail | Pass | 2400×1300 |
+| Notification delivery | V1 recipient, channel, attempt, subscription, and account FKs | Pass | Relationship map + SVG detail | Pass | 2400×1337 |
+| Outbox and audit correlation | V1 audit actor FK and non-FK `event_id` correlation | Pass | Relationship map + SVG detail | Pass | 2400×1400 |
+| Public error contract | Catalogue merge behavior, OpenAPI publication, Markdown snapshot, and separate HTTP exposure boundary | Pass | Inline readable | Pass | 2400×2133 |
 
 ## Execution evidence
 
@@ -116,7 +138,7 @@ named production capability or documentation coverage is incomplete.
 | Stable hierarchy | Generated public error catalogue | Pass: moved under `docs/api` and snapshot parity verified |
 | Stable hierarchy | Structure and repository link checks | Pass |
 | Truth baseline | Build, profiles, modules, HTTP, security, errors, schema, delivery, integrations, and tests compared with repository sources | 16 topics classified; six stable-guide corrections identified |
-| Truth baseline | V1 table inventory compared with ER source | 35 schema tables; 34 diagram entities; `login_attempt` queued for Task 5 |
+| Truth baseline | V1 table inventory compared with ER source | Initially 34 diagram entities; Task 5 now covers all 35 and enforces parity in `DatabaseDiagramCoverageTest` |
 | Truth baseline | Future-infrastructure scan | No production Kafka, Redis, JWT, OAuth2, or `@Aspect` implementation |
 | Historical cleanup | 41 completed work-item Markdown records | Removed after their current guidance was distilled; only the three active KAN-39 records remain |
 | Historical cleanup | 57 historical diagram assets reviewed | 54 obsolete assets removed; the three-file public error-contract set migrated to `docs/api/assets/` |
@@ -124,6 +146,11 @@ named production capability or documentation coverage is incomplete.
 | Historical cleanup | Diagram publication inventory | Reduced to 13 stable reader-facing diagrams with stable owners |
 | Historical cleanup | Structure, link, publication, and catalogue tests | Pass |
 | Historical cleanup | `npm run diagrams:check` and `git diff --check` | Pass |
+| Stable diagram set | `npm run diagrams:render` and `npm run diagrams:preview` | 13 canonical SVGs, 13 generated 2400-pixel PNGs, and 39 untracked review previews produced |
+| Stable diagram set | Desktop, 390-pixel phone, and dark-surround inspection | Pass for all 13 entries; no clipping, collision, ambiguous routing, or transparent canvas |
+| Stable diagram set | Public error-contract architecture | Corrected catalogue generation and HTTP documentation exposure into separate responsibilities |
+| Stable diagram set | `DatabaseDiagramCoverageTest` | Pass: all 35 Flyway V1 tables represented |
+| Stable diagram set | Inventory, publication, structure, and link test gate | Pass |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.

@@ -263,6 +263,79 @@ class DiagramPublicationValidatorTest {
                 .contains("path escapes repository root");
     }
 
+    @Test
+    void rejectsDuplicateIdsAndPublishedSvgAssignments() throws Exception {
+        writeInventory("""
+                {
+                  "schemaVersion": 1,
+                  "renderer": {
+                    "packageName": "@mermaid-js/mermaid-cli",
+                    "version": "11.16.0",
+                    "config": "docs/architecture/diagram-publication/mermaid-config.json"
+                  },
+                  "diagrams": [
+                    {
+                      "id": "duplicate-flow",
+                      "owner": "docs/first.md",
+                      "source": "docs/assets/first.mmd",
+                      "sourceType": "MERMAID_FILE",
+                      "githubSvg": "docs/assets/shared.svg",
+                      "jiraPng": null,
+                      "jiraPngRequired": false,
+                      "remediation": "PASS"
+                    },
+                    {
+                      "id": "duplicate-flow",
+                      "owner": "docs/second.md",
+                      "source": "docs/assets/second.mmd",
+                      "sourceType": "MERMAID_FILE",
+                      "githubSvg": "docs/assets/shared.svg",
+                      "jiraPng": null,
+                      "jiraPngRequired": false,
+                      "remediation": "PASS"
+                    }
+                  ]
+                }
+                """);
+        write("docs/architecture/diagram-publication/mermaid-config.json", "{}\n");
+
+        assertThat(DiagramPublicationValidator.findViolations(repository))
+                .extracting(DiagramPublicationValidator.Violation::reason)
+                .contains(
+                        "diagram id is duplicated",
+                        "GitHub SVG is assigned to more than one diagram");
+    }
+
+    @Test
+    void rejectsPublishedOutputsOutsideTheRepository() throws Exception {
+        writeInventory("""
+                {
+                  "schemaVersion": 1,
+                  "renderer": {
+                    "packageName": "@mermaid-js/mermaid-cli",
+                    "version": "11.16.0",
+                    "config": "docs/architecture/diagram-publication/mermaid-config.json"
+                  },
+                  "diagrams": [{
+                    "id": "escaping-output",
+                    "owner": "docs/owner.md",
+                    "source": "docs/assets/flow.mmd",
+                    "sourceType": "MERMAID_FILE",
+                    "githubSvg": "../outside.svg",
+                    "jiraPng": "../outside.png",
+                    "jiraPngRequired": true,
+                    "remediation": "PASS"
+                  }]
+                }
+                """);
+        write("docs/architecture/diagram-publication/mermaid-config.json", "{}\n");
+
+        assertThat(DiagramPublicationValidator.findViolations(repository))
+                .filteredOn(violation -> violation.path().startsWith("../outside"))
+                .extracting(DiagramPublicationValidator.Violation::reason)
+                .containsOnly("path escapes repository root");
+    }
+
     private void writeInventory(String json) throws Exception {
         write("docs/architecture/diagram-publication/inventory.json", json);
     }
