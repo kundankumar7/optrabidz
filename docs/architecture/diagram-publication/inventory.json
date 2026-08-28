@@ -12,7 +12,7 @@
       "source": "docs/architecture/assets/optrabidz-system-overview.svg",
       "sourceType": "CURATED_SVG",
       "githubSvg": "docs/architecture/assets/optrabidz-system-overview.svg",
-      "jiraPng": "docs/architecture/assets/optrabidz-system-overview.png",
+      "jiraPng": "docs/architecture/assets/optrabidz-system-overview-jira.png",
       "jiraPngRequired": true,
       "remediation": "PASS"
     },

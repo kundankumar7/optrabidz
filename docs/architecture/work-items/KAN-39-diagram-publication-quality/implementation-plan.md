@@ -77,7 +77,7 @@ Java 21, Jackson, ImageIO, JUnit 5, AssertJ, Maven Surefire
 | `scripts/render-documentation-diagrams.mjs` | Render Mermaid SVG and derive PNG from either source type |
 | `scripts/render-documentation-previews.mjs` | Generate untracked desktop and phone review sheets |
 | `docs/architecture/assets/optrabidz-system-overview.svg` | Compact curated architecture source and GitHub image |
-| `docs/architecture/assets/optrabidz-system-overview.png` | Jira fallback derived from the SVG |
+| `docs/architecture/assets/optrabidz-system-overview-jira.png` | Jira fallback derived from the SVG with a cache-safe publication identity |
 | `docs/architecture/assets/optrabidz-module-map.svg` | Focused module view when approved by the disposition audit |
 | `docs/architecture/assets/optrabidz-module-map.png` | Jira fallback derived from the module SVG |
 | `docs/architecture/assets/optrabidz-event-delivery.svg` | Focused transaction/outbox/delivery view when approved |
@@ -221,7 +221,7 @@ only after the stable hierarchy exists.
 - Delete after replacement:
   `docs/architecture/assets/optrabidz-architecture-overview.png`
 - Create: `docs/architecture/assets/optrabidz-system-overview.svg`
-- Create: `docs/architecture/assets/optrabidz-system-overview.png`
+- Create: `docs/architecture/assets/optrabidz-system-overview-jira.png`
 - Create only when needed to keep the overview compact:
   `docs/architecture/assets/optrabidz-module-map.svg`
 - Create matching PNG when the module map is created
@@ -318,7 +318,7 @@ git push -u origin fix/KAN-39-documentation-experience
 Open or update the draft pull request. Verify the SVG on GitHub desktop and
 mobile web, then verify the same page in the GitHub Mobile app. Attach the
 purposefully named Jira fallback, such as
-`KAN-39-architecture-overview-review.png`, and record pass/fail evidence in
+`KAN-39-architecture-overview-approved.png`, and record pass/fail evidence in
 Jira and `audit.md`. Do not begin Task 3 until the prototype passes.
 
 ---

@@ -18,6 +18,12 @@ Each published diagram is declared in
 The renderer uses Mermaid CLI 11.16.0 and Sharp 0.35.4. Both versions are
 pinned in `package-lock.json` so local and CI output is reproducible.
 
+GitHub Mobile can retain a previously opened raster preview by repository path.
+When a published PNG has already reached reviewers and its visual content is
+replaced, give the approved fallback a new meaningful filename and update its
+inventory and owner links. Do not depend on a query parameter for cache
+invalidation.
+
 ## Render and validate
 
 Install the pinned tooling after cloning or changing the lock file:

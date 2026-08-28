@@ -69,8 +69,11 @@ retain delivery history; the repository will retain only current guidance.
 | Architecture prototype | Shared renderer and publication tests | Pass |
 | Architecture prototype | 980-pixel desktop preview | Pass: labels, routing, and hierarchy readable |
 | Architecture prototype | 390-pixel phone preview | Pass: seven-node overview readable without zoom |
-| Architecture prototype | GitHub desktop, mobile web, and GitHub Mobile | Pending published-branch review |
-| Architecture prototype | Jira 2400-pixel PNG | Pending attachment review |
+| Architecture prototype | Revised KAN-34-aligned SVG | Approved |
+| Architecture prototype | GitHub desktop and mobile web | Pass |
+| Architecture prototype | GitHub Mobile SVG | Pass |
+| Architecture prototype | GitHub Mobile PNG fallback | First path returned cached prototype; cache-safe final filename pending recheck |
+| Architecture prototype | Jira 2400-pixel PNG | Previous attachment obsolete; approved replacement pending |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.

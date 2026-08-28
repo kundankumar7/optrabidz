@@ -148,7 +148,7 @@ while still making the domain boundaries visible.
 
 ![OptraBidz system overview](docs/architecture/assets/optrabidz-system-overview.svg)
 
-[High-resolution PNG for Jira and offline review](docs/architecture/assets/optrabidz-system-overview.png)
+[High-resolution PNG for Jira and offline review](docs/architecture/assets/optrabidz-system-overview-jira.png)
 
 ## API Reference
 
