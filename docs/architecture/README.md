@@ -2,23 +2,17 @@
 
 [Back to the documentation portal](../README.md)
 
-## Current References
+OptraBidz is deployed as one Spring Boot process. Business capabilities remain
+separated as modules inside that process, while PostgreSQL and the transactional
+outbox provide durable state and reliable post-commit processing.
 
-- [Editable modular-monolith overview](overview.mmd)
-- [Diagram publication guide](diagram-publication.md)
-- [High-resolution PNG for Jira and offline review](assets/optrabidz-architecture-overview.png)
+![OptraBidz clients cross the HTTP and security boundary into a modular monolith that stores state in PostgreSQL and dispatches audit and notification work through an outbox](assets/optrabidz-system-overview.svg)
 
-<a href="assets/optrabidz-architecture-overview.svg">
-  <img src="assets/optrabidz-architecture-overview.svg" alt="OptraBidz modular-monolith architecture overview">
-</a>
+[High-resolution PNG for Jira and offline review](assets/optrabidz-system-overview.png)
 
-The application is deployed as one Spring Boot process while business areas
-remain separated into modules with explicit application, domain, persistence,
-event, and integration boundaries.
+The synchronous request path ends at committed application state. Audit and
+notification side effects begin from committed outbox records, which prevents a
+successful business transaction from depending on an external delivery channel.
 
-## Work-item History
-
-| Jira | Decision record | Delivery plan |
-|---|---|---|
-| [KAN-25](https://0707manna0895.atlassian.net/browse/KAN-25) | [Documentation information architecture](work-items/KAN-25-documentation-information-architecture/design.md) | [Implementation plan](work-items/KAN-25-documentation-information-architecture/implementation-plan.md) |
-| [KAN-39](https://0707manna0895.atlassian.net/browse/KAN-39) | [Reviewer-quality diagram publication](work-items/KAN-39-diagram-publication-quality/design.md) | [Implementation plan](work-items/KAN-39-diagram-publication-quality/implementation-plan.md) |
+See the [diagram publication guide](diagram-publication.md) for source and
+fallback maintenance rules.

@@ -11,7 +11,7 @@ Each published diagram is declared in
 
 | Asset | Role |
 |---|---|
-| Editable source | Canonical definition. Mermaid diagrams use `.mmd`; accepted hand-authored architecture and ER diagrams retain their documented source convention. |
+| Editable source | Canonical definition. Mermaid diagrams use `.mmd`; composition-sensitive architecture and ER diagrams use the published SVG itself as the curated source. |
 | SVG | GitHub embed. It must be scalable, accessible, opaque, and self-contained. |
 | PNG | Jira and offline companion. It must be opaque, at least 2000×600 pixels, and generated from the declared SVG. |
 
@@ -45,7 +45,7 @@ npm run diagrams:check
 .\mvnw.cmd -q "-Dtest=DiagramPublicationValidatorTest,DiagramPublicationTest" test
 ```
 
-Mermaid entries regenerate both SVG and PNG output. `HAND_AUTHORED_SVG`
+Mermaid entries regenerate both SVG and PNG output. `CURATED_SVG`
 entries retain the accepted SVG unchanged and only regenerate the PNG
 companion.
 

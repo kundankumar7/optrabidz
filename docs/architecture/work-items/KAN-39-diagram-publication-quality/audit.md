@@ -66,6 +66,11 @@ retain delivery history; the repository will retain only current guidance.
 |---|---|---|
 | Quality gates | 44 work-item Markdown files compared with the disposition table | 0 unclassified |
 | Quality gates | `DocumentationStructureValidatorTest`, `DiagramPublicationValidatorTest`, and `DiagramPublicationTest` | Pass |
+| Architecture prototype | Shared renderer and publication tests | Pass |
+| Architecture prototype | 980-pixel desktop preview | Pass: labels, routing, and hierarchy readable |
+| Architecture prototype | 390-pixel phone preview | Pass: seven-node overview readable without zoom |
+| Architecture prototype | GitHub desktop, mobile web, and GitHub Mobile | Pending published-branch review |
+| Architecture prototype | Jira 2400-pixel PNG | Pending attachment review |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.

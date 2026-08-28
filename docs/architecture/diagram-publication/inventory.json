@@ -7,12 +7,12 @@
   },
   "diagrams": [
     {
-      "id": "architecture-overview",
+      "id": "architecture-system-overview",
       "owner": "docs/architecture/README.md",
-      "source": "docs/architecture/assets/optrabidz-architecture-overview.svg",
+      "source": "docs/architecture/assets/optrabidz-system-overview.svg",
       "sourceType": "CURATED_SVG",
-      "githubSvg": "docs/architecture/assets/optrabidz-architecture-overview.svg",
-      "jiraPng": "docs/architecture/assets/optrabidz-architecture-overview.png",
+      "githubSvg": "docs/architecture/assets/optrabidz-system-overview.svg",
+      "jiraPng": "docs/architecture/assets/optrabidz-system-overview.png",
       "jiraPngRequired": true,
       "remediation": "PASS"
     },

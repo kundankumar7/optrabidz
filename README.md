@@ -146,11 +146,9 @@ while still making the domain boundaries visible.
 | Event layer | Outbox events used by audit and notification processors |
 | Integration adapters | Local/sandbox payment strategies and sandbox notification channels |
 
-<a href="docs/architecture/assets/optrabidz-architecture-overview.svg">
-  <img src="docs/architecture/assets/optrabidz-architecture-overview.svg?v=20260531-1040" alt="OptraBidz architecture diagram">
-</a>
+![OptraBidz system overview](docs/architecture/assets/optrabidz-system-overview.svg)
 
-Editable diagram source: [`docs/architecture/overview.mmd`](docs/architecture/overview.mmd).
+[High-resolution PNG for Jira and offline review](docs/architecture/assets/optrabidz-system-overview.png)
 
 ## API Reference
 

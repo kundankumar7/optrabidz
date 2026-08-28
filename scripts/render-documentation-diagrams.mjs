@@ -125,7 +125,7 @@ async function validateEntryInputs(entry) {
   if (!entry.id || !entry.owner || !entry.source || !entry.githubSvg) {
     throw new Error('Every diagram requires id, owner, source, and githubSvg');
   }
-  if (!['MERMAID_FILE', 'HAND_AUTHORED_SVG'].includes(entry.sourceType)) {
+  if (!['MERMAID_FILE', 'CURATED_SVG'].includes(entry.sourceType)) {
     throw new Error(`Unsupported source type for ${entry.id}`);
   }
   if (entry.jiraPngRequired && !entry.jiraPng) {
@@ -133,7 +133,12 @@ async function validateEntryInputs(entry) {
   }
   await access(resolveRepositoryPath(entry.owner), fsConstants.R_OK);
   await access(resolveRepositoryPath(entry.source), fsConstants.R_OK);
-  if (entry.sourceType === 'HAND_AUTHORED_SVG') {
+  if (entry.sourceType === 'CURATED_SVG') {
+    if (entry.source !== entry.githubSvg) {
+      throw new Error(
+        `Curated SVG source must equal published SVG for ${entry.id}`,
+      );
+    }
     await access(resolveRepositoryPath(entry.githubSvg), fsConstants.R_OK);
   }
 }
