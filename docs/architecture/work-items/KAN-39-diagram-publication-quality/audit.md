@@ -72,7 +72,7 @@ retain delivery history; the repository will retain only current guidance.
 | Architecture prototype | Revised KAN-34-aligned SVG | Approved |
 | Architecture prototype | GitHub desktop and mobile web | Pass |
 | Architecture prototype | GitHub Mobile SVG | Pass |
-| Architecture prototype | GitHub Mobile PNG fallback | First path returned cached prototype; cache-safe final filename pending recheck |
+| Architecture prototype | GitHub Mobile PNG fallback | Pass: cache-safe final filename displays the approved diagram |
 | Architecture prototype | Jira 2400-pixel PNG | Previous attachment obsolete; approved replacement pending |
 
 Temporary review sheets remain under `target/documentation-review/` and are
