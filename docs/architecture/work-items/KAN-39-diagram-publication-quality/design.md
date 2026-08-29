@@ -235,10 +235,26 @@ presented as duplicate ownership. Solid connectors mean real foreign keys;
 dashed connectors mean correlation or a trigger-enforced consistency rule.
 Colour is never the only carrier of meaning.
 
-The diagrams use human-curated composition backed by a machine-verifiable
-relationship manifest. Automated tests compare that manifest with the Flyway
-baseline and require all 35 tables and all 46 foreign keys to be represented.
-A generated or restyled PNG does not count as a redesigned model.
+The diagrams use human-curated composition backed by the effective PostgreSQL
+schema. Flyway remains the only schema authority: an integration test migrates
+a PostgreSQL 16 Testcontainer, reads the resulting catalogue, and verifies that
+all documented tables and foreign keys are represented. A generated or
+restyled PNG does not count as a redesigned model.
+
+The committed `schema-manifest.json` is transitional verification
+infrastructure, not reader documentation and not a second schema authority. It
+remains until database-catalogue verification replaces every test that consumes
+it. The replacement is accepted only when it proves the current 35-table,
+46-foreign-key baseline and covers constraint names, nullability, delete
+behaviour, material checks, partial indexes, triggers, and intentional non-FK
+correlations. After that gate passes, the committed manifest and reader-facing
+links to it are removed. Any diagnostic schema report is generated under
+`target/documentation-verification/` and is never committed.
+
+This keeps fast verification available during the transition without making a
+hand-maintained JSON projection permanent. It also ensures future Flyway
+migrations are checked against the final migrated database rather than only
+against regular-expression parsing of the baseline SQL file.
 
 ## 7. Mobile Readability Contract
 
@@ -388,6 +404,12 @@ KAN-39 is complete when:
   chooser;
 - all 35 Flyway tables and 46 foreign keys are represented and automatically
   checked;
+- schema verification is derived from a PostgreSQL database after all Flyway
+  migrations have run;
+- the committed schema manifest is removed only after database-catalogue
+  verification replaces all of its test responsibilities;
+- generated schema diagnostics remain build output and do not appear in reader
+  navigation;
 - focused database views expose foreign-key columns, nullability, delete
   behaviour, and material database-enforced invariants;
 - no reader-facing page links Mermaid source;
