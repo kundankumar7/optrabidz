@@ -153,22 +153,43 @@ owning capability view instead of duplicating the same diagram, while the
 complete module and dependency views continue to expose every one of the 11
 top-level modules individually.
 
-The diagram set is layered instead of compressed into one picture:
+The diagram set is layered instead of compressed into one picture or expanded
+into one forced image per page:
 
 1. system context — people and external boundaries;
 2. runtime view — process, PostgreSQL, scheduled work, and post-commit delivery;
 3. complete module map — all 11 modules and their responsibilities;
 4. module dependency view — meaningful current dependencies, including
    acknowledged coupling and unenforced boundaries;
-5. cross-cutting flows — request/security, error disclosure, and outbox-driven
-   audit/notification delivery; and
-6. focused module and database views — detail only for the question being
-   answered.
+5. cross-cutting flows — request/security and outbox-driven audit/notification
+   delivery;
+6. focused identity/access, marketplace, and finance/payment views where those
+   collaborations need visual explanation; and
+7. existing diagrams reused when they already answer the question, including
+   the public error contract on the error-disclosure page.
 
-Before diagrams or prose are rewritten, a code-to-documentation inventory maps
-every controller, application service, repository, event boundary, security
-adapter, and test family to its owning module page. This inventory prevents a
-visually tidy architecture from omitting implemented capabilities.
+Before diagrams or prose are rewritten, tests derive controllers, application
+services, repositories, event boundaries, security adapters, dependencies, and
+test families directly from the source tree. A small committed module catalogue
+contains only intentional classifications: module name, capability, and owner
+page. Generated counts and dependencies are diagnostic output under `target/`,
+not durable documentation.
+
+### 3.3 Machine-readable support files
+
+Machine-readable files are permitted only when build tooling needs stable
+configuration that cannot be derived from the repository. They are not linked
+from normal reader navigation.
+
+`module-catalog.json` contains only the intentional module-to-capability and
+module-to-owner mapping. Source roots, test roots, file counts, surface counts,
+and import dependencies are derived by tests and are not committed.
+
+`diagram-publications.json` declares canonical diagram sources, neutral SVG/PNG
+outputs, one primary owner, and optional consumers. It does not contain GitHub
+or Jira field names, review status, remediation history, or renderer-package
+versions. Package versions remain owned by `package.json` and
+`package-lock.json`.
 
 ## 4. Reader Surfaces
 
@@ -179,7 +200,7 @@ Every reader-facing diagram must be considered on all of these surfaces:
 | GitHub desktop website | Embedded SVG at normal README width |
 | GitHub mobile website | The same embedded SVG at phone width |
 | GitHub Mobile app | The same Markdown page, verified on a real device |
-| Jira | Attached high-resolution opaque PNG |
+| External or offline review | High-resolution opaque PNG |
 | Local IDE or checkout | SVG, PNG fallback, and editable source |
 
 GitHub documents support for repository images, including SVG, but do not
@@ -233,8 +254,26 @@ template will not be stretched across the repository.
 
 Large diagrams are split by reader question. An overview links to focused
 details; it does not attempt to contain every class, table, adapter, and event.
+Pages may reuse a canonical figure when it already answers their question. A
+new diagram is justified only when relationships, hierarchy, sequence, state,
+or boundaries are materially clearer visually than through concise prose or a
+table.
 
-### 6.1 Database relationship experience
+### 6.1 Architecture figure set
+
+The core set contains system context, runtime topology, complete module and
+capability map, current dependency view, identity/access collaboration,
+marketplace collaboration, finance/payment lifecycle, request/security flow,
+and event/outbox delivery. The existing public error-contract figure is reused
+for error disclosure. Platform-support guidance reuses the complete-module and
+event-delivery figures where relevant instead of receiving a generic duplicate.
+
+Before drawing, a disposition table records the reader question, source
+evidence, owner, consumers, and keep/redesign/reuse decision for every
+candidate. Diagram count is therefore an outcome of justified questions, not a
+page-count target.
+
+### 6.2 Database relationship experience
 
 The database documentation is not accepted merely because every table name is
 present or an old ER layout has been restyled. Its model and navigation are
@@ -353,16 +392,16 @@ A curated SVG must:
 - contain a title and description;
 - avoid scripts, external resources, and `foreignObject`;
 - use meaningful groups and comments so it remains maintainable; and
-- generate its Jira PNG from the same SVG.
+- generate its PNG companion from the same SVG.
 
-The diagram inventory records which source path each figure uses. A diagram
+The diagram publication catalogue records which source path each figure uses. A diagram
 must never have two competing canonical sources, as happened when an
 architecture `.mmd` file and a separately authored overview SVG represented
 the same figure.
 
 ## 9. Reader-Facing Publication Contract
 
-Every stable Markdown page follows this pattern:
+Every stable Markdown page that publishes a diagram follows this pattern:
 
 1. a short paragraph explains what question the diagram answers;
 2. the page embeds the SVG using a relative repository path;
@@ -372,7 +411,7 @@ Every stable Markdown page follows this pattern:
 
 Reader pages do not contain Mermaid code fences and do not direct readers to
 `.mmd` files. Source files remain discoverable through the maintenance guide
-and inventory.
+and publication catalogue.
 
 ## 10. Representative Prototype Gate
 
@@ -390,7 +429,7 @@ The prototype must be reviewed on:
 - GitHub desktop web;
 - GitHub mobile web at approximately 390 pixels;
 - the GitHub Mobile app on the user's phone;
-- Jira PNG preview; and
+- full-resolution PNG preview; and
 - local light and dark surroundings.
 
 Bulk diagram conversion cannot start until this prototype is approved.
@@ -400,7 +439,8 @@ Bulk diagram conversion cannot start until this prototype is approved.
 Automated checks will verify objective properties:
 
 - every local image reference resolves;
-- each inventory entry has exactly one canonical source;
+- each publication entry has exactly one canonical source;
+- every declared primary owner and consumer embeds the same canonical SVG;
 - reader-facing Markdown does not link `.mmd` files;
 - SVG files contain a `viewBox`, title, description, and explicit background;
 - SVG files contain no unsafe or externally loaded content;
@@ -410,7 +450,7 @@ Automated checks will verify objective properties:
 
 Database-specific checks additionally verify:
 
-- every Flyway table is represented in the relationship manifest;
+- every Flyway table is represented in the database documentation;
 - every foreign-key child column and referenced parent column is represented;
 - nullability and delete behaviour match the migration; and
 - focused diagrams do not depict correlations or trigger rules as foreign
@@ -451,6 +491,8 @@ KAN-39 is complete when:
   code and tests;
 - four shared capability pages connect system-wide views to the 11 module
   references without hiding module boundaries;
+- committed module metadata contains only intentional capability and owner
+  mappings; derived counts and dependencies are not stored as durable JSON;
 - the system-context, runtime, complete module, dependency, and cross-cutting
   views are distinct and mutually consistent;
 - stable GitHub guidance, Confluence review records, and Jira work tracking
@@ -458,6 +500,9 @@ KAN-39 is complete when:
 - obsolete work-item documents have been distilled and removed where safe;
 - every reader-facing diagram follows the visual notation approved during the
   prototype review;
+- the diagram publication catalogue uses neutral SVG/PNG terminology, supports
+  primary owners and consumers, and contains no review-history fields;
+- diagrams are created or reused by reader question rather than page count;
 - every diagram has exactly one canonical source;
 - the database page provides an end-to-end overview and question-based view
   chooser;
