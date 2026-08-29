@@ -622,6 +622,11 @@ complete module model.
   Compare the manifest with Flyway and verify the published set on desktop,
   phone, GitHub Mobile, Jira, and local light/dark surroundings.
 
+  Automated manifest comparison, local 980-pixel, local 390-pixel,
+  dark-surround, GitHub desktop, GitHub mobile-web, Jira PNG, and Confluence
+  checks pass. Native GitHub Mobile remains the final device confirmation, so
+  this step stays open until that review is recorded.
+
 ---
 
 ## Task 6: Complete Repository and Surface Verification

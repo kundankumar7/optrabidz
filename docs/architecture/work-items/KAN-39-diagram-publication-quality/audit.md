@@ -195,6 +195,13 @@ map; field detail remains lossless through the linked SVG.
 | Database information model | Focused relationship comparison | 46/46 Flyway foreign keys already represented; zero visual topology omissions, so approved SVG/PNG assets were preserved |
 | Database information model | Exact relationship semantics | Every FK reference row now records constraint name, nullability, and `ON DELETE` behavior; all 6 intentional non-FK correlations are listed separately |
 | Database information model | `DatabaseRelationshipDocumentationTest` | Pass: focused references are checked directly against the machine-readable manifest |
+| Database surface verification | Focused database, manifest, navigation, publication, structure, and link test selection | Pass |
+| Database surface verification | `npm run diagrams:check` and `npm run diagrams:preview` | Pass: 13 publications validated; 980-pixel, 390-pixel, and dark-surround previews regenerated under `target/` |
+| Database surface verification | Eleven database views at 980 pixels, 390 pixels, and on a dark surrounding | Pass: opaque canvases, readable relationship maps, no clipping, collision, or ambiguous routing |
+| Database surface verification | GitHub desktop and 390-pixel mobile web | Pass: all 11 SVGs loaded at their intrinsic resolution; no raw Mermaid presentation |
+| Database surface verification | Jira named PNG viewer | Pass: the 2400×3000 architecture fixture opens without clipping; database PNGs use the same validated opaque 2400-pixel publication path |
+| Database surface verification | Confluence delivery page | Pass: current KAN-39 status, PR link, ownership boundaries, database counts, and checkpoint history render correctly |
+| Database surface verification | Native GitHub Mobile | Pending final device confirmation; not inferred from mobile-web emulation |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.
