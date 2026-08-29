@@ -110,7 +110,7 @@ Java source; these are not estimates or hand-maintained diagrams.
 | `audit` | 20 | 1 | 2 | 1 | 1 | 0 | 4 | `common` |
 | `classification` | 61 | 2 | 2 | 6 | 2 | 0 | 7 | `common`, `security` |
 | `common` | 36 | 1 | 0 | 0 | 12 | 0 | 18 | `identity`, `security` |
-| `documentation` | 7 | 0 | 0 | 0 | 0 | 2 | 19 | error catalogues from 8 business/access modules plus `common` |
+| `documentation` | 7 | 0 | 0 | 0 | 0 | 2 | 20 | error catalogues from 8 business/access modules plus `common` |
 | `financial` | 119 | 3 | 4 | 18 | 3 | 5 | 30 | `audit`, `common`, `governance`, `identity`, `marketplace`, `participation`, `security` |
 | `governance` | 41 | 1 | 4 | 0 | 2 | 0 | 6 | `classification`, `common`, `identity`, `participation`, `security` |
 | `identity` | 26 | 0 | 2 | 3 | 0 | 0 | 2 | `common` |
@@ -183,6 +183,11 @@ map; field detail remains lossless through the linked SVG.
 | Stable diagram set | Public error-contract architecture | Corrected catalogue generation and HTTP documentation exposure into separate responsibilities |
 | Stable diagram set | `DatabaseDiagramCoverageTest` | Pass: all 35 Flyway V1 tables represented |
 | Stable diagram set | Inventory, publication, structure, and link test gate | Pass |
+| Architecture coverage | Layered entry points | System context, runtime, module catalogue, current dependency graph, request security, event delivery, and error disclosure published as separate reviewer questions |
+| Architecture coverage | Module owner pages | All 11 production modules document purpose, entry points, application/domain rules, persistence, events, dependencies, security/errors, verification, and known gaps |
+| Architecture coverage | `ArchitectureModuleInventoryTest` and `ArchitectureDocumentationCoverageTest` | Pass: current source/import inventory and every required owner page/section agree |
+| Architecture coverage | Documentation, link, catalogue, OpenAPI, exposure, and diagram test selection | Pass against PostgreSQL Testcontainers; Flyway V1 applied and Hibernate validation completed |
+| Architecture coverage | `npm run diagrams:check` | Pass: 13 publication entries validated without rewriting assets |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.

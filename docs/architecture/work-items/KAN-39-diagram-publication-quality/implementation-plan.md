@@ -1,6 +1,6 @@
 # KAN-39 Documentation Experience Implementation Plan
 
-**Status:** Awaiting review
+**Status:** Approved / In progress
 
 **Goal:** Replace the noisy historical documentation tree with concise current
 guidance and publish every surviving diagram as a readable SVG with a verified
@@ -579,18 +579,18 @@ complete module model.
   security adapters, tests, and current direct imports. Enforce the inventory
   against Java source so a new or moved surface fails documentation checks.
 
-- [ ] **Step 2: Publish the layered architecture entry points**
+- [x] **Step 2: Publish the layered architecture entry points**
 
   Add distinct system-context, runtime, complete-module, dependency, and
   cross-cutting flow pages. Do not compress all concerns into the overview.
 
-- [ ] **Step 3: Publish one owned page for every module**
+- [x] **Step 3: Publish one owned page for every module**
 
   Each page must cover purpose, entry points, application/domain rules,
   persistence, events, dependencies, security/error boundaries, verification,
   and known gaps using repository evidence.
 
-- [ ] **Step 4: Verify module coverage and navigation**
+- [x] **Step 4: Verify module coverage and navigation**
 
   Extend documentation tests to require every inventory owner page and its
   standard reviewer sections, then run structure and link checks.

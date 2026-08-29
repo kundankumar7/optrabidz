@@ -1,10 +1,19 @@
-# System Architecture
+# Architecture
 
 [Back to the documentation portal](../README.md)
 
-OptraBidz is deployed as one Spring Boot process. Business capabilities remain
-separated as modules inside that process, while PostgreSQL and the transactional
-outbox provide durable state and reliable post-commit processing.
+OptraBidz is a Spring Boot modular monolith backed by PostgreSQL. Start with the
+view that matches the question you are answering:
+
+| Question | View |
+|---|---|
+| Who uses the system and what lies outside it? | [System context](system-context.md) |
+| What starts and runs inside one application instance? | [Runtime](runtime.md) |
+| Which capability owns a change? | [Module catalogue](modules/README.md) |
+| Which current source dependencies cross module boundaries? | [Module dependencies](module-dependencies.md) |
+| How is an authenticated request handled? | [Request and security flow](flows/request-security.md) |
+| How do committed events reach audit and notification processing? | [Event-delivery flow](flows/event-delivery.md) |
+| How does an internal failure become a safe public response? | [Error-disclosure flow](flows/error-disclosure.md) |
 
 ![OptraBidz clients cross the HTTP and security boundary into a modular monolith that stores state in PostgreSQL and dispatches audit and notification work through an outbox](assets/optrabidz-system-overview.svg)
 
