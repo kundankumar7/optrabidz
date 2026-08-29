@@ -10,6 +10,7 @@ schema and never generates or updates it.
 | Task | Reference |
 |---|---|
 | Understand tables and relationships | [ER diagram index](er-diagram.md) |
+| Inspect the machine-verified relationship inventory | [Schema manifest](schema-manifest.json) |
 | Author, test, or recover a schema change | [Migration guide](migrations.md) |
 | Inspect the executable baseline | [V1 baseline SQL](../../src/main/resources/db/migration/V1__baseline.sql) |
 
@@ -26,11 +27,15 @@ Solid ER relationships represent database foreign keys. Event correlation
 without a foreign key is identified explicitly so diagrams do not imply a
 constraint that the schema does not contain.
 
-The V1 baseline currently defines 35 tables, and all 35 appear in the published
-ER source. `login_attempt` is shown as a standalone security log because the
-schema deliberately defines no foreign key from it to `account` or
-`credential`. An automated coverage check keeps the Flyway table set and ER
-entity set aligned.
+The V1 baseline currently defines 35 tables and 46 foreign keys. The schema
+manifest records every FK's child and parent columns, nullability, and delete
+behavior together with 25 unique constraints, 57 checks, 19 partial indexes,
+12 triggers, and explicitly identified non-FK correlations. Its regression
+test derives those facts from Flyway, while the diagram coverage test keeps all
+35 tables represented in the published ER source.
+
+`login_attempt` is shown as a standalone security log because the schema
+deliberately defines no foreign key from it to `account` or `credential`.
 
 ## Ownership Rules
 

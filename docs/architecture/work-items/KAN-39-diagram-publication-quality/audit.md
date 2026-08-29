@@ -110,7 +110,7 @@ Java source; these are not estimates or hand-maintained diagrams.
 | `audit` | 20 | 1 | 2 | 1 | 1 | 0 | 4 | `common` |
 | `classification` | 61 | 2 | 2 | 6 | 2 | 0 | 7 | `common`, `security` |
 | `common` | 36 | 1 | 0 | 0 | 12 | 0 | 18 | `identity`, `security` |
-| `documentation` | 7 | 0 | 0 | 0 | 0 | 2 | 20 | error catalogues from 8 business/access modules plus `common` |
+| `documentation` | 7 | 0 | 0 | 0 | 0 | 2 | 21 | error catalogues from 8 business/access modules plus `common` |
 | `financial` | 119 | 3 | 4 | 18 | 3 | 5 | 30 | `audit`, `common`, `governance`, `identity`, `marketplace`, `participation`, `security` |
 | `governance` | 41 | 1 | 4 | 0 | 2 | 0 | 6 | `classification`, `common`, `identity`, `participation`, `security` |
 | `identity` | 26 | 0 | 2 | 3 | 0 | 0 | 2 | `common` |
@@ -188,6 +188,8 @@ map; field detail remains lossless through the linked SVG.
 | Architecture coverage | `ArchitectureModuleInventoryTest` and `ArchitectureDocumentationCoverageTest` | Pass: current source/import inventory and every required owner page/section agree |
 | Architecture coverage | Documentation, link, catalogue, OpenAPI, exposure, and diagram test selection | Pass against PostgreSQL Testcontainers; Flyway V1 applied and Hibernate validation completed |
 | Architecture coverage | `npm run diagrams:check` | Pass: 13 publication entries validated without rewriting assets |
+| Database information model | `schema-manifest.json` | 35 tables, 46 FKs with nullability/delete behavior, 25 unique constraints, 57 checks, 19 partial indexes, 12 triggers, and 6 explicit non-FK correlations |
+| Database information model | `DatabaseSchemaManifestTest` | Pass: manifest facts derived from and compared with Flyway V1 |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.

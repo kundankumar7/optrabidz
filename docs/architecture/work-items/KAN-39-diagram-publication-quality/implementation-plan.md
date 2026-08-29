@@ -597,7 +597,7 @@ complete module model.
 
 ## Task 5B: Correct the Database Information Model
 
-- [ ] **Step 1: Build the Flyway relationship manifest**
+- [x] **Step 1: Build the Flyway relationship manifest**
 
   Capture all 35 tables and 46 foreign keys with child/parent columns,
   nullability, and delete behaviour. Record material checks, partial indexes,
