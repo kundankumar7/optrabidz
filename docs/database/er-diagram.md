@@ -20,6 +20,25 @@ available in the executable Flyway migration
 | Solid line | Database foreign-key relationship |
 | Dotted line | Event correlation by `event_id`, not a database foreign key |
 
+## Choose a relationship view
+
+| Question | Focused view |
+|---|---|
+| How are accounts, credentials, sessions, roles, and administrators related? | [Identity and access](#identity-and-access) |
+| How are startup and investor details attached? | [Participant profiles](#participant-profiles) |
+| How do listings and bids connect? | [Marketplace and bidding](#marketplace-and-bidding) |
+| What becomes durable when a bid is accepted? | [Agreement acceptance](#agreement-acceptance) |
+| How does money owed to a startup become a settlement? | [Settlement](#settlement) |
+| How is investor repayment scheduled? | [Repayment schedule](#repayment-schedule) |
+| How is a payment purpose tied to payer and payee accounts? | [Payment intent](#payment-intent) |
+| How do attempts select a configured provider? | [Payment processing](#payment-processing) |
+| How are provider callbacks deduplicated and linked? | [Payment webhooks](#payment-webhooks) |
+| How are notification recipients, channels, and attempts tracked? | [Notification delivery](#notification-delivery) |
+| Which event links are correlations rather than foreign keys? | [Outbox and audit](#outbox-and-audit) |
+
+For the end-to-end order in which these areas participate, read the
+[relational journey](relationship-journey.md).
+
 ## Identity and Access
 
 ### Identity and access

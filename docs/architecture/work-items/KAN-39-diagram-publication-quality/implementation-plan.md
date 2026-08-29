@@ -603,7 +603,7 @@ complete module model.
   nullability, and delete behaviour. Record material checks, partial indexes,
   triggers, and intentional non-FK correlations separately.
 
-- [ ] **Step 2: Publish the relational journey and question chooser**
+- [x] **Step 2: Publish the relational journey and question chooser**
 
   Provide a mobile-readable overview and route each reviewer question to a
   focused relationship view.

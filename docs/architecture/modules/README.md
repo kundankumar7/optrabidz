@@ -11,7 +11,7 @@ navigation aid, not a quality score.
 | [`audit`](audit.md) | Durable business and security audit records | 20 / 4 |
 | [`classification`](classification.md) | Startup classifications and investor preferences | 61 / 7 |
 | [`common`](common.md) | Shared HTTP, error, observability, event, and outbox infrastructure | 36 / 18 |
-| [`documentation`](documentation.md) | Public error catalogue and OpenAPI/security adapters | 7 / 21 |
+| [`documentation`](documentation.md) | Public error catalogue and OpenAPI/security adapters | 7 / 22 |
 | [`financial`](financial.md) | Settlements, repayments, payment attempts, and webhooks | 119 / 30 |
 | [`governance`](governance.md) | Authority, eligibility, boundary, and lifecycle rules | 41 / 6 |
 | [`identity`](identity.md) | Accounts, roles, and profile state | 26 / 2 |

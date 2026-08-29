@@ -9,6 +9,7 @@ schema and never generates or updates it.
 
 | Task | Reference |
 |---|---|
+| Follow the data model from account to audit | [Relational journey](relationship-journey.md) |
 | Understand tables and relationships | [ER diagram index](er-diagram.md) |
 | Inspect the machine-verified relationship inventory | [Schema manifest](schema-manifest.json) |
 | Author, test, or recover a schema change | [Migration guide](migrations.md) |

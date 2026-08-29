@@ -41,7 +41,7 @@ mapping.
 
 ## Verification
 
-Twenty-one tests cover catalogue uniqueness and parity, OpenAPI components,
+Twenty-two tests cover catalogue uniqueness and parity, OpenAPI components,
 exposure rules, link/structure rules, diagrams, and real-HTTP documentation
 smoke behavior.
 
