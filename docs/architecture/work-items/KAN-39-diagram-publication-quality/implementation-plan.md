@@ -1,20 +1,21 @@
 # KAN-39 Documentation Experience Implementation Plan
 
-**Status:** Approved / In progress
+**Status:** Draft — review required
 
-**Goal:** Replace the noisy historical documentation tree with concise current
-guidance and publish every surviving diagram as a readable SVG with a verified
-PNG fallback.
+**Goal:** Provide two clear documentation routes, publish a complete and
+readable architecture/database view set, and verify database documentation
+against the effective Flyway-migrated PostgreSQL schema.
 
-**Architecture:** Restructure documentation before remediating diagrams so the
-team does not polish assets whose historical owners will be removed. A compact
-architecture prototype proves the publication contract on GitHub desktop,
-mobile web, GitHub Mobile, and Jira before the remaining content is migrated.
-Repository tests enforce navigation, canonical diagram sources, safe SVGs,
-opaque PNGs, and the absence of reader-facing Mermaid-source links.
+**Architecture:** The documentation portal separates understanding the system
+from changing or verifying it. System-wide views lead to four reusable
+capability views and then to the 11 module references; database navigation leads
+from an end-to-end relational journey to 11 focused views. Publication tests
+enforce readable SVG/PNG pairs, while PostgreSQL integration tests apply all
+Flyway migrations and verify documentation against the effective catalogue.
 
 **Tech stack:** Markdown, SVG, PNG, Node.js, Mermaid CLI 11.16.0, Sharp 0.35.4,
-Java 21, Jackson, ImageIO, JUnit 5, AssertJ, Maven Surefire
+Java 21, Jackson, ImageIO, JUnit 5, AssertJ, Maven Surefire/Failsafe, Flyway,
+PostgreSQL 16, Testcontainers
 
 **Spec:** [KAN-39 renewed design](design.md)
 
@@ -37,6 +38,12 @@ Java 21, Jackson, ImageIO, JUnit 5, AssertJ, Maven Surefire
 - GitHub Mobile is a real-device acceptance surface, not an inferred result.
 - Temporary review images belong under `target/documentation-review/` and are
   never committed.
+- Flyway remains the sole schema authority; a committed schema projection must
+  not become permanent documentation.
+- Keep `schema-manifest.json` until catalogue verification replaces every test
+  that consumes it, then remove it in the same reviewed checkpoint.
+- Generated schema diagnostics belong under
+  `target/documentation-verification/` and are never committed.
 - Use short, human-readable commit subjects with `KAN-39`; do not use robotic
   scope prefixes or AI-related wording.
 - Do not merge the pull request without normal review.
@@ -53,12 +60,18 @@ Java 21, Jackson, ImageIO, JUnit 5, AssertJ, Maven Surefire
 | `docs/README.md` | Task-oriented documentation portal without a work-item catalogue |
 | `docs/getting-started/README.md` | Prerequisites, profiles, local startup, and verification |
 | `docs/architecture/README.md` | Current system, module, persistence, and event-delivery views |
+| `docs/architecture/capabilities/README.md` | Capability map linking four shared views to all 11 modules |
+| `docs/architecture/capabilities/*.md` | Reusable identity/access, marketplace, finance/payment, and platform-support views |
+| `docs/architecture/modules/*.md` | Current module ownership and change/verification references |
 | `docs/api/README.md` | API boundary, documentation profile, response, and versioning guidance |
 | `docs/api/errors.md` | Current neutral exception and RFC 9457 contract |
 | `docs/api/error-catalogue.md` | Generated public error catalogue moved from `docs/error-handling/` |
 | `docs/database/README.md` | Database navigation and schema ownership |
 | `docs/database/migrations.md` | Flyway authoring and recovery policy |
-| `docs/database/er-diagram.md` | Context-sized ER diagrams |
+| `docs/database/relationship-journey.md` | End-to-end relational narrative and overview figure |
+| `docs/database/views/README.md` | Question-based chooser for 11 focused database views |
+| `docs/database/views/*.md` | One bounded relationship question and its exact semantics per page |
+| `docs/database/reference/README.md` | Database notation, verification method, and non-FK semantics |
 | `docs/security/README.md` | Current session security boundary and replaceable authentication adapters |
 | `docs/operations/README.md` | Profiles, configuration, outbox workers, Docker, and operational checks |
 | `docs/decisions/README.md` | Durable decision-record index |
@@ -94,6 +107,9 @@ Java 21, Jackson, ImageIO, JUnit 5, AssertJ, Maven Surefire
 | `src/test/java/com/project/optrabidz/documentation/DiagramPublicationValidatorTest.java` | Fixture-test source and output rules |
 | `src/test/java/com/project/optrabidz/documentation/DiagramPublicationTest.java` | Apply diagram rules to the repository |
 | `src/test/java/com/project/optrabidz/documentation/DocumentationLinksTest.java` | Preserve the repository-wide broken-link gate |
+| `src/test/java/com/project/optrabidz/documentation/database/PostgresSchemaIntrospector.java` | Read tables, columns, keys, checks, partial indexes, and triggers from PostgreSQL |
+| `src/test/java/com/project/optrabidz/documentation/database/DatabaseSchemaSnapshot.java` | Immutable effective-schema model used by documentation verification |
+| `src/test/java/com/project/optrabidz/documentation/database/DatabaseDocumentationContractIT.java` | Apply Flyway and compare human documentation with the effective schema |
 | `src/test/java/com/project/optrabidz/documentation/error/ErrorCatalogueMarkdownSnapshotTest.java` | Track the moved public catalogue path |
 | `docs/architecture/work-items/KAN-39-diagram-publication-quality/audit.md` | Record content disposition and review results during delivery |
 
@@ -625,6 +641,483 @@ complete module model.
   Automated manifest comparison, local 980-pixel, local 390-pixel,
   dark-surround, GitHub desktop, GitHub mobile-web, Jira PNG, and Confluence
   checks pass. Native GitHub Mobile was confirmed on the same published set.
+
+---
+
+The Task 5A and 5B checkmarks record completed intermediate deliveries. They do
+not represent final KAN-39 acceptance: review found missing architecture
+figures, compressed database navigation, and a transitional schema manifest in
+the reader path. Tasks 5C through 5G close those gaps before Task 6 begins.
+
+## Task 5C: Establish the Two Reader Routes
+
+**Files:**
+
+- Modify: `docs/README.md`
+- Modify: `docs/architecture/README.md`
+- Create: `docs/architecture/capabilities/README.md`
+- Create: `docs/architecture/capabilities/identity-access.md`
+- Create: `docs/architecture/capabilities/marketplace.md`
+- Create: `docs/architecture/capabilities/finance-payments.md`
+- Create: `docs/architecture/capabilities/platform-support.md`
+- Modify: `docs/architecture/modules/inventory.json`
+- Modify: `docs/architecture/modules/README.md`
+- Modify: all 11 files under `docs/architecture/modules/`
+- Modify: `src/test/java/com/project/optrabidz/documentation/ArchitectureDocumentationCoverageTest.java`
+- Modify: `src/test/java/com/project/optrabidz/documentation/ArchitectureModuleInventoryTest.java`
+
+**Interfaces:**
+
+- `docs/README.md` exposes `Understand the system` and `Change or verify the
+  system` as the two primary routes.
+- Each module inventory item contains one `capability` value.
+- Each module page links exactly one shared capability page.
+- Capability grouping aids navigation but does not hide any module boundary.
+
+- [ ] **Step 1: Write failing route and capability-ownership tests**
+
+Extend `ArchitectureDocumentationCoverageTest` with the approved capability
+pages and require the two reader routes:
+
+```java
+private static final List<String> CAPABILITY_PAGES = List.of(
+        "capabilities/identity-access.md",
+        "capabilities/marketplace.md",
+        "capabilities/finance-payments.md",
+        "capabilities/platform-support.md");
+
+assertThat(Files.readString(Path.of("docs", "README.md")))
+        .contains("## Understand the system")
+        .contains("## Change or verify the system");
+```
+
+Update `ArchitectureModuleInventoryTest` to require a nonblank `capability`
+whose value is one of `identity-access`, `marketplace`, `finance-payments`, or
+`platform-support`.
+
+- [ ] **Step 2: Run the focused tests and confirm the red phase**
+
+```powershell
+.\mvnw.cmd -q "-Dtest=ArchitectureDocumentationCoverageTest,ArchitectureModuleInventoryTest" test
+```
+
+Expected: FAIL because the capability pages and inventory fields do not exist.
+
+- [ ] **Step 3: Publish the two routes and capability ownership**
+
+Map modules as follows:
+
+| Capability | Modules |
+|---|---|
+| Identity and access | `security`, `identity`, `participation` |
+| Marketplace | `classification`, `marketplace`, `governance` |
+| Finance and payments | `financial` |
+| Platform support | `common`, `audit`, `notification`, `documentation` |
+
+Create the capability index, add the `capability` inventory fields, link each
+module page to its capability page, and ensure the module index still lists all
+11 modules individually.
+
+- [ ] **Step 4: Run navigation, structure, and link verification**
+
+```powershell
+.\mvnw.cmd -q "-Dtest=ArchitectureDocumentationCoverageTest,ArchitectureModuleInventoryTest,DocumentationStructureTest,DocumentationLinksTest" test
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit the independently reviewable navigation change**
+
+```powershell
+git add docs/README.md docs/architecture src/test/java/com/project/optrabidz/documentation
+git commit -m "Clarify architecture reading paths (KAN-39)"
+```
+
+**Checkpoint:** The two reader routes and capability ownership are independently
+reviewable before architecture assets change.
+
+---
+
+## Task 5D: Publish the Complete Architecture View Set
+
+**Files:**
+
+- Create: `docs/architecture/assets/system-context.svg` and
+  `docs/architecture/assets/system-context.png`
+- Create: `docs/architecture/assets/runtime-topology.svg` and
+  `docs/architecture/assets/runtime-topology.png`
+- Create: `docs/architecture/assets/complete-module-map.svg` and
+  `docs/architecture/assets/complete-module-map.png`
+- Create: `docs/architecture/assets/module-dependencies.svg` and
+  `docs/architecture/assets/module-dependencies.png`
+- Create: `docs/architecture/capabilities/assets/identity-access.svg` and
+  `docs/architecture/capabilities/assets/identity-access.png`
+- Create: `docs/architecture/capabilities/assets/marketplace.svg` and
+  `docs/architecture/capabilities/assets/marketplace.png`
+- Create: `docs/architecture/capabilities/assets/finance-payments.svg` and
+  `docs/architecture/capabilities/assets/finance-payments.png`
+- Create: `docs/architecture/capabilities/assets/platform-support.svg` and
+  `docs/architecture/capabilities/assets/platform-support.png`
+- Create: `docs/architecture/flows/assets/request-security.svg` and
+  `docs/architecture/flows/assets/request-security.png`
+- Create: `docs/architecture/flows/assets/event-delivery.svg` and
+  `docs/architecture/flows/assets/event-delivery.png`
+- Create: `docs/architecture/flows/assets/error-disclosure.svg` and
+  `docs/architecture/flows/assets/error-disclosure.png`
+- Modify: `docs/architecture/system-context.md`
+- Modify: `docs/architecture/runtime.md`
+- Modify: `docs/architecture/modules/README.md`
+- Modify: `docs/architecture/module-dependencies.md`
+- Modify: all four capability pages
+- Modify: all three flow pages
+- Modify: `docs/architecture/diagram-publication/inventory.json`
+- Modify: `src/test/java/com/project/optrabidz/documentation/ArchitectureDocumentationCoverageTest.java`
+- Modify: `docs/architecture/work-items/KAN-39-diagram-publication-quality/audit.md`
+
+**Interfaces:**
+
+- Each system, capability, or flow question has a distinct owner page and
+  distinct canonical image; the overview image is not reused as a substitute.
+- Diagrams describe current source/configuration/test evidence and label known
+  gaps separately.
+- SVG is embedded on GitHub; its PNG is derived from the same SVG.
+
+- [ ] **Step 1: Write a failing architecture-figure coverage test**
+
+Add an owner-to-diagram map to `ArchitectureDocumentationCoverageTest` and
+require each owner to embed its own asset:
+
+```java
+private static final Map<String, String> REQUIRED_FIGURES = Map.ofEntries(
+        Map.entry("system-context.md", "assets/system-context.svg"),
+        Map.entry("runtime.md", "assets/runtime-topology.svg"),
+        Map.entry("modules/README.md", "../assets/complete-module-map.svg"),
+        Map.entry("module-dependencies.md", "assets/module-dependencies.svg"),
+        Map.entry("capabilities/identity-access.md", "assets/identity-access.svg"),
+        Map.entry("capabilities/marketplace.md", "assets/marketplace.svg"),
+        Map.entry("capabilities/finance-payments.md", "assets/finance-payments.svg"),
+        Map.entry("capabilities/platform-support.md", "assets/platform-support.svg"),
+        Map.entry("flows/request-security.md", "assets/request-security.svg"),
+        Map.entry("flows/event-delivery.md", "assets/event-delivery.svg"),
+        Map.entry("flows/error-disclosure.md", "assets/error-disclosure.svg"));
+```
+
+- [ ] **Step 2: Run the focused test and confirm missing distinct figures**
+
+```powershell
+.\mvnw.cmd -q "-Dtest=ArchitectureDocumentationCoverageTest" test
+```
+
+Expected: FAIL for the missing owner-specific assets.
+
+- [ ] **Step 3: Re-verify current architecture evidence before drawing**
+
+Use `modules/inventory.json`, production imports, Spring configuration,
+controllers, repositories, outbox processors, security adapters, and matching
+tests to update the claims in every owner page. Record `IMPLEMENTED`,
+`PARTIAL`, or `PLANNED` in `audit.md`; never draw a planned Kafka, Redis, JWT,
+OAuth2, or real-payment component as current.
+
+- [ ] **Step 4: Create and publish the system-wide and capability figures**
+
+Create 11 restrained, question-specific curated SVGs using the approved KAN-34
+clarity rules. Keep one reading direction, readable normal-width labels,
+explicit boundary names, opaque backgrounds, and no decorative palette. Add
+each SVG and derived PNG to the publication inventory and its owner page.
+
+- [ ] **Step 5: Render and verify every architecture surface**
+
+```powershell
+npm run diagrams:render
+npm run diagrams:preview
+npm run diagrams:check
+.\mvnw.cmd -q "-Dtest=ArchitectureDocumentationCoverageTest,DiagramPublicationTest,DocumentationLinksTest" test
+```
+
+Review the 980-pixel and 390-pixel sheets before committing. Then confirm the
+published pages on GitHub desktop and GitHub Mobile and the named PNGs in Jira.
+
+- [ ] **Step 6: Commit the architecture checkpoint**
+
+```powershell
+git add docs/architecture scripts src/test/java/com/project/optrabidz/documentation
+git commit -m "Complete the architecture views (KAN-39)"
+```
+
+**Checkpoint:** The complete architecture view set is independently reviewable
+before database pages change.
+
+---
+
+## Task 5E: Make Database Documentation Question-Oriented
+
+**Files:**
+
+- Modify: `docs/database/README.md`
+- Modify: `docs/database/relationship-journey.md`
+- Create: `docs/database/views/README.md`
+- Create: `docs/database/views/identity-access.md`
+- Create: `docs/database/views/participant-profile.md`
+- Create: `docs/database/views/marketplace-bidding.md`
+- Create: `docs/database/views/agreement-acceptance.md`
+- Create: `docs/database/views/settlement.md`
+- Create: `docs/database/views/repayment-schedule.md`
+- Create: `docs/database/views/payment-intent.md`
+- Create: `docs/database/views/payment-processing.md`
+- Create: `docs/database/views/payment-webhook.md`
+- Create: `docs/database/views/notification-delivery.md`
+- Create: `docs/database/views/outbox-audit.md`
+- Create: `docs/database/reference/README.md`
+- Create: `docs/database/assets/relationship-journey.svg`
+- Create: `docs/database/assets/relationship-journey.png`
+- Delete after migration: `docs/database/er-diagram.md`
+- Modify: `docs/architecture/diagram-publication/inventory.json`
+- Modify: `src/test/java/com/project/optrabidz/documentation/DatabaseDocumentationNavigationTest.java`
+- Modify: `src/test/java/com/project/optrabidz/documentation/DatabaseRelationshipDocumentationTest.java`
+
+**Interfaces:**
+
+- `README.md` routes by reviewer question and does not expose the raw manifest.
+- The relationship journey provides orientation; each focused page owns one
+  existing database figure and its exact relationship table.
+- `reference/README.md` owns notation, verification method, material database
+  invariants, and intentional non-FK correlation rules.
+
+- [ ] **Step 1: Write failing split-navigation tests**
+
+Require `views/README.md`, the 11 named focused pages, the relationship-journey
+figure, and the absence of a `schema-manifest.json` link in `README.md`:
+
+```java
+assertThat(entryPoint)
+        .contains("(relationship-journey.md)")
+        .contains("(views/README.md)")
+        .contains("(reference/README.md)")
+        .doesNotContain("schema-manifest.json");
+```
+
+- [ ] **Step 2: Run the focused tests and confirm the red phase**
+
+```powershell
+.\mvnw.cmd -q "-Dtest=DatabaseDocumentationNavigationTest,DatabaseRelationshipDocumentationTest" test
+```
+
+Expected: FAIL because the focused-page hierarchy is not present.
+
+- [ ] **Step 3: Split the monolithic ER page without changing schema claims**
+
+Create these pages: `identity-access.md`, `participant-profile.md`,
+`marketplace-bidding.md`, `agreement-acceptance.md`, `settlement.md`,
+`repayment-schedule.md`, `payment-intent.md`, `payment-processing.md`,
+`payment-webhook.md`, `notification-delivery.md`, and `outbox-audit.md`.
+Move each existing figure and relationship table to exactly one owner page,
+update inventory owners, and delete `er-diagram.md` only after all links move.
+
+- [ ] **Step 4: Add orientation and reference material**
+
+Publish a compact relational-journey SVG/PNG showing the six existing stages.
+Create `reference/README.md` for FK notation, nullability, delete actions,
+checks, partial indexes, triggers, and the six intentional correlations. Keep
+the manifest file temporarily for tests but remove it from reader navigation.
+
+- [ ] **Step 5: Verify navigation, publication, and mobile readability**
+
+```powershell
+npm run diagrams:render
+npm run diagrams:preview
+npm run diagrams:check
+.\mvnw.cmd -q "-Dtest=DatabaseDocumentationNavigationTest,DatabaseRelationshipDocumentationTest,DiagramPublicationTest,DocumentationLinksTest" test
+```
+
+Expected: PASS. Review the journey and every focused page at desktop and phone
+width before committing.
+
+- [ ] **Step 6: Commit the database reader-experience checkpoint**
+
+```powershell
+git add -A docs/database docs/architecture/diagram-publication src/test/java/com/project/optrabidz/documentation
+git commit -m "Improve database documentation navigation (KAN-39)"
+```
+
+**Checkpoint:** The database navigation and focused-page split are independently
+reviewable before schema-verification infrastructure changes.
+
+---
+
+## Task 5F: Replace the Transitional Schema Manifest
+
+**Files:**
+
+- Create: `src/test/java/com/project/optrabidz/documentation/database/DatabaseSchemaSnapshot.java`
+- Create: `src/test/java/com/project/optrabidz/documentation/database/PostgresSchemaIntrospector.java`
+- Create: `src/test/java/com/project/optrabidz/documentation/database/DatabaseDocumentationContractIT.java`
+- Modify: `src/test/java/com/project/optrabidz/documentation/DatabaseDocumentationNavigationTest.java`
+- Delete after parity passes: `src/test/java/com/project/optrabidz/documentation/DatabaseSchemaManifestTest.java`
+- Delete after parity passes: `src/test/java/com/project/optrabidz/documentation/DatabaseRelationshipDocumentationTest.java`
+- Delete after parity passes: `src/test/java/com/project/optrabidz/documentation/DatabaseDiagramCoverageTest.java`
+- Delete after parity passes: `docs/database/schema-manifest.json`
+- Modify: `docs/database/reference/README.md`
+
+**Interfaces:**
+
+- `PostgresSchemaIntrospector.read(Connection)` returns the effective schema
+  after all Flyway migrations.
+- `DatabaseDocumentationContractIT` runs under the existing
+  `integration-tests` profile and compares that schema directly with human
+  documentation.
+- Diagnostic JSON is written only to
+  `target/documentation-verification/schema-report.json`.
+
+- [ ] **Step 1: Define the immutable schema model**
+
+Create records for the facts currently represented by the manifest:
+
+```java
+public record DatabaseSchemaSnapshot(
+        List<String> tables,
+        List<ForeignKey> foreignKeys,
+        List<NamedObject> uniqueConstraints,
+        List<NamedObject> checkConstraints,
+        List<NamedObject> partialIndexes,
+        List<NamedObject> triggers) {
+
+    public record ForeignKey(String name, String childTable,
+            List<String> childColumns, String parentTable,
+            List<String> parentColumns, boolean nullable, String onDelete) {}
+
+    public record NamedObject(String name, String table, List<String> columns) {}
+}
+```
+
+- [ ] **Step 2: Write a failing PostgreSQL catalogue parity test**
+
+In `DatabaseDocumentationContractIT`, migrate a
+`postgres:16-alpine` Testcontainer with Flyway, call the introspector, and
+temporarily compare the result with `schema-manifest.json`. Assert the current
+transition baseline of 35 tables, 46 foreign keys, 25 unique constraints, 57
+check constraints, 19 partial indexes, and 12 triggers so deletion cannot occur
+after a partial extraction.
+
+- [ ] **Step 3: Implement catalogue introspection**
+
+Read user tables and constraints from `pg_class`, `pg_namespace`,
+`pg_constraint`, `pg_attribute`, `pg_index`, and `pg_trigger`. Use
+`pg_get_constraintdef`, `pg_get_indexdef`, and `pg_get_triggerdef` for stable
+definitions; exclude PostgreSQL internal objects and `flyway_schema_history`.
+Map `confdeltype` to `NO ACTION`, `RESTRICT`, `CASCADE`, `SET NULL`, or
+`SET DEFAULT`, preserving composite-column order with ordinality.
+
+- [ ] **Step 4: Prove parity before removing the manifest**
+
+```powershell
+.\mvnw.cmd -q verify -Pintegration-tests "-Dit.test=DatabaseDocumentationContractIT"
+```
+
+Expected: PASS with exact parity for tables, foreign keys, unique/check
+constraints, partial indexes, and triggers. If any category differs, keep the
+manifest and correct the introspector; do not weaken the comparison.
+
+- [ ] **Step 5: Move documentation checks onto the effective schema**
+
+Make the integration test verify:
+
+- every database table appears in the relational journey or a focused view;
+- every foreign key has one exact relationship row with its name, columns,
+  nullability, and delete action;
+- checks, partial indexes, and triggers referenced by documentation exist; and
+- each documented non-FK correlation references existing tables and columns
+  while remaining visibly labelled as a correlation.
+
+Write a deterministic diagnostic snapshot to `target/` for failed-build
+inspection, never as an expected input.
+
+- [ ] **Step 6: Remove the duplicate schema projection and obsolete parsers**
+
+Delete the committed manifest and the three regex/manifest-dependent tests.
+Keep the fast navigation-only assertions in
+`DatabaseDocumentationNavigationTest`; effective-schema assertions belong to
+the integration test.
+
+- [ ] **Step 7: Run both fast and PostgreSQL verification**
+
+```powershell
+.\mvnw.cmd -q test
+.\mvnw.cmd -q verify -Pintegration-tests
+git ls-files | rg "schema-manifest.json|target/documentation-verification"
+```
+
+Expected: both Maven phases pass and the final command returns no tracked
+manifest or generated diagnostic output.
+
+- [ ] **Step 8: Commit the schema-verification checkpoint**
+
+```powershell
+git add -A docs/database src/test/java/com/project/optrabidz/documentation
+git commit -m "Verify database docs from PostgreSQL (KAN-39)"
+```
+
+**Checkpoint:** Catalogue parity and manifest removal are independently
+reviewable before the complete current-reality audit.
+
+---
+
+## Task 5G: Audit the Complete Current Documentation
+
+**Files:**
+
+- Modify only when evidence is stale: stable pages under `docs/` and their
+  canonical diagram sources
+- Modify: `docs/architecture/modules/inventory.json`
+- Modify: `docs/architecture/work-items/KAN-39-diagram-publication-quality/audit.md`
+- Modify when required: documentation tests under
+  `src/test/java/com/project/optrabidz/documentation/`
+
+**Interfaces:**
+
+- Stable pages describe current implementation, not planned production
+  features.
+- Every architecture/database figure is reachable from the two reader routes.
+- Inventory facts, prose, diagrams, code, configuration, and tests agree.
+
+- [ ] **Step 1: Re-scan production and test surfaces**
+
+Regenerate or manually verify the module inventory against `src/main/java`,
+`src/main/resources`, `src/test/java`, `pom.xml`, Docker configuration, and CI.
+Check every durable claim about security, payments, outbox delivery,
+notifications, audit, exception handling, persistence, and profiles.
+
+- [ ] **Step 2: Classify and correct every mismatch**
+
+Record each reviewed capability as `IMPLEMENTED`, `PARTIAL`, or `PLANNED` in
+`audit.md`. Correct stale prose or diagrams; do not change production code or
+silently promote a future component into the current architecture.
+
+- [ ] **Step 3: Verify complete navigation and asset ownership**
+
+```powershell
+rg -n "schema-manifest|er-diagram\.md|\.mmd\)" README.md docs --glob "*.md"
+npm run diagrams:check
+.\mvnw.cmd -q "-Dtest=ArchitectureDocumentationCoverageTest,ArchitectureModuleInventoryTest,DatabaseDocumentationNavigationTest,DocumentationStructureTest,DocumentationLinksTest,DiagramPublicationTest" test
+```
+
+Expected: no obsolete reader link; every remaining match is an intentional
+historical statement inside the active KAN-39 record; all tests pass.
+
+- [ ] **Step 4: Review every diagram surface as a set**
+
+Generate the complete 980-pixel and 390-pixel review sheets. Verify GitHub
+desktop, GitHub Mobile, Jira PNG, Confluence, and local light/dark surroundings.
+Record each named figure and result rather than claiming one sample represents
+the whole set.
+
+- [ ] **Step 5: Commit the current-reality audit**
+
+```powershell
+git add docs src/test/java/com/project/optrabidz/documentation
+git commit -m "Align documentation with the current system (KAN-39)"
+```
+
+Only after this checkpoint is reviewed may Task 6 begin.
 
 ---
 

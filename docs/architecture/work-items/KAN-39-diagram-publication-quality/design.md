@@ -62,6 +62,18 @@ The root README is a concise product and repository entry point. It explains
 what OptraBidz does, states its boundaries, shows one architecture overview,
 and routes readers to stable topic pages.
 
+The documentation portal offers two explicit reading routes:
+
+1. **Understand the system** — visual system context, runtime, capability,
+   dependency, cross-cutting flow, and relational-journey views; and
+2. **Change or verify the system** — module ownership, database semantics,
+   API contracts, security boundaries, operations, tests, and decisions.
+
+The first route builds a mental model without requiring source-code knowledge.
+The second routes an engineer to the authoritative detail needed to make or
+review a change. Machine inventories and generated verification output never
+appear as primary destinations in either route.
+
 Durable technical decisions belong in the topic guides or in short decision
 records. Completed implementation plans are not permanent product
 documentation. Before obsolete work-item files are removed, any still-valid
@@ -103,6 +115,12 @@ docs/architecture/
   README.md                    architecture map and reading routes
   system-context.md           actors and trust boundary
   runtime.md                  Spring Boot, PostgreSQL, scheduling, outbox
+  capabilities/
+    README.md                  capability map and module ownership
+    identity-access.md         security, identity, participation
+    marketplace.md             classification, marketplace, governance
+    finance-payments.md        financial and payment execution
+    platform-support.md        common, audit, notification, documentation
   modules/
     README.md                  complete module and dependency map
     identity.md
@@ -127,6 +145,13 @@ public entry points, application use cases, domain rules, persistence, emitted
 or consumed events, outgoing module dependencies, security/error boundaries,
 verification, and known gaps. Statements are checked against code and tests;
 future architecture is labelled rather than mixed with current behaviour.
+
+Capability pages provide the reusable visual layer between system-wide views
+and module reference pages. They show how related modules collaborate without
+pretending those modules are one deployable unit. Module pages link to their
+owning capability view instead of duplicating the same diagram, while the
+complete module and dependency views continue to expose every one of the 11
+top-level modules individually.
 
 The diagram set is layered instead of compressed into one picture:
 
@@ -234,6 +259,36 @@ appear in more than one focused view are identified as references rather than
 presented as duplicate ownership. Solid connectors mean real foreign keys;
 dashed connectors mean correlation or a trigger-enforced consistency rule.
 Colour is never the only carrier of meaning.
+
+The durable database hierarchy separates navigation, focused views, and
+verification guidance:
+
+```text
+docs/database/
+  README.md                    human entry point and question routes
+  relationship-journey.md     end-to-end relational narrative
+  migrations.md               Flyway ownership and migration policy
+  views/
+    README.md                  focused-view chooser
+    identity-access.md
+    participant-profile.md
+    marketplace-bidding.md
+    agreement-acceptance.md
+    settlement.md
+    repayment-schedule.md
+    payment-intent.md
+    payment-processing.md
+    payment-webhook.md
+    notification-delivery.md
+    outbox-audit.md
+  reference/
+    README.md                  notation, verification, and schema semantics
+  assets/                      canonical SVG and PNG publications
+```
+
+The raw schema inventory is not a `Start Here` destination. During the gated
+replacement it may remain at its current path solely for automated tests; it
+is removed after catalogue-based verification assumes those responsibilities.
 
 The diagrams use human-curated composition backed by the effective PostgreSQL
 schema. Flyway remains the only schema authority: an integration test migrates
@@ -390,8 +445,12 @@ desktop, phone-width, and Jira outputs. A human reviewer approves that evidence.
 KAN-39 is complete when:
 
 - the stable documentation hierarchy is complete and navigable;
+- the documentation portal exposes separate `Understand the system` and
+  `Change or verify the system` routes;
 - all 11 top-level modules have an owned architecture page backed by current
   code and tests;
+- four shared capability pages connect system-wide views to the 11 module
+  references without hiding module boundaries;
 - the system-context, runtime, complete module, dependency, and cross-cutting
   views are distinct and mutually consistent;
 - stable GitHub guidance, Confluence review records, and Jira work tracking
@@ -402,6 +461,8 @@ KAN-39 is complete when:
 - every diagram has exactly one canonical source;
 - the database page provides an end-to-end overview and question-based view
   chooser;
+- the 11 focused database concerns have separate owner pages rather than one
+  monolithic ER page;
 - all 35 Flyway tables and 46 foreign keys are represented and automatically
   checked;
 - schema verification is derived from a PostgreSQL database after all Flyway
