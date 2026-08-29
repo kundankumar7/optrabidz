@@ -110,7 +110,7 @@ Java source; these are not estimates or hand-maintained diagrams.
 | `audit` | 20 | 1 | 2 | 1 | 1 | 0 | 4 | `common` |
 | `classification` | 61 | 2 | 2 | 6 | 2 | 0 | 7 | `common`, `security` |
 | `common` | 36 | 1 | 0 | 0 | 12 | 0 | 18 | `identity`, `security` |
-| `documentation` | 7 | 0 | 0 | 0 | 0 | 2 | 22 | error catalogues from 8 business/access modules plus `common` |
+| `documentation` | 7 | 0 | 0 | 0 | 0 | 2 | 23 | error catalogues from 8 business/access modules plus `common` |
 | `financial` | 119 | 3 | 4 | 18 | 3 | 5 | 30 | `audit`, `common`, `governance`, `identity`, `marketplace`, `participation`, `security` |
 | `governance` | 41 | 1 | 4 | 0 | 2 | 0 | 6 | `classification`, `common`, `identity`, `participation`, `security` |
 | `identity` | 26 | 0 | 2 | 3 | 0 | 0 | 2 | `common` |
@@ -192,6 +192,9 @@ map; field detail remains lossless through the linked SVG.
 | Database information model | `DatabaseSchemaManifestTest` | Pass: manifest facts derived from and compared with Flyway V1 |
 | Database information model | Relational journey and question chooser | All 35 tables placed across six business stages; eleven focused relationship questions linked |
 | Database information model | `DatabaseDocumentationNavigationTest` | Pass: journey, chooser, and full manifest table coverage enforced |
+| Database information model | Focused relationship comparison | 46/46 Flyway foreign keys already represented; zero visual topology omissions, so approved SVG/PNG assets were preserved |
+| Database information model | Exact relationship semantics | Every FK reference row now records constraint name, nullability, and `ON DELETE` behavior; all 6 intentional non-FK correlations are listed separately |
+| Database information model | `DatabaseRelationshipDocumentationTest` | Pass: focused references are checked directly against the machine-readable manifest |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.

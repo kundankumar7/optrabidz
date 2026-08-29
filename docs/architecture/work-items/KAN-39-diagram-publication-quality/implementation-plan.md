@@ -608,10 +608,14 @@ complete module model.
   Provide a mobile-readable overview and route each reviewer question to a
   focused relationship view.
 
-- [ ] **Step 3: Redesign focused relationship views from the manifest**
+- [x] **Step 3: Redesign focused relationship views from the manifest**
 
   Show exact relationship semantics and adjacent invariants. Never depict a
-  correlation or trigger rule as a foreign key.
+  correlation or trigger rule as a foreign key. The manifest comparison found
+  all 46 foreign-key relationships already present in the approved focused
+  views, so the images were preserved. Their reference tables now expose exact
+  constraint names, nullability, and delete behavior, while all six non-FK
+  correlations are listed separately.
 
 - [ ] **Step 4: Verify complete schema semantics and all reader surfaces**
 
