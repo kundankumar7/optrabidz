@@ -62,7 +62,7 @@ For the end-to-end order in which these areas participate, read the
   <img src="assets/identity-access-schema.svg" alt="Identity and access relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/identity-access-schema.png)
+[High-resolution PNG fallback](assets/identity-access-schema.png)
 
 This slice includes account-owned access records and the standalone
 `login_attempt` security log. A login attempt stores the submitted email value
@@ -83,7 +83,7 @@ triggers make these records immutable.
   <img src="assets/participant-profile-schema.svg" alt="Participant profile relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/participant-profile-schema.png)
+[High-resolution PNG fallback](assets/participant-profile-schema.png)
 
 This slice focuses on account-owned participant records and the detail rows
 attached to startup and investor profiles. `profile`, `startup`, and `investor`
@@ -109,7 +109,7 @@ key from `profile` to either participant table.
   <img src="assets/marketplace-bidding-schema.svg" alt="Marketplace and bidding relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/marketplace-bidding-schema.png)
+[High-resolution PNG fallback](assets/marketplace-bidding-schema.png)
 
 This slice focuses only on listings and bids. Agreement acceptance is documented
 separately so the marketplace bidding model stays readable.
@@ -131,7 +131,7 @@ separately so the marketplace bidding model stays readable.
   <img src="assets/agreement-acceptance-schema.svg" alt="Agreement acceptance relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/agreement-acceptance-schema.png)
+[High-resolution PNG fallback](assets/agreement-acceptance-schema.png)
 
 This slice focuses on the accepted agreement record and the final agreed debt
 terms. Triggers require the agreement bid to be accepted and enforce consistency
@@ -153,7 +153,7 @@ between the selected bid, listing, startup, and investor.
   <img src="assets/settlement-schema.svg" alt="Settlement relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/settlement-schema.png)
+[High-resolution PNG fallback](assets/settlement-schema.png)
 
 This slice focuses only on how a settlement belongs to an accepted agreement and
 its participants. Repayment scheduling is documented separately so the settlement
@@ -171,7 +171,7 @@ model stays readable.
   <img src="assets/repayment-schedule-schema.svg" alt="Repayment schedule relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/repayment-schedule-schema.png)
+[High-resolution PNG fallback](assets/repayment-schedule-schema.png)
 
 This slice focuses only on the repayment schedule created for an accepted
 agreement. Payment execution is documented in the payment diagrams so the
@@ -192,7 +192,7 @@ repayment model stays readable.
   <img src="assets/payment-intent-schema.svg" alt="Payment intent relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/payment-intent-schema.png)
+[High-resolution PNG fallback](assets/payment-intent-schema.png)
 
 This slice focuses only on how a `payment_intent` is sourced and which accounts
 participate. Provider, attempt, and webhook relationships are intentionally left
@@ -211,7 +211,7 @@ out of this diagram so the payment intent model stays readable.
   <img src="assets/payment-processing-schema.svg" alt="Payment processing relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/payment-processing-schema.png)
+[High-resolution PNG fallback](assets/payment-processing-schema.png)
 
 This slice focuses on payment attempts and provider configuration. Webhook
 relationships are intentionally left out because webhook events have optional
@@ -229,7 +229,7 @@ references back to both `payment_intent` and `payment_attempt`.
   <img src="assets/payment-webhook-schema.svg" alt="Payment webhook relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/payment-webhook-schema.png)
+[High-resolution PNG fallback](assets/payment-webhook-schema.png)
 
 This slice focuses on provider webhook idempotency and the optional references a
 webhook event may carry back to payment records.
@@ -248,7 +248,7 @@ webhook event may carry back to payment records.
   <img src="assets/notification-delivery-schema.svg" alt="Notification delivery relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/notification-delivery-schema.png)
+[High-resolution PNG fallback](assets/notification-delivery-schema.png)
 
 This slice focuses on notification fan-out, delivery tracking, retry attempts,
 and account subscriptions. Outbox and audit event correlation is documented
@@ -268,7 +268,7 @@ separately because it is not modeled with notification delivery foreign keys.
   <img src="assets/outbox-audit-schema.svg" alt="Outbox and audit relational schema">
 </a>
 
-[High-resolution PNG for Jira and offline review](assets/outbox-audit-schema.png)
+[High-resolution PNG fallback](assets/outbox-audit-schema.png)
 
 This slice focuses on `event_id` correlation. The dotted lines are not foreign
 keys; the only solid FK in this slice is the nullable audit actor account.

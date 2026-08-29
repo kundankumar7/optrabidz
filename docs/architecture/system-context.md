@@ -10,7 +10,7 @@ than a real-money provider integration.
 
 ![OptraBidz clients cross the HTTP and security boundary into a modular monolith that stores state in PostgreSQL and dispatches audit and notification work through an outbox](assets/optrabidz-system-overview.svg)
 
-[High-resolution PNG for Jira and offline review](assets/optrabidz-system-overview-jira.png)
+[High-resolution PNG fallback](assets/optrabidz-system-overview.png)
 
 ## People and callers
 

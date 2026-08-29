@@ -77,7 +77,7 @@ Java 21, Jackson, ImageIO, JUnit 5, AssertJ, Maven Surefire
 | `scripts/render-documentation-diagrams.mjs` | Render Mermaid SVG and derive PNG from either source type |
 | `scripts/render-documentation-previews.mjs` | Generate untracked desktop and phone review sheets |
 | `docs/architecture/assets/optrabidz-system-overview.svg` | Compact curated architecture source and GitHub image |
-| `docs/architecture/assets/optrabidz-system-overview-jira.png` | Jira fallback derived from the SVG with a cache-safe publication identity |
+| `docs/architecture/assets/optrabidz-system-overview.png` | High-resolution fallback derived from the SVG with a cache-safe publication identity |
 | `docs/architecture/assets/optrabidz-module-map.svg` | Focused module view when approved by the disposition audit |
 | `docs/architecture/assets/optrabidz-module-map.png` | Jira fallback derived from the module SVG |
 | `docs/architecture/assets/optrabidz-event-delivery.svg` | Focused transaction/outbox/delivery view when approved |
@@ -221,7 +221,7 @@ only after the stable hierarchy exists.
 - Delete after replacement:
   `docs/architecture/assets/optrabidz-architecture-overview.png`
 - Create: `docs/architecture/assets/optrabidz-system-overview.svg`
-- Create: `docs/architecture/assets/optrabidz-system-overview-jira.png`
+- Create: `docs/architecture/assets/optrabidz-system-overview.png`
 - Create only when needed to keep the overview compact:
   `docs/architecture/assets/optrabidz-module-map.svg`
 - Create matching PNG when the module map is created
@@ -294,8 +294,8 @@ npm run diagrams:check
 
 - [ ] **Step 5: Update reader-facing architecture pages**
 
-Embed the SVG, link the PNG as `High-resolution PNG for Jira and offline
-review`, add a short textual interpretation, and remove the reader-facing
+Embed the SVG, link the PNG as `High-resolution PNG fallback`, add a short
+textual interpretation, and remove the reader-facing
 `.mmd` link. Do not mention local approval procedure or tooling authorship.
 
 - [ ] **Step 6: Run the prototype tests**
@@ -617,15 +617,14 @@ complete module model.
   constraint names, nullability, and delete behavior, while all six non-FK
   correlations are listed separately.
 
-- [ ] **Step 4: Verify complete schema semantics and all reader surfaces**
+- [x] **Step 4: Verify complete schema semantics and all reader surfaces**
 
   Compare the manifest with Flyway and verify the published set on desktop,
   phone, GitHub Mobile, Jira, and local light/dark surroundings.
 
   Automated manifest comparison, local 980-pixel, local 390-pixel,
   dark-surround, GitHub desktop, GitHub mobile-web, Jira PNG, and Confluence
-  checks pass. Native GitHub Mobile remains the final device confirmation, so
-  this step stays open until that review is recorded.
+  checks pass. Native GitHub Mobile was confirmed on the same published set.
 
 ---
 

@@ -201,7 +201,8 @@ map; field detail remains lossless through the linked SVG.
 | Database surface verification | GitHub desktop and 390-pixel mobile web | Pass: all 11 SVGs loaded at their intrinsic resolution; no raw Mermaid presentation |
 | Database surface verification | Jira named PNG viewer | Pass: the 2400×3000 architecture fixture opens without clipping; database PNGs use the same validated opaque 2400-pixel publication path |
 | Database surface verification | Confluence delivery page | Pass: current KAN-39 status, PR link, ownership boundaries, database counts, and checkpoint history render correctly |
-| Database surface verification | Native GitHub Mobile | Pending final device confirmation; not inferred from mobile-web emulation |
+| Database surface verification | Native GitHub Mobile | Pass: user-device review confirmed the database page, embedded figures, and linked detail render correctly |
+| Repository wording | PNG fallback labels | Pass: stable GitHub documentation uses the vendor-neutral `High-resolution PNG fallback`; Jira-specific wording remains in delivery evidence only |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.
