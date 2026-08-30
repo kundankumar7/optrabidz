@@ -1198,7 +1198,7 @@ Only after this checkpoint is reviewed may Task 6 begin.
 - Jira receives concise evidence; the repository does not contain personal
   approval instructions or AI/tooling references.
 
-- [ ] **Step 1: Run deterministic documentation checks**
+- [x] **Step 1: Run deterministic documentation checks**
 
 ```powershell
 npm ci
@@ -1209,7 +1209,7 @@ git diff --check
 
 Expected: all commands pass and `git diff --check` reports no whitespace error.
 
-- [ ] **Step 2: Run the unmodified full test suite**
+- [x] **Step 2: Run the unmodified full test suite**
 
 ```powershell
 .\mvnw.cmd test
@@ -1219,7 +1219,7 @@ Expected: PASS. If an unrelated pre-existing failure reproduces on `develop`,
 record that evidence separately instead of weakening or excluding the test in
 KAN-39.
 
-- [ ] **Step 3: Verify repository hygiene**
+- [x] **Step 3: Verify repository hygiene**
 
 ```powershell
 git status --short
@@ -1230,14 +1230,14 @@ rg -n "C:\\Users\\|agentic|Codex|AI-generated" README.md docs .github --glob "*.
 Expected: no generated review directory, crash log, temporary clipboard file,
 machine path, or authorship/process leakage is tracked or published.
 
-- [ ] **Step 4: Complete final surface review**
+- [x] **Step 4: Complete final surface review**
 
 Review the draft pull request on GitHub desktop, mobile web, and GitHub Mobile.
 Open the named Jira PNG attachments. Confirm navigation from root README to
 every stable topic, readable normal-width figures, correct light/dark
 surroundings, and no raw Mermaid source presentation.
 
-- [ ] **Step 5: Record evidence and prepare the reviewable branch**
+- [x] **Step 5: Record evidence and prepare the reviewable branch**
 
 Update `audit.md` and Jira with final counts, commands, and surface results.
 Then:

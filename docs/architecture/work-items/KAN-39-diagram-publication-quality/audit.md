@@ -236,6 +236,11 @@ and perpendicular entry. The regenerated assets passed the reopened review.
 | Current-reality audit | Navigation and asset ownership gate | Pass: obsolete-path matches are confined to the active KAN-39 historical record; 22 publication entries, both reader routes, all module owners, structure, and repository links validate |
 | Current-reality audit | Complete diagram set | Pass: all 22 named rows in the stable diagram review table were re-rendered and inspected across 66 fresh desktop, phone-width, and dark-surround previews; module maps and architecture/database contact sheets were reviewed separately |
 | Current-reality audit | Task 5G checkpoint review | Approved after repository, Jira, Confluence, pull-request, diagram-surface, and CI review; proceed to final repository and surface verification |
+| Final verification | Deterministic documentation gate | Pass: `npm ci` audited 196 packages with 0 vulnerabilities; `npm run diagrams:check` validated all 22 entries; the focused structure, link, publication, and error-catalogue suite passed; `git diff --check` passed |
+| Final verification | Unmodified unit suite | Pass: `.\mvnw.cmd test` completed 468 tests with 0 failures, 0 errors, and 0 skipped tests |
+| Final verification | Repository hygiene | Pass: `target/` and `node_modules/` remain ignored; no tracked or untracked crash/clipboard artifacts, machine paths, or internal authorship/process terms remain on stable documentation surfaces |
+| Final verification | Publication continuity | Pass: no diagram asset changed after the approved Task 5G surface review; all 22 catalogue entries retain both SVG and PNG outputs, and stable reader pages contain no raw Mermaid embeds |
+| Final verification | Delivery surfaces | Pass: draft PR #40 targets `develop`; Jira retains the named opaque PNG review attachment; the current Confluence delivery page remains in the Optrabidz space; previously approved GitHub desktop, mobile web, GitHub Mobile, dark-surround, and Jira results therefore remain current |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.
