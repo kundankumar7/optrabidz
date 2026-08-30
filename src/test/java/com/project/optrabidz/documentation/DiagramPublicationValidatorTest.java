@@ -167,6 +167,72 @@ class DiagramPublicationValidatorTest {
                 .contains("curated SVG source must equal the published SVG");
     }
 
+    @Test
+    void requiresDirectionalConnectorsToDeclareTheirTarget() throws Exception {
+        writeValidPublication("""
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 1200 800" role="img">
+                  <title>Flow without a declared target</title>
+                  <desc>The arrow target cannot be verified.</desc>
+                  <defs>
+                    <marker id="arrow"><path d="M0 0 L10 5 L0 10 Z"/></marker>
+                    <style>.wire{marker-end:url(#arrow)}</style>
+                  </defs>
+                  <rect width="1200" height="800" fill="#FFFFFF"/>
+                  <rect id="target" x="300" y="300" width="600" height="200"/>
+                  <path class="wire" d="M600 100 V300"/>
+                </svg>
+                """);
+
+        assertThat(DiagramPublicationValidator.findViolations(repository))
+                .extracting(DiagramPublicationValidator.Violation::reason)
+                .contains("directional connector is missing data-target");
+    }
+
+    @Test
+    void rejectsDirectionalConnectorThatMissesItsDeclaredTarget() throws Exception {
+        writeValidPublication("""
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 1200 800" role="img">
+                  <title>Flow with a floating arrow</title>
+                  <desc>The arrow stops before reaching its declared target.</desc>
+                  <defs>
+                    <marker id="arrow"><path d="M0 0 L10 5 L0 10 Z"/></marker>
+                    <style>.wire{marker-end:url(#arrow)}</style>
+                  </defs>
+                  <rect width="1200" height="800" fill="#FFFFFF"/>
+                  <rect id="target" x="300" y="300" width="600" height="200"/>
+                  <path class="wire" data-target="target" d="M600 100 V250"/>
+                </svg>
+                """);
+
+        assertThat(DiagramPublicationValidator.findViolations(repository))
+                .extracting(DiagramPublicationValidator.Violation::reason)
+                .contains("directional connector does not end on its declared target");
+    }
+
+    @Test
+    void rejectsDirectionalConnectorThatRunsAlongItsTargetEdge() throws Exception {
+        writeValidPublication("""
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 1200 800" role="img">
+                  <title>Flow with a tangential arrow</title>
+                  <desc>The arrow runs along the target border.</desc>
+                  <defs>
+                    <marker id="arrow"><path d="M0 0 L10 5 L0 10 Z"/></marker>
+                    <style>.wire{marker-end:url(#arrow)}</style>
+                  </defs>
+                  <rect width="1200" height="800" fill="#FFFFFF"/>
+                  <rect id="target" x="300" y="300" width="600" height="200"/>
+                  <path class="wire" data-target="target" d="M100 300 H600"/>
+                </svg>
+                """);
+
+        assertThat(DiagramPublicationValidator.findViolations(repository))
+                .extracting(DiagramPublicationValidator.Violation::reason)
+                .contains("directional connector must enter its target perpendicularly");
+    }
+
     private String singleEntry(String... consumers) {
         String consumerJson = java.util.Arrays.stream(consumers)
                 .map(value -> "\"" + value + "\"")
@@ -189,6 +255,14 @@ class DiagramPublicationValidatorTest {
 
     private void writeCatalog(String json) throws Exception {
         write("docs/architecture/diagram-publication/diagram-publications.json", json);
+    }
+
+    private void writeValidPublication(String svg) throws Exception {
+        writeCatalog(singleEntry());
+        write("docs/owner.md", "![Flow](assets/flow.svg)\n");
+        write("docs/assets/flow.svg", svg);
+        write("docs/architecture/diagram-publication/mermaid-config.json", "{}\n");
+        writePng("docs/assets/flow.png", 2000, 600, 0xFFFFFFFF);
     }
 
     private void write(String relativePath, String content) throws Exception {

@@ -34,6 +34,11 @@ final class DiagramPublicationValidator {
             "!\\[[^]]*]\\((?:<)?([^)>\\s]+)(?:>)?(?:\\s+[^)]*)?\\)");
     private static final Pattern HTML_IMAGE = Pattern.compile(
             "(?i)<img\\b[^>]*\\bsrc\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>");
+    private static final Pattern DIRECTIONAL_CLASS = Pattern.compile(
+            "(?is)\\.([a-z_][a-z0-9_-]*)\\s*\\{[^}]*?marker-end\\s*:");
+    private static final Pattern PATH_TOKEN = Pattern.compile(
+            "[A-Za-z]|[-+]?(?:\\d*\\.\\d+|\\d+\\.?)(?:[eE][-+]?\\d+)?");
+    private static final double SVG_EPSILON = 0.01;
 
     private DiagramPublicationValidator() {
     }
@@ -236,10 +241,170 @@ final class DiagramPublicationValidator {
                 violations.add(new Violation(id, relative(root, svg),
                         "SVG contains forbidden external reference"));
             }
+            validateDirectionalConnectors(root, id, svg, document, violations);
         } catch (Exception exception) {
             violations.add(new Violation(id, relative(root, svg),
                     "SVG is not valid secure XML"));
         }
+    }
+
+    private static void validateDirectionalConnectors(Path root, String id,
+            Path svg, Document document, List<Violation> violations) {
+        Set<String> directionalClasses = directionalClasses(document);
+        NodeList paths = document.getElementsByTagName("path");
+        for (int index = 0; index < paths.getLength(); index++) {
+            Element path = (Element) paths.item(index);
+            if (!isDirectional(path, directionalClasses)) {
+                continue;
+            }
+
+            String targetId = path.getAttribute("data-target").trim();
+            if (targetId.isBlank()) {
+                violations.add(new Violation(id, relative(root, svg),
+                        "directional connector is missing data-target"));
+                continue;
+            }
+
+            Element target = findElementById(document, targetId);
+            if (target == null || !"rect".equals(target.getLocalName())) {
+                violations.add(new Violation(id, relative(root, svg),
+                        "directional connector data-target must reference a rectangle"));
+                continue;
+            }
+
+            Segment finalSegment = finalOrthogonalSegment(path.getAttribute("d"));
+            if (finalSegment == null) {
+                violations.add(new Violation(id, relative(root, svg),
+                        "directional connector must use an orthogonal path"));
+                continue;
+            }
+
+            Rectangle rectangle = rectangle(target);
+            if (!rectangle.containsOnBoundary(finalSegment.end())) {
+                violations.add(new Violation(id, relative(root, svg),
+                        "directional connector does not end on its declared target"));
+            } else if (!rectangle.isPerpendicularEntry(finalSegment)) {
+                violations.add(new Violation(id, relative(root, svg),
+                        "directional connector must enter its target perpendicularly"));
+            }
+        }
+    }
+
+    private static Set<String> directionalClasses(Document document) {
+        Set<String> classes = new HashSet<>();
+        NodeList styles = document.getElementsByTagName("style");
+        for (int index = 0; index < styles.getLength(); index++) {
+            Matcher matcher = DIRECTIONAL_CLASS.matcher(
+                    styles.item(index).getTextContent());
+            while (matcher.find()) {
+                classes.add(matcher.group(1));
+            }
+        }
+        return classes;
+    }
+
+    private static boolean isDirectional(Element path,
+            Set<String> directionalClasses) {
+        String markerEnd = path.getAttribute("marker-end").trim();
+        if (!markerEnd.isBlank() && !"none".equalsIgnoreCase(markerEnd)) {
+            return true;
+        }
+        for (String className : path.getAttribute("class").trim().split("\\s+")) {
+            if (directionalClasses.contains(className)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static Element findElementById(Document document, String id) {
+        NodeList elements = document.getElementsByTagName("*");
+        for (int index = 0; index < elements.getLength(); index++) {
+            Element element = (Element) elements.item(index);
+            if (id.equals(element.getAttribute("id"))) {
+                return element;
+            }
+        }
+        return null;
+    }
+
+    private static Rectangle rectangle(Element element) {
+        return new Rectangle(
+                number(element, "x"), number(element, "y"),
+                number(element, "width"), number(element, "height"));
+    }
+
+    private static double number(Element element, String attribute) {
+        String value = element.getAttribute(attribute).trim();
+        return value.isBlank() ? 0 : Double.parseDouble(value);
+    }
+
+    private static Segment finalOrthogonalSegment(String pathData) {
+        List<String> tokens = PATH_TOKEN.matcher(pathData).results()
+                .map(result -> result.group())
+                .toList();
+        Point current = new Point(0, 0);
+        Point previous = null;
+        char command = 0;
+        int index = 0;
+
+        while (index < tokens.size()) {
+            String token = tokens.get(index);
+            if (Character.isLetter(token.charAt(0))) {
+                command = token.charAt(0);
+                index++;
+                if (command == 'Z' || command == 'z') {
+                    return null;
+                }
+                continue;
+            }
+
+            Point next;
+            switch (command) {
+                case 'M', 'L' -> {
+                    if (index + 1 >= tokens.size()) {
+                        return null;
+                    }
+                    next = new Point(Double.parseDouble(tokens.get(index)),
+                            Double.parseDouble(tokens.get(index + 1)));
+                    index += 2;
+                }
+                case 'm', 'l' -> {
+                    if (index + 1 >= tokens.size()) {
+                        return null;
+                    }
+                    next = new Point(current.x()
+                            + Double.parseDouble(tokens.get(index)), current.y()
+                            + Double.parseDouble(tokens.get(index + 1)));
+                    index += 2;
+                }
+                case 'H' -> {
+                    next = new Point(Double.parseDouble(token), current.y());
+                    index++;
+                }
+                case 'h' -> {
+                    next = new Point(current.x() + Double.parseDouble(token),
+                            current.y());
+                    index++;
+                }
+                case 'V' -> {
+                    next = new Point(current.x(), Double.parseDouble(token));
+                    index++;
+                }
+                case 'v' -> {
+                    next = new Point(current.x(),
+                            current.y() + Double.parseDouble(token));
+                    index++;
+                }
+                default -> {
+                    return null;
+                }
+            }
+            previous = current;
+            current = next;
+        }
+
+        return previous == null ? null : new Segment(previous, current);
     }
 
     private static DocumentBuilderFactory secureDocumentBuilderFactory()
@@ -502,5 +667,45 @@ final class DiagramPublicationValidator {
     }
 
     record Violation(String diagramId, String path, String reason) {
+    }
+
+    private record Point(double x, double y) {
+    }
+
+    private record Segment(Point start, Point end) {
+    }
+
+    private record Rectangle(double x, double y, double width, double height) {
+
+        boolean containsOnBoundary(Point point) {
+            boolean onHorizontal = between(point.x(), x, x + width)
+                    && (same(point.y(), y) || same(point.y(), y + height));
+            boolean onVertical = between(point.y(), y, y + height)
+                    && (same(point.x(), x) || same(point.x(), x + width));
+            return onHorizontal || onVertical;
+        }
+
+        boolean isPerpendicularEntry(Segment segment) {
+            Point end = segment.end();
+            boolean verticalSegment = same(segment.start().x(), end.x())
+                    && !same(segment.start().y(), end.y());
+            boolean horizontalSegment = same(segment.start().y(), end.y())
+                    && !same(segment.start().x(), end.x());
+            boolean horizontalEdge = same(end.y(), y)
+                    || same(end.y(), y + height);
+            boolean verticalEdge = same(end.x(), x)
+                    || same(end.x(), x + width);
+            return (horizontalEdge && verticalSegment)
+                    || (verticalEdge && horizontalSegment);
+        }
+
+        private static boolean between(double value, double start, double end) {
+            return value >= start - SVG_EPSILON
+                    && value <= end + SVG_EPSILON;
+        }
+
+        private static boolean same(double left, double right) {
+            return Math.abs(left - right) <= SVG_EPSILON;
+        }
     }
 }

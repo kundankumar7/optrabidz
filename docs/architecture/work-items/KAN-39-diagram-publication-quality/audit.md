@@ -136,16 +136,21 @@ artwork. Their new descriptive asset paths also prevent GitHub Mobile from
 reusing a stale cached image. Dense phone previews preserve the relationship
 map; field detail remains lossless through the linked SVG.
 
+A post-approval review found directional connectors that stopped in whitespace
+or entered along a target border. The affected architecture SVGs were repaired,
+and the publication validator now enforces declared targets, boundary contact,
+and perpendicular entry. Remote review is reopened for the regenerated assets.
+
 | Diagram | Repository truth reviewed | Desktop | Phone | Dark surround | Jira PNG |
 |---|---|---|---|---|---|
-| System context | Callers, user HTTP boundary, signed webhook boundary, modular monolith, PostgreSQL, and external adapters | Pass | Inline readable | Pass | 2400×3200 generated; reviewer approved |
-| Runtime topology | One JVM, adapter layers, scheduled responsibilities, and PostgreSQL | Pass | Inline readable | Pass | 2400×3267 generated; reviewer approved |
+| System context | Callers, user HTTP boundary, signed webhook boundary, modular monolith, PostgreSQL, and external adapters | Pass | Inline readable | Pass | 2400×3200 generated; arrow repair awaiting review |
+| Runtime topology | One JVM, adapter layers, scheduled responsibilities, and PostgreSQL | Pass | Inline readable | Pass | 2400×3267 generated; arrow repair awaiting review |
 | Module ownership map | All eleven modules grouped into four reader capabilities | Pass | Inline readable | Pass | 2400×3267 generated; reviewer approved |
 | Current module dependencies | All source-derived direct imports, including reverse `common` coupling | Pass | Inline readable | Pass | 2400×2880 generated; reviewer approved |
-| Identity and access | Security adapter, authenticated actor, identity/participation facts, and service authorization | Pass | Inline readable | Pass | 2400×3133 generated; reviewer approved |
-| Marketplace lifecycle | Classification and governance guards through listing, discovery, bid, and agreement | Pass | Inline readable | Pass | 2400×3133 generated; reviewer approved |
-| Finance and payments | Agreement obligations, intents, attempts, signed callbacks, and replay protection | Pass | Inline readable | Pass | 2400×3267 generated; reviewer approved |
-| Request and security | Route policy, server-side session/CSRF, controller adaptation, service rules, and rejection | Pass | Inline readable | Pass | 2400×3467 generated; reviewer approved |
+| Identity and access | Security adapter, authenticated actor, identity/participation facts, and service authorization | Pass | Inline readable | Pass | 2400×3133 generated; arrow repair awaiting review |
+| Marketplace lifecycle | Classification and governance guards through listing, discovery, bid, and agreement | Pass | Inline readable | Pass | 2400×3133 generated; arrow repair awaiting review |
+| Finance and payments | Agreement obligations, intents, attempts, signed callbacks, and replay protection | Pass | Inline readable | Pass | 2400×3267 generated; arrow repair awaiting review |
+| Request and security | Route policy, server-side session/CSRF, controller adaptation, service rules, and rejection | Pass | Inline readable | Pass | 2400×3467 generated; arrow repair awaiting review |
 | Event delivery | Atomic outbox write, claim, audit/notification processors, and retryable delivery | Pass | Inline readable | Pass | 2400×3533 generated; reviewer approved |
 | Account access and security | V1 account, role, credential, session, admin, and standalone `login_attempt` | Pass | Relationship map + SVG detail | Pass | 2400×1720 |
 | Participant profile | V1 account-owned profile, startup, investor, and detail-table FKs | Pass | Relationship map + SVG detail | Pass | 2400×1509 |

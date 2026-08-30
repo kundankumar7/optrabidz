@@ -16,54 +16,54 @@
   <text class="title" x="450" y="46" text-anchor="middle">Public error contract publication</text>
 
   <g aria-label="Owned public definitions">
-    <rect class="node source" x="230" y="76" width="440" height="104" rx="10"/>
+    <rect id="owned-definitions" class="node source" x="230" y="76" width="440" height="104" rx="10"/>
     <text class="head" x="450" y="116" text-anchor="middle">1. Owned public definitions</text>
     <text class="body" x="450" y="151" text-anchor="middle">Module · Framework · Security</text>
   </g>
 
-  <path class="wire" d="M450 180 V220"/>
+  <path class="wire" data-target="public-error-catalogue" d="M450 180 V220"/>
 
   <g aria-label="Validated public catalogue">
-    <rect class="node catalogue" x="230" y="220" width="440" height="110" rx="10"/>
+    <rect id="public-error-catalogue" class="node catalogue" x="230" y="220" width="440" height="110" rx="10"/>
     <text class="head" x="450" y="263" text-anchor="middle">2. Public error catalogue</text>
     <text class="body" x="450" y="299" text-anchor="middle">Merge by code · Reject conflicting definitions</text>
   </g>
 
-  <path class="wire" d="M450 330 V370 H220 V404"/>
-  <path class="wire" d="M450 370 H680 V404"/>
+  <path class="wire" data-target="openapi-contract" d="M450 330 V370 H220 V404"/>
+  <path class="wire" data-target="markdown-catalogue" d="M450 370 H680 V404"/>
 
   <g aria-label="OpenAPI contract">
-    <rect class="node published" x="40" y="404" width="360" height="126" rx="10"/>
+    <rect id="openapi-contract" class="node published" x="40" y="404" width="360" height="126" rx="10"/>
     <text class="head" x="220" y="447" text-anchor="middle">3A. OpenAPI contract</text>
     <text class="body" x="220" y="482" text-anchor="middle">Problem schemas · Reusable responses</text>
     <text class="body" x="220" y="510" text-anchor="middle">Public error-code enum</text>
   </g>
 
   <g aria-label="Generated Markdown catalogue">
-    <rect class="node published" x="500" y="404" width="360" height="126" rx="10"/>
+    <rect id="markdown-catalogue" class="node published" x="500" y="404" width="360" height="126" rx="10"/>
     <text class="head" x="680" y="447" text-anchor="middle">3B. Markdown catalogue</text>
     <text class="body" x="680" y="482" text-anchor="middle">Generated checked-in snapshot</text>
     <text class="body" x="680" y="510" text-anchor="middle">One row per public code</text>
   </g>
 
-  <path class="wire" d="M220 530 V604"/>
+  <path class="wire" data-target="documentation-access" d="M220 530 V604"/>
   <text class="label" x="238" y="574">served through</text>
 
   <g aria-label="HTTP documentation access boundary">
-    <rect class="node security" x="40" y="604" width="360" height="142" rx="10"/>
+    <rect id="documentation-access" class="node security" x="40" y="604" width="360" height="142" rx="10"/>
     <text class="head" x="220" y="646" text-anchor="middle">4. HTTP documentation access</text>
     <text class="body" x="220" y="681" text-anchor="middle">Disabled · Authenticated · Public</text>
     <text class="body" x="220" y="713" text-anchor="middle">Production rejects public Swagger UI</text>
   </g>
 
   <g aria-label="Contract verification">
-    <rect class="node verification" x="500" y="604" width="360" height="142" rx="10"/>
+    <rect id="contract-verification" class="node verification" x="500" y="604" width="360" height="142" rx="10"/>
     <text class="head" x="680" y="646" text-anchor="middle">5. Contract verification</text>
     <text class="body" x="680" y="681" text-anchor="middle">Parity · Inventory · Exposure</text>
     <text class="body" x="680" y="713" text-anchor="middle">Disclosure and snapshot tests</text>
   </g>
 
-  <path class="check" d="M400 467 H454 V638 H500"/>
-  <path class="check" d="M680 530 V604"/>
-  <path class="check" d="M400 702 H500"/>
+  <path class="check" data-target="contract-verification" d="M400 467 H454 V638 H500"/>
+  <path class="check" data-target="contract-verification" d="M680 530 V604"/>
+  <path class="check" data-target="contract-verification" d="M400 702 H500"/>
 </svg>

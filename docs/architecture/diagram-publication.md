@@ -65,6 +65,8 @@ A publication entry passes only when:
   background;
 - the SVG contains no `script`, `foreignObject`, external reference, or CSS
   import;
+- every directional connector declares its target element, terminates on that
+  target, and enters perpendicular to the target edge;
 - the PNG is readable, opaque, and at least 2000×600 pixels; and
 - no temporary clipboard image is published under `docs/`.
 
@@ -75,6 +77,7 @@ untracked `target/documentation-review/` directory. Confirm that:
 - the reading direction is obvious;
 - labels remain legible and do not clip or overlap;
 - connectors and branch labels remain distinguishable;
+- arrowheads do not float, run along a node border, or cross unrelated nodes;
 - foreground and connector contrast works on light and dark surrounding pages;
 - no important relationship is hidden by scaling; and
 - the full-resolution PNG is suitable for Jira attachment and offline review.
