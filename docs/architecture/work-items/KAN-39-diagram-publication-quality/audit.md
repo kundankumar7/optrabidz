@@ -235,6 +235,7 @@ and perpendicular entry. The regenerated assets passed the reopened review.
 | Current-reality audit | Stable wording corrections | Development fallback credentials are now described as a current hardening gap; database verification names the effective PostgreSQL catalogue; diagram publication uses vendor-neutral cross-platform fallback language |
 | Current-reality audit | Navigation and asset ownership gate | Pass: obsolete-path matches are confined to the active KAN-39 historical record; 22 publication entries, both reader routes, all module owners, structure, and repository links validate |
 | Current-reality audit | Complete diagram set | Pass: all 22 named rows in the stable diagram review table were re-rendered and inspected across 66 fresh desktop, phone-width, and dark-surround previews; module maps and architecture/database contact sheets were reviewed separately |
+| Current-reality audit | Task 5G checkpoint review | Approved after repository, Jira, Confluence, pull-request, diagram-surface, and CI review; proceed to final repository and surface verification |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.
