@@ -15,44 +15,87 @@ class DiagramPublicationValidatorTest {
     Path repository;
 
     @Test
-    void reportsUnsafeIncompleteAndUnreadablePublicationAssets() throws Exception {
-        writeInventory("""
+    void acceptsNeutralPublicationWithOwnerAndConsumer() throws Exception {
+        writeCatalog("""
                 {
-                  "schemaVersion": 1,
-                  "renderer": {
-                    "packageName": "@mermaid-js/mermaid-cli",
-                    "version": "11.16.0",
-                    "config": "docs/architecture/diagram-publication/mermaid-config.json"
-                  },
+                  "schemaVersion": 2,
                   "diagrams": [{
-                    "id": "unsafe-flow",
-                    "owner": "docs/owner.md",
-                    "source": "docs/assets/unsafe-flow.mmd",
-                    "sourceType": "MERMAID_FILE",
-                    "githubSvg": "docs/assets/unsafe-flow.svg",
-                    "jiraPng": "docs/assets/unsafe-flow.png",
-                    "jiraPngRequired": true,
-                    "remediation": "REGENERATE"
+                    "id": "public-error-flow",
+                    "sourceType": "CURATED_SVG",
+                    "source": "docs/assets/flow.svg",
+                    "svg": "docs/assets/flow.svg",
+                    "png": "docs/assets/flow.png",
+                    "primaryOwner": "docs/errors.md",
+                    "consumers": ["docs/architecture/error-flow.md"]
                   }]
                 }
                 """);
-        write("docs/owner.md", "# Owner\n\nNo image is embedded.\n");
-        write("docs/assets/unsafe-flow.mmd", "flowchart TB\nA --> B\n");
-        write("docs/assets/unsafe-flow.svg", """
+        write("docs/errors.md", "![Public error flow](assets/flow.svg)\n");
+        write("docs/architecture/error-flow.md",
+                "![Public error flow](../assets/flow.svg)\n");
+        write("docs/assets/flow.svg", safeSvg());
+        write("docs/architecture/diagram-publication/mermaid-config.json", "{}\n");
+        writePng("docs/assets/flow.png", 2000, 600, 0xFFFFFFFF);
+
+        assertThat(DiagramPublicationValidator.findViolations(repository)).isEmpty();
+    }
+
+    @Test
+    void rejectsLegacyProductSpecificContract() throws Exception {
+        writeCatalog("""
+                {
+                  "schemaVersion": 1,
+                  "renderer": {"version": "11.16.0"},
+                  "diagrams": [{
+                    "id": "legacy",
+                    "sourceType": "CURATED_SVG",
+                    "source": "docs/assets/flow.svg",
+                    "githubSvg": "docs/assets/flow.svg",
+                    "jiraPng": "docs/assets/flow.png",
+                    "jiraPngRequired": true,
+                    "owner": "docs/errors.md",
+                    "remediation": "PASS"
+                  }]
+                }
+                """);
+
+        assertThat(DiagramPublicationValidator.findViolations(repository))
+                .extracting(DiagramPublicationValidator.Violation::reason)
+                .contains("diagram publication catalogue is invalid JSON");
+    }
+
+    @Test
+    void requiresEveryConsumerToEmbedTheCanonicalSvg() throws Exception {
+        writeCatalog(singleEntry("docs/consumer.md"));
+        write("docs/owner.md", "![Flow](assets/flow.svg)\n");
+        write("docs/consumer.md", "# Consumer without the figure\n");
+        write("docs/assets/flow.svg", safeSvg());
+        write("docs/architecture/diagram-publication/mermaid-config.json", "{}\n");
+        writePng("docs/assets/flow.png", 2000, 600, 0xFFFFFFFF);
+
+        assertThat(DiagramPublicationValidator.findViolations(repository))
+                .extracting(DiagramPublicationValidator.Violation::reason)
+                .contains("consumer does not embed the declared SVG");
+    }
+
+    @Test
+    void reportsUnsafeIncompleteAndUnreadableAssets() throws Exception {
+        writeCatalog(singleEntry());
+        write("docs/owner.md", "# Owner without the figure\n");
+        write("docs/assets/flow.svg", """
                 <svg xmlns="http://www.w3.org/2000/svg">
-                  <style>.canvas { fill: rgba(0, 0, 0, 0); }</style>
-                  <rect class="canvas" width="1200" height="800"/>
                   <script>window.alert('unsafe')</script>
                   <foreignObject><div>HTML label</div></foreignObject>
                 </svg>
                 """);
-        writePng("docs/assets/unsafe-flow.png", 100, 100, 0x00FFFFFF);
-        writePng("docs/assets/draft-clipboard-preview.png", 2400, 800, 0xFFFFFFFF);
+        write("docs/architecture/diagram-publication/mermaid-config.json", "{}\n");
+        writePng("docs/assets/flow.png", 100, 100, 0x00FFFFFF);
+        writePng("docs/assets/clipboard-preview.png", 2400, 800, 0xFFFFFFFF);
 
         assertThat(DiagramPublicationValidator.findViolations(repository))
                 .extracting(DiagramPublicationValidator.Violation::reason)
                 .contains(
-                        "owner document does not embed the declared SVG",
+                        "primary owner does not embed the declared SVG",
                         "SVG is missing viewBox",
                         "SVG is missing title",
                         "SVG is missing description",
@@ -62,132 +105,58 @@ class DiagramPublicationValidatorTest {
                         "PNG contains transparent pixels",
                         "PNG width must be at least 2000 pixels",
                         "PNG height must be at least 600 pixels",
-                        "temporary clipboard asset is published"
-                );
+                        "temporary clipboard asset is published");
     }
 
     @Test
-    void acceptsSafePublicationWithNonSiblingSourceAndOptionalJiraExport() throws Exception {
-        writeInventory("""
+    void rejectsDuplicateIdsAssetsAndEscapingPaths() throws Exception {
+        writeCatalog("""
                 {
-                  "schemaVersion": 1,
-                  "renderer": {
-                    "packageName": "@mermaid-js/mermaid-cli",
-                    "version": "11.16.0",
-                    "config": "docs/architecture/diagram-publication/mermaid-config.json"
-                  },
-                  "diagrams": [{
-                    "id": "architecture-overview",
-                    "owner": "docs/architecture/README.md",
-                    "source": "docs/architecture/overview.mmd",
-                    "sourceType": "MERMAID_FILE",
-                    "githubSvg": "docs/architecture/assets/architecture-overview.svg",
-                    "jiraPng": null,
-                    "jiraPngRequired": false,
-                    "remediation": "PASS"
-                  }]
+                  "schemaVersion": 2,
+                  "diagrams": [
+                    {
+                      "id": "duplicate",
+                      "sourceType": "CURATED_SVG",
+                      "source": "docs/assets/shared.svg",
+                      "svg": "docs/assets/shared.svg",
+                      "png": "docs/assets/first.png",
+                      "primaryOwner": "docs/first.md",
+                      "consumers": []
+                    },
+                    {
+                      "id": "duplicate",
+                      "sourceType": "CURATED_SVG",
+                      "source": "docs/assets/shared.svg",
+                      "svg": "docs/assets/shared.svg",
+                      "png": "../outside.png",
+                      "primaryOwner": "docs/second.md",
+                      "consumers": []
+                    }
+                  ]
                 }
-                """);
-        write("docs/architecture/README.md", """
-                # Architecture
-
-                <img src="assets/architecture-overview.svg" alt="Architecture overview">
-                """);
-        write("docs/architecture/overview.mmd", "flowchart TB\nA --> B\n");
-        write("docs/architecture/assets/architecture-overview.svg", safeSvg());
-        write("docs/architecture/diagram-publication/mermaid-config.json", "{}\n");
-
-        assertThat(DiagramPublicationValidator.findViolations(repository)).isEmpty();
-    }
-
-    @Test
-    void acceptsMarkdownImageAndOpaqueHighResolutionPng() throws Exception {
-        writeInventory("""
-                {
-                  "schemaVersion": 1,
-                  "renderer": {
-                    "packageName": "@mermaid-js/mermaid-cli",
-                    "version": "11.16.0",
-                    "config": "docs/architecture/diagram-publication/mermaid-config.json"
-                  },
-                  "diagrams": [{
-                    "id": "published-flow",
-                    "owner": "docs/design.md",
-                    "source": "docs/assets/published-flow.mmd",
-                    "sourceType": "MERMAID_FILE",
-                    "githubSvg": "docs/assets/published-flow.svg",
-                    "jiraPng": "docs/assets/published-flow.png",
-                    "jiraPngRequired": true,
-                    "remediation": "REGENERATE"
-                  }]
-                }
-                """);
-        write("docs/design.md", "![Published flow](assets/published-flow.svg)\n");
-        write("docs/assets/published-flow.mmd", "flowchart TB\nA --> B\n");
-        write("docs/assets/published-flow.svg", safeSvg());
-        write("docs/architecture/diagram-publication/mermaid-config.json", "{}\n");
-        writePng("docs/assets/published-flow.png", 2000, 600, 0xFFFFFFFF);
-
-        assertThat(DiagramPublicationValidator.findViolations(repository)).isEmpty();
-    }
-
-    @Test
-    void acceptsOpaqueBackgroundDeclaredByAClassRule() throws Exception {
-        writeInventory("""
-                {
-                  "schemaVersion": 1,
-                  "renderer": {
-                    "packageName": "@mermaid-js/mermaid-cli",
-                    "version": "11.16.0",
-                    "config": "docs/architecture/diagram-publication/mermaid-config.json"
-                  },
-                  "diagrams": [{
-                    "id": "hand-authored-flow",
-                    "owner": "docs/design.md",
-                    "source": "docs/assets/hand-authored-flow.svg",
-                    "sourceType": "HAND_AUTHORED_SVG",
-                    "githubSvg": "docs/assets/hand-authored-flow.svg",
-                    "jiraPng": null,
-                    "jiraPngRequired": false,
-                    "remediation": "PASS"
-                  }]
-                }
-                """);
-        write("docs/design.md",
-                "![Hand-authored flow](assets/hand-authored-flow.svg)\n");
-        write("docs/assets/hand-authored-flow.svg", """
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     viewBox="0 0 1200 800" role="img">
-                  <title>Hand-authored diagram</title>
-                  <desc>Fixture with an opaque class-backed background.</desc>
-                  <style>.canvas { fill: #F7F3EA; }</style>
-                  <rect class="canvas" width="1200" height="800"/>
-                </svg>
                 """);
         write("docs/architecture/diagram-publication/mermaid-config.json", "{}\n");
 
-        assertThat(DiagramPublicationValidator.findViolations(repository)).isEmpty();
+        assertThat(DiagramPublicationValidator.findViolations(repository))
+                .extracting(DiagramPublicationValidator.Violation::reason)
+                .contains("diagram id is duplicated",
+                        "canonical SVG is assigned to more than one diagram",
+                        "path escapes repository root");
     }
 
     @Test
-    void rejectsInventoryPathsThatEscapeTheRepository() throws Exception {
-        writeInventory("""
+    void enforcesCanonicalSourceTypeContracts() throws Exception {
+        writeCatalog("""
                 {
-                  "schemaVersion": 1,
-                  "renderer": {
-                    "packageName": "@mermaid-js/mermaid-cli",
-                    "version": "11.16.0",
-                    "config": "docs/architecture/diagram-publication/mermaid-config.json"
-                  },
+                  "schemaVersion": 2,
                   "diagrams": [{
-                    "id": "escaping-flow",
-                    "owner": "../outside.md",
-                    "source": "docs/assets/flow.mmd",
-                    "sourceType": "MERMAID_FILE",
-                    "githubSvg": "docs/assets/flow.svg",
-                    "jiraPng": null,
-                    "jiraPngRequired": false,
-                    "remediation": "REGENERATE"
+                    "id": "split-source",
+                    "sourceType": "CURATED_SVG",
+                    "source": "docs/assets/source.svg",
+                    "svg": "docs/assets/published.svg",
+                    "png": "docs/assets/flow.png",
+                    "primaryOwner": "docs/owner.md",
+                    "consumers": []
                   }]
                 }
                 """);
@@ -195,11 +164,105 @@ class DiagramPublicationValidatorTest {
 
         assertThat(DiagramPublicationValidator.findViolations(repository))
                 .extracting(DiagramPublicationValidator.Violation::reason)
-                .contains("path escapes repository root");
+                .contains("curated SVG source must equal the published SVG");
     }
 
-    private void writeInventory(String json) throws Exception {
-        write("docs/architecture/diagram-publication/inventory.json", json);
+    @Test
+    void requiresDirectionalConnectorsToDeclareTheirTarget() throws Exception {
+        writeValidPublication("""
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 1200 800" role="img">
+                  <title>Flow without a declared target</title>
+                  <desc>The arrow target cannot be verified.</desc>
+                  <defs>
+                    <marker id="arrow"><path d="M0 0 L10 5 L0 10 Z"/></marker>
+                    <style>.wire{marker-end:url(#arrow)}</style>
+                  </defs>
+                  <rect width="1200" height="800" fill="#FFFFFF"/>
+                  <rect id="target" x="300" y="300" width="600" height="200"/>
+                  <path class="wire" d="M600 100 V300"/>
+                </svg>
+                """);
+
+        assertThat(DiagramPublicationValidator.findViolations(repository))
+                .extracting(DiagramPublicationValidator.Violation::reason)
+                .contains("directional connector is missing data-target");
+    }
+
+    @Test
+    void rejectsDirectionalConnectorThatMissesItsDeclaredTarget() throws Exception {
+        writeValidPublication("""
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 1200 800" role="img">
+                  <title>Flow with a floating arrow</title>
+                  <desc>The arrow stops before reaching its declared target.</desc>
+                  <defs>
+                    <marker id="arrow"><path d="M0 0 L10 5 L0 10 Z"/></marker>
+                    <style>.wire{marker-end:url(#arrow)}</style>
+                  </defs>
+                  <rect width="1200" height="800" fill="#FFFFFF"/>
+                  <rect id="target" x="300" y="300" width="600" height="200"/>
+                  <path class="wire" data-target="target" d="M600 100 V250"/>
+                </svg>
+                """);
+
+        assertThat(DiagramPublicationValidator.findViolations(repository))
+                .extracting(DiagramPublicationValidator.Violation::reason)
+                .contains("directional connector does not end on its declared target");
+    }
+
+    @Test
+    void rejectsDirectionalConnectorThatRunsAlongItsTargetEdge() throws Exception {
+        writeValidPublication("""
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 1200 800" role="img">
+                  <title>Flow with a tangential arrow</title>
+                  <desc>The arrow runs along the target border.</desc>
+                  <defs>
+                    <marker id="arrow"><path d="M0 0 L10 5 L0 10 Z"/></marker>
+                    <style>.wire{marker-end:url(#arrow)}</style>
+                  </defs>
+                  <rect width="1200" height="800" fill="#FFFFFF"/>
+                  <rect id="target" x="300" y="300" width="600" height="200"/>
+                  <path class="wire" data-target="target" d="M100 300 H600"/>
+                </svg>
+                """);
+
+        assertThat(DiagramPublicationValidator.findViolations(repository))
+                .extracting(DiagramPublicationValidator.Violation::reason)
+                .contains("directional connector must enter its target perpendicularly");
+    }
+
+    private String singleEntry(String... consumers) {
+        String consumerJson = java.util.Arrays.stream(consumers)
+                .map(value -> "\"" + value + "\"")
+                .collect(java.util.stream.Collectors.joining(", "));
+        return """
+                {
+                  "schemaVersion": 2,
+                  "diagrams": [{
+                    "id": "flow",
+                    "sourceType": "CURATED_SVG",
+                    "source": "docs/assets/flow.svg",
+                    "svg": "docs/assets/flow.svg",
+                    "png": "docs/assets/flow.png",
+                    "primaryOwner": "docs/owner.md",
+                    "consumers": [%s]
+                  }]
+                }
+                """.formatted(consumerJson);
+    }
+
+    private void writeCatalog(String json) throws Exception {
+        write("docs/architecture/diagram-publication/diagram-publications.json", json);
+    }
+
+    private void writeValidPublication(String svg) throws Exception {
+        writeCatalog(singleEntry());
+        write("docs/owner.md", "![Flow](assets/flow.svg)\n");
+        write("docs/assets/flow.svg", svg);
+        write("docs/architecture/diagram-publication/mermaid-config.json", "{}\n");
+        writePng("docs/assets/flow.png", 2000, 600, 0xFFFFFFFF);
     }
 
     private void write(String relativePath, String content) throws Exception {
@@ -228,7 +291,7 @@ class DiagramPublicationValidatorTest {
                      viewBox="0 0 1200 800" role="img">
                   <title>Safe diagram</title>
                   <desc>Fixture with an explicit opaque background.</desc>
-                  <rect x="0" y="0" width="1200" height="800" fill="#FFFFFF"/>
+                  <rect width="1200" height="800" fill="#FFFFFF"/>
                   <text x="80" y="100">Safe label</text>
                 </svg>
                 """;

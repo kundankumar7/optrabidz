@@ -22,14 +22,23 @@ import org.w3c.dom.NodeList;
 
 final class DiagramPublicationValidator {
 
-    private static final Path INVENTORY = Path.of(
-            "docs", "architecture", "diagram-publication", "inventory.json");
+    private static final Path CATALOG = Path.of(
+            "docs", "architecture", "diagram-publication",
+            "diagram-publications.json");
+    private static final Path MERMAID_CONFIG = Path.of(
+            "docs", "architecture", "diagram-publication",
+            "mermaid-config.json");
     private static final int MINIMUM_PNG_WIDTH = 2000;
     private static final int MINIMUM_PNG_HEIGHT = 600;
     private static final Pattern MARKDOWN_IMAGE = Pattern.compile(
             "!\\[[^]]*]\\((?:<)?([^)>\\s]+)(?:>)?(?:\\s+[^)]*)?\\)");
     private static final Pattern HTML_IMAGE = Pattern.compile(
             "(?i)<img\\b[^>]*\\bsrc\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>");
+    private static final Pattern DIRECTIONAL_CLASS = Pattern.compile(
+            "(?is)\\.([a-z_][a-z0-9_-]*)\\s*\\{[^}]*?marker-end\\s*:");
+    private static final Pattern PATH_TOKEN = Pattern.compile(
+            "[A-Za-z]|[-+]?(?:\\d*\\.\\d+|\\d+\\.?)(?:[eE][-+]?\\d+)?");
+    private static final double SVG_EPSILON = 0.01;
 
     private DiagramPublicationValidator() {
     }
@@ -37,11 +46,11 @@ final class DiagramPublicationValidator {
     static List<Violation> findViolations(Path repositoryRoot) throws Exception {
         Path root = repositoryRoot.toAbsolutePath().normalize();
         List<Violation> violations = new ArrayList<>();
-        Path inventoryPath = root.resolve(INVENTORY).normalize();
+        Path inventoryPath = root.resolve(CATALOG).normalize();
 
         if (!Files.isRegularFile(inventoryPath)) {
-            return List.of(new Violation("inventory", normalize(INVENTORY),
-                    "diagram inventory does not exist"));
+            return List.of(new Violation("catalogue", normalize(CATALOG),
+                    "diagram publication catalogue does not exist"));
         }
 
         Inventory inventory;
@@ -49,20 +58,20 @@ final class DiagramPublicationValidator {
             inventory = new ObjectMapper().readValue(inventoryPath.toFile(),
                     Inventory.class);
         } catch (IOException exception) {
-            return List.of(new Violation("inventory", normalize(INVENTORY),
-                    "diagram inventory is invalid JSON"));
+            return List.of(new Violation("catalogue", normalize(CATALOG),
+                    "diagram publication catalogue is invalid JSON"));
         }
 
         validateInventoryHeader(root, inventory, violations);
         Set<String> ids = new HashSet<>();
-        Set<Path> githubAssets = new HashSet<>();
+        Set<Path> canonicalAssets = new HashSet<>();
 
         if (inventory.diagrams() == null) {
-            violations.add(new Violation("inventory", normalize(INVENTORY),
-                    "diagram inventory has no diagrams"));
+            violations.add(new Violation("catalogue", normalize(CATALOG),
+                    "diagram publication catalogue has no diagrams"));
         } else {
             for (DiagramEntry entry : inventory.diagrams()) {
-                validateEntry(root, entry, ids, githubAssets, violations);
+                validateEntry(root, entry, ids, canonicalAssets, violations);
             }
         }
 
@@ -77,61 +86,64 @@ final class DiagramPublicationValidator {
 
     private static void validateInventoryHeader(Path root, Inventory inventory,
             List<Violation> violations) {
-        if (inventory.schemaVersion() != 1) {
-            violations.add(new Violation("inventory", normalize(INVENTORY),
-                    "unsupported diagram inventory schema version"));
+        if (inventory.schemaVersion() != 2) {
+            violations.add(new Violation("catalogue", normalize(CATALOG),
+                    "unsupported diagram publication schema version"));
         }
-        if (inventory.renderer() == null) {
-            violations.add(new Violation("inventory", normalize(INVENTORY),
-                    "diagram renderer definition is missing"));
-            return;
-        }
-        Path config = resolve(root, inventory.renderer().config(), "inventory",
-                violations);
-        if (config != null && !Files.isRegularFile(config)) {
-            violations.add(new Violation("inventory", relative(root, config),
+        Path config = root.resolve(MERMAID_CONFIG).normalize();
+        if (!Files.isRegularFile(config)) {
+            violations.add(new Violation("catalogue", relative(root, config),
                     "renderer configuration does not exist"));
         }
     }
 
     private static void validateEntry(Path root, DiagramEntry entry,
-            Set<String> ids, Set<Path> githubAssets,
+            Set<String> ids, Set<Path> canonicalAssets,
             List<Violation> violations) {
         String id = entry.id() == null || entry.id().isBlank()
                 ? "unknown" : entry.id();
         if (!ids.add(id)) {
-            violations.add(new Violation(id, normalize(INVENTORY),
+            violations.add(new Violation(id, normalize(CATALOG),
                     "diagram id is duplicated"));
         }
 
-        Path owner = resolve(root, entry.owner(), id, violations);
+        Path owner = resolve(root, entry.primaryOwner(), id, violations);
         Path source = resolve(root, entry.source(), id, violations);
-        Path svg = resolve(root, entry.githubSvg(), id, violations);
-        Path png = entry.jiraPng() == null ? null
-                : resolve(root, entry.jiraPng(), id, violations);
+        Path svg = resolve(root, entry.svg(), id, violations);
+        Path png = resolve(root, entry.png(), id, violations);
+
+        validateSourceContract(root, id, entry, source, svg, violations);
 
         requireFile(root, id, owner, "owner document does not exist", violations);
         requireFile(root, id, source, "editable source does not exist", violations);
         requireFile(root, id, svg, "declared SVG does not exist", violations);
 
-        if (svg != null && !githubAssets.add(svg)) {
+        if (svg != null && !canonicalAssets.add(svg)) {
             violations.add(new Violation(id, relative(root, svg),
-                    "GitHub SVG is assigned to more than one diagram"));
+                    "canonical SVG is assigned to more than one diagram"));
         }
         if (owner != null && svg != null && Files.isRegularFile(owner)
                 && Files.isRegularFile(svg)) {
-            validateOwnerEmbed(root, id, owner, svg, violations);
+            validateDocumentEmbed(root, id, owner, svg,
+                    "primary owner does not embed the declared SVG", violations);
+        }
+        if (entry.consumers() != null && svg != null && Files.isRegularFile(svg)) {
+            for (String consumerPath : entry.consumers()) {
+                Path consumer = resolve(root, consumerPath, id, violations);
+                requireFile(root, id, consumer,
+                        "consumer document does not exist", violations);
+                if (consumer != null && Files.isRegularFile(consumer)) {
+                    validateDocumentEmbed(root, id, consumer, svg,
+                            "consumer does not embed the declared SVG", violations);
+                }
+            }
         }
         if (svg != null && Files.isRegularFile(svg)) {
             validateSvg(root, id, svg, violations);
         }
 
-        if (entry.jiraPngRequired() && png == null) {
-            violations.add(new Violation(id, normalize(INVENTORY),
-                    "required Jira PNG is not declared"));
-        }
         if (png != null) {
-            requireFile(root, id, png, "declared Jira PNG does not exist",
+            requireFile(root, id, png, "declared PNG does not exist",
                     violations);
             if (Files.isRegularFile(png)) {
                 validatePng(root, id, png, violations);
@@ -139,8 +151,33 @@ final class DiagramPublicationValidator {
         }
     }
 
-    private static void validateOwnerEmbed(Path root, String id, Path owner,
-            Path svg, List<Violation> violations) {
+    private static void validateSourceContract(Path root, String id,
+            DiagramEntry entry, Path source, Path svg,
+            List<Violation> violations) {
+        SourceType sourceType;
+        try {
+            sourceType = SourceType.valueOf(entry.sourceType());
+        } catch (RuntimeException exception) {
+            violations.add(new Violation(id, normalize(CATALOG),
+                    "diagram source type is unsupported"));
+            return;
+        }
+
+        if (sourceType == SourceType.CURATED_SVG && source != null && svg != null
+                && !source.equals(svg)) {
+            violations.add(new Violation(id, relative(root, source),
+                    "curated SVG source must equal the published SVG"));
+        }
+        if (sourceType == SourceType.MERMAID_FILE && source != null
+                && !source.getFileName().toString().toLowerCase(Locale.ROOT)
+                        .endsWith(".mmd")) {
+            violations.add(new Violation(id, relative(root, source),
+                    "Mermaid source must use the .mmd extension"));
+        }
+    }
+
+    private static void validateDocumentEmbed(Path root, String id, Path owner,
+            Path svg, String reason, List<Violation> violations) {
         try {
             String markdown = Files.readString(owner);
             List<String> targets = new ArrayList<>();
@@ -152,8 +189,7 @@ final class DiagramPublicationValidator {
                     .map(target -> owner.getParent().resolve(target).normalize())
                     .anyMatch(svg::equals);
             if (!embedded) {
-                violations.add(new Violation(id, relative(root, owner),
-                        "owner document does not embed the declared SVG"));
+                violations.add(new Violation(id, relative(root, owner), reason));
             }
         } catch (IOException exception) {
             violations.add(new Violation(id, relative(root, owner),
@@ -205,10 +241,170 @@ final class DiagramPublicationValidator {
                 violations.add(new Violation(id, relative(root, svg),
                         "SVG contains forbidden external reference"));
             }
+            validateDirectionalConnectors(root, id, svg, document, violations);
         } catch (Exception exception) {
             violations.add(new Violation(id, relative(root, svg),
                     "SVG is not valid secure XML"));
         }
+    }
+
+    private static void validateDirectionalConnectors(Path root, String id,
+            Path svg, Document document, List<Violation> violations) {
+        Set<String> directionalClasses = directionalClasses(document);
+        NodeList paths = document.getElementsByTagName("path");
+        for (int index = 0; index < paths.getLength(); index++) {
+            Element path = (Element) paths.item(index);
+            if (!isDirectional(path, directionalClasses)) {
+                continue;
+            }
+
+            String targetId = path.getAttribute("data-target").trim();
+            if (targetId.isBlank()) {
+                violations.add(new Violation(id, relative(root, svg),
+                        "directional connector is missing data-target"));
+                continue;
+            }
+
+            Element target = findElementById(document, targetId);
+            if (target == null || !"rect".equals(target.getLocalName())) {
+                violations.add(new Violation(id, relative(root, svg),
+                        "directional connector data-target must reference a rectangle"));
+                continue;
+            }
+
+            Segment finalSegment = finalOrthogonalSegment(path.getAttribute("d"));
+            if (finalSegment == null) {
+                violations.add(new Violation(id, relative(root, svg),
+                        "directional connector must use an orthogonal path"));
+                continue;
+            }
+
+            Rectangle rectangle = rectangle(target);
+            if (!rectangle.containsOnBoundary(finalSegment.end())) {
+                violations.add(new Violation(id, relative(root, svg),
+                        "directional connector does not end on its declared target"));
+            } else if (!rectangle.isPerpendicularEntry(finalSegment)) {
+                violations.add(new Violation(id, relative(root, svg),
+                        "directional connector must enter its target perpendicularly"));
+            }
+        }
+    }
+
+    private static Set<String> directionalClasses(Document document) {
+        Set<String> classes = new HashSet<>();
+        NodeList styles = document.getElementsByTagName("style");
+        for (int index = 0; index < styles.getLength(); index++) {
+            Matcher matcher = DIRECTIONAL_CLASS.matcher(
+                    styles.item(index).getTextContent());
+            while (matcher.find()) {
+                classes.add(matcher.group(1));
+            }
+        }
+        return classes;
+    }
+
+    private static boolean isDirectional(Element path,
+            Set<String> directionalClasses) {
+        String markerEnd = path.getAttribute("marker-end").trim();
+        if (!markerEnd.isBlank() && !"none".equalsIgnoreCase(markerEnd)) {
+            return true;
+        }
+        for (String className : path.getAttribute("class").trim().split("\\s+")) {
+            if (directionalClasses.contains(className)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static Element findElementById(Document document, String id) {
+        NodeList elements = document.getElementsByTagName("*");
+        for (int index = 0; index < elements.getLength(); index++) {
+            Element element = (Element) elements.item(index);
+            if (id.equals(element.getAttribute("id"))) {
+                return element;
+            }
+        }
+        return null;
+    }
+
+    private static Rectangle rectangle(Element element) {
+        return new Rectangle(
+                number(element, "x"), number(element, "y"),
+                number(element, "width"), number(element, "height"));
+    }
+
+    private static double number(Element element, String attribute) {
+        String value = element.getAttribute(attribute).trim();
+        return value.isBlank() ? 0 : Double.parseDouble(value);
+    }
+
+    private static Segment finalOrthogonalSegment(String pathData) {
+        List<String> tokens = PATH_TOKEN.matcher(pathData).results()
+                .map(result -> result.group())
+                .toList();
+        Point current = new Point(0, 0);
+        Point previous = null;
+        char command = 0;
+        int index = 0;
+
+        while (index < tokens.size()) {
+            String token = tokens.get(index);
+            if (Character.isLetter(token.charAt(0))) {
+                command = token.charAt(0);
+                index++;
+                if (command == 'Z' || command == 'z') {
+                    return null;
+                }
+                continue;
+            }
+
+            Point next;
+            switch (command) {
+                case 'M', 'L' -> {
+                    if (index + 1 >= tokens.size()) {
+                        return null;
+                    }
+                    next = new Point(Double.parseDouble(tokens.get(index)),
+                            Double.parseDouble(tokens.get(index + 1)));
+                    index += 2;
+                }
+                case 'm', 'l' -> {
+                    if (index + 1 >= tokens.size()) {
+                        return null;
+                    }
+                    next = new Point(current.x()
+                            + Double.parseDouble(tokens.get(index)), current.y()
+                            + Double.parseDouble(tokens.get(index + 1)));
+                    index += 2;
+                }
+                case 'H' -> {
+                    next = new Point(Double.parseDouble(token), current.y());
+                    index++;
+                }
+                case 'h' -> {
+                    next = new Point(current.x() + Double.parseDouble(token),
+                            current.y());
+                    index++;
+                }
+                case 'V' -> {
+                    next = new Point(current.x(), Double.parseDouble(token));
+                    index++;
+                }
+                case 'v' -> {
+                    next = new Point(current.x(),
+                            current.y() + Double.parseDouble(token));
+                    index++;
+                }
+                default -> {
+                    return null;
+                }
+            }
+            previous = current;
+            current = next;
+        }
+
+        return previous == null ? null : new Segment(previous, current);
     }
 
     private static DocumentBuilderFactory secureDocumentBuilderFactory()
@@ -350,7 +546,7 @@ final class DiagramPublicationValidator {
             BufferedImage image = ImageIO.read(png.toFile());
             if (image == null) {
                 violations.add(new Violation(id, relative(root, png),
-                        "declared Jira PNG is not a readable PNG"));
+                        "declared PNG is not a readable PNG"));
                 return;
             }
             if (image.getWidth() < MINIMUM_PNG_WIDTH) {
@@ -367,7 +563,7 @@ final class DiagramPublicationValidator {
             }
         } catch (IOException exception) {
             violations.add(new Violation(id, relative(root, png),
-                    "declared Jira PNG could not be read"));
+                    "declared PNG could not be read"));
         }
     }
 
@@ -417,8 +613,8 @@ final class DiagramPublicationValidator {
     private static Path resolve(Path root, String rawPath, String id,
             List<Violation> violations) {
         if (rawPath == null || rawPath.isBlank()) {
-            violations.add(new Violation(id, normalize(INVENTORY),
-                    "required inventory path is missing"));
+            violations.add(new Violation(id, normalize(CATALOG),
+                    "required catalogue path is missing"));
             return null;
         }
         Path resolved = root.resolve(rawPath).normalize();
@@ -457,18 +653,59 @@ final class DiagramPublicationValidator {
         return path.toString().replace('\\', '/');
     }
 
-    record Inventory(int schemaVersion, Renderer renderer,
-                     List<DiagramEntry> diagrams) {
+    record Inventory(int schemaVersion, List<DiagramEntry> diagrams) {
     }
 
-    record Renderer(String packageName, String version, String config) {
+    enum SourceType {
+        MERMAID_FILE,
+        CURATED_SVG
     }
 
-    record DiagramEntry(String id, String owner, String source,
-                        String sourceType, String githubSvg, String jiraPng,
-                        boolean jiraPngRequired, String remediation) {
+    record DiagramEntry(String id, String sourceType, String source,
+                        String svg, String png, String primaryOwner,
+                        List<String> consumers) {
     }
 
     record Violation(String diagramId, String path, String reason) {
+    }
+
+    private record Point(double x, double y) {
+    }
+
+    private record Segment(Point start, Point end) {
+    }
+
+    private record Rectangle(double x, double y, double width, double height) {
+
+        boolean containsOnBoundary(Point point) {
+            boolean onHorizontal = between(point.x(), x, x + width)
+                    && (same(point.y(), y) || same(point.y(), y + height));
+            boolean onVertical = between(point.y(), y, y + height)
+                    && (same(point.x(), x) || same(point.x(), x + width));
+            return onHorizontal || onVertical;
+        }
+
+        boolean isPerpendicularEntry(Segment segment) {
+            Point end = segment.end();
+            boolean verticalSegment = same(segment.start().x(), end.x())
+                    && !same(segment.start().y(), end.y());
+            boolean horizontalSegment = same(segment.start().y(), end.y())
+                    && !same(segment.start().x(), end.x());
+            boolean horizontalEdge = same(end.y(), y)
+                    || same(end.y(), y + height);
+            boolean verticalEdge = same(end.x(), x)
+                    || same(end.x(), x + width);
+            return (horizontalEdge && verticalSegment)
+                    || (verticalEdge && horizontalSegment);
+        }
+
+        private static boolean between(double value, double start, double end) {
+            return value >= start - SVG_EPSILON
+                    && value <= end + SVG_EPSILON;
+        }
+
+        private static boolean same(double left, double right) {
+            return Math.abs(left - right) <= SVG_EPSILON;
+        }
     }
 }

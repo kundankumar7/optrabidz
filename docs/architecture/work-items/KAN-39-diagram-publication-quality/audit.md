@@ -1,52 +1,246 @@
-# KAN-39 Diagram Publication Audit
+# KAN-39 Documentation Audit
 
-This record covers all 31 entries in the diagram publication inventory. The
-initial defect and remediation class explain why each entry was retained or
-changed. Desktop, mobile, contrast, and Jira columns record human review of the
-final assets; automated checks validate their structure and source pairing.
+This delivery record classifies every historical Markdown file before the
+stable documentation hierarchy is built. Jira, pull requests, commits, and Git
+retain delivery history; the repository will retain only current guidance.
 
-| Diagram ID | Initial defect | Class | Final SVG / PNG | Desktop | Mobile | Contrast | Jira | Disposition |
-|---|---|---|---|---|---|---|---|---|
-| `architecture-overview` | Accepted scalable SVG; no standard Jira export | Pass | [SVG](../../assets/optrabidz-architecture-overview.svg) · [PNG](../../assets/optrabidz-architecture-overview.png) | Pass | Pass | Pass | Pass | SVG retained; opaque 2400 px PNG added |
-| `database-account-access-security` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/account-access-security-er.svg) · [PNG](../../../database/assets/account-access-security-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-participant-profile` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/participant-profile-er.svg) · [PNG](../../../database/assets/participant-profile-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-marketplace-listing-bidding` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/marketplace-listing-bidding-er.svg) · [PNG](../../../database/assets/marketplace-listing-bidding-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-agreement-acceptance-terms` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/agreement-acceptance-terms-er.svg) · [PNG](../../../database/assets/agreement-acceptance-terms-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-settlement-context` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/settlement-context-er.svg) · [PNG](../../../database/assets/settlement-context-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-repayment-schedule` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/repayment-schedule-er.svg) · [PNG](../../../database/assets/repayment-schedule-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-payment-intent` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/payment-intent-er.svg) · [PNG](../../../database/assets/payment-intent-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-payment-attempt-provider` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/payment-attempt-provider-er.svg) · [PNG](../../../database/assets/payment-attempt-provider-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-payment-webhook` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/payment-webhook-er.svg) · [PNG](../../../database/assets/payment-webhook-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-notification-delivery-subscription` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/notification-delivery-subscription-er.svg) · [PNG](../../../database/assets/notification-delivery-subscription-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `database-outbox-audit-correlation` | Accepted scalable ER SVG; no standard Jira export | Pass | [SVG](../../../database/assets/outbox-audit-correlation-er.svg) · [PNG](../../../database/assets/outbox-audit-correlation-er.png) | Pass | Pass | Pass | Pass | SVG retained; PNG added |
-| `kan-24-module-architecture` | 552×1228 low-resolution raster embedded on GitHub | Regenerate | [SVG](../../../error-handling/work-items/KAN-24-module-migration/assets/architecture.svg) · [PNG](../../../error-handling/work-items/KAN-24-module-migration/assets/architecture.png) | Pass | Pass | Pass | Pass | Concise scalable module view published |
-| `kan-24-login-flow` | 1506×884 raster-only publication | Regenerate | [SVG](../../../error-handling/work-items/KAN-24-module-migration/assets/login-flow.svg) · [PNG](../../../error-handling/work-items/KAN-24-module-migration/assets/login-flow.png) | Pass | Pass | Pass | Pass | Protected-cause summary published |
-| `kan-29-notification-error-flow` | 1302×1178 raster-only publication | Regenerate | [SVG](../../../error-handling/work-items/KAN-29-notification-error-migration/assets/error-flow.svg) · [PNG](../../../error-handling/work-items/KAN-29-notification-error-migration/assets/error-flow.png) | Pass | Pass | Pass | Pass | Narrow outcome tree published |
-| `kan-30-financial-request-error-flow` | Combined 1584×2118 flow mixed API and provider ingress | Split | [SVG](../../../error-handling/work-items/KAN-30-financial-error-migration/assets/financial-request-error-flow.svg) · [PNG](../../../error-handling/work-items/KAN-30-financial-error-migration/assets/financial-request-error-flow.png) | Pass | Pass | Pass | Pass | Focused API request flow published |
-| `kan-30-financial-webhook-error-flow` | Combined 1584×2118 flow mixed API and provider ingress | Split | [SVG](../../../error-handling/work-items/KAN-30-financial-error-migration/assets/financial-webhook-error-flow.svg) · [PNG](../../../error-handling/work-items/KAN-30-financial-error-migration/assets/financial-webhook-error-flow.png) | Pass | Pass | Pass | Pass | Focused provider webhook flow published |
-| `kan-31-authentication-flow` | 1729×478 layout shrank trust boundaries on mobile | Redesign | [SVG](../../../error-handling/work-items/KAN-31-financial-security-boundary/assets/authentication-flow.svg) · [PNG](../../../error-handling/work-items/KAN-31-financial-security-boundary/assets/authentication-flow.png) | Pass | Pass | Pass | Pass | Independent trust boundaries stacked |
-| `kan-32-webhook-replay-ingress` | Combined 2446×4194 transparent replay canvas | Split | [SVG](../../../error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-ingress.svg) · [PNG](../../../error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-ingress.png) | Pass | Pass | Pass | Pass | Ingress and atomic claim isolated |
-| `kan-32-webhook-replay-outcomes` | Combined 2446×4194 transparent replay canvas | Split | [SVG](../../../error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-outcomes.svg) · [PNG](../../../error-handling/work-items/KAN-32-webhook-replay-protection/assets/webhook-replay-outcomes.png) | Pass | Pass | Pass | Pass | Transaction and replay outcomes isolated |
-| `kan-33-single-error-contract` | 2532×3164 output used per-diagram rendering | Regenerate | [SVG](../../../error-handling/work-items/KAN-33-legacy-exception-removal/assets/single-error-contract.svg) · [PNG](../../../error-handling/work-items/KAN-33-legacy-exception-removal/assets/single-error-contract.png) | Pass | Pass | Pass | Pass | Shared rendering applied; topology retained |
-| `kan-33-legacy-deletion-boundary` | 1898×1906 output used per-diagram rendering | Regenerate | [SVG](../../../error-handling/work-items/KAN-33-legacy-exception-removal/assets/legacy-deletion-boundary.svg) · [PNG](../../../error-handling/work-items/KAN-33-legacy-exception-removal/assets/legacy-deletion-boundary.png) | Pass | Pass | Pass | Pass | Shared rendering applied; topology retained |
-| `kan-34-repayment-error-boundary` | Accepted layout used duplicated renderer configuration | Regenerate | [SVG](../../../error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-error-boundary.svg) · [PNG](../../../error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-error-boundary.png) | Pass | Pass | Pass | Pass | Accepted layout retained |
-| `kan-34-repayment-transition-state` | Accepted layout used duplicated renderer configuration | Regenerate | [SVG](../../../error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-transition-state.svg) · [PNG](../../../error-handling/work-items/KAN-34-repayment-error-migration/assets/repayment-transition-state.png) | Pass | Pass | Pass | Pass | Accepted layout retained |
-| `kan-35-payment-error-boundary` | 868×1576 transparent PNG and dense lookup fan-out | Redesign | [SVG](../../../error-handling/work-items/KAN-35-payment-error-migration/assets/payment-error-boundary.svg) · [PNG](../../../error-handling/work-items/KAN-35-payment-error-migration/assets/payment-error-boundary.png) | Pass | Pass | Pass | Pass | Scoped lookup and rendering stages separated |
-| `kan-35-payment-state-errors` | 1784×1199 transparent flow mixed creation and completion | Redesign | [SVG](../../../error-handling/work-items/KAN-35-payment-error-migration/assets/payment-state-errors.svg) · [PNG](../../../error-handling/work-items/KAN-35-payment-error-migration/assets/payment-state-errors.png) | Pass | Pass | Pass | Pass | Creation and completion outcomes separated |
-| `kan-36-webhook-ingress-flow` | 1584×898 raster-only flow with wide internal rows | Regenerate | [SVG](../../../error-handling/work-items/KAN-36-secure-webhook-ingress/assets/webhook-ingress-flow.svg) · [PNG](../../../error-handling/work-items/KAN-36-secure-webhook-ingress/assets/webhook-ingress-flow.png) | Pass | Pass | Pass | Pass | Failure outcomes ordered vertically |
-| `kan-37-settlement-error-boundary` | 1283×1912 transparent flow with dense role fan-out | Redesign | [SVG](../../../error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-error-boundary.svg) · [PNG](../../../error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-error-boundary.png) | Pass | Pass | Pass | Pass | Role-first disclosure-safe stages published |
-| `kan-37-settlement-confirmation-state` | 986×1044 flow had overlapping labels and effects | Redesign | [SVG](../../../error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-confirmation-state.svg) · [PNG](../../../error-handling/work-items/KAN-37-settlement-error-migration/assets/settlement-confirmation-state.png) | Pass | Pass | Pass | Pass | Classification and effects separated |
-| `kan-42-real-http-boundary` | Output used per-diagram rendering | Regenerate | [SVG](../../../error-handling/work-items/KAN-42-real-http-smoke/assets/real-http-boundary.svg) · [PNG](../../../error-handling/work-items/KAN-42-real-http-smoke/assets/real-http-boundary.png) | Pass | Pass | Pass | Pass | Shared rendering applied; topology retained |
-| `kan-43-error-contract-publication` | 3568×626 publication flow was unreadable at page width | Redesign | [SVG](../../../error-handling/work-items/KAN-43-openapi-error-catalogue/assets/error-contract-publication.svg) · [PNG](../../../error-handling/work-items/KAN-43-openapi-error-catalogue/assets/error-contract-publication.png) | Pass | Pass | Pass | Pass | Five-stage top-to-bottom flow published |
+## Content disposition
 
-## Verification notes
+| File | Disposition | Stable target | Reusable facts | Asset disposition |
+|---|---|---|---|---|
+| `architecture/work-items/KAN-25-documentation-information-architecture/design.md` | `DISTILL_REMOVE` | `docs/README.md` | Task-oriented navigation | Remove after distillation |
+| `architecture/work-items/KAN-25-documentation-information-architecture/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `architecture/work-items/KAN-39-diagram-publication-quality/audit.md` | `ACTIVE_RECORD` | none | Verification evidence | Retain through delivery |
+| `architecture/work-items/KAN-39-diagram-publication-quality/design.md` | `ACTIVE_RECORD` | none | Approved KAN-39 scope | Retain through delivery |
+| `architecture/work-items/KAN-39-diagram-publication-quality/implementation-plan.md` | `ACTIVE_RECORD` | none | Approved execution plan | Retain through delivery |
+| `database/work-items/KAN-12-migration-policy/design.md` | `DISTILL_REMOVE` | `docs/database/migrations.md` | Flyway ownership and migration policy | Remove after distillation |
+| `database/work-items/KAN-12-migration-policy/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `database/work-items/KAN-14-database-foundation-release/design.md` | `DISTILL_REMOVE` | `docs/database/README.md` | Database release boundary | Remove after distillation |
+| `database/work-items/KAN-14-database-foundation-release/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-17-foundation/design.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | Error-system separation | Remove after distillation |
+| `error-handling/work-items/KAN-20-neutral-contract/implementation-plan.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | Transport-neutral error contract | Remove |
+| `error-handling/work-items/KAN-21-rest-adapter/implementation-plan.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | REST mapping responsibility | Remove |
+| `error-handling/work-items/KAN-22-mvc-adapter/implementation-plan.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | MVC boundary responsibility | Remove |
+| `error-handling/work-items/KAN-23-security-adapter/implementation-plan.md` | `DISTILL_REMOVE` | `docs/security/README.md` | Security error adapter boundary | Remove |
+| `error-handling/work-items/KAN-24-module-migration/design.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | Module-owned error definitions | Remove all assets |
+| `error-handling/work-items/KAN-24-module-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-26-classification-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Classification public codes | Remove all assets |
+| `error-handling/work-items/KAN-26-classification-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-27-governance-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Governance public codes | Remove all assets |
+| `error-handling/work-items/KAN-27-governance-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-28-marketplace-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Marketplace public codes | Remove all assets |
+| `error-handling/work-items/KAN-28-marketplace-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-29-notification-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Notification public codes | Remove all assets |
+| `error-handling/work-items/KAN-29-notification-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-30-financial-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Financial public codes and disclosure rule | Remove all assets |
+| `error-handling/work-items/KAN-30-financial-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-31-financial-security-boundary/design.md` | `DISTILL_REMOVE` | `docs/security/README.md` | Authentication resolves at the security boundary | Remove all assets |
+| `error-handling/work-items/KAN-31-financial-security-boundary/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-32-webhook-replay-protection/design.md` | `DISTILL_REMOVE` | `docs/security/README.md` | Webhook verification and replay protection | Remove all assets |
+| `error-handling/work-items/KAN-32-webhook-replay-protection/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-33-legacy-exception-removal/design.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | Single public error contract | Remove all assets |
+| `error-handling/work-items/KAN-33-legacy-exception-removal/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-34-repayment-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Repayment public codes | Remove all assets |
+| `error-handling/work-items/KAN-34-repayment-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-35-payment-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Payment public codes | Remove all assets |
+| `error-handling/work-items/KAN-35-payment-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-36-secure-webhook-ingress/design.md` | `DISTILL_REMOVE` | `docs/security/README.md` | Signed webhook ingress | Remove all assets |
+| `error-handling/work-items/KAN-36-secure-webhook-ingress/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-37-settlement-error-migration/design.md` | `DISTILL_REMOVE` | `docs/api/error-catalogue.md` | Settlement public codes | Remove all assets |
+| `error-handling/work-items/KAN-37-settlement-error-migration/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-42-real-http-smoke/design.md` | `DISTILL_REMOVE` | `docs/api/errors.md` | Real-port error contract verification | Remove all assets |
+| `error-handling/work-items/KAN-42-real-http-smoke/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
+| `error-handling/work-items/KAN-43-openapi-error-catalogue/design.md` | `MIGRATE_DIAGRAM` | `docs/api/errors.md` | Error contract publication flow | Move and rename diagram |
+| `error-handling/work-items/KAN-43-openapi-error-catalogue/implementation-plan.md` | `DISTILL_REMOVE` | none | none | Remove |
 
-- Inventory coverage: 31 of 31 entries (12 Pass, 9 Regenerate, 6 Redesign,
-  and 4 Split).
-- Mobile review used a 358-pixel content width inside a 390-pixel viewport.
-- Every Jira companion was reviewed as an opaque 2400-pixel-wide PNG.
-- Representative narrow, wide, and dense layouts were reviewed directly;
-  automated checks do not substitute for the visual result above.
-- The first render exposed lost spaces between Mermaid SVG `tspan` elements.
-  The shared publisher now preserves inherited XML whitespace before PNG
-  rasterization.
+## Disposition totals
+
+- `ACTIVE_RECORD`: 3 Markdown files
+- `MIGRATE_DIAGRAM`: 1 Markdown owner and its diagram set
+- `DISTILL_REMOVE`: 40 Markdown files
+- Unclassified Markdown files: 0
+
+## Current implementation truth baseline
+
+This baseline compares stable guidance with repository sources before delivery
+history is removed. `PARTIAL` means the implemented boundary exists but the
+named production capability or documentation coverage is incomplete.
+
+| Topic | Classification | Authoritative repository evidence | Documentation result |
+|---|---|---|---|
+| Build and runtime | `IMPLEMENTED` | `pom.xml`; `.github/workflows/backend-ci.yml` | Java 21, Spring Boot 3.3.2, Maven unit tests, and PostgreSQL integration tests verified |
+| Modular structure | `PARTIAL` | `src/main/java/com/project/optrabidz/`; `src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java` | Capability packages verified; `documentation` adapter added to map; repository-wide dependency enforcement is not claimed |
+| Runtime profiles | `IMPLEMENTED` | `src/main/resources/application.properties`; `application-dev.properties`; `application-prod.properties` | Development admin bootstrap and financial adapters distinguished from baseline notification channels; production datasource requirements retained |
+| Configuration secret hygiene | `PARTIAL` | `application-dev.properties`; `application-prod.properties`; provider configuration tests | Production requires environment-supplied datasource values and local financial adapters remain disabled; disposable development bootstrap and webhook fallbacks are still checked in and require the planned configuration-hardening story |
+| HTTP and OpenAPI boundary | `IMPLEMENTED` | module `api/*Controller.java`; `documentation/openapi/`; `documentation/security/` | `/api/v1` routes verified; configured Swagger entry corrected to `/swagger-ui.html`; documentation remains fail-closed outside an enabled profile |
+| Success and error contracts | `IMPLEMENTED` | `common/api/response/`; `common/api/error/`; `common/error/`; module `application/error/` catalogues | Success envelope and RFC 9457 responsibilities verified; generated catalogue parity remains enforced |
+| Session security | `IMPLEMENTED` | `security/infrastructure/config/SecurityConfig.java`; session filters; security HTTP tests | Server-side session, CSRF, matched route rules, security Problem Details, and current public listing reads documented |
+| JWT and OAuth2 | `PLANNED` | No corresponding dependency or production implementation | Described only as possible future adapters |
+| Flyway schema ownership | `IMPLEMENTED` | `db/migration/V1__baseline.sql`; database migration integration tests; JPA configuration | Flyway ownership and Hibernate validation verified |
+| ER diagram coverage | `IMPLEMENTED` | 35 Flyway-migrated PostgreSQL tables compared with the relational journey and focused database views; `DatabaseDocumentationContractIT` | Eleven focused relational views use the approved KAN-34 visual language; `login_attempt` is shown as a standalone immutable security log without an invented foreign key |
+| Outbox and audit | `IMPLEMENTED` | `common/event/`; `common/outbox/`; `audit/`; outbox and audit tests | Atomic outbox write, `SKIP LOCKED` dispatch, retry, audit persistence, request correlation, and masking verified |
+| Notifications | `PARTIAL` | `notification/`; dispatcher and API tests | In-app persistence, subscriptions, delivery attempts, retry, sandbox email, and sandbox push exist; no external provider or broker is claimed |
+| Payments and webhooks | `PARTIAL` | `financial/`; financial and webhook integration tests | Local/sandbox strategies, HMAC-style verification, bounded ingress, and database replay claims exist; no real-money provider is claimed |
+| Logging and observability | `PARTIAL` | `common/observability/`; security and audit tests | Request/security MDC and sensitive-data masking exist; centralized aggregation, metrics dashboards, and alerting are not implemented |
+| AOP cross-cutting adapters | `PLANNED` | Spring AOP dependency in `pom.xml`; no production `@Aspect` implementation | Stable guidance does not claim AOP-based logging, audit, security, or transaction policy |
+| Redis caching | `PLANNED` | No Redis dependency or production implementation | Not described as current architecture |
+| Verification | `IMPLEMENTED` | Surefire/Failsafe configuration; Testcontainers support; CI workflow; MockMvc and real-port HTTP tests | Unit, PostgreSQL integration, MVC boundary, real-port smoke, documentation, and architecture checks verified as distinct layers |
+
+### Corrections found by the baseline
+
+- Use `/swagger-ui.html`, which is the configured development entry point.
+- Include the `documentation` adapter package in the architecture capability
+  map without treating it as a business-domain module.
+- State that general module dependency enforcement remains incomplete.
+- Distinguish development admin and payment configuration from notification
+  channel defaults.
+- Describe checked-in development credentials and webhook fallbacks as a
+  current hardening gap rather than claiming all secret-like values are absent
+  from source.
+- Add `login_attempt` when the surviving ER set is remediated. Resolved in Task 5 with automated Flyway-to-ER coverage.
+- Keep Kafka, Redis, JWT, OAuth2, external notification providers, AOP policy,
+  centralized observability, and real-money processing out of current-state
+  claims.
+
+### Module ownership catalogue
+
+`docs/architecture/module-catalog.json` records only intentional module,
+capability, and owner-page assignments. Generated source, test, surface, and
+dependency counts are no longer committed. `ArchitectureModuleCatalogTest`
+derives the current top-level modules and import edges directly from production
+source and verifies the human dependency guide.
+
+The current dependency guide still discloses reverse `common` coupling, the
+documentation adapter's broad catalogue composition, and the financial
+module's cross-capability dependencies instead of presenting an idealized
+architecture.
+
+## Architecture figure disposition
+
+| Reader question | Current evidence | Status | Owner | Decision |
+|---|---|---|---|---|
+| Who calls the system and where are its trust boundaries? | Spring MVC/security configuration, webhook adapters, PostgreSQL configuration | `IMPLEMENTED` | `architecture/system-context.md` | `REDESIGN` as a focused system-context view |
+| What runs inside one application instance? | `OptrabidzApplication`, Spring configuration, scheduled workers | `IMPLEMENTED` | `architecture/runtime.md` | `KEEP` as a dedicated runtime view |
+| Which module owns each capability? | `module-catalog.json`, eleven production packages | `IMPLEMENTED` | `architecture/modules/README.md` | `KEEP` as one complete module map |
+| Which source dependencies cross modules? | Production Java imports verified by `ArchitectureModuleCatalogTest` | `PARTIAL` | `architecture/module-dependencies.md` | `KEEP`; show current reverse coupling rather than an ideal graph |
+| Where do authentication and business authorization occur? | Security filters/configuration, identity and participant ports, boundary tests | `IMPLEMENTED` | `architecture/capabilities/identity-access.md` | `KEEP`; label JWT and OAuth2 as planned only |
+| How does a listing become an agreement? | Classification, marketplace, governance services and lifecycle tests | `IMPLEMENTED` | `architecture/capabilities/marketplace.md` | `KEEP` as a guarded lifecycle |
+| How do obligations reach provider callbacks? | Financial services, adapters, webhook and replay tests | `PARTIAL` | `architecture/capabilities/finance-payments.md` | `KEEP`; label real-money processing as absent |
+| How does a user request cross the security boundary? | Route policy, session/CSRF filters, controllers, application authorization | `IMPLEMENTED` | `architecture/flows/request-security.md` | `KEEP` as a responsibility sequence |
+| How are audit and notification effects delivered? | Transactional outbox, dispatchers, processors, retry tests | `PARTIAL` | `architecture/flows/event-delivery.md` | `KEEP`; no Kafka or external provider claim |
+| How are public errors disclosed? | Existing API Problem Details figure and catalogue tests | `IMPLEMENTED` | `api/errors.md` | `REUSE` in the architecture error flow |
+| Does platform support need a separate generic diagram? | Same outbox/delivery evidence as the event flow | `IMPLEMENTED` | `architecture/capabilities/platform-support.md` | `REUSE` event-delivery; reject a duplicate drawing |
+
+## Stable diagram review
+
+Every entry was rendered from its declared canonical source. Desktop and phone
+previews use 980- and 390-pixel widths. The eleven database views were
+redesigned as focused relational maps rather than republishing the previous ER
+artwork. Their new descriptive asset paths also prevent GitHub Mobile from
+reusing a stale cached image. Dense phone previews preserve the relationship
+map; field detail remains lossless through the linked SVG.
+
+A post-approval review found directional connectors that stopped in whitespace
+or entered along a target border. The affected architecture SVGs were repaired,
+and the publication validator now enforces declared targets, boundary contact,
+and perpendicular entry. The regenerated assets passed the reopened review.
+
+| Diagram | Repository truth reviewed | Desktop | Phone | Dark surround | Jira PNG |
+|---|---|---|---|---|---|
+| System context | Callers, user HTTP boundary, signed webhook boundary, modular monolith, PostgreSQL, and external adapters | Pass | Inline readable | Pass | 2400×3200 generated; arrow repair approved |
+| Runtime topology | One JVM, adapter layers, scheduled responsibilities, and PostgreSQL | Pass | Inline readable | Pass | 2400×3267 generated; arrow repair approved |
+| Module ownership map | All eleven modules grouped into four reader capabilities | Pass | Inline readable | Pass | 2400×3267 generated; reviewer approved |
+| Current module dependencies | All source-derived direct imports, including reverse `common` coupling | Pass | Inline readable | Pass | 2400×2880 generated; reviewer approved |
+| Identity and access | Security adapter, authenticated actor, identity/participation facts, and service authorization | Pass | Inline readable | Pass | 2400×3133 generated; arrow repair approved |
+| Marketplace lifecycle | Classification and governance guards through listing, discovery, bid, and agreement | Pass | Inline readable | Pass | 2400×3133 generated; arrow repair approved |
+| Finance and payments | Agreement obligations, intents, attempts, signed callbacks, and replay protection | Pass | Inline readable | Pass | 2400×3267 generated; arrow repair approved |
+| Request and security | Route policy, server-side session/CSRF, controller adaptation, service rules, and rejection | Pass | Inline readable | Pass | 2400×3467 generated; arrow repair approved |
+| Event delivery | Atomic outbox write, claim, audit/notification processors, and retryable delivery | Pass | Inline readable | Pass | 2400×3533 generated; reviewer approved |
+| Account access and security | V1 account, role, credential, session, admin, and standalone `login_attempt` | Pass | Relationship map + SVG detail | Pass | 2400×1720 |
+| Participant profile | V1 account-owned profile, startup, investor, and detail-table FKs | Pass | Relationship map + SVG detail | Pass | 2400×1509 |
+| Marketplace listing and bidding | V1 listing, debt terms, bid, investor, and partial accepted-bid rule | Pass | Relationship map + SVG detail | Pass | 2400×1520 |
+| Agreement acceptance and terms | V1 agreement FKs, unique bid, debt terms, and consistency triggers | Pass | Relationship map + SVG detail | Pass | 2400×1337 |
+| Settlement | V1 agreement and participant FKs plus consistency trigger | Pass | Relationship map + SVG detail | Pass | 2400×1300 |
+| Repayment schedule | V1 agreement, participant, repayment, and installment relationships | Pass | Relationship map + SVG detail | Pass | 2400×1560 |
+| Payment intent | V1 nullable purpose sources and payer/payee account FKs | Pass | Relationship map + SVG detail | Pass | 2400×1440 |
+| Payment attempt and provider | V1 intent, provider, method, and attempt relationships | Pass | Relationship map + SVG detail | Pass | 2400×1300 |
+| Payment webhook | V1 provider idempotency and nullable payment references | Pass | Relationship map + SVG detail | Pass | 2400×1300 |
+| Notification delivery | V1 recipient, channel, attempt, subscription, and account FKs | Pass | Relationship map + SVG detail | Pass | 2400×1337 |
+| Outbox and audit correlation | V1 audit actor FK and non-FK `event_id` correlation | Pass | Relationship map + SVG detail | Pass | 2400×1400 |
+| Public error contract | Catalogue merge behavior, OpenAPI publication, Markdown snapshot, and separate HTTP exposure boundary | Pass | Inline readable | Pass | 2400×2133 |
+
+## Execution evidence
+
+| Stage | Evidence | Result |
+|---|---|---|
+| Quality gates | 44 work-item Markdown files compared with the disposition table | 0 unclassified |
+| Quality gates | `DocumentationStructureValidatorTest`, `DiagramPublicationValidatorTest`, and `DiagramPublicationTest` | Pass |
+| Architecture prototype | Shared renderer and publication tests | Pass |
+| Architecture prototype | 980-pixel desktop preview | Pass: labels, routing, and hierarchy readable |
+| Architecture prototype | 390-pixel phone preview | Pass: seven-node overview readable without zoom |
+| Architecture prototype | Revised KAN-34-aligned SVG | Approved |
+| Architecture prototype | GitHub desktop and mobile web | Pass |
+| Architecture prototype | GitHub Mobile SVG | Pass |
+| Architecture prototype | GitHub Mobile PNG fallback | Pass: cache-safe final filename displays the approved diagram |
+| Architecture prototype | Jira 2400-pixel PNG | Pass: approved fallback is the only KAN-39 attachment |
+| Stable hierarchy | Task-oriented portal and seven topic guides | Pass: current guidance is reachable without Jira-key navigation |
+| Stable hierarchy | Generated public error catalogue | Pass: moved under `docs/api` and snapshot parity verified |
+| Stable hierarchy | Structure and repository link checks | Pass |
+| Truth baseline | Build, profiles, modules, HTTP, security, errors, schema, delivery, integrations, and tests compared with repository sources | 16 topics classified; six stable-guide corrections identified |
+| Truth baseline | Flyway-migrated PostgreSQL table inventory compared with published database guidance | Initially 34 diagram entities; Task 5 now covers all 35 and enforces parity in `DatabaseDocumentationContractIT` |
+| Truth baseline | Future-infrastructure scan | No production Kafka, Redis, JWT, OAuth2, or `@Aspect` implementation |
+| Historical cleanup | 41 completed work-item Markdown records | Removed after their current guidance was distilled; only the three active KAN-39 records remain |
+| Historical cleanup | 57 historical diagram assets reviewed | 54 obsolete assets removed; the three-file public error-contract set migrated to `docs/api/assets/` |
+| Historical cleanup | Stable Markdown dependency scan | No stable page links to `work-items/`, removed Jira-key paths, Mermaid source files, or inline Mermaid blocks |
+| Historical cleanup | Diagram publication catalogue | Migrated to a neutral version-two owner/consumer contract |
+| Historical cleanup | Structure, link, publication, and catalogue tests | Pass |
+| Historical cleanup | `npm run diagrams:check` and `git diff --check` | Pass |
+| Stable diagram set | `npm run diagrams:render` and `npm run diagrams:preview` | 21 canonical SVGs, 21 generated 2400-pixel PNGs, and 63 untracked review previews produced |
+| Stable diagram set | Eleven database relational views | Redesigned with the approved KAN-34 white-and-blue visual language, stronger type, restrained relationship labels, and new cache-safe asset paths |
+| Stable diagram set | Desktop, 390-pixel phone, and dark-surround inspection | Pass for all 13 entries; no clipping, collision, ambiguous routing, or transparent canvas |
+| Stable diagram set | Public error-contract architecture | Corrected catalogue generation and HTTP documentation exposure into separate responsibilities |
+| Stable diagram set | `DatabaseDocumentationContractIT` | Pass: all 35 Flyway-migrated PostgreSQL tables represented |
+| Stable diagram set | Inventory, publication, structure, and link test gate | Pass |
+| Architecture coverage | Layered entry points | System context, runtime, module catalogue, current dependency graph, request security, event delivery, and error disclosure published as separate reviewer questions |
+| Architecture coverage | Module owner pages | All 11 production modules document purpose, entry points, application/domain rules, persistence, events, dependencies, security/errors, verification, and known gaps |
+| Architecture coverage | `ArchitectureModuleCatalogTest` and `ArchitectureDocumentationCoverageTest` | Pass: source-derived module dependencies, minimal ownership catalogue, two reader routes, four capability pages, and all module owner sections agree |
+| Architecture coverage | Documentation, link, catalogue, OpenAPI, exposure, and diagram test selection | Pass against PostgreSQL Testcontainers; Flyway V1 applied and Hibernate validation completed |
+| Architecture coverage | Architecture publication set | Nine justified architecture figures plus the reused public-error figure; no generic platform-support duplicate |
+| Database information model | Flyway-migrated PostgreSQL 16 catalogue | 35 tables, 46 FKs with nullability/delete behavior, 25 unique constraints, 57 checks, 19 partial indexes, and 12 triggers extracted directly from the effective schema |
+| Database information model | `DatabaseDocumentationContractIT` | Pass: documentation compared with the effective PostgreSQL schema; no committed schema projection remains |
+| Database information model | Relational journey and question chooser | All 35 tables placed across six business stages; eleven focused relationship questions linked |
+| Database information model | `DatabaseDocumentationNavigationTest` | Pass: fast reader-navigation and entry-point boundaries enforced |
+| Database information model | Focused relationship comparison | 46/46 Flyway foreign keys already represented; zero visual topology omissions, so approved SVG/PNG assets were preserved |
+| Database information model | Exact relationship semantics | Every FK reference row now records constraint name, nullability, and `ON DELETE` behavior; all 6 intentional non-FK correlations are listed separately |
+| Database information model | `DatabaseDocumentationContractIT` | Pass: focused references are checked directly against PostgreSQL catalogue facts, including all 6 intentional non-FK correlations |
+| Database surface verification | Focused database contract, navigation, publication, structure, and link test selection | Pass |
+| Database surface verification | `npm run diagrams:check` and `npm run diagrams:preview` | Revalidation now runs through the neutral 21-entry publication catalogue |
+| Database surface verification | Eleven database views at 980 pixels, 390 pixels, and on a dark surrounding | Pass: opaque canvases, readable relationship maps, no clipping, collision, or ambiguous routing |
+| Database surface verification | GitHub desktop and 390-pixel mobile web | Pass: all 11 SVGs loaded at their intrinsic resolution; no raw Mermaid presentation |
+| Database surface verification | Jira named PNG viewer | Pass: the 2400×3000 architecture fixture opens without clipping; database PNGs use the same validated opaque 2400-pixel publication path |
+| Database surface verification | Confluence delivery page | Pass: current KAN-39 status, PR link, ownership boundaries, database counts, and checkpoint history render correctly |
+| Database surface verification | Native GitHub Mobile | Pass: user-device review confirmed the database page, embedded figures, and linked detail render correctly |
+| Repository wording | PNG fallback labels and publication guidance | Pass: diagram links and publication rules use vendor-neutral fallback and cross-platform review language; workflow guidance may still name Jira as the configured tracker |
+| Database reader experience | Question-oriented hierarchy | Pass: one journey, one chooser, 11 focused owner pages, and one schema reference replace the 280-line ER page |
+| Database reader experience | Duplicate schema projection removal | Pass: committed manifest removed; deterministic diagnostics are generated only under ignored `target/documentation-verification/` |
+| Database reader experience | Relationship ownership | Pass: all 11 existing database publications now have one focused primary owner; schema claims remain unchanged |
+| Database reader experience | Relational journey publication | Pass: desktop, 390-pixel phone, dark-surround, PNG, connector geometry, and catalogue checks |
+| Database reader experience | Focused documentation gate | Pass: all 35 tables, all 46 foreign keys, all 6 intentional correlations, links, navigation, and publication contracts verified |
+| Database reader experience | Task 5E checkpoint review | Approved after GitHub desktop/mobile review; proceed to transitional manifest replacement |
+| Database reader experience | Task 5F effective-schema verification | Pass: unit and complete PostgreSQL integration profiles verify documentation from the Flyway-migrated PostgreSQL catalogue |
+| Database reader experience | Task 5F checkpoint review | Approved after repository, PR, Jira, Confluence, local verification, and GitHub CI review; proceed to complete current-reality audit |
+| Current-reality audit | Production and test inventory | 11 production modules, 572 production Java files, 130 test Java files, three runtime property layers, Maven/CI configuration, Flyway V1, and Docker-backed test surfaces re-scanned |
+| Current-reality audit | Module ownership and verification claims | Pass: all 11 source modules match `module-catalog.json`; every numeric module-test claim matches its current package count |
+| Current-reality audit | Implemented versus planned technology | Pass: session security, PostgreSQL, Flyway, outbox, local/sandbox providers, Problem Details, audit, and notification delivery are implemented; Kafka, Redis, JWT, OAuth2, production provider integrations, centralized observability, and AOP policy remain partial or planned as classified above |
+| Current-reality audit | Stable wording corrections | Development fallback credentials are now described as a current hardening gap; database verification names the effective PostgreSQL catalogue; diagram publication uses vendor-neutral cross-platform fallback language |
+| Current-reality audit | Navigation and asset ownership gate | Pass: obsolete-path matches are confined to the active KAN-39 historical record; 22 publication entries, both reader routes, all module owners, structure, and repository links validate |
+| Current-reality audit | Complete diagram set | Pass: all 22 named rows in the stable diagram review table were re-rendered and inspected across 66 fresh desktop, phone-width, and dark-surround previews; module maps and architecture/database contact sheets were reviewed separately |
+| Current-reality audit | Task 5G checkpoint review | Approved after repository, Jira, Confluence, pull-request, diagram-surface, and CI review; proceed to final repository and surface verification |
+| Final verification | Deterministic documentation gate | Pass: `npm ci` audited 196 packages with 0 vulnerabilities; `npm run diagrams:check` validated all 22 entries; the focused structure, link, publication, and error-catalogue suite passed; `git diff --check` passed |
+| Final verification | Unmodified unit suite | Pass: `.\mvnw.cmd test` completed 468 tests with 0 failures, 0 errors, and 0 skipped tests |
+| Final verification | Repository hygiene | Pass: `target/` and `node_modules/` remain ignored; no tracked or untracked crash/clipboard artifacts, machine paths, or internal authorship/process terms remain on stable documentation surfaces |
+| Final verification | Publication continuity | Pass: no diagram asset changed after the approved Task 5G surface review; all 22 catalogue entries retain both SVG and PNG outputs, and stable reader pages contain no raw Mermaid embeds |
+| Final verification | Delivery surfaces | Pass: draft PR #40 targets `develop`; Jira retains the named opaque PNG review attachment; the current Confluence delivery page remains in the Optrabidz space; previously approved GitHub desktop, mobile web, GitHub Mobile, dark-surround, and Jira results therefore remain current |
+
+Temporary review sheets remain under `target/documentation-review/` and are
+never committed.
