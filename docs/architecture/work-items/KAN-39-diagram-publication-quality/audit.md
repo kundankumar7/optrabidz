@@ -71,6 +71,7 @@ named production capability or documentation coverage is incomplete.
 | Build and runtime | `IMPLEMENTED` | `pom.xml`; `.github/workflows/backend-ci.yml` | Java 21, Spring Boot 3.3.2, Maven unit tests, and PostgreSQL integration tests verified |
 | Modular structure | `PARTIAL` | `src/main/java/com/project/optrabidz/`; `src/test/java/com/project/optrabidz/architecture/ExceptionArchitectureTest.java` | Capability packages verified; `documentation` adapter added to map; repository-wide dependency enforcement is not claimed |
 | Runtime profiles | `IMPLEMENTED` | `src/main/resources/application.properties`; `application-dev.properties`; `application-prod.properties` | Development admin bootstrap and financial adapters distinguished from baseline notification channels; production datasource requirements retained |
+| Configuration secret hygiene | `PARTIAL` | `application-dev.properties`; `application-prod.properties`; provider configuration tests | Production requires environment-supplied datasource values and local financial adapters remain disabled; disposable development bootstrap and webhook fallbacks are still checked in and require the planned configuration-hardening story |
 | HTTP and OpenAPI boundary | `IMPLEMENTED` | module `api/*Controller.java`; `documentation/openapi/`; `documentation/security/` | `/api/v1` routes verified; configured Swagger entry corrected to `/swagger-ui.html`; documentation remains fail-closed outside an enabled profile |
 | Success and error contracts | `IMPLEMENTED` | `common/api/response/`; `common/api/error/`; `common/error/`; module `application/error/` catalogues | Success envelope and RFC 9457 responsibilities verified; generated catalogue parity remains enforced |
 | Session security | `IMPLEMENTED` | `security/infrastructure/config/SecurityConfig.java`; session filters; security HTTP tests | Server-side session, CSRF, matched route rules, security Problem Details, and current public listing reads documented |
@@ -93,6 +94,9 @@ named production capability or documentation coverage is incomplete.
 - State that general module dependency enforcement remains incomplete.
 - Distinguish development admin and payment configuration from notification
   channel defaults.
+- Describe checked-in development credentials and webhook fallbacks as a
+  current hardening gap rather than claiming all secret-like values are absent
+  from source.
 - Add `login_attempt` when the surviving ER set is remediated. Resolved in Task 5 with automated Flyway-to-ER coverage.
 - Keep Kafka, Redis, JWT, OAuth2, external notification providers, AOP policy,
   centralized observability, and real-money processing out of current-state
@@ -216,7 +220,7 @@ and perpendicular entry. The regenerated assets passed the reopened review.
 | Database surface verification | Jira named PNG viewer | Pass: the 2400×3000 architecture fixture opens without clipping; database PNGs use the same validated opaque 2400-pixel publication path |
 | Database surface verification | Confluence delivery page | Pass: current KAN-39 status, PR link, ownership boundaries, database counts, and checkpoint history render correctly |
 | Database surface verification | Native GitHub Mobile | Pass: user-device review confirmed the database page, embedded figures, and linked detail render correctly |
-| Repository wording | PNG fallback labels | Pass: stable GitHub documentation uses the vendor-neutral `High-resolution PNG fallback`; Jira-specific wording remains in delivery evidence only |
+| Repository wording | PNG fallback labels and publication guidance | Pass: diagram links and publication rules use vendor-neutral fallback and cross-platform review language; workflow guidance may still name Jira as the configured tracker |
 | Database reader experience | Question-oriented hierarchy | Pass: one journey, one chooser, 11 focused owner pages, and one schema reference replace the 280-line ER page |
 | Database reader experience | Duplicate schema projection removal | Pass: committed manifest removed; deterministic diagnostics are generated only under ignored `target/documentation-verification/` |
 | Database reader experience | Relationship ownership | Pass: all 11 existing database publications now have one focused primary owner; schema claims remain unchanged |
@@ -225,6 +229,12 @@ and perpendicular entry. The regenerated assets passed the reopened review.
 | Database reader experience | Task 5E checkpoint review | Approved after GitHub desktop/mobile review; proceed to transitional manifest replacement |
 | Database reader experience | Task 5F effective-schema verification | Pass: unit and complete PostgreSQL integration profiles verify documentation from the Flyway-migrated PostgreSQL catalogue |
 | Database reader experience | Task 5F checkpoint review | Approved after repository, PR, Jira, Confluence, local verification, and GitHub CI review; proceed to complete current-reality audit |
+| Current-reality audit | Production and test inventory | 11 production modules, 572 production Java files, 130 test Java files, three runtime property layers, Maven/CI configuration, Flyway V1, and Docker-backed test surfaces re-scanned |
+| Current-reality audit | Module ownership and verification claims | Pass: all 11 source modules match `module-catalog.json`; every numeric module-test claim matches its current package count |
+| Current-reality audit | Implemented versus planned technology | Pass: session security, PostgreSQL, Flyway, outbox, local/sandbox providers, Problem Details, audit, and notification delivery are implemented; Kafka, Redis, JWT, OAuth2, production provider integrations, centralized observability, and AOP policy remain partial or planned as classified above |
+| Current-reality audit | Stable wording corrections | Development fallback credentials are now described as a current hardening gap; database verification names the effective PostgreSQL catalogue; diagram publication uses vendor-neutral cross-platform fallback language |
+| Current-reality audit | Navigation and asset ownership gate | Pass: obsolete-path matches are confined to the active KAN-39 historical record; 22 publication entries, both reader routes, all module owners, structure, and repository links validate |
+| Current-reality audit | Complete diagram set | Pass: all 22 named rows in the stable diagram review table were re-rendered and inspected across 66 fresh desktop, phone-width, and dark-surround previews; module maps and architecture/database contact sheets were reviewed separately |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.

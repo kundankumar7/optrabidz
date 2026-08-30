@@ -1141,20 +1141,20 @@ reviewable before the complete current-reality audit.
 - Every architecture/database figure is reachable from the two reader routes.
 - Inventory facts, prose, diagrams, code, configuration, and tests agree.
 
-- [ ] **Step 1: Re-scan production and test surfaces**
+- [x] **Step 1: Re-scan production and test surfaces**
 
 Regenerate or manually verify the module inventory against `src/main/java`,
 `src/main/resources`, `src/test/java`, `pom.xml`, Docker configuration, and CI.
 Check every durable claim about security, payments, outbox delivery,
 notifications, audit, exception handling, persistence, and profiles.
 
-- [ ] **Step 2: Classify and correct every mismatch**
+- [x] **Step 2: Classify and correct every mismatch**
 
 Record each reviewed capability as `IMPLEMENTED`, `PARTIAL`, or `PLANNED` in
 `audit.md`. Correct stale prose or diagrams; do not change production code or
 silently promote a future component into the current architecture.
 
-- [ ] **Step 3: Verify complete navigation and asset ownership**
+- [x] **Step 3: Verify complete navigation and asset ownership**
 
 ```powershell
 rg -n "schema-manifest|er-diagram\.md|\.mmd\)" README.md docs --glob "*.md"
@@ -1165,14 +1165,14 @@ npm run diagrams:check
 Expected: no obsolete reader link; every remaining match is an intentional
 historical statement inside the active KAN-39 record; all tests pass.
 
-- [ ] **Step 4: Review every diagram surface as a set**
+- [x] **Step 4: Review every diagram surface as a set**
 
 Generate the complete 980-pixel and 390-pixel review sheets. Verify GitHub
 desktop, GitHub Mobile, Jira PNG, Confluence, and local light/dark surroundings.
 Record each named figure and result rather than claiming one sample represents
 the whole set.
 
-- [ ] **Step 5: Commit the current-reality audit**
+- [x] **Step 5: Commit the current-reality audit**
 
 ```powershell
 git add docs src/test/java/com/project/optrabidz/documentation

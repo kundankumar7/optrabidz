@@ -32,8 +32,8 @@ pull requests rather than the permanent documentation path.
 - Keep task tracking in Jira and code-review discussion in pull requests.
 - Record durable architectural choices as decision records.
 - Publish diagrams as SVG with a high-resolution PNG fallback.
-- Never include credentials, secret values, personal paths, or internal
-  approval instructions.
+- Never include deployable credentials, secret material, personal paths, or
+  internal approval instructions. Mark any disposable local example clearly.
 
 See the [diagram publication guide](architecture/diagram-publication.md) when
 adding or changing a diagram.

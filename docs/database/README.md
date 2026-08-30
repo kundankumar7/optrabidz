@@ -29,10 +29,10 @@ without a foreign key is identified explicitly so diagrams do not imply a
 constraint that the schema does not contain.
 
 The V1 baseline currently defines 35 tables and 46 foreign keys. Automated
-regression tests derive the documentation inventory from Flyway and verify that
-every table and relationship remains represented. The generated verification
-artifact is intentionally kept out of reader navigation; use the focused views
-or schema reference for human-readable answers.
+regression tests apply Flyway to PostgreSQL, inspect the effective catalogue,
+and verify that every table and relationship remains represented. The generated
+diagnostic artifact is ignored and kept out of reader navigation; use the
+focused views or schema reference for human-readable answers.
 
 `login_attempt` is shown as a standalone security log because the schema
 deliberately defines no foreign key from it to `account` or `credential`.

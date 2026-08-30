@@ -54,7 +54,10 @@ lifecycle rules, revocation strategy, migration plan, and security tests.
 
 ## Security Checks
 
-- Keep secrets in environment-specific configuration, never in source or docs.
+- Keep shared and production secrets in environment-specific secret storage,
+  never in source or docs. The repository currently contains explicitly
+  disposable `dev` defaults; do not reuse them, and remove them through the
+  planned configuration-hardening work before treating that profile as shared.
 - Keep CSRF protection enabled for browser session flows.
 - Return neutral not-found results when a more specific response would reveal
   another caller's resource.

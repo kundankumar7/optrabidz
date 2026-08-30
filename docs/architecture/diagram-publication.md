@@ -1,8 +1,8 @@
 # Diagram Publication
 
 This reference defines how repository diagrams are stored, rendered, reviewed,
-and published. The goal is readable engineering documentation on GitHub, Jira,
-desktop, and mobile—not merely a valid image file.
+and published. The goal is readable engineering documentation in repository
+browsers, review tools, desktop, and mobile—not merely a valid image file.
 
 ## Publication model
 
@@ -13,7 +13,7 @@ Each published diagram is declared in
 |---|---|
 | Editable source | Canonical definition. Mermaid diagrams use `.mmd`; composition-sensitive architecture and ER diagrams use the published SVG itself as the curated source. |
 | SVG | GitHub embed. It must be scalable, accessible, opaque, and self-contained. |
-| PNG | Jira and offline companion. It must be opaque, at least 2000×600 pixels, and generated from the declared SVG. |
+| PNG | Cross-platform and offline fallback. It must be opaque, at least 2000×600 pixels, and generated from the declared SVG. |
 
 Renderer versions are owned by `package.json` and `package-lock.json`; the
 publication catalogue contains only diagram ownership and output paths.
@@ -80,7 +80,7 @@ untracked `target/documentation-review/` directory. Confirm that:
 - arrowheads do not float, run along a node border, or cross unrelated nodes;
 - foreground and connector contrast works on light and dark surrounding pages;
 - no important relationship is hidden by scaling; and
-- the full-resolution PNG is suitable for Jira attachment and offline review.
+- the full-resolution PNG is suitable for issue-tracker, wiki, and offline review.
 
 ## Choose the remediation
 

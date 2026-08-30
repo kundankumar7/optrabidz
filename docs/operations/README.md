@@ -48,10 +48,12 @@ before changing those values.
 ## Integration Configuration
 
 Local and sandbox financial providers are disabled by default and in the
-production profile. Webhook secrets must be provided through environment
-configuration. Notification channels use application configuration and the
-current local delivery adapters; external broker or delivery-provider
-infrastructure is not implemented.
+production profile. When those providers are enabled outside disposable local
+development, webhook secrets must be supplied through environment-specific
+secret storage; the checked-in `dev` fallbacks are not deployable credentials.
+Notification channels use application configuration and the current local
+delivery adapters; external broker or delivery-provider infrastructure is not
+implemented.
 
 ## Operational Checks
 
