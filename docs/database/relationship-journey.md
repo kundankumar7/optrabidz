@@ -4,10 +4,13 @@
 
 This page follows durable data from an account through participation,
 marketplace, finance, payment, and supporting records. It is a reading route,
-not a single oversized ER diagram. Use the [focused relationship chooser](er-diagram.md#choose-a-relationship-view)
+not a single oversized ER diagram. Use the [focused relationship chooser](views/README.md)
 when you need columns and cardinality for one question, and the
-[schema manifest](schema-manifest.json) when you need the complete verified
-relationship inventory.
+[schema reference](reference/README.md) for notation and cross-cutting guarantees.
+
+<a href="assets/relationship-journey.svg"><img src="assets/relationship-journey.svg" alt="Relational journey orientation map"></a>
+
+[High-resolution PNG fallback](assets/relationship-journey.png)
 
 ## Identity and access
 
@@ -21,7 +24,7 @@ sessions only after other restricted ownership relationships permit deletion.
 without an account or credential foreign key. Triggers prevent its update and
 deletion, so it remains an immutable security log rather than an identity child.
 
-Focused view: [identity and access](er-diagram.md#identity-and-access).
+Focused view: [identity and access](views/identity-access.md).
 
 ## Participant profiles
 
@@ -35,7 +38,7 @@ to `investor_web_presence` and `investor_preference`. Detail and classification
 rows cascade when their owning participant is removed. The partial unique index
 on `admin` permits only one active administrator.
 
-Focused view: [participant profiles](er-diagram.md#participant-profiles).
+Focused view: [participant profiles](views/participant-profile.md).
 
 ## Marketplace discovery and bidding
 
@@ -49,7 +52,7 @@ The core listing and bid ownership foreign keys use `RESTRICT`; deleting a
 listing does not silently erase submitted bids. Debt-term rows use `CASCADE`
 because they are dependent value records.
 
-Focused view: [marketplace and bidding](er-diagram.md#marketplace-and-bidding).
+Focused view: [marketplace and bidding](views/marketplace-bidding.md).
 
 ## Agreement and finance
 
@@ -63,9 +66,9 @@ startup-to-investor obligation and owns ordered `repayment_installment` rows.
 Participant-consistency triggers protect both finance records. These primary
 finance relationships use `RESTRICT`, preventing accidental history loss.
 
-Focused views: [agreement acceptance](er-diagram.md#agreement-acceptance),
-[settlement](er-diagram.md#settlement), and
-[repayment schedule](er-diagram.md#repayment-schedule).
+Focused views: [agreement acceptance](views/agreement-acceptance.md),
+[settlement](views/settlement.md), and
+[repayment schedule](views/repayment-schedule.md).
 
 ## Payment execution
 
@@ -85,9 +88,9 @@ provider and optionally linked to an intent and attempt. Nullable links reflect
 callbacks that cannot yet be associated; signature and replay validation remain
 application concerns.
 
-Focused views: [payment intent](er-diagram.md#payment-intent),
-[payment processing](er-diagram.md#payment-processing), and
-[payment webhooks](er-diagram.md#payment-webhooks).
+Focused views: [payment intent](views/payment-intent.md),
+[payment processing](views/payment-processing.md), and
+[payment webhooks](views/payment-webhook.md).
 
 ## Reliable supporting work
 
@@ -103,13 +106,13 @@ correlations to the outbox, not foreign keys. Audit triggers make records
 append-only; delivery constraints and partial indexes support bounded retry and
 feed queries.
 
-Focused views: [notification delivery](er-diagram.md#notification-delivery) and
-[outbox and audit](er-diagram.md#outbox-and-audit).
+Focused views: [notification delivery](views/notification-delivery.md) and
+[outbox and audit](views/outbox-audit.md).
 
 ## Verification boundary
 
 `DatabaseSchemaManifestTest` derives tables, foreign keys, nullability, delete
 behavior, unique/check constraints, partial indexes, and triggers directly from
 Flyway V1. `DatabaseDocumentationNavigationTest` ensures this journey places all
-35 tables. `DatabaseDiagramCoverageTest` separately ensures the diagram source
-represents every table.
+35 tables. `DatabaseDiagramCoverageTest` separately ensures the focused diagram
+sources represent every table.

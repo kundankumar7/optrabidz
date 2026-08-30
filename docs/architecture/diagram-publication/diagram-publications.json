@@ -83,12 +83,21 @@
       "consumers": ["docs/architecture/capabilities/platform-support.md"]
     },
     {
+      "id": "database-relationship-journey",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/database/assets/relationship-journey.svg",
+      "svg": "docs/database/assets/relationship-journey.svg",
+      "png": "docs/database/assets/relationship-journey.png",
+      "primaryOwner": "docs/database/relationship-journey.md",
+      "consumers": []
+    },
+    {
       "id": "database-account-access-security",
       "sourceType": "CURATED_SVG",
       "source": "docs/database/assets/identity-access-schema.svg",
       "svg": "docs/database/assets/identity-access-schema.svg",
       "png": "docs/database/assets/identity-access-schema.png",
-      "primaryOwner": "docs/database/er-diagram.md",
+      "primaryOwner": "docs/database/views/identity-access.md",
       "consumers": []
     },
     {
@@ -97,7 +106,7 @@
       "source": "docs/database/assets/participant-profile-schema.svg",
       "svg": "docs/database/assets/participant-profile-schema.svg",
       "png": "docs/database/assets/participant-profile-schema.png",
-      "primaryOwner": "docs/database/er-diagram.md",
+      "primaryOwner": "docs/database/views/participant-profile.md",
       "consumers": []
     },
     {
@@ -106,7 +115,7 @@
       "source": "docs/database/assets/marketplace-bidding-schema.svg",
       "svg": "docs/database/assets/marketplace-bidding-schema.svg",
       "png": "docs/database/assets/marketplace-bidding-schema.png",
-      "primaryOwner": "docs/database/er-diagram.md",
+      "primaryOwner": "docs/database/views/marketplace-bidding.md",
       "consumers": []
     },
     {
@@ -115,7 +124,7 @@
       "source": "docs/database/assets/agreement-acceptance-schema.svg",
       "svg": "docs/database/assets/agreement-acceptance-schema.svg",
       "png": "docs/database/assets/agreement-acceptance-schema.png",
-      "primaryOwner": "docs/database/er-diagram.md",
+      "primaryOwner": "docs/database/views/agreement-acceptance.md",
       "consumers": []
     },
     {
@@ -124,7 +133,7 @@
       "source": "docs/database/assets/settlement-schema.svg",
       "svg": "docs/database/assets/settlement-schema.svg",
       "png": "docs/database/assets/settlement-schema.png",
-      "primaryOwner": "docs/database/er-diagram.md",
+      "primaryOwner": "docs/database/views/settlement.md",
       "consumers": []
     },
     {
@@ -133,7 +142,7 @@
       "source": "docs/database/assets/repayment-schedule-schema.svg",
       "svg": "docs/database/assets/repayment-schedule-schema.svg",
       "png": "docs/database/assets/repayment-schedule-schema.png",
-      "primaryOwner": "docs/database/er-diagram.md",
+      "primaryOwner": "docs/database/views/repayment-schedule.md",
       "consumers": []
     },
     {
@@ -142,7 +151,7 @@
       "source": "docs/database/assets/payment-intent-schema.svg",
       "svg": "docs/database/assets/payment-intent-schema.svg",
       "png": "docs/database/assets/payment-intent-schema.png",
-      "primaryOwner": "docs/database/er-diagram.md",
+      "primaryOwner": "docs/database/views/payment-intent.md",
       "consumers": []
     },
     {
@@ -151,7 +160,7 @@
       "source": "docs/database/assets/payment-processing-schema.svg",
       "svg": "docs/database/assets/payment-processing-schema.svg",
       "png": "docs/database/assets/payment-processing-schema.png",
-      "primaryOwner": "docs/database/er-diagram.md",
+      "primaryOwner": "docs/database/views/payment-processing.md",
       "consumers": []
     },
     {
@@ -160,7 +169,7 @@
       "source": "docs/database/assets/payment-webhook-schema.svg",
       "svg": "docs/database/assets/payment-webhook-schema.svg",
       "png": "docs/database/assets/payment-webhook-schema.png",
-      "primaryOwner": "docs/database/er-diagram.md",
+      "primaryOwner": "docs/database/views/payment-webhook.md",
       "consumers": []
     },
     {
@@ -169,7 +178,7 @@
       "source": "docs/database/assets/notification-delivery-schema.svg",
       "svg": "docs/database/assets/notification-delivery-schema.svg",
       "png": "docs/database/assets/notification-delivery-schema.png",
-      "primaryOwner": "docs/database/er-diagram.md",
+      "primaryOwner": "docs/database/views/notification-delivery.md",
       "consumers": []
     },
     {
@@ -178,7 +187,7 @@
       "source": "docs/database/assets/outbox-audit-schema.svg",
       "svg": "docs/database/assets/outbox-audit-schema.svg",
       "png": "docs/database/assets/outbox-audit-schema.png",
-      "primaryOwner": "docs/database/er-diagram.md",
+      "primaryOwner": "docs/database/views/outbox-audit.md",
       "consumers": []
     },
     {

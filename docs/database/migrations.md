@@ -178,8 +178,8 @@ Confirm all of the following before accepting a migration:
 Scan for obsolete schema-initialization instructions:
 
 ```powershell
-rg -n "optrabidz-schema\.sql|ddl-auto=update|manual schema initialization" README.md docs/database/README.md docs/database/er-diagram.md docs/database/assets/er-diagram-source.md src
-rg -n "spring\.sql\.init" README.md docs/database/README.md docs/database/er-diagram.md docs/database/assets/er-diagram-source.md src/main
+rg -n "optrabidz-schema\.sql|ddl-auto=update|manual schema initialization" README.md docs/database/README.md docs/database/views docs/database/assets/er-diagram-source.md src
+rg -n "spring\.sql\.init" README.md docs/database/README.md docs/database/views docs/database/assets/er-diagram-source.md src/main
 rg -n "spring\.sql\.init" src/test
 ```
 

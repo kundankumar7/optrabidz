@@ -945,7 +945,7 @@ before database pages change.
 - `reference/README.md` owns notation, verification method, material database
   invariants, and intentional non-FK correlation rules.
 
-- [ ] **Step 1: Write failing split-navigation tests**
+- [x] **Step 1: Write failing split-navigation tests**
 
 Require `views/README.md`, the 11 named focused pages, the relationship-journey
 figure, and the absence of a `schema-manifest.json` link in `README.md`:
@@ -958,7 +958,7 @@ assertThat(entryPoint)
         .doesNotContain("schema-manifest.json");
 ```
 
-- [ ] **Step 2: Run the focused tests and confirm the red phase**
+- [x] **Step 2: Run the focused tests and confirm the red phase**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=DatabaseDocumentationNavigationTest,DatabaseRelationshipDocumentationTest" test
@@ -966,7 +966,7 @@ assertThat(entryPoint)
 
 Expected: FAIL because the focused-page hierarchy is not present.
 
-- [ ] **Step 3: Split the monolithic ER page without changing schema claims**
+- [x] **Step 3: Split the monolithic ER page without changing schema claims**
 
 Create these pages: `identity-access.md`, `participant-profile.md`,
 `marketplace-bidding.md`, `agreement-acceptance.md`, `settlement.md`,
@@ -975,14 +975,14 @@ Create these pages: `identity-access.md`, `participant-profile.md`,
 Move each existing figure and relationship table to exactly one owner page,
 update inventory owners, and delete `er-diagram.md` only after all links move.
 
-- [ ] **Step 4: Add orientation and reference material**
+- [x] **Step 4: Add orientation and reference material**
 
 Publish a compact relational-journey SVG/PNG showing the six existing stages.
 Create `reference/README.md` for FK notation, nullability, delete actions,
 checks, partial indexes, triggers, and the six intentional correlations. Keep
 the manifest file temporarily for tests but remove it from reader navigation.
 
-- [ ] **Step 5: Verify navigation, publication, and mobile readability**
+- [x] **Step 5: Verify navigation, publication, and mobile readability**
 
 ```powershell
 npm run diagrams:render
@@ -994,7 +994,7 @@ npm run diagrams:check
 Expected: PASS. Review the journey and every focused page at desktop and phone
 width before committing.
 
-- [ ] **Step 6: Commit the database reader-experience checkpoint**
+- [x] **Step 6: Commit the database reader-experience checkpoint**
 
 ```powershell
 git add -A docs/database docs/architecture/diagram-publication src/test/java/com/project/optrabidz/documentation

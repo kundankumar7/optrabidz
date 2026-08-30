@@ -12,11 +12,24 @@ import org.junit.jupiter.api.Test;
 class DatabaseRelationshipDocumentationTest {
 
     private static final Path DATABASE_ROOT = Path.of("docs", "database");
+    private static final Path VIEWS_ROOT = DATABASE_ROOT.resolve("views");
 
     @Test
     void focusedRelationshipRowsExposeExactForeignKeySemantics() throws Exception {
         JsonNode manifest = manifest();
-        List<String> lines = Files.readAllLines(DATABASE_ROOT.resolve("er-diagram.md"));
+        List<String> lines;
+        try (var paths = Files.list(VIEWS_ROOT)) {
+            lines = paths.filter(path -> path.toString().endsWith(".md"))
+                    .filter(path -> !path.getFileName().toString().equals("README.md"))
+                    .flatMap(path -> {
+                        try {
+                            return Files.readAllLines(path).stream();
+                        } catch (Exception exception) {
+                            throw new IllegalStateException(exception);
+                        }
+                    })
+                    .toList();
+        }
 
         for (JsonNode foreignKey : manifest.path("foreignKeys")) {
             String childReference = foreignKey.path("childTable").asText() + "."
@@ -46,7 +59,7 @@ class DatabaseRelationshipDocumentationTest {
     @Test
     void intentionalCorrelationsAreListedSeparatelyFromForeignKeys() throws Exception {
         JsonNode manifest = manifest();
-        String documentation = Files.readString(DATABASE_ROOT.resolve("er-diagram.md"));
+        String documentation = Files.readString(DATABASE_ROOT.resolve("reference/README.md"));
 
         assertThat(documentation).contains("## Intentional non-FK correlations");
         for (JsonNode correlation : manifest.path("correlations")) {

@@ -217,6 +217,11 @@ and perpendicular entry. The regenerated assets passed the reopened review.
 | Database surface verification | Confluence delivery page | Pass: current KAN-39 status, PR link, ownership boundaries, database counts, and checkpoint history render correctly |
 | Database surface verification | Native GitHub Mobile | Pass: user-device review confirmed the database page, embedded figures, and linked detail render correctly |
 | Repository wording | PNG fallback labels | Pass: stable GitHub documentation uses the vendor-neutral `High-resolution PNG fallback`; Jira-specific wording remains in delivery evidence only |
+| Database reader experience | Question-oriented hierarchy | Pass: one journey, one chooser, 11 focused owner pages, and one schema reference replace the 280-line ER page |
+| Database reader experience | Raw manifest exposure | Pass: retained temporarily for regression tests but removed from reader entry-point navigation |
+| Database reader experience | Relationship ownership | Pass: all 11 existing database publications now have one focused primary owner; schema claims remain unchanged |
+| Database reader experience | Relational journey publication | Pass: desktop, 390-pixel phone, dark-surround, PNG, connector geometry, and catalogue checks |
+| Database reader experience | Focused documentation gate | Pass: all 35 tables, all 46 foreign keys, all 6 intentional correlations, links, navigation, and publication contracts verified |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.
