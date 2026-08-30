@@ -887,7 +887,7 @@ entry to `diagram-publications.json`; package versions remain owned by
 `diagram-publication/mermaid-config.json` path rather than duplicating renderer
 configuration in the publication catalogue.
 
-- [ ] **Step 5: Render and verify every architecture surface**
+- [x] **Step 5: Render and verify every architecture surface**
 
 ```powershell
 npm run diagrams:render
