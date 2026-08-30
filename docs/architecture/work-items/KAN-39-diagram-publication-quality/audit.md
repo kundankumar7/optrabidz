@@ -224,6 +224,7 @@ and perpendicular entry. The regenerated assets passed the reopened review.
 | Database reader experience | Focused documentation gate | Pass: all 35 tables, all 46 foreign keys, all 6 intentional correlations, links, navigation, and publication contracts verified |
 | Database reader experience | Task 5E checkpoint review | Approved after GitHub desktop/mobile review; proceed to transitional manifest replacement |
 | Database reader experience | Task 5F effective-schema verification | Pass: unit and complete PostgreSQL integration profiles verify documentation from the Flyway-migrated PostgreSQL catalogue |
+| Database reader experience | Task 5F checkpoint review | Approved after repository, PR, Jira, Confluence, local verification, and GitHub CI review; proceed to complete current-reality audit |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.
