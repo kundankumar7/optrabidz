@@ -7,7 +7,7 @@ desktop, and mobile—not merely a valid image file.
 ## Publication model
 
 Each published diagram is declared in
-[`diagram-publication/inventory.json`](diagram-publication/inventory.json).
+[`diagram-publication/diagram-publications.json`](diagram-publication/diagram-publications.json).
 
 | Asset | Role |
 |---|---|
@@ -15,8 +15,8 @@ Each published diagram is declared in
 | SVG | GitHub embed. It must be scalable, accessible, opaque, and self-contained. |
 | PNG | Jira and offline companion. It must be opaque, at least 2000×600 pixels, and generated from the declared SVG. |
 
-The renderer uses Mermaid CLI 11.16.0 and Sharp 0.35.4. Both versions are
-pinned in `package-lock.json` so local and CI output is reproducible.
+Renderer versions are owned by `package.json` and `package-lock.json`; the
+publication catalogue contains only diagram ownership and output paths.
 
 GitHub Mobile can retain a previously opened raster preview by repository path.
 When a published PNG has already reached reviewers and its visual content is
@@ -32,7 +32,7 @@ Install the pinned tooling after cloning or changing the lock file:
 npm ci
 ```
 
-Render every inventory entry:
+Render every publication entry:
 
 ```powershell
 npm run diagrams:render
@@ -59,8 +59,8 @@ companion.
 
 A publication entry passes only when:
 
-- its owner document embeds the declared SVG;
-- source, SVG, and required PNG paths exist inside the repository;
+- its primary owner and every declared consumer embed the same SVG;
+- source, SVG, and PNG paths exist inside the repository;
 - the SVG has a `viewBox`, non-empty `title` and `desc`, and an explicit opaque
   background;
 - the SVG contains no `script`, `foreignObject`, external reference, or CSS
@@ -99,10 +99,11 @@ split the diagram.
 
 1. Place the editable source beside its owning document or in that document's
    `assets/` directory.
-2. Add a unique inventory entry with its owner, source type, SVG, PNG, and
-   remediation classification.
-3. Embed the SVG in the owner document and add a clearly labelled PNG link.
-4. Render the selected inventory entry.
+2. Add a unique publication entry with its source type, SVG, PNG, primary
+   owner, and any consumers.
+3. Embed the same SVG in the primary owner and every consumer; add a clearly
+   labelled PNG link in the primary owner.
+4. Render the selected publication entry.
 5. Run the structural checks and complete the desktop/mobile review.
 6. Record the result in the applicable work-item audit or review evidence.
 

@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 2,
+  "diagrams": [
+    {
+      "id": "architecture-system-context",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/architecture/assets/system-context.svg",
+      "svg": "docs/architecture/assets/system-context.svg",
+      "png": "docs/architecture/assets/system-context.png",
+      "primaryOwner": "docs/architecture/system-context.md",
+      "consumers": ["docs/architecture/README.md"]
+    },
+    {
+      "id": "architecture-runtime-topology",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/architecture/assets/runtime-topology.svg",
+      "svg": "docs/architecture/assets/runtime-topology.svg",
+      "png": "docs/architecture/assets/runtime-topology.png",
+      "primaryOwner": "docs/architecture/runtime.md",
+      "consumers": []
+    },
+    {
+      "id": "architecture-module-capability-map",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/architecture/assets/complete-module-map.svg",
+      "svg": "docs/architecture/assets/complete-module-map.svg",
+      "png": "docs/architecture/assets/complete-module-map.png",
+      "primaryOwner": "docs/architecture/modules/README.md",
+      "consumers": ["docs/architecture/capabilities/README.md"]
+    },
+    {
+      "id": "architecture-module-dependencies",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/architecture/assets/module-dependencies.svg",
+      "svg": "docs/architecture/assets/module-dependencies.svg",
+      "png": "docs/architecture/assets/module-dependencies.png",
+      "primaryOwner": "docs/architecture/module-dependencies.md",
+      "consumers": []
+    },
+    {
+      "id": "architecture-identity-access",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/architecture/capabilities/assets/identity-access.svg",
+      "svg": "docs/architecture/capabilities/assets/identity-access.svg",
+      "png": "docs/architecture/capabilities/assets/identity-access.png",
+      "primaryOwner": "docs/architecture/capabilities/identity-access.md",
+      "consumers": []
+    },
+    {
+      "id": "architecture-marketplace",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/architecture/capabilities/assets/marketplace.svg",
+      "svg": "docs/architecture/capabilities/assets/marketplace.svg",
+      "png": "docs/architecture/capabilities/assets/marketplace.png",
+      "primaryOwner": "docs/architecture/capabilities/marketplace.md",
+      "consumers": []
+    },
+    {
+      "id": "architecture-finance-payments",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/architecture/capabilities/assets/finance-payments.svg",
+      "svg": "docs/architecture/capabilities/assets/finance-payments.svg",
+      "png": "docs/architecture/capabilities/assets/finance-payments.png",
+      "primaryOwner": "docs/architecture/capabilities/finance-payments.md",
+      "consumers": []
+    },
+    {
+      "id": "architecture-request-security",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/architecture/flows/assets/request-security.svg",
+      "svg": "docs/architecture/flows/assets/request-security.svg",
+      "png": "docs/architecture/flows/assets/request-security.png",
+      "primaryOwner": "docs/architecture/flows/request-security.md",
+      "consumers": []
+    },
+    {
+      "id": "architecture-event-delivery",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/architecture/flows/assets/event-delivery.svg",
+      "svg": "docs/architecture/flows/assets/event-delivery.svg",
+      "png": "docs/architecture/flows/assets/event-delivery.png",
+      "primaryOwner": "docs/architecture/flows/event-delivery.md",
+      "consumers": ["docs/architecture/capabilities/platform-support.md"]
+    },
+    {
+      "id": "database-account-access-security",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/database/assets/identity-access-schema.svg",
+      "svg": "docs/database/assets/identity-access-schema.svg",
+      "png": "docs/database/assets/identity-access-schema.png",
+      "primaryOwner": "docs/database/er-diagram.md",
+      "consumers": []
+    },
+    {
+      "id": "database-participant-profile",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/database/assets/participant-profile-schema.svg",
+      "svg": "docs/database/assets/participant-profile-schema.svg",
+      "png": "docs/database/assets/participant-profile-schema.png",
+      "primaryOwner": "docs/database/er-diagram.md",
+      "consumers": []
+    },
+    {
+      "id": "database-marketplace-listing-bidding",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/database/assets/marketplace-bidding-schema.svg",
+      "svg": "docs/database/assets/marketplace-bidding-schema.svg",
+      "png": "docs/database/assets/marketplace-bidding-schema.png",
+      "primaryOwner": "docs/database/er-diagram.md",
+      "consumers": []
+    },
+    {
+      "id": "database-agreement-acceptance-terms",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/database/assets/agreement-acceptance-schema.svg",
+      "svg": "docs/database/assets/agreement-acceptance-schema.svg",
+      "png": "docs/database/assets/agreement-acceptance-schema.png",
+      "primaryOwner": "docs/database/er-diagram.md",
+      "consumers": []
+    },
+    {
+      "id": "database-settlement-context",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/database/assets/settlement-schema.svg",
+      "svg": "docs/database/assets/settlement-schema.svg",
+      "png": "docs/database/assets/settlement-schema.png",
+      "primaryOwner": "docs/database/er-diagram.md",
+      "consumers": []
+    },
+    {
+      "id": "database-repayment-schedule",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/database/assets/repayment-schedule-schema.svg",
+      "svg": "docs/database/assets/repayment-schedule-schema.svg",
+      "png": "docs/database/assets/repayment-schedule-schema.png",
+      "primaryOwner": "docs/database/er-diagram.md",
+      "consumers": []
+    },
+    {
+      "id": "database-payment-intent",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/database/assets/payment-intent-schema.svg",
+      "svg": "docs/database/assets/payment-intent-schema.svg",
+      "png": "docs/database/assets/payment-intent-schema.png",
+      "primaryOwner": "docs/database/er-diagram.md",
+      "consumers": []
+    },
+    {
+      "id": "database-payment-attempt-provider",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/database/assets/payment-processing-schema.svg",
+      "svg": "docs/database/assets/payment-processing-schema.svg",
+      "png": "docs/database/assets/payment-processing-schema.png",
+      "primaryOwner": "docs/database/er-diagram.md",
+      "consumers": []
+    },
+    {
+      "id": "database-payment-webhook",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/database/assets/payment-webhook-schema.svg",
+      "svg": "docs/database/assets/payment-webhook-schema.svg",
+      "png": "docs/database/assets/payment-webhook-schema.png",
+      "primaryOwner": "docs/database/er-diagram.md",
+      "consumers": []
+    },
+    {
+      "id": "database-notification-delivery-subscription",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/database/assets/notification-delivery-schema.svg",
+      "svg": "docs/database/assets/notification-delivery-schema.svg",
+      "png": "docs/database/assets/notification-delivery-schema.png",
+      "primaryOwner": "docs/database/er-diagram.md",
+      "consumers": []
+    },
+    {
+      "id": "database-outbox-audit-correlation",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/database/assets/outbox-audit-schema.svg",
+      "svg": "docs/database/assets/outbox-audit-schema.svg",
+      "png": "docs/database/assets/outbox-audit-schema.png",
+      "primaryOwner": "docs/database/er-diagram.md",
+      "consumers": []
+    },
+    {
+      "id": "api-public-error-contract-flow",
+      "sourceType": "CURATED_SVG",
+      "source": "docs/api/assets/public-error-contract-flow.svg",
+      "svg": "docs/api/assets/public-error-contract-flow.svg",
+      "png": "docs/api/assets/public-error-contract-flow.png",
+      "primaryOwner": "docs/api/errors.md",
+      "consumers": ["docs/architecture/flows/error-disclosure.md"]
+    }
+  ]
+}

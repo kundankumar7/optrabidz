@@ -2,6 +2,8 @@
 
 [Back to architecture](../README.md)
 
+![Runtime failures are normalized into safe public Problem Details while diagnostics remain internal](../../api/assets/public-error-contract-flow.svg)
+
 ## Runtime mapping
 
 1. Validation, security, application, or unexpected failures reach their

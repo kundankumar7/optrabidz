@@ -5,6 +5,10 @@
 This capability coordinates eligibility and reference classifications with the
 listing, bidding, and agreement lifecycle.
 
+![Classification and governance rules guard the marketplace sequence from listing discovery through bidding and agreement creation](assets/marketplace.svg)
+
+[High-resolution PNG fallback](assets/marketplace.png)
+
 | Module | Owns |
 |---|---|
 | [`classification`](../modules/classification.md) | Startup classifications and investor preferences |

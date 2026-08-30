@@ -815,7 +815,7 @@ reviewable before architecture assets change.
   gaps separately.
 - SVG is embedded on GitHub; its PNG is derived from the same SVG.
 
-- [ ] **Step 1: Write failing publication-catalogue tests**
+- [x] **Step 1: Write failing publication-catalogue tests**
 
 Update validator fixtures to require the version-two neutral contract:
 
@@ -851,7 +851,7 @@ private static final Set<String> REQUIRED_ARCHITECTURE_FIGURES = Set.of(
         "architecture-event-delivery");
 ```
 
-- [ ] **Step 2: Run the focused tests and confirm the legacy contract fails**
+- [x] **Step 2: Run the focused tests and confirm the legacy contract fails**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=DiagramPublicationValidatorTest,ArchitectureDocumentationCoverageTest" test
@@ -859,7 +859,7 @@ private static final Set<String> REQUIRED_ARCHITECTURE_FIGURES = Set.of(
 
 Expected: FAIL because the current catalogue uses the legacy schema.
 
-- [ ] **Step 3: Record the diagram disposition before drawing**
+- [x] **Step 3: Record the diagram disposition before drawing**
 
 Use `module-catalog.json`, production imports, Spring configuration,
 controllers, repositories, outbox processors, security adapters, and matching
@@ -871,7 +871,7 @@ For every candidate, record its reader question, evidence, primary owner,
 consumers, and `KEEP`, `REDESIGN`, `REUSE`, or `REMOVE` decision. A page does
 not receive a diagram merely because it exists.
 
-- [ ] **Step 4: Create and publish the system-wide and capability figures**
+- [x] **Step 4: Create and publish the system-wide and capability figures**
 
 Create the nine justified core figures: system context, runtime topology,
 complete module/capability map, module dependencies, identity/access,
@@ -899,7 +899,7 @@ npm run diagrams:check
 Review the 980-pixel and 390-pixel sheets before committing. Then confirm the
 published pages on GitHub desktop and GitHub Mobile and the named PNGs in Jira.
 
-- [ ] **Step 6: Commit the architecture checkpoint**
+- [x] **Step 6: Commit the architecture checkpoint**
 
 ```powershell
 git add docs/architecture scripts src/test/java/com/project/optrabidz/documentation

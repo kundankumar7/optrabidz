@@ -6,6 +6,10 @@ The catalogue mirrors the eleven top-level production packages. Capability
 grouping helps navigation but does not merge module ownership or hide current
 dependencies.
 
+![All eleven production modules grouped into four navigation capabilities while retaining individual ownership](../assets/complete-module-map.svg)
+
+[High-resolution PNG fallback](../assets/complete-module-map.png)
+
 | Module | Primary responsibility | Capability |
 |---|---|---|
 | [`audit`](audit.md) | Durable business and security audit records | [Platform support](../capabilities/platform-support.md) |

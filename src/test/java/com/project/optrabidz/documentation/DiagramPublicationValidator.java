@@ -22,8 +22,12 @@ import org.w3c.dom.NodeList;
 
 final class DiagramPublicationValidator {
 
-    private static final Path INVENTORY = Path.of(
-            "docs", "architecture", "diagram-publication", "inventory.json");
+    private static final Path CATALOG = Path.of(
+            "docs", "architecture", "diagram-publication",
+            "diagram-publications.json");
+    private static final Path MERMAID_CONFIG = Path.of(
+            "docs", "architecture", "diagram-publication",
+            "mermaid-config.json");
     private static final int MINIMUM_PNG_WIDTH = 2000;
     private static final int MINIMUM_PNG_HEIGHT = 600;
     private static final Pattern MARKDOWN_IMAGE = Pattern.compile(
@@ -37,11 +41,11 @@ final class DiagramPublicationValidator {
     static List<Violation> findViolations(Path repositoryRoot) throws Exception {
         Path root = repositoryRoot.toAbsolutePath().normalize();
         List<Violation> violations = new ArrayList<>();
-        Path inventoryPath = root.resolve(INVENTORY).normalize();
+        Path inventoryPath = root.resolve(CATALOG).normalize();
 
         if (!Files.isRegularFile(inventoryPath)) {
-            return List.of(new Violation("inventory", normalize(INVENTORY),
-                    "diagram inventory does not exist"));
+            return List.of(new Violation("catalogue", normalize(CATALOG),
+                    "diagram publication catalogue does not exist"));
         }
 
         Inventory inventory;
@@ -49,20 +53,20 @@ final class DiagramPublicationValidator {
             inventory = new ObjectMapper().readValue(inventoryPath.toFile(),
                     Inventory.class);
         } catch (IOException exception) {
-            return List.of(new Violation("inventory", normalize(INVENTORY),
-                    "diagram inventory is invalid JSON"));
+            return List.of(new Violation("catalogue", normalize(CATALOG),
+                    "diagram publication catalogue is invalid JSON"));
         }
 
         validateInventoryHeader(root, inventory, violations);
         Set<String> ids = new HashSet<>();
-        Set<Path> githubAssets = new HashSet<>();
+        Set<Path> canonicalAssets = new HashSet<>();
 
         if (inventory.diagrams() == null) {
-            violations.add(new Violation("inventory", normalize(INVENTORY),
-                    "diagram inventory has no diagrams"));
+            violations.add(new Violation("catalogue", normalize(CATALOG),
+                    "diagram publication catalogue has no diagrams"));
         } else {
             for (DiagramEntry entry : inventory.diagrams()) {
-                validateEntry(root, entry, ids, githubAssets, violations);
+                validateEntry(root, entry, ids, canonicalAssets, violations);
             }
         }
 
@@ -77,38 +81,31 @@ final class DiagramPublicationValidator {
 
     private static void validateInventoryHeader(Path root, Inventory inventory,
             List<Violation> violations) {
-        if (inventory.schemaVersion() != 1) {
-            violations.add(new Violation("inventory", normalize(INVENTORY),
-                    "unsupported diagram inventory schema version"));
+        if (inventory.schemaVersion() != 2) {
+            violations.add(new Violation("catalogue", normalize(CATALOG),
+                    "unsupported diagram publication schema version"));
         }
-        if (inventory.renderer() == null) {
-            violations.add(new Violation("inventory", normalize(INVENTORY),
-                    "diagram renderer definition is missing"));
-            return;
-        }
-        Path config = resolve(root, inventory.renderer().config(), "inventory",
-                violations);
-        if (config != null && !Files.isRegularFile(config)) {
-            violations.add(new Violation("inventory", relative(root, config),
+        Path config = root.resolve(MERMAID_CONFIG).normalize();
+        if (!Files.isRegularFile(config)) {
+            violations.add(new Violation("catalogue", relative(root, config),
                     "renderer configuration does not exist"));
         }
     }
 
     private static void validateEntry(Path root, DiagramEntry entry,
-            Set<String> ids, Set<Path> githubAssets,
+            Set<String> ids, Set<Path> canonicalAssets,
             List<Violation> violations) {
         String id = entry.id() == null || entry.id().isBlank()
                 ? "unknown" : entry.id();
         if (!ids.add(id)) {
-            violations.add(new Violation(id, normalize(INVENTORY),
+            violations.add(new Violation(id, normalize(CATALOG),
                     "diagram id is duplicated"));
         }
 
-        Path owner = resolve(root, entry.owner(), id, violations);
+        Path owner = resolve(root, entry.primaryOwner(), id, violations);
         Path source = resolve(root, entry.source(), id, violations);
-        Path svg = resolve(root, entry.githubSvg(), id, violations);
-        Path png = entry.jiraPng() == null ? null
-                : resolve(root, entry.jiraPng(), id, violations);
+        Path svg = resolve(root, entry.svg(), id, violations);
+        Path png = resolve(root, entry.png(), id, violations);
 
         validateSourceContract(root, id, entry, source, svg, violations);
 
@@ -116,24 +113,32 @@ final class DiagramPublicationValidator {
         requireFile(root, id, source, "editable source does not exist", violations);
         requireFile(root, id, svg, "declared SVG does not exist", violations);
 
-        if (svg != null && !githubAssets.add(svg)) {
+        if (svg != null && !canonicalAssets.add(svg)) {
             violations.add(new Violation(id, relative(root, svg),
-                    "GitHub SVG is assigned to more than one diagram"));
+                    "canonical SVG is assigned to more than one diagram"));
         }
         if (owner != null && svg != null && Files.isRegularFile(owner)
                 && Files.isRegularFile(svg)) {
-            validateOwnerEmbed(root, id, owner, svg, violations);
+            validateDocumentEmbed(root, id, owner, svg,
+                    "primary owner does not embed the declared SVG", violations);
+        }
+        if (entry.consumers() != null && svg != null && Files.isRegularFile(svg)) {
+            for (String consumerPath : entry.consumers()) {
+                Path consumer = resolve(root, consumerPath, id, violations);
+                requireFile(root, id, consumer,
+                        "consumer document does not exist", violations);
+                if (consumer != null && Files.isRegularFile(consumer)) {
+                    validateDocumentEmbed(root, id, consumer, svg,
+                            "consumer does not embed the declared SVG", violations);
+                }
+            }
         }
         if (svg != null && Files.isRegularFile(svg)) {
             validateSvg(root, id, svg, violations);
         }
 
-        if (entry.jiraPngRequired() && png == null) {
-            violations.add(new Violation(id, normalize(INVENTORY),
-                    "required Jira PNG is not declared"));
-        }
         if (png != null) {
-            requireFile(root, id, png, "declared Jira PNG does not exist",
+            requireFile(root, id, png, "declared PNG does not exist",
                     violations);
             if (Files.isRegularFile(png)) {
                 validatePng(root, id, png, violations);
@@ -148,7 +153,7 @@ final class DiagramPublicationValidator {
         try {
             sourceType = SourceType.valueOf(entry.sourceType());
         } catch (RuntimeException exception) {
-            violations.add(new Violation(id, normalize(INVENTORY),
+            violations.add(new Violation(id, normalize(CATALOG),
                     "diagram source type is unsupported"));
             return;
         }
@@ -166,8 +171,8 @@ final class DiagramPublicationValidator {
         }
     }
 
-    private static void validateOwnerEmbed(Path root, String id, Path owner,
-            Path svg, List<Violation> violations) {
+    private static void validateDocumentEmbed(Path root, String id, Path owner,
+            Path svg, String reason, List<Violation> violations) {
         try {
             String markdown = Files.readString(owner);
             List<String> targets = new ArrayList<>();
@@ -179,8 +184,7 @@ final class DiagramPublicationValidator {
                     .map(target -> owner.getParent().resolve(target).normalize())
                     .anyMatch(svg::equals);
             if (!embedded) {
-                violations.add(new Violation(id, relative(root, owner),
-                        "owner document does not embed the declared SVG"));
+                violations.add(new Violation(id, relative(root, owner), reason));
             }
         } catch (IOException exception) {
             violations.add(new Violation(id, relative(root, owner),
@@ -377,7 +381,7 @@ final class DiagramPublicationValidator {
             BufferedImage image = ImageIO.read(png.toFile());
             if (image == null) {
                 violations.add(new Violation(id, relative(root, png),
-                        "declared Jira PNG is not a readable PNG"));
+                        "declared PNG is not a readable PNG"));
                 return;
             }
             if (image.getWidth() < MINIMUM_PNG_WIDTH) {
@@ -394,7 +398,7 @@ final class DiagramPublicationValidator {
             }
         } catch (IOException exception) {
             violations.add(new Violation(id, relative(root, png),
-                    "declared Jira PNG could not be read"));
+                    "declared PNG could not be read"));
         }
     }
 
@@ -444,8 +448,8 @@ final class DiagramPublicationValidator {
     private static Path resolve(Path root, String rawPath, String id,
             List<Violation> violations) {
         if (rawPath == null || rawPath.isBlank()) {
-            violations.add(new Violation(id, normalize(INVENTORY),
-                    "required inventory path is missing"));
+            violations.add(new Violation(id, normalize(CATALOG),
+                    "required catalogue path is missing"));
             return null;
         }
         Path resolved = root.resolve(rawPath).normalize();
@@ -484,11 +488,7 @@ final class DiagramPublicationValidator {
         return path.toString().replace('\\', '/');
     }
 
-    record Inventory(int schemaVersion, Renderer renderer,
-                     List<DiagramEntry> diagrams) {
-    }
-
-    record Renderer(String packageName, String version, String config) {
+    record Inventory(int schemaVersion, List<DiagramEntry> diagrams) {
     }
 
     enum SourceType {
@@ -496,9 +496,9 @@ final class DiagramPublicationValidator {
         CURATED_SVG
     }
 
-    record DiagramEntry(String id, String owner, String source,
-                        String sourceType, String githubSvg, String jiraPng,
-                        boolean jiraPngRequired, String remediation) {
+    record DiagramEntry(String id, String sourceType, String source,
+                        String svg, String png, String primaryOwner,
+                        List<String> consumers) {
     }
 
     record Violation(String diagramId, String path, String reason) {

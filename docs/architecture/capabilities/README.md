@@ -5,6 +5,8 @@
 Capabilities group related modules for navigation. They do not change the
 current modular-monolith deployment or transfer ownership between modules.
 
+![All eleven production modules grouped into four navigation capabilities while retaining individual ownership](../assets/complete-module-map.svg)
+
 | Capability | Modules | Read when changing |
 |---|---|---|
 | [Identity and access](identity-access.md) | `security`, `identity`, `participation` | Authentication, accounts, roles, sessions, or participant profiles |

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="960" viewBox="0 0 720 960" role="img" aria-labelledby="title desc">
+  <title id="title">OptraBidz system context</title>
+  <desc id="desc">People and API clients enter one Spring Boot modular monolith through session security, while signed payment callbacks use a separate boundary. PostgreSQL stores all durable state.</desc>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#334155"/></marker><style>
+    .bg{fill:#fff}.box{fill:#eff6ff;stroke:#2563eb;stroke-width:2}.outside{fill:#f8fafc;stroke:#64748b;stroke-width:2}.scope{fill:none;stroke:#94a3b8;stroke-width:2;stroke-dasharray:8 7}.t{font:700 30px "Segoe UI",Arial;fill:#0f172a}.h{font:700 21px "Segoe UI",Arial;fill:#0f172a}.b{font:400 18px "Segoe UI",Arial;fill:#334155}.s{font:600 15px "Segoe UI",Arial;fill:#475569}.w{fill:none;stroke:#334155;stroke-width:2.5;marker-end:url(#a)}
+  </style></defs>
+  <rect class="bg" width="720" height="960"/><text class="t" x="360" y="48" text-anchor="middle">System context</text><text class="s" x="360" y="76" text-anchor="middle">Implemented deployment boundary</text>
+  <rect class="outside" x="70" y="105" width="580" height="116" rx="12"/><text class="h" x="360" y="140" text-anchor="middle">People and API clients</text><text class="b" x="360" y="174" text-anchor="middle">Visitors · Investors · Startups · Administrators</text><text class="b" x="360" y="202" text-anchor="middle">Browser · API client · Swagger UI</text>
+  <path class="w" d="M360 221V270"/><text class="s" x="375" y="255">HTTPS</text>
+  <rect class="scope" x="48" y="270" width="624" height="410" rx="18"/><text class="s" x="70" y="299">OPTRABIDZ DEPLOYMENT</text>
+  <rect class="box" x="65" y="325" width="350" height="100" rx="12"/><text class="h" x="240" y="364" text-anchor="middle">User HTTP boundary</text><text class="b" x="240" y="397" text-anchor="middle">Sessions · CSRF · route policy</text>
+  <rect class="box" x="445" y="325" width="210" height="100" rx="12"/><text class="h" x="550" y="356" text-anchor="middle">Webhook boundary</text><text class="b" x="550" y="386" text-anchor="middle">HMAC · timestamp</text><text class="b" x="550" y="412" text-anchor="middle">replay checks</text>
+  <path class="w" d="M240 425V452H300V472"/><path class="w" d="M550 425V452H470V472"/>
+  <rect class="box" x="105" y="472" width="510" height="126" rx="12"/><text class="h" x="360" y="510" text-anchor="middle">Spring Boot modular monolith</text><text class="b" x="360" y="544" text-anchor="middle">11 modules · one process · scheduled workers</text><text class="b" x="360" y="574" text-anchor="middle">Business rules and adapter ports</text>
+  <path class="w" d="M360 598V635"/>
+  <rect class="box" x="105" y="635" width="510" height="92" rx="12"/><text class="h" x="360" y="674" text-anchor="middle">PostgreSQL</text><text class="b" x="360" y="704" text-anchor="middle">Business state · sessions · outbox · audit</text>
+  <rect class="outside" x="70" y="790" width="250" height="104" rx="12"/><text class="h" x="195" y="828" text-anchor="middle">Delivery channels</text><text class="b" x="195" y="860" text-anchor="middle">In-app / sandbox</text>
+  <rect class="outside" x="400" y="790" width="250" height="104" rx="12"/><text class="h" x="525" y="828" text-anchor="middle">Payment provider</text><text class="b" x="525" y="860" text-anchor="middle">Local / sandbox</text>
+  <path class="w" d="M525 790V750H690V375H655"/><text class="s" x="630" y="740" text-anchor="end">signed callback</text><path class="w" d="M250 727V750H195V790"/><text class="s" x="80" y="740">post-commit</text>
+  <text class="s" x="360" y="935" text-anchor="middle">Not present: Kafka · Redis · JWT/OAuth2 · real-money gateway</text>
+</svg>

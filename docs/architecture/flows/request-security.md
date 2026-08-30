@@ -2,6 +2,10 @@
 
 [Back to architecture](../README.md)
 
+![Spring Security validates route policy and a server-side session before the controller adapts an authenticated request for the owning service](assets/request-security.svg)
+
+[High-resolution PNG fallback](assets/request-security.png)
+
 ## Session-authenticated request
 
 1. `SecurityConfig` classifies the route and applies public, authenticated, or

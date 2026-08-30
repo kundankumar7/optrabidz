@@ -6,6 +6,10 @@ One `OptrabidzApplication` process hosts HTTP adapters, application services,
 domain rules, JPA adapters, and scheduled workers. The runtime is a modular
 monolith; modules are package boundaries, not independently deployed services.
 
+![One Spring Boot process contains HTTP adapters, application services, persistence adapters, and scheduled workers connected to PostgreSQL](assets/runtime-topology.svg)
+
+[High-resolution PNG fallback](assets/runtime-topology.png)
+
 ## Startup sequence
 
 1. Spring loads the selected configuration profile.

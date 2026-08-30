@@ -6,6 +6,10 @@ This is the current production-import graph derived from Java source. It is
 descriptive, not an assertion that every dependency is desirable. A dependency
 means at least one class imports a type from the named top-level module.
 
+![Each production module paired with the other top-level modules imported by its Java source](assets/module-dependencies.svg)
+
+[High-resolution PNG fallback](assets/module-dependencies.png)
+
 | Module | Direct dependencies |
 |---|---|
 | `audit` | `common` |

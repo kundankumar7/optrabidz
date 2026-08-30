@@ -16,9 +16,9 @@ view that matches the question you are answering:
 | How do committed events reach audit and notification processing? | [Event-delivery flow](flows/event-delivery.md) |
 | How does an internal failure become a safe public response? | [Error-disclosure flow](flows/error-disclosure.md) |
 
-![OptraBidz clients cross the HTTP and security boundary into a modular monolith that stores state in PostgreSQL and dispatches audit and notification work through an outbox](assets/optrabidz-system-overview.svg)
+![People and API clients enter the OptraBidz modular monolith through session security while signed provider callbacks use a separate boundary](assets/system-context.svg)
 
-[High-resolution PNG fallback](assets/optrabidz-system-overview.png)
+[High-resolution PNG fallback](assets/system-context.png)
 
 The synchronous request path ends at committed application state. Audit and
 notification side effects begin from committed outbox records, which prevents a

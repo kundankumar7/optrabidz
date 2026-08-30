@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class ArchitectureDocumentationCoverageTest {
@@ -27,6 +28,16 @@ class ArchitectureDocumentationCoverageTest {
             "marketplace",
             "finance-payments",
             "platform-support");
+    private static final Set<String> REQUIRED_ARCHITECTURE_FIGURES = Set.of(
+            "architecture-system-context",
+            "architecture-runtime-topology",
+            "architecture-module-capability-map",
+            "architecture-module-dependencies",
+            "architecture-identity-access",
+            "architecture-marketplace",
+            "architecture-finance-payments",
+            "architecture-request-security",
+            "architecture-event-delivery");
     private static final List<String> MODULE_SECTIONS = List.of(
             "Purpose",
             "Entry points",
@@ -74,6 +85,17 @@ class ArchitectureDocumentationCoverageTest {
                     .as("capability index must link %s", capability)
                     .contains("(" + capability + ".md)");
         }
+    }
+
+    @Test
+    void publicationCatalogueContainsTheApprovedArchitectureFigures() throws Exception {
+        JsonNode diagrams = new ObjectMapper().readTree(ARCHITECTURE_ROOT
+                .resolve("diagram-publication/diagram-publications.json").toFile())
+                .path("diagrams");
+        Set<String> ids = new java.util.TreeSet<>();
+        diagrams.forEach(diagram -> ids.add(diagram.path("id").asText()));
+
+        assertThat(ids).containsAll(REQUIRED_ARCHITECTURE_FIGURES);
     }
 
     @Test

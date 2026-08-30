@@ -2,6 +2,10 @@
 
 [Back to architecture](../README.md)
 
+![Business state and an outbox event commit together before scheduled audit and notification processing](assets/event-delivery.svg)
+
+[High-resolution PNG fallback](assets/event-delivery.png)
+
 ## Transaction boundary
 
 1. An application service accepts a state transition.

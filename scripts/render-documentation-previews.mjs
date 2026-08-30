@@ -11,7 +11,7 @@ const inventoryPath = path.resolve(
   'docs',
   'architecture',
   'diagram-publication',
-  'inventory.json',
+  'diagram-publications.json',
 );
 const requestedId = optionValue(process.argv.slice(2), '--id');
 const inventory = JSON.parse(await readFile(inventoryPath, 'utf8'));
@@ -24,7 +24,7 @@ if (requestedId && entries.length !== 1) {
 }
 
 for (const entry of entries) {
-  const svgPath = resolveRepositoryPath(entry.githubSvg);
+  const svgPath = resolveRepositoryPath(entry.svg);
   await access(svgPath, fsConstants.R_OK);
   const outputDirectory = resolveReviewPath(entry.id);
   await mkdir(outputDirectory, { recursive: true });

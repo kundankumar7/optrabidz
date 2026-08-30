@@ -11,25 +11,27 @@ const inventoryPath = path.join(
   'docs',
   'architecture',
   'diagram-publication',
-  'inventory.json',
+  'diagram-publications.json',
 );
 const packageJsonPath = path.join(repository, 'package.json');
+const configPath = path.join(
+  repository,
+  'docs',
+  'architecture',
+  'diagram-publication',
+  'mermaid-config.json',
+);
 const argumentsList = process.argv.slice(2);
 const checkOnly = argumentsList.includes('--check');
 const requestedId = optionValue(argumentsList, '--id');
 
 const inventory = JSON.parse(await readFile(inventoryPath, 'utf8'));
 const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'));
-const configPath = resolveRepositoryPath(inventory.renderer.config);
-
-if (inventory.schemaVersion !== 1) {
-  throw new Error(`Unsupported inventory schema: ${inventory.schemaVersion}`);
+if (inventory.schemaVersion !== 2) {
+  throw new Error(`Unsupported publication schema: ${inventory.schemaVersion}`);
 }
-if (packageJson.devDependencies?.[inventory.renderer.packageName]
-    !== inventory.renderer.version) {
-  throw new Error(
-    `Renderer version mismatch for ${inventory.renderer.packageName}`,
-  );
+if (!packageJson.devDependencies?.['@mermaid-js/mermaid-cli']) {
+  throw new Error('Mermaid CLI must be pinned in package.json');
 }
 
 const config = JSON.parse(await readFile(configPath, 'utf8'));
@@ -64,7 +66,7 @@ for (const entry of entries) {
 console.log(`Rendered ${entries.length} diagram publication entries.`);
 
 async function renderEntry(entry) {
-  const svgPath = resolveRepositoryPath(entry.githubSvg);
+  const svgPath = resolveRepositoryPath(entry.svg);
   const sourcePath = resolveRepositoryPath(entry.source);
 
   await mkdir(path.dirname(svgPath), { recursive: true });
@@ -98,15 +100,13 @@ async function renderEntry(entry) {
     await preserveNativeLabelSpacing(svgPath);
   }
 
-  if (entry.jiraPngRequired) {
-    const pngPath = resolveRepositoryPath(entry.jiraPng);
-    await mkdir(path.dirname(pngPath), { recursive: true });
-    await sharp(svgPath, { density: 192 })
-      .flatten({ background: '#FFFFFF' })
-      .resize({ width: 2400, withoutEnlargement: false })
-      .png()
-      .toFile(pngPath);
-  }
+  const pngPath = resolveRepositoryPath(entry.png);
+  await mkdir(path.dirname(pngPath), { recursive: true });
+  await sharp(svgPath, { density: 192 })
+    .flatten({ background: '#FFFFFF' })
+    .resize({ width: 2400, withoutEnlargement: false })
+    .png()
+    .toFile(pngPath);
 }
 
 async function preserveNativeLabelSpacing(svgPath) {
@@ -122,24 +122,27 @@ async function preserveNativeLabelSpacing(svgPath) {
 }
 
 async function validateEntryInputs(entry) {
-  if (!entry.id || !entry.owner || !entry.source || !entry.githubSvg) {
-    throw new Error('Every diagram requires id, owner, source, and githubSvg');
+  if (!entry.id || !entry.primaryOwner || !entry.source
+      || !entry.svg || !entry.png) {
+    throw new Error(
+      'Every diagram requires id, primaryOwner, source, svg, and png',
+    );
   }
   if (!['MERMAID_FILE', 'CURATED_SVG'].includes(entry.sourceType)) {
     throw new Error(`Unsupported source type for ${entry.id}`);
   }
-  if (entry.jiraPngRequired && !entry.jiraPng) {
-    throw new Error(`Required Jira PNG is missing for ${entry.id}`);
+  await access(resolveRepositoryPath(entry.primaryOwner), fsConstants.R_OK);
+  for (const consumer of entry.consumers ?? []) {
+    await access(resolveRepositoryPath(consumer), fsConstants.R_OK);
   }
-  await access(resolveRepositoryPath(entry.owner), fsConstants.R_OK);
   await access(resolveRepositoryPath(entry.source), fsConstants.R_OK);
   if (entry.sourceType === 'CURATED_SVG') {
-    if (entry.source !== entry.githubSvg) {
+    if (entry.source !== entry.svg) {
       throw new Error(
         `Curated SVG source must equal published SVG for ${entry.id}`,
       );
     }
-    await access(resolveRepositoryPath(entry.githubSvg), fsConstants.R_OK);
+    await access(resolveRepositoryPath(entry.svg), fsConstants.R_OK);
   }
 }
 

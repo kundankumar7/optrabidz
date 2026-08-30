@@ -5,6 +5,10 @@
 This capability separates authentication mechanics from account and
 participant ownership.
 
+![Spring Security authenticates a server-side session while identity and participation provide account, role, profile, and ownership facts](assets/identity-access.svg)
+
+[High-resolution PNG fallback](assets/identity-access.png)
+
 | Module | Owns |
 |---|---|
 | [`security`](../modules/security.md) | Credentials, server-side sessions, login attempts, CSRF, and route policy |

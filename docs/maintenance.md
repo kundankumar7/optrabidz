@@ -17,7 +17,7 @@ request.
 | Schema and persistence | `src/main/resources/db/migration/`, module `infrastructure/entity/` and `infrastructure/repository/` packages | Database guide, migrations, ER diagrams |
 | Events, audit, and delivery | `common/event/`, `common/outbox/`, `audit/`, `notification/` | Architecture, operations, outbox decision |
 | Payment and webhook behavior | `financial/`, financial integration tests | Security, operations, API error catalogue |
-| Diagram publication | `docs/architecture/diagram-publication/inventory.json`, diagram assets, render scripts | Owning guide and diagram publication guide |
+| Diagram publication | `docs/architecture/diagram-publication/diagram-publications.json`, diagram assets, render scripts | Owning guide and diagram publication guide |
 
 ## Update Rule
 

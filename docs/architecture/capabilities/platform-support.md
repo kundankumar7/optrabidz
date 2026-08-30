@@ -16,5 +16,7 @@ Committed domain events enter the transactional outbox before audit and
 notification processing. Documentation adapters assemble public contracts but
 do not own the business errors contributed by other modules.
 
+![Business state and an outbox event commit together before scheduled audit and notification processing](../flows/assets/event-delivery.svg)
+
 Read the [event-delivery flow](../flows/event-delivery.md) for the shared
 post-commit path.

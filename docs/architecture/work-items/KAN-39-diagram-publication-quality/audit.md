@@ -111,6 +111,22 @@ documentation adapter's broad catalogue composition, and the financial
 module's cross-capability dependencies instead of presenting an idealized
 architecture.
 
+## Architecture figure disposition
+
+| Reader question | Current evidence | Status | Owner | Decision |
+|---|---|---|---|---|
+| Who calls the system and where are its trust boundaries? | Spring MVC/security configuration, webhook adapters, PostgreSQL configuration | `IMPLEMENTED` | `architecture/system-context.md` | `REDESIGN` as a focused system-context view |
+| What runs inside one application instance? | `OptrabidzApplication`, Spring configuration, scheduled workers | `IMPLEMENTED` | `architecture/runtime.md` | `KEEP` as a dedicated runtime view |
+| Which module owns each capability? | `module-catalog.json`, eleven production packages | `IMPLEMENTED` | `architecture/modules/README.md` | `KEEP` as one complete module map |
+| Which source dependencies cross modules? | Production Java imports verified by `ArchitectureModuleCatalogTest` | `PARTIAL` | `architecture/module-dependencies.md` | `KEEP`; show current reverse coupling rather than an ideal graph |
+| Where do authentication and business authorization occur? | Security filters/configuration, identity and participant ports, boundary tests | `IMPLEMENTED` | `architecture/capabilities/identity-access.md` | `KEEP`; label JWT and OAuth2 as planned only |
+| How does a listing become an agreement? | Classification, marketplace, governance services and lifecycle tests | `IMPLEMENTED` | `architecture/capabilities/marketplace.md` | `KEEP` as a guarded lifecycle |
+| How do obligations reach provider callbacks? | Financial services, adapters, webhook and replay tests | `PARTIAL` | `architecture/capabilities/finance-payments.md` | `KEEP`; label real-money processing as absent |
+| How does a user request cross the security boundary? | Route policy, session/CSRF filters, controllers, application authorization | `IMPLEMENTED` | `architecture/flows/request-security.md` | `KEEP` as a responsibility sequence |
+| How are audit and notification effects delivered? | Transactional outbox, dispatchers, processors, retry tests | `PARTIAL` | `architecture/flows/event-delivery.md` | `KEEP`; no Kafka or external provider claim |
+| How are public errors disclosed? | Existing API Problem Details figure and catalogue tests | `IMPLEMENTED` | `api/errors.md` | `REUSE` in the architecture error flow |
+| Does platform support need a separate generic diagram? | Same outbox/delivery evidence as the event flow | `IMPLEMENTED` | `architecture/capabilities/platform-support.md` | `REUSE` event-delivery; reject a duplicate drawing |
+
 ## Stable diagram review
 
 Every entry was rendered from its declared canonical source. Desktop and phone
@@ -122,7 +138,15 @@ map; field detail remains lossless through the linked SVG.
 
 | Diagram | Repository truth reviewed | Desktop | Phone | Dark surround | Jira PNG |
 |---|---|---|---|---|---|
-| System overview | Runtime boundaries, modules, PostgreSQL, outbox, audit, notification adapters | Pass | Inline readable | Pass | 2400×3000 |
+| System context | Callers, user HTTP boundary, signed webhook boundary, modular monolith, PostgreSQL, and external adapters | Pass | Inline readable | Pass | 2400×3200 generated; remote review pending |
+| Runtime topology | One JVM, adapter layers, scheduled responsibilities, and PostgreSQL | Pass | Inline readable | Pass | 2400×3267 generated; remote review pending |
+| Module ownership map | All eleven modules grouped into four reader capabilities | Pass | Inline readable | Pass | 2400×3267 generated; remote review pending |
+| Current module dependencies | All source-derived direct imports, including reverse `common` coupling | Pass | Inline readable | Pass | 2400×2880 generated; remote review pending |
+| Identity and access | Security adapter, authenticated actor, identity/participation facts, and service authorization | Pass | Inline readable | Pass | 2400×3133 generated; remote review pending |
+| Marketplace lifecycle | Classification and governance guards through listing, discovery, bid, and agreement | Pass | Inline readable | Pass | 2400×3133 generated; remote review pending |
+| Finance and payments | Agreement obligations, intents, attempts, signed callbacks, and replay protection | Pass | Inline readable | Pass | 2400×3267 generated; remote review pending |
+| Request and security | Route policy, server-side session/CSRF, controller adaptation, service rules, and rejection | Pass | Inline readable | Pass | 2400×3467 generated; remote review pending |
+| Event delivery | Atomic outbox write, claim, audit/notification processors, and retryable delivery | Pass | Inline readable | Pass | 2400×3533 generated; remote review pending |
 | Account access and security | V1 account, role, credential, session, admin, and standalone `login_attempt` | Pass | Relationship map + SVG detail | Pass | 2400×1720 |
 | Participant profile | V1 account-owned profile, startup, investor, and detail-table FKs | Pass | Relationship map + SVG detail | Pass | 2400×1509 |
 | Marketplace listing and bidding | V1 listing, debt terms, bid, investor, and partial accepted-bid rule | Pass | Relationship map + SVG detail | Pass | 2400×1520 |
@@ -159,10 +183,10 @@ map; field detail remains lossless through the linked SVG.
 | Historical cleanup | 41 completed work-item Markdown records | Removed after their current guidance was distilled; only the three active KAN-39 records remain |
 | Historical cleanup | 57 historical diagram assets reviewed | 54 obsolete assets removed; the three-file public error-contract set migrated to `docs/api/assets/` |
 | Historical cleanup | Stable Markdown dependency scan | No stable page links to `work-items/`, removed Jira-key paths, Mermaid source files, or inline Mermaid blocks |
-| Historical cleanup | Diagram publication inventory | Reduced to 13 stable reader-facing diagrams with stable owners |
+| Historical cleanup | Diagram publication catalogue | Migrated to a neutral version-two owner/consumer contract |
 | Historical cleanup | Structure, link, publication, and catalogue tests | Pass |
 | Historical cleanup | `npm run diagrams:check` and `git diff --check` | Pass |
-| Stable diagram set | `npm run diagrams:render` and `npm run diagrams:preview` | 13 canonical SVGs, 13 generated 2400-pixel PNGs, and 39 untracked review previews produced |
+| Stable diagram set | `npm run diagrams:render` and `npm run diagrams:preview` | 21 canonical SVGs, 21 generated 2400-pixel PNGs, and 63 untracked review previews produced |
 | Stable diagram set | Eleven database relational views | Redesigned with the approved KAN-34 white-and-blue visual language, stronger type, restrained relationship labels, and new cache-safe asset paths |
 | Stable diagram set | Desktop, 390-pixel phone, and dark-surround inspection | Pass for all 13 entries; no clipping, collision, ambiguous routing, or transparent canvas |
 | Stable diagram set | Public error-contract architecture | Corrected catalogue generation and HTTP documentation exposure into separate responsibilities |
@@ -172,7 +196,7 @@ map; field detail remains lossless through the linked SVG.
 | Architecture coverage | Module owner pages | All 11 production modules document purpose, entry points, application/domain rules, persistence, events, dependencies, security/errors, verification, and known gaps |
 | Architecture coverage | `ArchitectureModuleCatalogTest` and `ArchitectureDocumentationCoverageTest` | Pass: source-derived module dependencies, minimal ownership catalogue, two reader routes, four capability pages, and all module owner sections agree |
 | Architecture coverage | Documentation, link, catalogue, OpenAPI, exposure, and diagram test selection | Pass against PostgreSQL Testcontainers; Flyway V1 applied and Hibernate validation completed |
-| Architecture coverage | `npm run diagrams:check` | Pass: 13 publication entries validated without rewriting assets |
+| Architecture coverage | Architecture publication set | Nine justified architecture figures plus the reused public-error figure; no generic platform-support duplicate |
 | Database information model | `schema-manifest.json` | 35 tables, 46 FKs with nullability/delete behavior, 25 unique constraints, 57 checks, 19 partial indexes, 12 triggers, and 6 explicit non-FK correlations |
 | Database information model | `DatabaseSchemaManifestTest` | Pass: manifest facts derived from and compared with Flyway V1 |
 | Database information model | Relational journey and question chooser | All 35 tables placed across six business stages; eleven focused relationship questions linked |
@@ -181,7 +205,7 @@ map; field detail remains lossless through the linked SVG.
 | Database information model | Exact relationship semantics | Every FK reference row now records constraint name, nullability, and `ON DELETE` behavior; all 6 intentional non-FK correlations are listed separately |
 | Database information model | `DatabaseRelationshipDocumentationTest` | Pass: focused references are checked directly against the machine-readable manifest |
 | Database surface verification | Focused database, manifest, navigation, publication, structure, and link test selection | Pass |
-| Database surface verification | `npm run diagrams:check` and `npm run diagrams:preview` | Pass: 13 publications validated; 980-pixel, 390-pixel, and dark-surround previews regenerated under `target/` |
+| Database surface verification | `npm run diagrams:check` and `npm run diagrams:preview` | Revalidation now runs through the neutral 21-entry publication catalogue |
 | Database surface verification | Eleven database views at 980 pixels, 390 pixels, and on a dark surrounding | Pass: opaque canvases, readable relationship maps, no clipping, collision, or ambiguous routing |
 | Database surface verification | GitHub desktop and 390-pixel mobile web | Pass: all 11 SVGs loaded at their intrinsic resolution; no raw Mermaid presentation |
 | Database surface verification | Jira named PNG viewer | Pass: the 2400×3000 architecture fixture opens without clipping; database PNGs use the same validated opaque 2400-pixel publication path |

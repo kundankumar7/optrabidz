@@ -30,7 +30,7 @@ documentation is disabled by default outside the development profile.
 
 ## Architecture
 
-[![OptraBidz system overview](docs/architecture/assets/optrabidz-system-overview.svg)](docs/architecture/README.md)
+[![OptraBidz system context](docs/architecture/assets/system-context.svg)](docs/architecture/README.md)
 
 OptraBidz runs as one deployable modular monolith. PostgreSQL stores durable
 state, Flyway owns schema changes, and a transactional outbox starts reliable
