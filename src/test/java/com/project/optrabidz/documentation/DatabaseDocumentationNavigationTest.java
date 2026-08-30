@@ -2,8 +2,6 @@ package com.project.optrabidz.documentation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -59,15 +57,4 @@ class DatabaseDocumentationNavigationTest {
         }
     }
 
-    @Test
-    void relationalJourneyAccountsForEveryManifestTable() throws Exception {
-        String journey = Files.readString(DATABASE_ROOT.resolve("relationship-journey.md"));
-        JsonNode tables = new ObjectMapper()
-                .readTree(DATABASE_ROOT.resolve("schema-manifest.json").toFile())
-                .path("tables");
-
-        tables.forEach(table -> assertThat(journey)
-                .as("relational journey must place table %s", table.asText())
-                .contains("`" + table.asText() + "`"));
-    }
 }

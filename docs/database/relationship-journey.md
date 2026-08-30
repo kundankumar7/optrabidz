@@ -111,8 +111,7 @@ Focused views: [notification delivery](views/notification-delivery.md) and
 
 ## Verification boundary
 
-`DatabaseSchemaManifestTest` derives tables, foreign keys, nullability, delete
-behavior, unique/check constraints, partial indexes, and triggers directly from
-Flyway V1. `DatabaseDocumentationNavigationTest` ensures this journey places all
-35 tables. `DatabaseDiagramCoverageTest` separately ensures the focused diagram
-sources represent every table.
+`DatabaseDocumentationContractIT` migrates PostgreSQL with Flyway and compares
+the effective catalogue directly with this journey, the focused relationship
+pages, and the schema reference. `DatabaseDocumentationNavigationTest` keeps the
+reader routes fast and independently verifiable without duplicating schema data.

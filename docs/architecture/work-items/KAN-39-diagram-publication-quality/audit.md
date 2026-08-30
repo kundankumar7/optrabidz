@@ -76,7 +76,7 @@ named production capability or documentation coverage is incomplete.
 | Session security | `IMPLEMENTED` | `security/infrastructure/config/SecurityConfig.java`; session filters; security HTTP tests | Server-side session, CSRF, matched route rules, security Problem Details, and current public listing reads documented |
 | JWT and OAuth2 | `PLANNED` | No corresponding dependency or production implementation | Described only as possible future adapters |
 | Flyway schema ownership | `IMPLEMENTED` | `db/migration/V1__baseline.sql`; database migration integration tests; JPA configuration | Flyway ownership and Hibernate validation verified |
-| ER diagram coverage | `IMPLEMENTED` | 35 V1 tables compared with 35 unique entities in `database/assets/er-diagram-source.md`; `DatabaseDiagramCoverageTest` | Eleven focused relational views use the approved KAN-34 visual language; `login_attempt` is shown as a standalone immutable security log without an invented foreign key |
+| ER diagram coverage | `IMPLEMENTED` | 35 Flyway-migrated PostgreSQL tables compared with the relational journey and focused database views; `DatabaseDocumentationContractIT` | Eleven focused relational views use the approved KAN-34 visual language; `login_attempt` is shown as a standalone immutable security log without an invented foreign key |
 | Outbox and audit | `IMPLEMENTED` | `common/event/`; `common/outbox/`; `audit/`; outbox and audit tests | Atomic outbox write, `SKIP LOCKED` dispatch, retry, audit persistence, request correlation, and masking verified |
 | Notifications | `PARTIAL` | `notification/`; dispatcher and API tests | In-app persistence, subscriptions, delivery attempts, retry, sandbox email, and sandbox push exist; no external provider or broker is claimed |
 | Payments and webhooks | `PARTIAL` | `financial/`; financial and webhook integration tests | Local/sandbox strategies, HMAC-style verification, bounded ingress, and database replay claims exist; no real-money provider is claimed |
@@ -183,7 +183,7 @@ and perpendicular entry. The regenerated assets passed the reopened review.
 | Stable hierarchy | Generated public error catalogue | Pass: moved under `docs/api` and snapshot parity verified |
 | Stable hierarchy | Structure and repository link checks | Pass |
 | Truth baseline | Build, profiles, modules, HTTP, security, errors, schema, delivery, integrations, and tests compared with repository sources | 16 topics classified; six stable-guide corrections identified |
-| Truth baseline | V1 table inventory compared with ER source | Initially 34 diagram entities; Task 5 now covers all 35 and enforces parity in `DatabaseDiagramCoverageTest` |
+| Truth baseline | Flyway-migrated PostgreSQL table inventory compared with published database guidance | Initially 34 diagram entities; Task 5 now covers all 35 and enforces parity in `DatabaseDocumentationContractIT` |
 | Truth baseline | Future-infrastructure scan | No production Kafka, Redis, JWT, OAuth2, or `@Aspect` implementation |
 | Historical cleanup | 41 completed work-item Markdown records | Removed after their current guidance was distilled; only the three active KAN-39 records remain |
 | Historical cleanup | 57 historical diagram assets reviewed | 54 obsolete assets removed; the three-file public error-contract set migrated to `docs/api/assets/` |
@@ -195,21 +195,21 @@ and perpendicular entry. The regenerated assets passed the reopened review.
 | Stable diagram set | Eleven database relational views | Redesigned with the approved KAN-34 white-and-blue visual language, stronger type, restrained relationship labels, and new cache-safe asset paths |
 | Stable diagram set | Desktop, 390-pixel phone, and dark-surround inspection | Pass for all 13 entries; no clipping, collision, ambiguous routing, or transparent canvas |
 | Stable diagram set | Public error-contract architecture | Corrected catalogue generation and HTTP documentation exposure into separate responsibilities |
-| Stable diagram set | `DatabaseDiagramCoverageTest` | Pass: all 35 Flyway V1 tables represented |
+| Stable diagram set | `DatabaseDocumentationContractIT` | Pass: all 35 Flyway-migrated PostgreSQL tables represented |
 | Stable diagram set | Inventory, publication, structure, and link test gate | Pass |
 | Architecture coverage | Layered entry points | System context, runtime, module catalogue, current dependency graph, request security, event delivery, and error disclosure published as separate reviewer questions |
 | Architecture coverage | Module owner pages | All 11 production modules document purpose, entry points, application/domain rules, persistence, events, dependencies, security/errors, verification, and known gaps |
 | Architecture coverage | `ArchitectureModuleCatalogTest` and `ArchitectureDocumentationCoverageTest` | Pass: source-derived module dependencies, minimal ownership catalogue, two reader routes, four capability pages, and all module owner sections agree |
 | Architecture coverage | Documentation, link, catalogue, OpenAPI, exposure, and diagram test selection | Pass against PostgreSQL Testcontainers; Flyway V1 applied and Hibernate validation completed |
 | Architecture coverage | Architecture publication set | Nine justified architecture figures plus the reused public-error figure; no generic platform-support duplicate |
-| Database information model | `schema-manifest.json` | 35 tables, 46 FKs with nullability/delete behavior, 25 unique constraints, 57 checks, 19 partial indexes, 12 triggers, and 6 explicit non-FK correlations |
-| Database information model | `DatabaseSchemaManifestTest` | Pass: manifest facts derived from and compared with Flyway V1 |
+| Database information model | Flyway-migrated PostgreSQL 16 catalogue | 35 tables, 46 FKs with nullability/delete behavior, 25 unique constraints, 57 checks, 19 partial indexes, and 12 triggers extracted directly from the effective schema |
+| Database information model | `DatabaseDocumentationContractIT` | Pass: documentation compared with the effective PostgreSQL schema; no committed schema projection remains |
 | Database information model | Relational journey and question chooser | All 35 tables placed across six business stages; eleven focused relationship questions linked |
-| Database information model | `DatabaseDocumentationNavigationTest` | Pass: journey, chooser, and full manifest table coverage enforced |
+| Database information model | `DatabaseDocumentationNavigationTest` | Pass: fast reader-navigation and entry-point boundaries enforced |
 | Database information model | Focused relationship comparison | 46/46 Flyway foreign keys already represented; zero visual topology omissions, so approved SVG/PNG assets were preserved |
 | Database information model | Exact relationship semantics | Every FK reference row now records constraint name, nullability, and `ON DELETE` behavior; all 6 intentional non-FK correlations are listed separately |
-| Database information model | `DatabaseRelationshipDocumentationTest` | Pass: focused references are checked directly against the machine-readable manifest |
-| Database surface verification | Focused database, manifest, navigation, publication, structure, and link test selection | Pass |
+| Database information model | `DatabaseDocumentationContractIT` | Pass: focused references are checked directly against PostgreSQL catalogue facts, including all 6 intentional non-FK correlations |
+| Database surface verification | Focused database contract, navigation, publication, structure, and link test selection | Pass |
 | Database surface verification | `npm run diagrams:check` and `npm run diagrams:preview` | Revalidation now runs through the neutral 21-entry publication catalogue |
 | Database surface verification | Eleven database views at 980 pixels, 390 pixels, and on a dark surrounding | Pass: opaque canvases, readable relationship maps, no clipping, collision, or ambiguous routing |
 | Database surface verification | GitHub desktop and 390-pixel mobile web | Pass: all 11 SVGs loaded at their intrinsic resolution; no raw Mermaid presentation |
@@ -218,11 +218,12 @@ and perpendicular entry. The regenerated assets passed the reopened review.
 | Database surface verification | Native GitHub Mobile | Pass: user-device review confirmed the database page, embedded figures, and linked detail render correctly |
 | Repository wording | PNG fallback labels | Pass: stable GitHub documentation uses the vendor-neutral `High-resolution PNG fallback`; Jira-specific wording remains in delivery evidence only |
 | Database reader experience | Question-oriented hierarchy | Pass: one journey, one chooser, 11 focused owner pages, and one schema reference replace the 280-line ER page |
-| Database reader experience | Raw manifest exposure | Pass: retained temporarily for regression tests but removed from reader entry-point navigation |
+| Database reader experience | Duplicate schema projection removal | Pass: committed manifest removed; deterministic diagnostics are generated only under ignored `target/documentation-verification/` |
 | Database reader experience | Relationship ownership | Pass: all 11 existing database publications now have one focused primary owner; schema claims remain unchanged |
 | Database reader experience | Relational journey publication | Pass: desktop, 390-pixel phone, dark-surround, PNG, connector geometry, and catalogue checks |
 | Database reader experience | Focused documentation gate | Pass: all 35 tables, all 46 foreign keys, all 6 intentional correlations, links, navigation, and publication contracts verified |
 | Database reader experience | Task 5E checkpoint review | Approved after GitHub desktop/mobile review; proceed to transitional manifest replacement |
+| Database reader experience | Task 5F effective-schema verification | Pass: unit and complete PostgreSQL integration profiles verify documentation from the Flyway-migrated PostgreSQL catalogue |
 
 Temporary review sheets remain under `target/documentation-review/` and are
 never committed.

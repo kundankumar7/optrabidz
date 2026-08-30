@@ -1030,7 +1030,7 @@ reviewable before schema-verification infrastructure changes.
 - Diagnostic JSON is written only to
   `target/documentation-verification/schema-report.json`.
 
-- [ ] **Step 1: Define the immutable schema model**
+- [x] **Step 1: Define the immutable schema model**
 
 Create records for the facts currently represented by the manifest:
 
@@ -1051,7 +1051,7 @@ public record DatabaseSchemaSnapshot(
 }
 ```
 
-- [ ] **Step 2: Write a failing PostgreSQL catalogue parity test**
+- [x] **Step 2: Write a failing PostgreSQL catalogue parity test**
 
 In `DatabaseDocumentationContractIT`, migrate a
 `postgres:16-alpine` Testcontainer with Flyway, call the introspector, and
@@ -1060,7 +1060,7 @@ transition baseline of 35 tables, 46 foreign keys, 25 unique constraints, 57
 check constraints, 19 partial indexes, and 12 triggers so deletion cannot occur
 after a partial extraction.
 
-- [ ] **Step 3: Implement catalogue introspection**
+- [x] **Step 3: Implement catalogue introspection**
 
 Read user tables and constraints from `pg_class`, `pg_namespace`,
 `pg_constraint`, `pg_attribute`, `pg_index`, and `pg_trigger`. Use
@@ -1069,7 +1069,7 @@ definitions; exclude PostgreSQL internal objects and `flyway_schema_history`.
 Map `confdeltype` to `NO ACTION`, `RESTRICT`, `CASCADE`, `SET NULL`, or
 `SET DEFAULT`, preserving composite-column order with ordinality.
 
-- [ ] **Step 4: Prove parity before removing the manifest**
+- [x] **Step 4: Prove parity before removing the manifest**
 
 ```powershell
 .\mvnw.cmd -q verify -Pintegration-tests "-Dit.test=DatabaseDocumentationContractIT"
@@ -1079,7 +1079,7 @@ Expected: PASS with exact parity for tables, foreign keys, unique/check
 constraints, partial indexes, and triggers. If any category differs, keep the
 manifest and correct the introspector; do not weaken the comparison.
 
-- [ ] **Step 5: Move documentation checks onto the effective schema**
+- [x] **Step 5: Move documentation checks onto the effective schema**
 
 Make the integration test verify:
 
@@ -1093,14 +1093,14 @@ Make the integration test verify:
 Write a deterministic diagnostic snapshot to `target/` for failed-build
 inspection, never as an expected input.
 
-- [ ] **Step 6: Remove the duplicate schema projection and obsolete parsers**
+- [x] **Step 6: Remove the duplicate schema projection and obsolete parsers**
 
 Delete the committed manifest and the three regex/manifest-dependent tests.
 Keep the fast navigation-only assertions in
 `DatabaseDocumentationNavigationTest`; effective-schema assertions belong to
 the integration test.
 
-- [ ] **Step 7: Run both fast and PostgreSQL verification**
+- [x] **Step 7: Run both fast and PostgreSQL verification**
 
 ```powershell
 .\mvnw.cmd -q test
@@ -1111,7 +1111,7 @@ git ls-files | rg "schema-manifest.json|target/documentation-verification"
 Expected: both Maven phases pass and the final command returns no tracked
 manifest or generated diagnostic output.
 
-- [ ] **Step 8: Commit the schema-verification checkpoint**
+- [x] **Step 8: Commit the schema-verification checkpoint**
 
 ```powershell
 git add -A docs/database src/test/java/com/project/optrabidz/documentation

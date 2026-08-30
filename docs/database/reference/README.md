@@ -21,8 +21,9 @@ relationship view. Flyway remains the executable source of truth.
 ## Verified baseline
 
 The V1 baseline defines 35 tables and 46 foreign keys. Verification also tracks
-25 unique constraints, 57 checks, 19 partial indexes, and 12 triggers. Tests
-derive these facts directly from Flyway and verify every published relationship.
+25 unique constraints, 57 checks, 19 partial indexes, and 12 triggers. The
+integration contract migrates a clean PostgreSQL 16 database with Flyway,
+introspects the effective catalogue, and verifies every published relationship.
 
 Material guarantees include immutable login-attempt and audit records, one
 active administrator, at most one accepted bid per listing, consistent agreement
@@ -46,6 +47,9 @@ keys.
 
 ## Verification boundary
 
-`schema-manifest.json` is a machine-consumed regression artifact, not a reader
-entry point. `DatabaseSchemaManifestTest` derives it from Flyway;
-`DatabaseRelationshipDocumentationTest` compares it with the focused pages.
+`DatabaseDocumentationContractIT` compares the human documentation directly
+with a Flyway-migrated PostgreSQL catalogue. It checks table placement, exact
+foreign-key semantics, referenced constraints/indexes/triggers, and the six
+intentional non-FK correlations. A deterministic diagnostic snapshot is written
+only under `target/documentation-verification/` for build investigation; it is
+never a committed source of truth.
