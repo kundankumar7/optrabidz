@@ -2,6 +2,8 @@
 
 [Back to the module catalogue](README.md)
 
+Capability: [Platform support](../capabilities/platform-support.md)
+
 ## Purpose
 
 Persist searchable business and security audit records after committed domain

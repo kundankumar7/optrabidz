@@ -2,6 +2,8 @@
 
 [Back to the module catalogue](README.md)
 
+Capability: [Marketplace](../capabilities/marketplace.md)
+
 ## Purpose
 
 Own funding listings, bids, accepted agreements, debt terms, discovery, and

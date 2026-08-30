@@ -2,6 +2,8 @@
 
 [Back to the module catalogue](README.md)
 
+Capability: [Marketplace](../capabilities/marketplace.md)
+
 ## Purpose
 
 Centralize administrative authority, eligibility, neutrality, system-boundary,

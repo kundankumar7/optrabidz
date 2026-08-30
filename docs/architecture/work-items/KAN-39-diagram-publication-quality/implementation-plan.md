@@ -1,6 +1,6 @@
 # KAN-39 Documentation Experience Implementation Plan
 
-**Status:** Draft — review required
+**Status:** Approved — execution in progress
 
 **Goal:** Provide two clear documentation routes, publish a complete and
 readable architecture/database view set, and verify database documentation
@@ -695,7 +695,7 @@ the reader path. Tasks 5C through 5G close those gaps before Task 6 begins.
 - Source/test roots, surface counts, and dependencies are derived by tests and
   are not committed as expected JSON values.
 
-- [ ] **Step 1: Write failing route and capability-ownership tests**
+- [x] **Step 1: Write failing route and capability-ownership tests**
 
 Extend `ArchitectureDocumentationCoverageTest` with the approved capability
 pages and require the two reader routes:
@@ -720,7 +720,7 @@ dependencies and require every derived module edge in
 `module-dependencies.md`. Do not persist source-file, surface, or test counts;
 they are diagnostic measurements rather than architecture contracts.
 
-- [ ] **Step 2: Run the focused tests and confirm the red phase**
+- [x] **Step 2: Run the focused tests and confirm the red phase**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=ArchitectureDocumentationCoverageTest,ArchitectureModuleCatalogTest" test
@@ -728,7 +728,7 @@ they are diagnostic measurements rather than architecture contracts.
 
 Expected: FAIL because the capability pages and inventory fields do not exist.
 
-- [ ] **Step 3: Publish the two routes and capability ownership**
+- [x] **Step 3: Publish the two routes and capability ownership**
 
 Map modules as follows:
 
@@ -744,7 +744,7 @@ to its capability page, and ensure the module index still lists all 11 modules
 individually. Delete `modules/inventory.json` after the test no longer consumes
 it; any derived metrics used for diagnostics belong under `target/`.
 
-- [ ] **Step 4: Run navigation, structure, and link verification**
+- [x] **Step 4: Run navigation, structure, and link verification**
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=ArchitectureDocumentationCoverageTest,ArchitectureModuleCatalogTest,DocumentationStructureTest,DocumentationLinksTest" test
@@ -752,7 +752,7 @@ it; any derived metrics used for diagnostics belong under `target/`.
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit the independently reviewable navigation change**
+- [x] **Step 5: Commit the independently reviewable navigation change**
 
 ```powershell
 git add docs/README.md docs/architecture src/test/java/com/project/optrabidz/documentation

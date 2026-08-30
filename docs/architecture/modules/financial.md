@@ -2,6 +2,8 @@
 
 [Back to the module catalogue](README.md)
 
+Capability: [Finance and payments](../capabilities/finance-payments.md)
+
 ## Purpose
 
 Coordinate settlements, repayments, installments, payment intents and attempts,

@@ -2,6 +2,8 @@
 
 [Back to the module catalogue](README.md)
 
+Capability: [Platform support](../capabilities/platform-support.md)
+
 ## Purpose
 
 Provide shared Problem Details mapping, response and pagination contracts,

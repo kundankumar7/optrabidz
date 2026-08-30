@@ -2,23 +2,24 @@
 
 [Back to architecture](../README.md)
 
-The catalogue mirrors the eleven top-level production packages. Counts are
-derived from source and tests by `ArchitectureModuleInventoryTest`; they are a
-navigation aid, not a quality score.
+The catalogue mirrors the eleven top-level production packages. Capability
+grouping helps navigation but does not merge module ownership or hide current
+dependencies.
 
-| Module | Primary responsibility | Source / tests |
-|---|---|---:|
-| [`audit`](audit.md) | Durable business and security audit records | 20 / 4 |
-| [`classification`](classification.md) | Startup classifications and investor preferences | 61 / 7 |
-| [`common`](common.md) | Shared HTTP, error, observability, event, and outbox infrastructure | 36 / 18 |
-| [`documentation`](documentation.md) | Public error catalogue and OpenAPI/security adapters | 7 / 23 |
-| [`financial`](financial.md) | Settlements, repayments, payment attempts, and webhooks | 119 / 30 |
-| [`governance`](governance.md) | Authority, eligibility, boundary, and lifecycle rules | 41 / 6 |
-| [`identity`](identity.md) | Accounts, roles, and profile state | 26 / 2 |
-| [`marketplace`](marketplace.md) | Listings, bids, agreements, and recommendation | 110 / 11 |
-| [`notification`](notification.md) | Notification subscriptions and channel delivery | 49 / 5 |
-| [`participation`](participation.md) | Administrator, startup, and investor records | 53 / 5 |
-| [`security`](security.md) | Credentials, sessions, authentication, CSRF, and route policy | 49 / 8 |
+| Module | Primary responsibility | Capability |
+|---|---|---|
+| [`audit`](audit.md) | Durable business and security audit records | [Platform support](../capabilities/platform-support.md) |
+| [`classification`](classification.md) | Startup classifications and investor preferences | [Marketplace](../capabilities/marketplace.md) |
+| [`common`](common.md) | Shared HTTP, error, observability, event, and outbox infrastructure | [Platform support](../capabilities/platform-support.md) |
+| [`documentation`](documentation.md) | Public error catalogue and OpenAPI/security adapters | [Platform support](../capabilities/platform-support.md) |
+| [`financial`](financial.md) | Settlements, repayments, payment attempts, and webhooks | [Finance and payments](../capabilities/finance-payments.md) |
+| [`governance`](governance.md) | Authority, eligibility, boundary, and lifecycle rules | [Marketplace](../capabilities/marketplace.md) |
+| [`identity`](identity.md) | Accounts, roles, and profile state | [Identity and access](../capabilities/identity-access.md) |
+| [`marketplace`](marketplace.md) | Listings, bids, agreements, and recommendation | [Marketplace](../capabilities/marketplace.md) |
+| [`notification`](notification.md) | Notification subscriptions and channel delivery | [Platform support](../capabilities/platform-support.md) |
+| [`participation`](participation.md) | Administrator, startup, and investor records | [Identity and access](../capabilities/identity-access.md) |
+| [`security`](security.md) | Credentials, sessions, authentication, CSRF, and route policy | [Identity and access](../capabilities/identity-access.md) |
 
 Use [module dependencies](../module-dependencies.md) for the current import
-graph. The machine-readable inventory is in `inventory.json`.
+graph. `ArchitectureModuleCatalogTest` derives current dependency edges from
+production imports and fails when this guide drifts.

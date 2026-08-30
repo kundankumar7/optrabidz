@@ -2,6 +2,8 @@
 
 [Back to the module catalogue](README.md)
 
+Capability: [Marketplace](../capabilities/marketplace.md)
+
 ## Purpose
 
 Own startup classification entries and investor preference entries together

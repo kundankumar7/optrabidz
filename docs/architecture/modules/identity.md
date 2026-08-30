@@ -2,6 +2,8 @@
 
 [Back to the module catalogue](README.md)
 
+Capability: [Identity and access](../capabilities/identity-access.md)
+
 ## Purpose
 
 Own accounts, roles, activation state, and profile-completeness state without

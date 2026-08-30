@@ -98,33 +98,18 @@ named production capability or documentation coverage is incomplete.
   centralized observability, and real-money processing out of current-state
   claims.
 
-### Module ownership inventory
+### Module ownership catalogue
 
-The machine-readable inventory at `docs/architecture/modules/inventory.json`
-maps every top-level production and test package to its intended owner page.
-Its regression test derives the counts and dependencies below directly from
-Java source; these are not estimates or hand-maintained diagrams.
+`docs/architecture/module-catalog.json` records only intentional module,
+capability, and owner-page assignments. Generated source, test, surface, and
+dependency counts are no longer committed. `ArchitectureModuleCatalogTest`
+derives the current top-level modules and import edges directly from production
+source and verifies the human dependency guide.
 
-| Module | Source files | HTTP | Services | Repositories | Events/outbox | Security adapters | Tests | Direct imports |
-|---|---:|---:|---:|---:|---:|---:|---:|---|
-| `audit` | 20 | 1 | 2 | 1 | 1 | 0 | 4 | `common` |
-| `classification` | 61 | 2 | 2 | 6 | 2 | 0 | 7 | `common`, `security` |
-| `common` | 36 | 1 | 0 | 0 | 12 | 0 | 18 | `identity`, `security` |
-| `documentation` | 7 | 0 | 0 | 0 | 0 | 2 | 23 | error catalogues from 8 business/access modules plus `common` |
-| `financial` | 119 | 3 | 4 | 18 | 3 | 5 | 30 | `audit`, `common`, `governance`, `identity`, `marketplace`, `participation`, `security` |
-| `governance` | 41 | 1 | 4 | 0 | 2 | 0 | 6 | `classification`, `common`, `identity`, `participation`, `security` |
-| `identity` | 26 | 0 | 2 | 3 | 0 | 0 | 2 | `common` |
-| `marketplace` | 110 | 3 | 4 | 9 | 7 | 0 | 11 | `classification`, `common`, `governance`, `identity`, `participation`, `security` |
-| `notification` | 49 | 1 | 1 | 5 | 1 | 0 | 5 | `common`, `security` |
-| `participation` | 53 | 2 | 3 | 9 | 2 | 0 | 5 | `classification`, `common`, `identity`, `security` |
-| `security` | 49 | 2 | 3 | 9 | 0 | 5 | 8 | `audit`, `common`, `identity`, `participation` |
-
-The inventory deliberately records current imports rather than an aspirational
-dependency graph. In particular, `common` currently imports identity/security
-types, the documentation adapter aggregates module error catalogues, and the
-financial module has the broadest cross-module dependency surface. The module
-pages and dependency view must disclose those facts instead of presenting an
-idealized architecture.
+The current dependency guide still discloses reverse `common` coupling, the
+documentation adapter's broad catalogue composition, and the financial
+module's cross-capability dependencies instead of presenting an idealized
+architecture.
 
 ## Stable diagram review
 
@@ -185,7 +170,7 @@ map; field detail remains lossless through the linked SVG.
 | Stable diagram set | Inventory, publication, structure, and link test gate | Pass |
 | Architecture coverage | Layered entry points | System context, runtime, module catalogue, current dependency graph, request security, event delivery, and error disclosure published as separate reviewer questions |
 | Architecture coverage | Module owner pages | All 11 production modules document purpose, entry points, application/domain rules, persistence, events, dependencies, security/errors, verification, and known gaps |
-| Architecture coverage | `ArchitectureModuleInventoryTest` and `ArchitectureDocumentationCoverageTest` | Pass: current source/import inventory and every required owner page/section agree |
+| Architecture coverage | `ArchitectureModuleCatalogTest` and `ArchitectureDocumentationCoverageTest` | Pass: source-derived module dependencies, minimal ownership catalogue, two reader routes, four capability pages, and all module owner sections agree |
 | Architecture coverage | Documentation, link, catalogue, OpenAPI, exposure, and diagram test selection | Pass against PostgreSQL Testcontainers; Flyway V1 applied and Hibernate validation completed |
 | Architecture coverage | `npm run diagrams:check` | Pass: 13 publication entries validated without rewriting assets |
 | Database information model | `schema-manifest.json` | 35 tables, 46 FKs with nullability/delete behavior, 25 unique constraints, 57 checks, 19 partial indexes, 12 triggers, and 6 explicit non-FK correlations |

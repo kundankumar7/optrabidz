@@ -32,6 +32,6 @@ means at least one class imports a type from the named top-level module.
 - Ports reduce some infrastructure coupling, but repository-wide architectural
   enforcement is not yet complete.
 
-`modules/inventory.json` is the machine-readable source for this table's facts.
-`ArchitectureModuleInventoryTest` fails when production packages, surface
-counts, or direct imports drift from that inventory.
+`ArchitectureModuleCatalogTest` derives these edges directly from production
+imports. The small module catalogue records only intentional capability and
+owner-page assignments; it does not duplicate generated dependency facts.

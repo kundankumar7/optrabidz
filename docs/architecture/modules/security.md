@@ -2,6 +2,8 @@
 
 [Back to the module catalogue](README.md)
 
+Capability: [Identity and access](../capabilities/identity-access.md)
+
 ## Purpose
 
 Own credential provisioning, password login, server-side sessions, login

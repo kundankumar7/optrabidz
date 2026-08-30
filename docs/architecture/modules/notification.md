@@ -2,6 +2,8 @@
 
 [Back to the module catalogue](README.md)
 
+Capability: [Platform support](../capabilities/platform-support.md)
+
 ## Purpose
 
 Create user notifications from committed events, store per-recipient state,

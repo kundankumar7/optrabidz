@@ -9,6 +9,7 @@ view that matches the question you are answering:
 |---|---|
 | Who uses the system and what lies outside it? | [System context](system-context.md) |
 | What starts and runs inside one application instance? | [Runtime](runtime.md) |
+| How are modules grouped into business capabilities? | [Capability views](capabilities/README.md) |
 | Which capability owns a change? | [Module catalogue](modules/README.md) |
 | Which current source dependencies cross module boundaries? | [Module dependencies](module-dependencies.md) |
 | How is an authenticated request handled? | [Request and security flow](flows/request-security.md) |

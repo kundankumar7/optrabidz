@@ -2,6 +2,8 @@
 
 [Back to the module catalogue](README.md)
 
+Capability: [Platform support](../capabilities/platform-support.md)
+
 ## Purpose
 
 Assemble the public error reference, contribute RFC 9457 schemas to OpenAPI,

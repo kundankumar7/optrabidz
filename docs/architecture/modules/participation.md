@@ -2,6 +2,8 @@
 
 [Back to the module catalogue](README.md)
 
+Capability: [Identity and access](../capabilities/identity-access.md)
+
 ## Purpose
 
 Own administrator, startup, and investor records plus participant-specific
