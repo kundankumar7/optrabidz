@@ -5,14 +5,17 @@ import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +31,12 @@ class DocumentationExposureIT extends ApiIntegrationTestSupport {
             "/swagger-ui.html",
             "/swagger-ui/index.html",
             "/webjars/swagger-ui/5.17.14/swagger-ui.css"
+    );
+    private static final List<HttpMethod> MUTATING_METHODS = List.of(
+            HttpMethod.POST,
+            HttpMethod.PUT,
+            HttpMethod.PATCH,
+            HttpMethod.DELETE
     );
 
     @Nested
@@ -53,6 +62,67 @@ class DocumentationExposureIT extends ApiIntegrationTestSupport {
                         .andExpect(jsonPath("$.code").value(
                                 "AUTHENTICATION_REQUIRED"
                         ));
+            }
+        }
+    }
+
+    @Nested
+    @TestPropertySource(properties = {
+            "optrabidz.documentation.api-docs-enabled=true",
+            "optrabidz.documentation.swagger-ui-enabled=true",
+            "optrabidz.documentation.management-port-enabled=false",
+            "optrabidz.documentation.access=PUBLIC"
+    })
+    class PublicDocumentationOverride {
+
+        @Autowired
+        private MockMvc contextMockMvc;
+
+        @Test
+        void rejectsMutatingDocumentationRequestsWithoutCsrfHeader()
+                throws Exception {
+            AuthenticatedClient client = registerAndLogin(RoleType.STARTUP);
+
+            for (String path : allDocumentationPaths()) {
+                for (HttpMethod method : MUTATING_METHODS) {
+                    contextMockMvc.perform(authenticatedRequest(
+                                    method,
+                                    path,
+                                    client,
+                                    false
+                            ))
+                            .andExpect(status().isForbidden())
+                            .andExpect(content().contentType(
+                                    MediaType.APPLICATION_PROBLEM_JSON
+                            ))
+                            .andExpect(jsonPath("$.code").value(
+                                    "CSRF_VALIDATION_FAILED"
+                            ));
+                }
+            }
+        }
+
+        @Test
+        void deniesMutatingDocumentationRequestsWithValidCsrfHeader()
+                throws Exception {
+            AuthenticatedClient client = registerAndLogin(RoleType.STARTUP);
+
+            for (String path : allDocumentationPaths()) {
+                for (HttpMethod method : MUTATING_METHODS) {
+                    contextMockMvc.perform(authenticatedRequest(
+                                    method,
+                                    path,
+                                    client,
+                                    true
+                            ))
+                            .andExpect(status().isForbidden())
+                            .andExpect(content().contentType(
+                                    MediaType.APPLICATION_PROBLEM_JSON
+                            ))
+                            .andExpect(jsonPath("$.code").value(
+                                    "AUTHORIZATION_FAILED"
+                            ));
+                }
             }
         }
     }
@@ -154,5 +224,20 @@ class DocumentationExposureIT extends ApiIntegrationTestSupport {
                 API_DOC_PATHS.stream(),
                 UI_PATHS.stream()
         ).toList();
+    }
+
+    private static MockHttpServletRequestBuilder authenticatedRequest(
+            HttpMethod method,
+            String path,
+            AuthenticatedClient client,
+            boolean includeCsrfHeader
+    ) {
+        MockHttpServletRequestBuilder builder = request(method, path)
+                .session(client.session())
+                .cookie(client.xsrfCookie());
+        if (includeCsrfHeader) {
+            builder.header("X-CSRF-TOKEN", client.csrfToken());
+        }
+        return builder;
     }
 }

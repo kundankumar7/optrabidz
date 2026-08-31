@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -23,12 +24,9 @@ public class SecurityConfig {
                                                    CsrfCookieFilter csrfCookieFilter,
                                                    SecurityMdcFilter securityMdcFilter,
                                                    ProblemAuthenticationEntryPoint authenticationEntryPoint,
-                                                   ProblemAccessDeniedHandler accessDeniedHandler) throws Exception {
-        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        csrfTokenRepository.setCookiePath("/");
-        csrfTokenRepository.setHeaderName("X-CSRF-TOKEN");
-        CsrfTokenRequestAttributeHandler csrfTokenRequestHandler = new CsrfTokenRequestAttributeHandler();
-
+                                                   ProblemAccessDeniedHandler accessDeniedHandler,
+                                                   CookieCsrfTokenRepository csrfTokenRepository,
+                                                   CsrfTokenRequestHandler csrfTokenRequestHandler) throws Exception {
         return http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)
@@ -91,6 +89,20 @@ public class SecurityConfig {
                 .addFilterAfter(securityMdcFilter, ActiveSessionFilter.class)
                 .addFilterAfter(csrfCookieFilter, org.springframework.security.web.csrf.CsrfFilter.class)
                 .build();
+    }
+
+    @Bean
+    public CookieCsrfTokenRepository csrfTokenRepository() {
+        CookieCsrfTokenRepository repository =
+                CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookiePath("/");
+        repository.setHeaderName("X-CSRF-TOKEN");
+        return repository;
+    }
+
+    @Bean
+    public CsrfTokenRequestHandler csrfTokenRequestHandler() {
+        return new CsrfTokenRequestAttributeHandler();
     }
 
     private RequestMatcher[] publicPostMatchers() {

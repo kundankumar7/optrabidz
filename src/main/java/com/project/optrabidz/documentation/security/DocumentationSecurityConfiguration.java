@@ -9,12 +9,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -36,6 +40,11 @@ public class DocumentationSecurityConfiguration {
             Stream.of(API_DOC_PATHS),
             Stream.of(UI_PATHS)
     ).toArray(String[]::new);
+    private static final List<HttpMethod> DOCUMENTATION_READ_METHODS = List.of(
+            HttpMethod.GET,
+            HttpMethod.HEAD,
+            HttpMethod.OPTIONS
+    );
 
     @Bean
     public DocumentationExposureValidator documentationExposureValidator(
@@ -72,28 +81,40 @@ public class DocumentationSecurityConfiguration {
             ActiveSessionFilter activeSessionFilter,
             SecurityMdcFilter securityMdcFilter,
             ProblemAuthenticationEntryPoint authenticationEntryPoint,
-            ProblemAccessDeniedHandler accessDeniedHandler
+            ProblemAccessDeniedHandler accessDeniedHandler,
+            CookieCsrfTokenRepository csrfTokenRepository,
+            CsrfTokenRequestHandler csrfTokenRequestHandler
     ) throws Exception {
         return http
                 .securityMatcher(DOCUMENTATION_PATHS)
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(csrfTokenRepository)
+                        .csrfTokenRequestHandler(csrfTokenRequestHandler)
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(
                         SessionCreationPolicy.IF_REQUIRED
                 ))
                 .authorizeHttpRequests(authorize -> {
-                    if (!properties.apiDocsEnabled()) {
-                        authorize.requestMatchers(API_DOC_PATHS).denyAll();
-                    } else if (properties.access()
-                            == DocumentationExposureProperties.Access.PUBLIC) {
-                        authorize.requestMatchers(API_DOC_PATHS).permitAll();
-                    } else {
-                        authorize.requestMatchers(API_DOC_PATHS).authenticated();
-                    }
+                    for (HttpMethod method : DOCUMENTATION_READ_METHODS) {
+                        if (!properties.apiDocsEnabled()) {
+                            authorize.requestMatchers(method, API_DOC_PATHS)
+                                    .denyAll();
+                        } else if (properties.access()
+                                == DocumentationExposureProperties.Access.PUBLIC) {
+                            authorize.requestMatchers(method, API_DOC_PATHS)
+                                    .permitAll();
+                        } else {
+                            authorize.requestMatchers(method, API_DOC_PATHS)
+                                    .authenticated();
+                        }
 
-                    if (!properties.swaggerUiEnabled()) {
-                        authorize.requestMatchers(UI_PATHS).denyAll();
-                    } else {
-                        authorize.requestMatchers(UI_PATHS).permitAll();
+                        if (!properties.swaggerUiEnabled()) {
+                            authorize.requestMatchers(method, UI_PATHS)
+                                    .denyAll();
+                        } else {
+                            authorize.requestMatchers(method, UI_PATHS)
+                                    .permitAll();
+                        }
                     }
                     authorize.anyRequest().denyAll();
                 })
