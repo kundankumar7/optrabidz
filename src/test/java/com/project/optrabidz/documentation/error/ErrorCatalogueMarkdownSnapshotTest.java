@@ -71,7 +71,7 @@ class ErrorCatalogueMarkdownSnapshotTest {
         }
 
         assertThat(Files.readString(CATALOGUE, StandardCharsets.UTF_8))
-                .isEqualTo(expected);
+                .isEqualToNormalizingNewlines(expected);
     }
 
     private static PublicErrorDefinition definition(
