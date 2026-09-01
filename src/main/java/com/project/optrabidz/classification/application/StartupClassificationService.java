@@ -7,15 +7,15 @@ import com.project.optrabidz.classification.application.command.ReplaceStartupCl
 import com.project.optrabidz.classification.application.dto.response.ClassificationEntryResponse;
 import com.project.optrabidz.classification.application.dto.response.StartupClassificationResponse;
 import com.project.optrabidz.classification.application.event.StartupClassificationChangedEvent;
-import com.project.optrabidz.classification.application.exception.ClassificationAlreadyExistsException;
+import com.project.optrabidz.classification.application.exception.StartupClassificationAlreadyExistsException;
+import com.project.optrabidz.classification.application.exception.StartupClassificationNotFoundException;
+import com.project.optrabidz.classification.application.exception.StartupClassificationProfileRequiredException;
 import com.project.optrabidz.classification.application.port.in.StartupClassificationCommandPort;
 import com.project.optrabidz.classification.application.port.in.StartupClassificationQueryPort;
 import com.project.optrabidz.classification.application.port.out.ParticipationActorQueryPort;
 import com.project.optrabidz.classification.domain.model.StartupClassification;
 import com.project.optrabidz.classification.domain.model.StartupClassificationProfile;
 import com.project.optrabidz.classification.domain.repository.StartupClassificationRepository;
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.common.api.response.MessageData;
 import com.project.optrabidz.common.event.EventPublisher;
 import org.springframework.stereotype.Service;
@@ -48,7 +48,10 @@ public class StartupClassificationService implements StartupClassificationComman
         StartupClassificationProfile profile = loadProfile(startupId);
 
         if (profile.contains(command.classificationType(), command.classificationValue())) {
-            throw new ClassificationAlreadyExistsException("Startup classification already exists");
+            throw new StartupClassificationAlreadyExistsException(
+                    command.classificationType(),
+                    command.classificationValue()
+            );
         }
 
         StartupClassification entry = StartupClassification.create(
@@ -129,17 +132,18 @@ public class StartupClassificationService implements StartupClassificationComman
 
     private Long resolveStartupId(Long accountId) {
         return participationActorQueryPort.findStartupIdByAccountId(accountId)
-                .orElseThrow(() -> new ApiException(
-                        ErrorCode.RESOURCE_NOT_FOUND,
-                        "Startup actor not found for account"
-                ));
+                .orElseThrow(() ->
+                        new StartupClassificationProfileRequiredException(accountId));
     }
 
     private void ensureClassificationExists(StartupClassificationProfile profile,
                                             String classificationType,
                                             String classificationValue) {
         if (!profile.contains(classificationType, classificationValue)) {
-            throw new ApiException(ErrorCode.RESOURCE_NOT_FOUND, "Startup classification not found");
+            throw new StartupClassificationNotFoundException(
+                    classificationType,
+                    classificationValue
+            );
         }
     }
 

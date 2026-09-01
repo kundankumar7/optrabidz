@@ -10,6 +10,10 @@ public interface PaymentIntentRepository {
 
     Optional<PaymentIntent> findById(Long paymentIntentId);
 
+    Optional<PaymentIntent> findByIdForParticipant(Long paymentIntentId, Long accountId);
+
+    Optional<PaymentIntent> findByIdForPayer(Long paymentIntentId, Long payerAccountId);
+
     Optional<PaymentIntent> findActiveBySettlementId(Long settlementId);
 
     Optional<PaymentIntent> findActiveByRepaymentInstallmentId(Long repaymentInstallmentId);

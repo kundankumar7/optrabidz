@@ -1,23 +1,27 @@
 package com.project.optrabidz.classification.application.specification;
 
-import com.project.optrabidz.classification.application.exception.ClassificationAlreadyExistsException;
+import com.project.optrabidz.classification.application.exception.StartupClassificationAlreadyExistsException;
 import com.project.optrabidz.classification.domain.model.StartupClassification;
 import com.project.optrabidz.classification.domain.model.StartupClassificationProfile;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.HashSet;
 
 @Component
 public class StartupClassificationUniquenessSpec implements StartupClassificationSpecification {
     @Override
     public void validate(StartupClassificationProfile profile) {
-        Set<String> uniqueEntries = profile.getClassifications().stream()
-                .map(this::key)
-                .collect(Collectors.toSet());
-        if (uniqueEntries.size() != profile.getClassifications().size()) {
-            throw new ClassificationAlreadyExistsException("Duplicate startup classification is not allowed");
-        }
+        Set<String> uniqueEntries = new HashSet<>();
+        profile.getClassifications().stream()
+                .filter(classification -> !uniqueEntries.add(key(classification)))
+                .findFirst()
+                .ifPresent(classification -> {
+                    throw new StartupClassificationAlreadyExistsException(
+                            classification.getClassificationType(),
+                            classification.getClassificationValue()
+                    );
+                });
     }
 
     private String key(StartupClassification classification) {

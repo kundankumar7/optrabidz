@@ -1,10 +1,14 @@
 package com.project.optrabidz.financial.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.financial.application.error.FinancialErrors;
 
-public class SettlementNotPayableException extends ApiException {
-    public SettlementNotPayableException(String message) {
-        super(ErrorCode.SETTLEMENT_NOT_PAYABLE, message);
+public final class SettlementNotPayableException extends ApplicationException {
+    public SettlementNotPayableException(String diagnosticMessage) {
+        super(
+                FinancialErrors.SETTLEMENT_NOT_PAYABLE,
+                "FINANCIAL.SETTLEMENT.NOT.PAYABLE",
+                diagnosticMessage
+        );
     }
 }

@@ -8,8 +8,6 @@ import com.project.optrabidz.common.observability.RequestIdProvider;
 import com.project.optrabidz.common.observability.SensitiveDataMasker;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -35,7 +33,6 @@ public class SecurityAuditService {
         this.operationalEventLogger = operationalEventLogger;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordLoginFailure(String email, String reason, HttpServletRequest request) {
         String maskedEmail = safeText(sensitiveDataMasker.maskEmail(email));
         saveSafely("LOGIN_FAILED", "CREDENTIAL", maskedEmail, null, null,
@@ -45,7 +42,6 @@ public class SecurityAuditService {
                 )));
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordAuthenticationRequired(HttpServletRequest request, String reason) {
         saveSafely("AUTHENTICATION_REQUIRED", "HTTP_REQUEST", requestPath(request), null, null,
                 AuditOutcome.DENIED, request, details(Map.of(
@@ -55,7 +51,6 @@ public class SecurityAuditService {
                 )));
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordAuthorizationDenied(HttpServletRequest request,
                                           String reason,
                                           Long actorAccountId,
@@ -68,6 +63,58 @@ public class SecurityAuditService {
                 )));
     }
 
+    public void recordPaymentWebhookRejected(String providerCode,
+                                             String requestId) {
+        saveWebhookSecurityEvent(
+                "PAYMENT_WEBHOOK_REJECTED",
+                providerCode,
+                requestId
+        );
+    }
+
+    public void recordPaymentWebhookPayloadInvalid(String providerCode,
+                                                   String requestId) {
+        saveWebhookSecurityEvent(
+                "PAYMENT_WEBHOOK_PAYLOAD_INVALID",
+                providerCode,
+                requestId
+        );
+    }
+
+    public void recordPaymentWebhookReplayCollision(String providerCode,
+                                                     String requestId) {
+        saveWebhookSecurityEvent(
+                "PAYMENT_WEBHOOK_REPLAY_COLLISION",
+                providerCode,
+                requestId
+        );
+    }
+
+    private void saveWebhookSecurityEvent(String action,
+                                          String providerCode,
+                                          String requestId) {
+        String safeProviderCode = boundedIdentifier(
+                providerCode,
+                "[A-Z0-9_-]{1,32}"
+        );
+        String safeRequestId = boundedIdentifier(
+                requestId,
+                "[A-Za-z0-9._-]{1,100}"
+        );
+        saveSafely(
+                action,
+                "PAYMENT_PROVIDER",
+                safeProviderCode,
+                null,
+                null,
+                AuditOutcome.DENIED,
+                safeRequestId,
+                null,
+                null,
+                details(Map.of("category", "PAYMENT_WEBHOOK"))
+        );
+    }
+
     private void saveSafely(String action,
                             String objectType,
                             String objectId,
@@ -75,6 +122,30 @@ public class SecurityAuditService {
                             String actorRole,
                             AuditOutcome outcome,
                             HttpServletRequest request,
+                            String details) {
+        saveSafely(
+                action,
+                objectType,
+                objectId,
+                actorAccountId,
+                actorRole,
+                outcome,
+                request == null ? null : RequestIdProvider.resolveOrCreate(request),
+                clientIp(request),
+                userAgent(request),
+                details
+        );
+    }
+
+    private void saveSafely(String action,
+                            String objectType,
+                            String objectId,
+                            Long actorAccountId,
+                            String actorRole,
+                            AuditOutcome outcome,
+                            String requestId,
+                            String ipAddress,
+                            String userAgent,
                             String details) {
         try {
             auditService.save(auditRecordFactory.securityRecord(
@@ -84,9 +155,9 @@ public class SecurityAuditService {
                     actorAccountId,
                     actorRole,
                     outcome,
-                    request == null ? null : RequestIdProvider.resolveOrCreate(request),
-                    clientIp(request),
-                    userAgent(request),
+                    requestId,
+                    ipAddress,
+                    userAgent,
                     details,
                     Instant.now()
             ));
@@ -97,6 +168,10 @@ public class SecurityAuditService {
                     exception
             );
         }
+    }
+
+    private String boundedIdentifier(String value, String pattern) {
+        return value != null && value.matches(pattern) ? value : "UNKNOWN";
     }
 
     private String details(Map<String, String> values) {

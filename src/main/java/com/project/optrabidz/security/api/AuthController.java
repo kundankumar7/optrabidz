@@ -34,6 +34,20 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    ref = "#/components/responses/ValidationProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    ref = "#/components/responses/UnauthorizedProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    ref = "#/components/responses/InternalServerProblem"
+            )
+    })
     public ResponseEntity<SuccessResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request,
                                                                 HttpServletRequest httpRequest) {
         return ResponseEntity.ok(ApiResponse.success(authenticationService.login(request, httpRequest), httpRequest));

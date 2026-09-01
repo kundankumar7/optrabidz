@@ -1,7 +1,5 @@
 package com.project.optrabidz.marketplace.api;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.common.api.pagination.PageResponse;
 import com.project.optrabidz.common.api.response.ApiResponse;
 import com.project.optrabidz.common.api.response.SuccessResponse;
@@ -37,9 +35,12 @@ public class BidController {
     public SuccessResponse<BidResponse> submitBid(@RequestBody @Valid SubmitBidRequest request,
                                                   @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                   HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                bidService.submitBid(user.getAccountId(), user.getRole(), request),
+                bidService.submitBid(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        request
+                ),
                 httpRequest
         );
     }
@@ -48,9 +49,12 @@ public class BidController {
     public SuccessResponse<BidResponse> getBid(@PathVariable Long bidId,
                                                @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                bidService.getBidById(user.getAccountId(), user.getRole(), bidId),
+                bidService.getBidById(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        bidId
+                ),
                 httpRequest
         );
     }
@@ -63,9 +67,15 @@ public class BidController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                bidService.getBidsForListing(user.getAccountId(), user.getRole(), listingId, state, page, size),
+                bidService.getBidsForListing(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        listingId,
+                        state,
+                        page,
+                        size
+                ),
                 httpRequest
         );
     }
@@ -77,9 +87,14 @@ public class BidController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                bidService.getMyBids(user.getAccountId(), user.getRole(), state, page, size),
+                bidService.getMyBids(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        state,
+                        page,
+                        size
+                ),
                 httpRequest
         );
     }
@@ -88,9 +103,12 @@ public class BidController {
     public SuccessResponse<BidResponse> getMyBidByListing(@PathVariable Long listingId,
                                                           @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                           HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                bidService.getMyBidByListing(user.getAccountId(), user.getRole(), listingId),
+                bidService.getMyBidByListing(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        listingId
+                ),
                 httpRequest
         );
     }
@@ -99,9 +117,12 @@ public class BidController {
     public SuccessResponse<BidResponse> getAcceptedBid(@PathVariable Long listingId,
                                                        @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                        HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                bidService.getAcceptedBid(user.getAccountId(), user.getRole(), listingId),
+                bidService.getAcceptedBid(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        listingId
+                ),
                 httpRequest
         );
     }
@@ -111,9 +132,13 @@ public class BidController {
                                                           @RequestBody(required = false) BidActionRequest request,
                                                           @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                           HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                bidService.withdrawBid(user.getAccountId(), user.getRole(), bidId, request),
+                bidService.withdrawBid(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        bidId,
+                        request
+                ),
                 httpRequest
         );
     }
@@ -123,9 +148,13 @@ public class BidController {
                                                         @RequestBody(required = false) BidActionRequest request,
                                                         @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                         HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                bidService.rejectBid(user.getAccountId(), user.getRole(), bidId, request),
+                bidService.rejectBid(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        bidId,
+                        request
+                ),
                 httpRequest
         );
     }
@@ -135,17 +164,14 @@ public class BidController {
                                                         @RequestBody(required = false) BidActionRequest request,
                                                         @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                         HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                bidService.acceptBid(user.getAccountId(), user.getRole(), bidId, request),
+                bidService.acceptBid(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        bidId,
+                        request
+                ),
                 httpRequest
         );
-    }
-
-    private AuthenticatedUserPrincipal requirePrincipal(AuthenticatedUserPrincipal principal) {
-        if (principal == null) {
-            throw new ApiException(ErrorCode.AUTHENTICATION_REQUIRED, "Authentication is required");
-        }
-        return principal;
     }
 }

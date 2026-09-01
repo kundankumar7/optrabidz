@@ -6,9 +6,9 @@ import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.participation.application.event.ParticipationProfileChangedEvent;
 import com.project.optrabidz.participation.application.dto.request.CreateInvestorRequest;
 import com.project.optrabidz.participation.application.dto.response.InvestorResponse;
-import com.project.optrabidz.participation.application.exception.InvalidRoleException;
-import com.project.optrabidz.participation.application.exception.ParticipationAlreadyExistsException;
-import com.project.optrabidz.participation.application.exception.ParticipationNotFoundException;
+import com.project.optrabidz.participation.application.exception.InvestorAlreadyExistsException;
+import com.project.optrabidz.participation.application.exception.InvestorNotFoundException;
+import com.project.optrabidz.participation.application.exception.ParticipationAuthorizationException;
 import com.project.optrabidz.participation.domain.model.Investor;
 import com.project.optrabidz.participation.domain.repository.InvestorRepository;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ public class InvestorService {
         ensureRole(roleType, RoleType.INVESTOR);
 
         if (investorRepository.existsByAccountId(accountId)) {
-            throw new ParticipationAlreadyExistsException("Investor already exists for this account");
+            throw new InvestorAlreadyExistsException(accountId);
         }
 
         Investor investor = Investor.establish(
@@ -54,7 +54,7 @@ public class InvestorService {
         ensureRole(roleType, RoleType.INVESTOR);
 
         Investor investor = investorRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Investor not found for this account"));
+                .orElseThrow(() -> new InvestorNotFoundException(accountId));
 
         return toResponse(investor);
     }
@@ -64,7 +64,7 @@ public class InvestorService {
         ensureRole(roleType, RoleType.INVESTOR);
 
         Investor investor = investorRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Investor not found for this account"));
+                .orElseThrow(() -> new InvestorNotFoundException(accountId));
 
         investor.updateRepresentation(
                 request.publicDisplayName(),
@@ -98,7 +98,7 @@ public class InvestorService {
 
     private void ensureRole(RoleType actualRole, RoleType expectedRole) {
         if (actualRole != expectedRole) {
-            throw new InvalidRoleException("Role is not allowed to perform this operation");
+            throw new ParticipationAuthorizationException(actualRole, expectedRole);
         }
     }
 }

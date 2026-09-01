@@ -1,7 +1,5 @@
 package com.project.optrabidz.financial.api;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.common.api.pagination.PageResponse;
 import com.project.optrabidz.common.api.response.ApiResponse;
 import com.project.optrabidz.common.api.response.SuccessResponse;
@@ -13,12 +11,12 @@ import com.project.optrabidz.financial.application.dto.response.RepaymentInstall
 import com.project.optrabidz.financial.application.dto.response.RepaymentProgressResponse;
 import com.project.optrabidz.financial.application.dto.response.RepaymentResponse;
 import com.project.optrabidz.financial.application.dto.response.SettlementResponse;
-import com.project.optrabidz.financial.domain.model.RepaymentInstallmentPaymentView;
-import com.project.optrabidz.financial.domain.model.RepaymentInstallmentState;
 import com.project.optrabidz.security.application.AuthenticatedUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,9 +37,8 @@ public class FinancialController {
     public SuccessResponse<SettlementResponse> getSettlement(@PathVariable Long settlementId,
                                                              @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                              HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.getSettlement(user.getAccountId(), user.getRole(), settlementId),
+                financialService.getSettlement(principal.getAccountId(), principal.getRole(), settlementId),
                 httpRequest
         );
     }
@@ -52,9 +49,8 @@ public class FinancialController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.getMyInvestorSettlements(user.getAccountId(), user.getRole(), page, size),
+                financialService.getMyInvestorSettlements(principal.getAccountId(), principal.getRole(), page, size),
                 httpRequest
         );
     }
@@ -65,9 +61,8 @@ public class FinancialController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.getMyStartupSettlements(user.getAccountId(), user.getRole(), page, size),
+                financialService.getMyStartupSettlements(principal.getAccountId(), principal.getRole(), page, size),
                 httpRequest
         );
     }
@@ -77,9 +72,8 @@ public class FinancialController {
             @PathVariable Long settlementId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.createSettlementPaymentIntent(user.getAccountId(), user.getRole(), settlementId),
+                financialService.createSettlementPaymentIntent(principal.getAccountId(), principal.getRole(), settlementId),
                 httpRequest
         );
     }
@@ -88,9 +82,8 @@ public class FinancialController {
     public SuccessResponse<RepaymentResponse> getRepayment(@PathVariable Long repaymentId,
                                                            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                            HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.getRepayment(user.getAccountId(), user.getRole(), repaymentId),
+                financialService.getRepayment(principal.getAccountId(), principal.getRole(), repaymentId),
                 httpRequest
         );
     }
@@ -98,15 +91,18 @@ public class FinancialController {
     @GetMapping("/repayments/{repaymentId}/installments")
     public SuccessResponse<PageResponse<RepaymentInstallmentResponse>> getRepaymentInstallments(
             @PathVariable Long repaymentId,
-            @RequestParam(required = false) RepaymentInstallmentState installmentState,
-            @RequestParam(required = false) RepaymentInstallmentPaymentView paymentView,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @Valid @ModelAttribute RepaymentInstallmentQuery query,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.getRepaymentInstallments(user.getAccountId(), user.getRole(), repaymentId, installmentState, paymentView, page, size),
+                financialService.getRepaymentInstallments(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        repaymentId,
+                        query.installmentState(),
+                        query.paymentView(),
+                        query.page(),
+                        query.size()),
                 httpRequest
         );
     }
@@ -116,9 +112,8 @@ public class FinancialController {
             @PathVariable Long installmentId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.getRepaymentInstallment(user.getAccountId(), user.getRole(), installmentId),
+                financialService.getRepaymentInstallment(principal.getAccountId(), principal.getRole(), installmentId),
                 httpRequest
         );
     }
@@ -128,9 +123,8 @@ public class FinancialController {
             @PathVariable Long agreementId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.getRepaymentProgress(user.getAccountId(), user.getRole(), agreementId),
+                financialService.getRepaymentProgress(principal.getAccountId(), principal.getRole(), agreementId),
                 httpRequest
         );
     }
@@ -141,24 +135,25 @@ public class FinancialController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.getMyInvestorRepayments(user.getAccountId(), user.getRole(), page, size),
+                financialService.getMyInvestorRepayments(principal.getAccountId(), principal.getRole(), page, size),
                 httpRequest
         );
     }
 
     @GetMapping("/investors/me/repayment-installments")
     public SuccessResponse<PageResponse<RepaymentInstallmentResponse>> getMyInvestorRepaymentInstallments(
-            @RequestParam(required = false) RepaymentInstallmentState installmentState,
-            @RequestParam(required = false) RepaymentInstallmentPaymentView paymentView,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @Valid @ModelAttribute RepaymentInstallmentQuery query,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.getMyInvestorRepaymentInstallments(user.getAccountId(), user.getRole(), installmentState, paymentView, page, size),
+                financialService.getMyInvestorRepaymentInstallments(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        query.installmentState(),
+                        query.paymentView(),
+                        query.page(),
+                        query.size()),
                 httpRequest
         );
     }
@@ -169,24 +164,25 @@ public class FinancialController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.getMyStartupRepayments(user.getAccountId(), user.getRole(), page, size),
+                financialService.getMyStartupRepayments(principal.getAccountId(), principal.getRole(), page, size),
                 httpRequest
         );
     }
 
     @GetMapping("/startups/me/repayment-installments")
     public SuccessResponse<PageResponse<RepaymentInstallmentResponse>> getMyStartupRepaymentInstallments(
-            @RequestParam(required = false) RepaymentInstallmentState installmentState,
-            @RequestParam(required = false) RepaymentInstallmentPaymentView paymentView,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @Valid @ModelAttribute RepaymentInstallmentQuery query,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.getMyStartupRepaymentInstallments(user.getAccountId(), user.getRole(), installmentState, paymentView, page, size),
+                financialService.getMyStartupRepaymentInstallments(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        query.installmentState(),
+                        query.paymentView(),
+                        query.page(),
+                        query.size()),
                 httpRequest
         );
     }
@@ -196,9 +192,8 @@ public class FinancialController {
             @PathVariable Long repaymentId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.createRepaymentPaymentIntent(user.getAccountId(), user.getRole(), repaymentId),
+                financialService.createRepaymentPaymentIntent(principal.getAccountId(), principal.getRole(), repaymentId),
                 httpRequest
         );
     }
@@ -208,9 +203,8 @@ public class FinancialController {
             @PathVariable Long installmentId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.createRepaymentInstallmentPaymentIntent(user.getAccountId(), user.getRole(), installmentId),
+                financialService.createRepaymentInstallmentPaymentIntent(principal.getAccountId(), principal.getRole(), installmentId),
                 httpRequest
         );
     }
@@ -219,9 +213,8 @@ public class FinancialController {
     public SuccessResponse<PaymentIntentResponse> getPaymentIntent(@PathVariable Long paymentIntentId,
                                                                    @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                                    HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.getPaymentIntent(user.getAccountId(), user.getRole(), paymentIntentId),
+                financialService.getPaymentIntent(principal.getAccountId(), principal.getRole(), paymentIntentId),
                 httpRequest
         );
     }
@@ -232,17 +225,9 @@ public class FinancialController {
             @RequestBody(required = false) CreatePaymentAttemptRequest request,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                financialService.createPaymentAttempt(user.getAccountId(), user.getRole(), paymentIntentId, request),
+                financialService.createPaymentAttempt(principal.getAccountId(), principal.getRole(), paymentIntentId, request),
                 httpRequest
         );
-    }
-
-    private AuthenticatedUserPrincipal requirePrincipal(AuthenticatedUserPrincipal principal) {
-        if (principal == null) {
-            throw new ApiException(ErrorCode.AUTHENTICATION_REQUIRED, "Authentication is required");
-        }
-        return principal;
     }
 }

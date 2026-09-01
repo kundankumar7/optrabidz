@@ -20,10 +20,9 @@ import com.project.optrabidz.marketplace.application.event.BidRejectedEvent;
 import com.project.optrabidz.marketplace.application.event.BidSubmittedEvent;
 import com.project.optrabidz.marketplace.application.event.BidWithdrawnEvent;
 import com.project.optrabidz.marketplace.application.exception.AgreementNotFoundException;
-import com.project.optrabidz.marketplace.application.exception.BidAlreadyAcceptedException;
+import com.project.optrabidz.marketplace.application.exception.BidAcceptanceConflictException;
 import com.project.optrabidz.marketplace.application.exception.BidAlreadyExistsException;
 import com.project.optrabidz.marketplace.application.exception.BidNotFoundException;
-import com.project.optrabidz.marketplace.application.exception.InvalidBidStateException;
 import com.project.optrabidz.marketplace.application.exception.MarketplaceAccessException;
 import com.project.optrabidz.marketplace.application.factory.AgreementFactory;
 import com.project.optrabidz.marketplace.application.factory.BidFactory;
@@ -44,13 +43,12 @@ import com.project.optrabidz.marketplace.domain.model.FundingListing;
 import com.project.optrabidz.marketplace.domain.repository.AgreementRepository;
 import com.project.optrabidz.marketplace.domain.repository.BidRepository;
 import com.project.optrabidz.marketplace.domain.repository.FundingListingRepository;
-import com.project.optrabidz.participation.application.exception.InvalidRoleException;
-import com.project.optrabidz.participation.application.exception.ParticipationNotFoundException;
+import com.project.optrabidz.participation.application.exception.InvestorNotFoundException;
+import com.project.optrabidz.participation.application.exception.StartupNotFoundException;
 import com.project.optrabidz.participation.domain.model.Investor;
 import com.project.optrabidz.participation.domain.model.Startup;
 import com.project.optrabidz.participation.domain.repository.InvestorRepository;
 import com.project.optrabidz.participation.domain.repository.StartupRepository;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -218,7 +216,7 @@ public class BidService {
         investorOwnsBidSpec.assertSatisfiedBy(investor, bid);
         bidCanBeWithdrawnSpec.assertSatisfiedBy(bid);
         Instant now = Instant.now();
-        applyBidTransition(() -> bid.withdraw(now));
+        bid.withdraw(now);
         Bid saved = bidRepository.save(bid);
         eventPublisher.publish(new BidWithdrawnEvent(
                 saved.getBidId(),
@@ -240,7 +238,7 @@ public class BidService {
         startupOwnsListingSpec.assertSatisfiedBy(startup, listing);
         bidCanBeRejectedSpec.assertSatisfiedBy(bid);
         Instant now = Instant.now();
-        applyBidTransition(() -> bid.reject(now));
+        bid.reject(now);
         Bid saved = bidRepository.save(bid);
         eventPublisher.publish(new BidRejectedEvent(
                 saved.getBidId(),
@@ -267,44 +265,63 @@ public class BidService {
         );
 
         Instant now = Instant.now();
-        applyBidTransition(() -> bid.accept(now));
+        bid.accept(now);
         assertAllowed(crossLifecycleConstraintController.evaluateAgreementCreation(bid.getBidState().name()));
 
-        try {
-            int updatedListings = listingRepository.markAgreementReachedIfOpen(listing.getListingId(), now);
-            if (updatedListings != 1) {
-                throw new BidAlreadyAcceptedException("Listing already has an accepted bid");
-            }
-            FundingListing savedListing = getListing(listing.getListingId());
-            Bid savedBid = bidRepository.saveAndFlush(bid);
-            bidRepository.rejectOtherSubmittedBids(savedBid.getListingId(), savedBid.getBidId(), now);
-            Agreement agreement = agreementFactory.createFromAcceptedBid(savedListing, savedBid, now);
-            Agreement savedAgreement = agreementRepository.save(agreement);
-            financeAgreementPort.onAgreementCreated(savedAgreement);
-            eventPublisher.publish(new BidAcceptedEvent(
-                    savedBid.getBidId(),
-                    savedBid.getListingId(),
-                    savedBid.getInvestorId(),
-                    accountId,
-                    now
-            ));
-            eventPublisher.publish(new AgreementCreatedEvent(
-                    savedAgreement.getAgreementId(),
-                    savedAgreement.getListingId(),
-                    savedAgreement.getBidId(),
-                    savedAgreement.getStartupId(),
-                    savedAgreement.getInvestorId(),
-                    accountId,
-                    now
-            ));
-            return new AcceptBidResponse(
-                    new BidActionResponse(savedBid.getBidId(), savedBid.getBidState(), savedBid.getAcceptedAt()),
-                    new CloseListingResponse(savedListing.getListingId(), savedListing.getListingState(), savedListing.getClosedAt()),
-                    toAgreementResponse(savedAgreement)
+        int updatedListings = listingRepository.markAgreementReachedIfOpen(
+                listing.getListingId(),
+                now
+        );
+        if (updatedListings != 1) {
+            throw new BidAcceptanceConflictException(
+                    "Listing " + listing.getListingId()
+                            + " cannot accept bid " + bid.getBidId()
+                            + " because the listing is no longer open"
             );
-        } catch (DataIntegrityViolationException ex) {
-            throw new BidAlreadyAcceptedException("Listing already has an accepted bid");
         }
+        FundingListing savedListing = getListing(listing.getListingId());
+        Bid savedBid = bidRepository.saveAndFlush(bid);
+        bidRepository.rejectOtherSubmittedBids(
+                savedBid.getListingId(),
+                savedBid.getBidId(),
+                now
+        );
+        Agreement agreement = agreementFactory.createFromAcceptedBid(
+                savedListing,
+                savedBid,
+                now
+        );
+        Agreement savedAgreement = agreementRepository.save(agreement);
+        financeAgreementPort.onAgreementCreated(savedAgreement);
+        eventPublisher.publish(new BidAcceptedEvent(
+                savedBid.getBidId(),
+                savedBid.getListingId(),
+                savedBid.getInvestorId(),
+                accountId,
+                now
+        ));
+        eventPublisher.publish(new AgreementCreatedEvent(
+                savedAgreement.getAgreementId(),
+                savedAgreement.getListingId(),
+                savedAgreement.getBidId(),
+                savedAgreement.getStartupId(),
+                savedAgreement.getInvestorId(),
+                accountId,
+                now
+        ));
+        return new AcceptBidResponse(
+                new BidActionResponse(
+                        savedBid.getBidId(),
+                        savedBid.getBidState(),
+                        savedBid.getAcceptedAt()
+                ),
+                new CloseListingResponse(
+                        savedListing.getListingId(),
+                        savedListing.getListingState(),
+                        savedListing.getClosedAt()
+                ),
+                toAgreementResponse(savedAgreement)
+        );
     }
 
     AgreementResponse toAgreementResponse(Agreement agreement) {
@@ -334,51 +351,50 @@ public class BidService {
 
     private FundingListing getListing(Long listingId) {
         return listingRepository.findById(listingId)
-                .orElseThrow(() -> new com.project.optrabidz.marketplace.application.exception.ListingNotFoundException("Funding listing not found"));
+                .orElseThrow(() -> new com.project.optrabidz.marketplace.application.exception.ListingNotFoundException(
+                        "Funding listing " + listingId + " was not found"
+                ));
     }
 
     private Bid getBid(Long bidId) {
         return bidRepository.findById(bidId)
-                .orElseThrow(() -> new BidNotFoundException("Bid not found"));
+                .orElseThrow(() -> new BidNotFoundException(
+                        "Bid " + bidId + " was not found"
+                ));
     }
 
     private Startup getStartupByAccount(Long accountId) {
         return startupRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Startup not found for this account"));
+                .orElseThrow(() -> new StartupNotFoundException(accountId));
     }
 
     private Startup getStartupById(Long startupId) {
         return startupRepository.findById(startupId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Startup not found"));
+                .orElseThrow(() -> new StartupNotFoundException("startup", startupId));
     }
 
     private Investor getInvestorByAccount(Long accountId) {
         return investorRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Investor not found for this account"));
+                .orElseThrow(() -> new InvestorNotFoundException(accountId));
     }
 
     private Investor getInvestorById(Long investorId) {
         return investorRepository.findById(investorId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Investor not found"));
+                .orElseThrow(() -> new InvestorNotFoundException("investor", investorId));
     }
 
     private void ensureRole(RoleType actualRole, RoleType expectedRole) {
         if (actualRole != expectedRole) {
-            throw new InvalidRoleException("Role is not allowed to perform this operation");
+            throw new MarketplaceAccessException(
+                    "Marketplace operation requires role " + expectedRole
+                            + " but actor role was " + actualRole
+            );
         }
     }
 
     private void assertAllowed(GovernanceDecision decision) {
         if (!decision.allowed()) {
             throw new GovernanceException(decision);
-        }
-    }
-
-    private void applyBidTransition(Runnable transition) {
-        try {
-            transition.run();
-        } catch (IllegalStateException exception) {
-            throw new InvalidBidStateException(exception.getMessage());
         }
     }
 

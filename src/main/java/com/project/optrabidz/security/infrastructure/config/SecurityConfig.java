@@ -1,50 +1,32 @@
 package com.project.optrabidz.security.infrastructure.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.optrabidz.audit.application.SecurityAuditService;
-import com.project.optrabidz.common.api.exception.ErrorCode;
-import com.project.optrabidz.common.api.response.ApiResponse;
 import com.project.optrabidz.common.observability.SecurityMdcFilter;
-import com.project.optrabidz.security.application.AuthenticatedUserPrincipal;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.project.optrabidz.security.infrastructure.web.ProblemAccessDeniedHandler;
+import com.project.optrabidz.security.infrastructure.web.ProblemAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import java.io.IOException;
-import java.util.List;
-
 @Configuration
 public class SecurityConfig {
-    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   ObjectMapper objectMapper,
                                                    ActiveSessionFilter activeSessionFilter,
                                                    CsrfCookieFilter csrfCookieFilter,
                                                    SecurityMdcFilter securityMdcFilter,
-                                                   SecurityAuditService securityAuditService) throws Exception {
-        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        csrfTokenRepository.setCookiePath("/");
-        csrfTokenRepository.setHeaderName("X-CSRF-TOKEN");
-        CsrfTokenRequestAttributeHandler csrfTokenRequestHandler = new CsrfTokenRequestAttributeHandler();
-
+                                                   ProblemAuthenticationEntryPoint authenticationEntryPoint,
+                                                   ProblemAccessDeniedHandler accessDeniedHandler,
+                                                   CookieCsrfTokenRepository csrfTokenRepository,
+                                                   CsrfTokenRequestHandler csrfTokenRequestHandler) throws Exception {
         return http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)
@@ -56,6 +38,32 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/admin/recovery/transfer").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/payment-providers/*/webhooks").permitAll()
+                        .requestMatchers(
+                                "/api/v1/settlements/**",
+                                "/api/v1/repayments/**",
+                                "/api/v1/repayment-installments/**",
+                                "/api/v1/payment-intents/**",
+                                "/api/v1/payment-attempts/**"
+                        ).authenticated()
+                        .requestMatchers(
+                                "/api/v1/bids",
+                                "/api/v1/bids/**",
+                                "/api/v1/agreements/**"
+                        ).authenticated()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/funding-listings/recommended",
+                                "/api/v1/funding-listings/*/accepted-bid"
+                        ).authenticated()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/funding-listings",
+                                "/api/v1/funding-listings/*/actions/**"
+                        ).authenticated()
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/v1/funding-listings/*"
+                        ).authenticated()
                         .requestMatchers(
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/change-password",
@@ -71,37 +79,8 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            securityAuditService.recordAuthenticationRequired(request, authException.getMessage());
-                            writeError(objectMapper, request, response,
-                                    ErrorCode.AUTHENTICATION_REQUIRED,
-                                    "Authentication is required");
-                        })
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            String message = "You are not authorized to perform this action";
-                            if (accessDeniedException instanceof org.springframework.security.web.csrf.CsrfException) {
-                                message = "CSRF validation failed";
-                            }
-                            AuthenticatedUserPrincipal principal = currentPrincipal();
-                            securityAuditService.recordAuthorizationDenied(
-                                    request,
-                                    message,
-                                    principal == null ? null : principal.getAccountId(),
-                                    principal == null ? null : principal.getRole().name()
-                            );
-
-                            log.warn(
-                                    "Access denied for {} {}: {} - {}",
-                                    request.getMethod(),
-                                    request.getRequestURI(),
-                                    accessDeniedException.getClass().getSimpleName(),
-                                    accessDeniedException.getMessage()
-                            );
-
-                            writeError(objectMapper, request, response,
-                                    ErrorCode.AUTHORIZATION_FAILED,
-                                    message);
-                        })
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 )
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
@@ -110,6 +89,20 @@ public class SecurityConfig {
                 .addFilterAfter(securityMdcFilter, ActiveSessionFilter.class)
                 .addFilterAfter(csrfCookieFilter, org.springframework.security.web.csrf.CsrfFilter.class)
                 .build();
+    }
+
+    @Bean
+    public CookieCsrfTokenRepository csrfTokenRepository() {
+        CookieCsrfTokenRepository repository =
+                CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookiePath("/");
+        repository.setHeaderName("X-CSRF-TOKEN");
+        return repository;
+    }
+
+    @Bean
+    public CsrfTokenRequestHandler csrfTokenRequestHandler() {
+        return new CsrfTokenRequestAttributeHandler();
     }
 
     private RequestMatcher[] publicPostMatchers() {
@@ -121,24 +114,4 @@ public class SecurityConfig {
         };
     }
 
-    private AuthenticatedUserPrincipal currentPrincipal() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof AuthenticatedUserPrincipal principal)) {
-            return null;
-        }
-        return principal;
-    }
-
-    private void writeError(ObjectMapper objectMapper,
-                            HttpServletRequest request,
-                            HttpServletResponse response,
-                            ErrorCode errorCode,
-                            String message) throws IOException {
-        response.setStatus(errorCode.httpStatus().value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        objectMapper.writeValue(
-                response.getOutputStream(),
-                ApiResponse.error(errorCode, message, List.of(), request)
-        );
-    }
 }

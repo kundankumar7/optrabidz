@@ -1,10 +1,16 @@
 package com.project.optrabidz.security.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.security.application.LoginFailureReason;
+import com.project.optrabidz.security.application.error.SecurityErrors;
 
-public class InvalidCredentialsException extends ApiException {
-    public InvalidCredentialsException(String message) {
-        super(ErrorCode.INVALID_CREDENTIALS, message);
+public final class InvalidCredentialsException extends ApplicationException {
+
+    public InvalidCredentialsException(LoginFailureReason reason) {
+        super(
+                SecurityErrors.INVALID_CREDENTIALS,
+                "SECURITY.LOGIN." + reason.name(),
+                "Login rejected: " + reason.name()
+        );
     }
 }

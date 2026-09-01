@@ -1,7 +1,9 @@
 package com.project.optrabidz.marketplace.application.specification;
 
 import com.project.optrabidz.identity.domain.model.RoleType;
-import com.project.optrabidz.marketplace.application.exception.BidAlreadyAcceptedException;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.marketplace.application.error.MarketplaceErrors;
+import com.project.optrabidz.marketplace.application.exception.BidAcceptanceConflictException;
 import com.project.optrabidz.marketplace.application.exception.InvalidBidStateException;
 import com.project.optrabidz.marketplace.application.exception.InvalidListingStateException;
 import com.project.optrabidz.marketplace.application.exception.MarketplaceAccessException;
@@ -37,13 +39,25 @@ class MarketplaceSpecificationTest {
 
         assertThatThrownBy(() -> new ListingCanBeUpdatedSpec().assertSatisfiedBy(open))
                 .isInstanceOf(InvalidListingStateException.class)
-                .hasMessageContaining("Only DRAFT listings can be updated");
+                .hasMessageContaining("Only DRAFT listings can be updated")
+                .satisfies(failure -> assertThatDescriptor(
+                        failure,
+                        MarketplaceErrors.LISTING_STATE_CONFLICT
+                ));
         assertThatThrownBy(() -> new ListingCanBePublishedSpec().assertSatisfiedBy(open))
                 .isInstanceOf(InvalidListingStateException.class)
-                .hasMessageContaining("Only DRAFT listings can be published");
+                .hasMessageContaining("Only DRAFT listings can be published")
+                .satisfies(failure -> assertThatDescriptor(
+                        failure,
+                        MarketplaceErrors.LISTING_STATE_CONFLICT
+                ));
         assertThatThrownBy(() -> new ListingCanBeClosedSpec().assertSatisfiedBy(draft))
                 .isInstanceOf(InvalidListingStateException.class)
-                .hasMessageContaining("Only OPEN listings can be closed");
+                .hasMessageContaining("Only OPEN listings can be closed")
+                .satisfies(failure -> assertThatDescriptor(
+                        failure,
+                        MarketplaceErrors.LISTING_STATE_CONFLICT
+                ));
     }
 
     @Test
@@ -55,14 +69,29 @@ class MarketplaceSpecificationTest {
         assertThatNoException().isThrownBy(() -> spec.assertSatisfiedBy(openListing, submittedBid, false));
 
         assertThatThrownBy(() -> spec.assertSatisfiedBy(listing(ListingState.CLOSED, NOW), submittedBid, false))
-                .isInstanceOf(BidAlreadyAcceptedException.class)
-                .hasMessageContaining("Listing is not open for bid acceptance");
+                .isInstanceOf(BidAcceptanceConflictException.class)
+                .hasMessageContaining("Listing 101")
+                .hasMessageContaining("CLOSED")
+                .hasMessageContaining("bid 501")
+                .satisfies(failure -> assertThatDescriptor(
+                        failure,
+                        MarketplaceErrors.BID_ACCEPTANCE_CONFLICT
+                ));
         assertThatThrownBy(() -> spec.assertSatisfiedBy(openListing, submittedBid, true))
-                .isInstanceOf(BidAlreadyAcceptedException.class)
-                .hasMessageContaining("Listing already has an accepted bid");
+                .isInstanceOf(BidAcceptanceConflictException.class)
+                .hasMessageContaining("Listing 101")
+                .hasMessageContaining("candidate bid=501")
+                .satisfies(failure -> assertThatDescriptor(
+                        failure,
+                        MarketplaceErrors.BID_ACCEPTANCE_CONFLICT
+                ));
         assertThatThrownBy(() -> spec.assertSatisfiedBy(openListing, bid(BidState.WITHDRAWN), false))
                 .isInstanceOf(InvalidBidStateException.class)
-                .hasMessageContaining("Only SUBMITTED bids can be accepted");
+                .hasMessageContaining("Only SUBMITTED bids can be accepted")
+                .satisfies(failure -> assertThatDescriptor(
+                        failure,
+                        MarketplaceErrors.BID_STATE_CONFLICT
+                ));
     }
 
     @Test
@@ -74,7 +103,11 @@ class MarketplaceSpecificationTest {
         assertThatNoException().isThrownBy(() -> new StartupOwnsListingSpec().assertSatisfiedBy(owner, listing));
         assertThatThrownBy(() -> new StartupOwnsListingSpec().assertSatisfiedBy(outsider, listing))
                 .isInstanceOf(MarketplaceAccessException.class)
-                .hasMessageContaining("Startup can access only owned listings");
+                .hasMessageContaining("Startup can access only owned listings")
+                .satisfies(failure -> assertThatDescriptor(
+                        failure,
+                        MarketplaceErrors.MARKETPLACE_ACCESS_DENIED
+                ));
 
         assertThatNoException().isThrownBy(() -> new ListingVisibleToActorSpec()
                 .assertSatisfiedBy(listing, owner.getAccountId(), RoleType.STARTUP, owner));
@@ -83,7 +116,11 @@ class MarketplaceSpecificationTest {
         assertThatThrownBy(() -> new ListingVisibleToActorSpec()
                 .assertSatisfiedBy(listing, outsider.getAccountId(), RoleType.STARTUP, owner))
                 .isInstanceOf(MarketplaceAccessException.class)
-                .hasMessageContaining("not authorized");
+                .hasMessageContaining("not authorized")
+                .satisfies(failure -> assertThatDescriptor(
+                        failure,
+                        MarketplaceErrors.MARKETPLACE_ACCESS_DENIED
+                ));
     }
 
     @Test
@@ -158,5 +195,14 @@ class MarketplaceSpecificationTest {
                 List.of("https://startupone.example.com"),
                 List.of()
         );
+    }
+
+    private static void assertThatDescriptor(
+            Throwable failure,
+            com.project.optrabidz.common.error.ErrorDescriptor descriptor
+    ) {
+        org.assertj.core.api.Assertions.assertThat(
+                        ((ApplicationException) failure).descriptor())
+                .isSameAs(descriptor);
     }
 }

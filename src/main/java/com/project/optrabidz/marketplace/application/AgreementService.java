@@ -4,11 +4,12 @@ import com.project.optrabidz.common.api.pagination.PageResponse;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.marketplace.application.dto.response.AgreementResponse;
 import com.project.optrabidz.marketplace.application.exception.AgreementNotFoundException;
+import com.project.optrabidz.marketplace.application.exception.MarketplaceAccessException;
 import com.project.optrabidz.marketplace.application.specification.AgreementVisibleToActorSpec;
 import com.project.optrabidz.marketplace.domain.model.Agreement;
 import com.project.optrabidz.marketplace.domain.repository.AgreementRepository;
-import com.project.optrabidz.participation.application.exception.InvalidRoleException;
-import com.project.optrabidz.participation.application.exception.ParticipationNotFoundException;
+import com.project.optrabidz.participation.application.exception.InvestorNotFoundException;
+import com.project.optrabidz.participation.application.exception.StartupNotFoundException;
 import com.project.optrabidz.participation.domain.model.Investor;
 import com.project.optrabidz.participation.domain.model.Startup;
 import com.project.optrabidz.participation.domain.repository.InvestorRepository;
@@ -75,7 +76,9 @@ public class AgreementService {
 
     private Agreement getAgreement(Long agreementId) {
         return agreementRepository.findById(agreementId)
-                .orElseThrow(() -> new AgreementNotFoundException("Agreement not found"));
+                .orElseThrow(() -> new AgreementNotFoundException(
+                        "Agreement " + agreementId + " was not found"
+                ));
     }
 
     private void ensureAgreementVisible(Long accountId, RoleType roleType, Agreement agreement) {
@@ -94,9 +97,9 @@ public class AgreementService {
 
     private AgreementResponse toResponse(Agreement agreement) {
         Startup startup = startupRepository.findById(agreement.getStartupId())
-                .orElseThrow(() -> new ParticipationNotFoundException("Startup not found"));
+                .orElseThrow(() -> new StartupNotFoundException("startup", agreement.getStartupId()));
         Investor investor = investorRepository.findById(agreement.getInvestorId())
-                .orElseThrow(() -> new ParticipationNotFoundException("Investor not found"));
+                .orElseThrow(() -> new InvestorNotFoundException("investor", agreement.getInvestorId()));
         return responseMapper.toAgreementResponse(
                 agreement,
                 startup.getPublicDisplayName(),
@@ -106,17 +109,20 @@ public class AgreementService {
 
     private Startup getStartupByAccount(Long accountId) {
         return startupRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Startup not found for this account"));
+                .orElseThrow(() -> new StartupNotFoundException(accountId));
     }
 
     private Investor getInvestorByAccount(Long accountId) {
         return investorRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Investor not found for this account"));
+                .orElseThrow(() -> new InvestorNotFoundException(accountId));
     }
 
     private void ensureRole(RoleType actualRole, RoleType expectedRole) {
         if (actualRole != expectedRole) {
-            throw new InvalidRoleException("Role is not allowed to perform this operation");
+            throw new MarketplaceAccessException(
+                    "Marketplace operation requires role " + expectedRole
+                            + " but actor role was " + actualRole
+            );
         }
     }
 

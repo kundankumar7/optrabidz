@@ -1,6 +1,6 @@
 package com.project.optrabidz.classification.application.specification;
 
-import com.project.optrabidz.classification.application.exception.InvalidClassificationException;
+import com.project.optrabidz.classification.application.exception.StartupClassificationRuleViolationException;
 import com.project.optrabidz.classification.application.policy.StartupClassificationTypePolicy;
 import com.project.optrabidz.classification.domain.model.StartupClassificationProfile;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ public class StartupClassificationCardinalitySpec implements StartupClassificati
         countsByType.forEach((type, count) -> {
             int maxAllowed = resolvePolicy(type).maxAllowedPerType();
             if (count > maxAllowed) {
-                throw new InvalidClassificationException(
+                throw new StartupClassificationRuleViolationException(
                         "Startup classification cardinality exceeded for type: " + type
                 );
             }
@@ -39,7 +39,7 @@ public class StartupClassificationCardinalitySpec implements StartupClassificati
         return policies.stream()
                 .filter(policy -> policy.supports(classificationType))
                 .findFirst()
-                .orElseThrow(() -> new InvalidClassificationException(
+                .orElseThrow(() -> new StartupClassificationRuleViolationException(
                         "Unsupported startup classification type: " + classificationType
                 ));
     }

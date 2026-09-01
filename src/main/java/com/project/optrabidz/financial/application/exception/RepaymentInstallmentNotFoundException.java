@@ -1,10 +1,14 @@
 package com.project.optrabidz.financial.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.financial.application.error.FinancialErrors;
 
-public class RepaymentInstallmentNotFoundException extends ApiException {
-    public RepaymentInstallmentNotFoundException(String message) {
-        super(ErrorCode.RESOURCE_NOT_FOUND, message);
+public final class RepaymentInstallmentNotFoundException extends ApplicationException {
+    public RepaymentInstallmentNotFoundException(String diagnosticMessage) {
+        super(
+                FinancialErrors.REPAYMENT_INSTALLMENT_NOT_FOUND,
+                "FINANCIAL.REPAYMENT.INSTALLMENT.NOT.FOUND",
+                diagnosticMessage
+        );
     }
 }

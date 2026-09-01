@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "modules": [
+    {
+      "name": "audit",
+      "capability": "platform-support",
+      "ownerPage": "docs/architecture/modules/audit.md"
+    },
+    {
+      "name": "classification",
+      "capability": "marketplace",
+      "ownerPage": "docs/architecture/modules/classification.md"
+    },
+    {
+      "name": "common",
+      "capability": "platform-support",
+      "ownerPage": "docs/architecture/modules/common.md"
+    },
+    {
+      "name": "documentation",
+      "capability": "platform-support",
+      "ownerPage": "docs/architecture/modules/documentation.md"
+    },
+    {
+      "name": "financial",
+      "capability": "finance-payments",
+      "ownerPage": "docs/architecture/modules/financial.md"
+    },
+    {
+      "name": "governance",
+      "capability": "marketplace",
+      "ownerPage": "docs/architecture/modules/governance.md"
+    },
+    {
+      "name": "identity",
+      "capability": "identity-access",
+      "ownerPage": "docs/architecture/modules/identity.md"
+    },
+    {
+      "name": "marketplace",
+      "capability": "marketplace",
+      "ownerPage": "docs/architecture/modules/marketplace.md"
+    },
+    {
+      "name": "notification",
+      "capability": "platform-support",
+      "ownerPage": "docs/architecture/modules/notification.md"
+    },
+    {
+      "name": "participation",
+      "capability": "identity-access",
+      "ownerPage": "docs/architecture/modules/participation.md"
+    },
+    {
+      "name": "security",
+      "capability": "identity-access",
+      "ownerPage": "docs/architecture/modules/security.md"
+    }
+  ]
+}

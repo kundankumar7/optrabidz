@@ -1,10 +1,14 @@
 package com.project.optrabidz.financial.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.financial.application.error.FinancialErrors;
 
-public class PaymentIntentNotFoundException extends ApiException {
-    public PaymentIntentNotFoundException(String message) {
-        super(ErrorCode.RESOURCE_NOT_FOUND, message);
+public final class PaymentIntentNotFoundException extends ApplicationException {
+    public PaymentIntentNotFoundException(String diagnosticMessage) {
+        super(
+                FinancialErrors.PAYMENT_INTENT_NOT_FOUND,
+                "FINANCIAL.PAYMENT.INTENT.NOT_FOUND",
+                diagnosticMessage
+        );
     }
 }

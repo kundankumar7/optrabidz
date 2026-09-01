@@ -46,6 +46,18 @@ public class RepaymentInstallmentRepositoryAdapter implements RepaymentInstallme
     }
 
     @Override
+    public Optional<RepaymentInstallment> findByIdForStartup(Long installmentId, Long startupId) {
+        return jpaRepository.findByIdForStartup(installmentId, startupId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<RepaymentInstallment> findByIdForInvestor(Long installmentId, Long investorId) {
+        return jpaRepository.findByIdForInvestor(installmentId, investorId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public Page<RepaymentInstallment> findByRepaymentId(Long repaymentId, Pageable pageable) {
         return jpaRepository.findByRepaymentId(repaymentId, pageable)
                 .map(mapper::toDomain);

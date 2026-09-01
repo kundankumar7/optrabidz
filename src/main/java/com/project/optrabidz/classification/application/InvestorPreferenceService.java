@@ -7,15 +7,15 @@ import com.project.optrabidz.classification.application.command.ReplaceInvestorP
 import com.project.optrabidz.classification.application.dto.response.ClassificationEntryResponse;
 import com.project.optrabidz.classification.application.dto.response.InvestorPreferenceResponse;
 import com.project.optrabidz.classification.application.event.InvestorPreferenceChangedEvent;
-import com.project.optrabidz.classification.application.exception.ClassificationAlreadyExistsException;
+import com.project.optrabidz.classification.application.exception.InvestorPreferenceAlreadyExistsException;
+import com.project.optrabidz.classification.application.exception.InvestorPreferenceNotFoundException;
+import com.project.optrabidz.classification.application.exception.InvestorPreferenceProfileRequiredException;
 import com.project.optrabidz.classification.application.port.in.InvestorPreferenceCommandPort;
 import com.project.optrabidz.classification.application.port.in.InvestorPreferenceQueryPort;
 import com.project.optrabidz.classification.application.port.out.ParticipationActorQueryPort;
 import com.project.optrabidz.classification.domain.model.InvestorPreference;
 import com.project.optrabidz.classification.domain.model.InvestorPreferenceProfile;
 import com.project.optrabidz.classification.domain.repository.InvestorPreferenceRepository;
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.common.api.response.MessageData;
 import com.project.optrabidz.common.event.EventPublisher;
 import org.springframework.stereotype.Service;
@@ -48,7 +48,10 @@ public class InvestorPreferenceService implements InvestorPreferenceCommandPort,
         InvestorPreferenceProfile profile = loadProfile(investorId);
 
         if (profile.contains(command.preferenceType(), command.preferenceValue())) {
-            throw new ClassificationAlreadyExistsException("Investor preference already exists");
+            throw new InvestorPreferenceAlreadyExistsException(
+                    command.preferenceType(),
+                    command.preferenceValue()
+            );
         }
 
         InvestorPreference entry = InvestorPreference.create(command.preferenceType(), command.preferenceValue());
@@ -126,17 +129,18 @@ public class InvestorPreferenceService implements InvestorPreferenceCommandPort,
 
     private Long resolveInvestorId(Long accountId) {
         return participationActorQueryPort.findInvestorIdByAccountId(accountId)
-                .orElseThrow(() -> new ApiException(
-                        ErrorCode.RESOURCE_NOT_FOUND,
-                        "Investor actor not found for account"
-                ));
+                .orElseThrow(() ->
+                        new InvestorPreferenceProfileRequiredException(accountId));
     }
 
     private void ensurePreferenceExists(InvestorPreferenceProfile profile,
                                         String preferenceType,
                                         String preferenceValue) {
         if (!profile.contains(preferenceType, preferenceValue)) {
-            throw new ApiException(ErrorCode.RESOURCE_NOT_FOUND, "Investor preference not found");
+            throw new InvestorPreferenceNotFoundException(
+                    preferenceType,
+                    preferenceValue
+            );
         }
     }
 

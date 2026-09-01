@@ -1,6 +1,6 @@
 package com.project.optrabidz.classification.application.policy;
 
-import com.project.optrabidz.classification.application.exception.InvalidClassificationException;
+import com.project.optrabidz.classification.application.exception.StartupClassificationRuleViolationException;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -16,7 +16,9 @@ public class DefaultStartupClassificationTypePolicy implements StartupClassifica
     @Override
     public void validateValue(String classificationValue) {
         if (!StringUtils.hasText(classificationValue)) {
-            throw new InvalidClassificationException("Classification value must not be blank");
+            throw new StartupClassificationRuleViolationException(
+                    "Classification value must not be blank"
+            );
         }
     }
 

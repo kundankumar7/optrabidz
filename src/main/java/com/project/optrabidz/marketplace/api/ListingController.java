@@ -1,7 +1,5 @@
 package com.project.optrabidz.marketplace.api;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.common.api.pagination.PageResponse;
 import com.project.optrabidz.common.api.response.ApiResponse;
 import com.project.optrabidz.common.api.response.SuccessResponse;
@@ -45,12 +43,37 @@ public class ListingController {
     }
 
     @PostMapping("/funding-listings")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    ref = "#/components/responses/ValidationProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    ref = "#/components/responses/UnauthorizedProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    ref = "#/components/responses/ForbiddenProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "422",
+                    ref = "#/components/responses/UnprocessableEntityProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    ref = "#/components/responses/InternalServerProblem"
+            )
+    })
     public SuccessResponse<ListingResponse> createListing(@RequestBody @Valid CreateListingRequest request,
                                                           @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                           HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                listingService.createDraftListing(user.getAccountId(), user.getRole(), request),
+                listingService.createDraftListing(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        request
+                ),
                 httpRequest
         );
     }
@@ -60,9 +83,13 @@ public class ListingController {
                                                           @RequestBody @Valid UpdateListingRequest request,
                                                           @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                           HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                listingService.updateDraftListing(user.getAccountId(), user.getRole(), listingId, request),
+                listingService.updateDraftListing(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        listingId,
+                        request
+                ),
                 httpRequest
         );
     }
@@ -72,9 +99,13 @@ public class ListingController {
                                                                   @RequestBody(required = false) @Valid PublishListingRequest request,
                                                                   @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                                   HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                listingService.publishListing(user.getAccountId(), user.getRole(), listingId, request),
+                listingService.publishListing(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        listingId,
+                        request
+                ),
                 httpRequest
         );
     }
@@ -84,9 +115,13 @@ public class ListingController {
                                                               @RequestBody(required = false) CloseListingRequest request,
                                                               @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                               HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                listingService.closeListing(user.getAccountId(), user.getRole(), listingId, request),
+                listingService.closeListing(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        listingId,
+                        request
+                ),
                 httpRequest
         );
     }
@@ -99,9 +134,15 @@ public class ListingController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
-                listingService.getMyListings(user.getAccountId(), user.getRole(), state, fundingModel, page, size),
+                listingService.getMyListings(
+                        principal.getAccountId(),
+                        principal.getRole(),
+                        state,
+                        fundingModel,
+                        page,
+                        size
+                ),
                 httpRequest
         );
     }
@@ -140,11 +181,10 @@ public class ListingController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             HttpServletRequest httpRequest) {
-        AuthenticatedUserPrincipal user = requirePrincipal(principal);
         return ApiResponse.success(
                 marketplaceDiscoveryService.getRecommendedListings(
-                        user.getAccountId(),
-                        user.getRole(),
+                        principal.getAccountId(),
+                        principal.getRole(),
                         fundingModel,
                         minAmount,
                         maxAmount,
@@ -157,6 +197,20 @@ public class ListingController {
     }
 
     @GetMapping("/funding-listings/{listingId}")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    ref = "#/components/responses/ValidationProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    ref = "#/components/responses/NotFoundProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    ref = "#/components/responses/InternalServerProblem"
+            )
+    })
     public SuccessResponse<ListingResponse> getListing(@PathVariable Long listingId,
                                                        @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                        HttpServletRequest httpRequest) {
@@ -170,10 +224,4 @@ public class ListingController {
         );
     }
 
-    private AuthenticatedUserPrincipal requirePrincipal(AuthenticatedUserPrincipal principal) {
-        if (principal == null) {
-            throw new ApiException(ErrorCode.AUTHENTICATION_REQUIRED, "Authentication is required");
-        }
-        return principal;
-    }
 }

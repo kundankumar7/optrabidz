@@ -1,7 +1,5 @@
 package com.project.optrabidz.security.application;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
 import com.project.optrabidz.audit.application.SecurityAuditService;
 import com.project.optrabidz.identity.application.command.ActivateAccountCommand;
 import com.project.optrabidz.identity.application.command.CreateAccountCommand;
@@ -16,9 +14,13 @@ import com.project.optrabidz.security.application.dto.request.SignupRequest;
 import com.project.optrabidz.security.application.dto.response.LoginResponse;
 import com.project.optrabidz.security.application.dto.response.MessageResponse;
 import com.project.optrabidz.security.application.dto.response.SignupResponse;
-import com.project.optrabidz.security.application.exception.CredentialLockedException;
-import com.project.optrabidz.security.application.exception.EmailAlreadyExistsException;
+import com.project.optrabidz.security.application.exception.CredentialNotFoundException;
+import com.project.optrabidz.security.application.exception.CurrentPasswordInvalidException;
+import com.project.optrabidz.security.application.exception.EmailAlreadyRegisteredException;
 import com.project.optrabidz.security.application.exception.InvalidCredentialsException;
+import com.project.optrabidz.security.application.exception.PasswordPolicyViolationException;
+import com.project.optrabidz.security.application.exception.SecurityAuthorizationException;
+import com.project.optrabidz.security.application.exception.SelfRegistrationNotAllowedException;
 import com.project.optrabidz.security.domain.model.Credential;
 import com.project.optrabidz.security.domain.model.CredentialStatus;
 import com.project.optrabidz.security.domain.model.LoginAttempt;
@@ -82,7 +84,7 @@ public class AuthenticationService {
         validatePasswordPolicy(request.password());
 
         if (credentialRepository.existsByEmail(email)) {
-            throw new EmailAlreadyExistsException("Email is already registered");
+            throw new EmailAlreadyRegisteredException(email);
         }
 
         Long accountId = identityCommandPort.createAccount(new CreateAccountCommand(request.role()));
@@ -105,36 +107,31 @@ public class AuthenticationService {
         Credential credential = credentialRepository.findByEmail(email).orElse(null);
 
         if (credential == null) {
-            recordFailedLogin(email, "Invalid credentials", sourceIp, httpRequest);
-            throw new InvalidCredentialsException("Invalid email or password");
+            rejectLogin(email, LoginFailureReason.UNKNOWN_IDENTITY, sourceIp, httpRequest);
         }
 
         if (credential.getCredentialStatus() == CredentialStatus.LOCKED) {
-            recordFailedLogin(email, "Credential locked", sourceIp, httpRequest);
-            throw new CredentialLockedException("Credential is locked");
+            rejectLogin(email, LoginFailureReason.CREDENTIAL_LOCKED, sourceIp, httpRequest);
         }
 
         if (credential.getCredentialStatus() == CredentialStatus.DISABLED) {
-            recordFailedLogin(email, "Credential disabled", sourceIp, httpRequest);
-            throw new ApiException(ErrorCode.AUTHORIZATION_FAILED, "Credential is disabled");
+            rejectLogin(email, LoginFailureReason.CREDENTIAL_DISABLED, sourceIp, httpRequest);
         }
 
         if (!passwordEncoder.matches(request.password(), credential.getPasswordHash())) {
-            recordFailedLogin(email, "Invalid credentials", sourceIp, httpRequest);
+            recordFailedLogin(email, LoginFailureReason.INVALID_SECRET, sourceIp, httpRequest);
             enforceLockPolicyIfNeeded(credential, email);
-            throw new InvalidCredentialsException("Invalid email or password");
+            throw new InvalidCredentialsException(LoginFailureReason.INVALID_SECRET);
         }
 
         AccountSnapshot account = identityQueryPort.findAccountById(credential.getAccountId())
-                .orElseThrow(() -> new ApiException(
-                        ErrorCode.RESOURCE_NOT_FOUND,
-                        "Account not found for credential"
+                .orElseThrow(() -> new IllegalStateException(
+                        "Credential references a missing account"
                 ));
 
         if (account.accountState() == AccountState.SUSPENDED
                 || account.accountState() == AccountState.DEACTIVATED) {
-            recordFailedLogin(email, "Account restricted", sourceIp, httpRequest);
-            throw new ApiException(ErrorCode.AUTHORIZATION_FAILED, "Account is restricted");
+            rejectLogin(email, LoginFailureReason.ACCOUNT_RESTRICTED, sourceIp, httpRequest);
         }
 
         loginAttemptRepository.save(LoginAttempt.success(email, sourceIp));
@@ -155,22 +152,20 @@ public class AuthenticationService {
     public MessageResponse changePassword(AuthenticatedUserPrincipal principal,
                                           ChangePasswordRequest request) {
         if (principal.getRole() == RoleType.ADMIN) {
-            throw new ApiException(
-                    ErrorCode.AUTHORIZATION_FAILED,
-                    "Admin password changes are controlled by governance transfer flow"
+            throw new SecurityAuthorizationException(
+                    principal.getAccountId(), "change password"
             );
         }
 
         validatePasswordPolicy(request.newPassword());
 
         Credential credential = credentialRepository.findByAccountId(principal.getAccountId())
-                .orElseThrow(() -> new ApiException(
-                        ErrorCode.RESOURCE_NOT_FOUND,
-                        "Credential not found for account"
+                .orElseThrow(() -> new CredentialNotFoundException(
+                        principal.getAccountId()
                 ));
 
         if (!passwordEncoder.matches(request.currentPassword(), credential.getPasswordHash())) {
-            throw new InvalidCredentialsException("Current password is incorrect");
+            throw new CurrentPasswordInvalidException(principal.getAccountId());
         }
 
         credential.changePassword(passwordEncoder.encode(request.newPassword()));
@@ -233,7 +228,6 @@ public class AuthenticationService {
         if (consecutiveFailures >= maxLoginFailures) {
             credential.lock();
             credentialRepository.save(credential);
-            throw new CredentialLockedException("Credential locked due to repeated failed login attempts");
         }
     }
 
@@ -249,17 +243,25 @@ public class AuthenticationService {
         return failures;
     }
 
+    private void rejectLogin(String email,
+                             LoginFailureReason reason,
+                             String sourceIp,
+                             HttpServletRequest httpRequest) {
+        recordFailedLogin(email, reason, sourceIp, httpRequest);
+        throw new InvalidCredentialsException(reason);
+    }
+
     private void recordFailedLogin(String email,
-                                   String failureReason,
+                                   LoginFailureReason failureReason,
                                    String sourceIp,
                                    HttpServletRequest httpRequest) {
-        loginAttemptRepository.save(LoginAttempt.failure(email, failureReason, sourceIp));
-        securityAuditService.recordLoginFailure(email, failureReason, httpRequest);
+        loginAttemptRepository.save(LoginAttempt.failure(email, failureReason.name(), sourceIp));
+        securityAuditService.recordLoginFailure(email, failureReason.name(), httpRequest);
     }
 
     private void validateSupportedRole(RoleType roleType) {
         if (roleType == RoleType.ADMIN) {
-            throw new ApiException(ErrorCode.VALIDATION_ERROR, "Only STARTUP or INVESTOR accounts can self-register");
+            throw new SelfRegistrationNotAllowedException(roleType);
         }
     }
 
@@ -268,10 +270,7 @@ public class AuthenticationService {
         boolean hasDigit = password.chars().anyMatch(Character::isDigit);
 
         if (!hasLetter || !hasDigit) {
-            throw new ApiException(
-                    ErrorCode.VALIDATION_ERROR,
-                    "Password must contain at least one letter and one digit"
-            );
+            throw new PasswordPolicyViolationException();
         }
     }
 

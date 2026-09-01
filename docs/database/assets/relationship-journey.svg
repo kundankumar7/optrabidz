@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1040" viewBox="0 0 720 1040" role="img" aria-labelledby="title desc">
+  <title id="title">Relational journey</title>
+  <desc id="desc">A vertical orientation map from account identity through participant, marketplace, agreement, finance, payment, and supporting records.</desc>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#334155"/></marker><style>
+    .bg{fill:#fff}.box{fill:#eff6ff;stroke:#2563eb;stroke-width:2}.support{fill:#f8fafc;stroke:#64748b;stroke-width:2}.t{font:700 30px "Segoe UI",Arial;fill:#0f172a}.h{font:700 21px "Segoe UI",Arial;fill:#0f172a}.b{font:400 17px "Segoe UI",Arial;fill:#334155}.s{font:600 15px "Segoe UI",Arial;fill:#475569}.w{fill:none;stroke:#334155;stroke-width:2.5;marker-end:url(#a)}
+  </style></defs>
+  <rect class="bg" width="720" height="1040"/><text class="t" x="360" y="48" text-anchor="middle">Relational journey</text><text class="s" x="360" y="76" text-anchor="middle">Orientation map — open a focused view for exact relationships</text>
+  <rect id="identity" class="box" x="90" y="108" width="540" height="90" rx="12"/><text class="h" x="360" y="145" text-anchor="middle">Identity and access</text><text class="b" x="360" y="176" text-anchor="middle">account · role · credential · session · login evidence</text>
+  <path class="w" data-target="participants" d="M360 198V240"/>
+  <rect id="participants" class="box" x="90" y="240" width="540" height="90" rx="12"/><text class="h" x="360" y="277" text-anchor="middle">Participant profiles</text><text class="b" x="360" y="308" text-anchor="middle">startup · investor · administrator · profile details</text>
+  <path class="w" data-target="marketplace" d="M360 330V372"/>
+  <rect id="marketplace" class="box" x="90" y="372" width="540" height="90" rx="12"/><text class="h" x="360" y="409" text-anchor="middle">Marketplace discovery and bidding</text><text class="b" x="360" y="440" text-anchor="middle">funding listing · debt terms · bid</text>
+  <path class="w" data-target="agreement" d="M360 462V504"/>
+  <rect id="agreement" class="box" x="90" y="504" width="540" height="90" rx="12"/><text class="h" x="360" y="541" text-anchor="middle">Agreement acceptance</text><text class="b" x="360" y="572" text-anchor="middle">accepted bid · durable agreement · agreed terms</text>
+  <path class="w" data-target="finance" d="M360 594V636"/>
+  <rect id="finance" class="box" x="90" y="636" width="540" height="90" rx="12"/><text class="h" x="360" y="673" text-anchor="middle">Finance obligations</text><text class="b" x="360" y="704" text-anchor="middle">settlement · repayment · installments</text>
+  <path class="w" data-target="payment" d="M360 726V768"/>
+  <rect id="payment" class="box" x="90" y="768" width="540" height="90" rx="12"/><text class="h" x="360" y="805" text-anchor="middle">Payment execution</text><text class="b" x="360" y="836" text-anchor="middle">intent · provider · attempt · webhook event</text>
+  <path class="w" data-target="support" d="M360 858V900"/>
+  <rect id="support" class="support" x="90" y="900" width="540" height="90" rx="12"/><text class="h" x="360" y="937" text-anchor="middle">Reliable supporting work</text><text class="b" x="360" y="968" text-anchor="middle">outbox · notification delivery · audit evidence</text>
+  <text class="s" x="360" y="1020" text-anchor="middle">Arrows show reading order, not additional foreign keys</text>
+</svg>

@@ -1,10 +1,14 @@
 package com.project.optrabidz.marketplace.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.marketplace.application.error.MarketplaceErrors;
 
-public class InvalidBidStateException extends ApiException {
-    public InvalidBidStateException(String message) {
-        super(ErrorCode.INVALID_STATE_TRANSITION, message);
+public final class InvalidBidStateException extends ApplicationException {
+    public InvalidBidStateException(String diagnosticMessage) {
+        super(
+                MarketplaceErrors.BID_STATE_CONFLICT,
+                "MARKETPLACE.BID.STATE_CONFLICT",
+                diagnosticMessage
+        );
     }
 }

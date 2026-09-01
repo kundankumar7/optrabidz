@@ -1,10 +1,14 @@
 package com.project.optrabidz.marketplace.application.exception;
 
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.marketplace.application.error.MarketplaceErrors;
 
-public class MarketplaceAccessException extends ApiException {
-    public MarketplaceAccessException(String message) {
-        super(ErrorCode.AUTHORIZATION_FAILED, message);
+public final class MarketplaceAccessException extends ApplicationException {
+    public MarketplaceAccessException(String diagnosticMessage) {
+        super(
+                MarketplaceErrors.MARKETPLACE_ACCESS_DENIED,
+                "MARKETPLACE.ACCESS.DENIED",
+                diagnosticMessage
+        );
     }
 }

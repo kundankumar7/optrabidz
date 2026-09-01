@@ -22,6 +22,16 @@ public class MeController {
     }
 
     @GetMapping
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    ref = "#/components/responses/UnauthorizedProblem"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    ref = "#/components/responses/InternalServerProblem"
+            )
+    })
     public SuccessResponse<MeResponse> getCurrentUser(@AuthenticationPrincipal AuthenticatedUserPrincipal principal,
                                                       HttpServletRequest httpRequest) {
         return ApiResponse.success(meService.getCurrentUser(principal), httpRequest);

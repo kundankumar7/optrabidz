@@ -1,6 +1,6 @@
 package com.project.optrabidz.classification.application.specification;
 
-import com.project.optrabidz.classification.application.exception.InvalidClassificationException;
+import com.project.optrabidz.classification.application.exception.InvestorPreferenceRuleViolationException;
 import com.project.optrabidz.classification.application.policy.InvestorPreferenceTypePolicy;
 import com.project.optrabidz.classification.domain.model.InvestorPreferenceProfile;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ public class InvestorPreferenceCardinalitySpec implements InvestorPreferenceSpec
         countsByType.forEach((type, count) -> {
             int maxAllowed = resolvePolicy(type).maxAllowedPerType();
             if (count > maxAllowed) {
-                throw new InvalidClassificationException(
+                throw new InvestorPreferenceRuleViolationException(
                         "Investor preference cardinality exceeded for type: " + type
                 );
             }
@@ -39,7 +39,7 @@ public class InvestorPreferenceCardinalitySpec implements InvestorPreferenceSpec
         return policies.stream()
                 .filter(policy -> policy.supports(preferenceType))
                 .findFirst()
-                .orElseThrow(() -> new InvalidClassificationException(
+                .orElseThrow(() -> new InvestorPreferenceRuleViolationException(
                         "Unsupported investor preference type: " + preferenceType
                 ));
     }

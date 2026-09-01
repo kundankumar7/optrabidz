@@ -8,6 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface JpaAgreementRepository extends JpaRepository<Agreement, Long> {
+    Optional<Agreement> findByAgreementIdAndStartupId(Long agreementId, Long startupId);
+
+    Optional<Agreement> findByAgreementIdAndInvestorId(Long agreementId, Long investorId);
+
     Optional<Agreement> findByBidId(Long bidId);
 
     Page<Agreement> findByStartupId(Long startupId, Pageable pageable);

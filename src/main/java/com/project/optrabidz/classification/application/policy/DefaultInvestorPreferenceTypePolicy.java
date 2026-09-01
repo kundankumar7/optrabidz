@@ -1,6 +1,6 @@
 package com.project.optrabidz.classification.application.policy;
 
-import com.project.optrabidz.classification.application.exception.InvalidClassificationException;
+import com.project.optrabidz.classification.application.exception.InvestorPreferenceRuleViolationException;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -16,7 +16,9 @@ public class DefaultInvestorPreferenceTypePolicy implements InvestorPreferenceTy
     @Override
     public void validateValue(String preferenceValue) {
         if (!StringUtils.hasText(preferenceValue)) {
-            throw new InvalidClassificationException("Preference value must not be blank");
+            throw new InvestorPreferenceRuleViolationException(
+                    "Preference value must not be blank"
+            );
         }
     }
 

@@ -13,6 +13,16 @@ import java.util.List;
 import java.util.Optional;
 
 public interface JpaSettlementRepository extends JpaRepository<Settlement, Long> {
+    Optional<Settlement> findBySettlementIdAndStartupId(
+            Long settlementId,
+            Long startupId
+    );
+
+    Optional<Settlement> findBySettlementIdAndInvestorId(
+            Long settlementId,
+            Long investorId
+    );
+
     Optional<Settlement> findByAgreementId(Long agreementId);
 
     Page<Settlement> findByStartupId(Long startupId, Pageable pageable);

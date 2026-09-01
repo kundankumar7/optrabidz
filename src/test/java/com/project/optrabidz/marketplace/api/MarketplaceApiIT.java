@@ -6,6 +6,7 @@ import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultMatcher;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,10 +19,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -148,6 +153,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
 
     @Test
     void publishingRequiresStartupClassificationWhenGovernanceRequiresIt() throws Exception {
+        String requestId = "kan-27-marketplace-governance";
         AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
         createCompleteStartupProfile(startup, "Unclassified Startup");
 
@@ -166,12 +172,27 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie())
                         .header("X-CSRF-TOKEN", startup.csrfToken())
+                        .header("X-Request-Id", requestId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("Startup is not eligible to publish listings"));
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(header().string("X-Request-Id", requestId))
+                .andExpect(jsonPath("$.type").value(
+                        "urn:optrabidz:problem:governance-action-not-eligible"))
+                .andExpect(jsonPath("$.title").value("Business rule violation"))
+                .andExpect(jsonPath("$.status").value(422))
+                .andExpect(jsonPath("$.detail").value(
+                        "The requested action does not satisfy governance eligibility rules"))
+                .andExpect(jsonPath("$.instance").value(
+                        "urn:optrabidz:request:" + requestId))
+                .andExpect(jsonPath("$.code").value("GOVERNANCE_ACTION_NOT_ELIGIBLE"))
+                .andExpect(jsonPath("$.requestId").value(requestId))
+                .andExpect(jsonPath("$.timestamp").isString())
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(content().string(not(containsString(
+                        "Startup is not eligible to publish listings"))));
     }
 
     @Test
@@ -283,27 +304,274 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.bidState").value("SUBMITTED"));
 
-        mockMvc.perform(post("/api/v1/bids")
+        String duplicateRequestId = "kan-28-bid-already-exists";
+        MvcResult duplicateResult = mockMvc.perform(post("/api/v1/bids")
                         .session(investor.session())
                         .cookie(investor.xsrfCookie())
                         .header("X-CSRF-TOKEN", investor.csrfToken())
+                        .header("X-Request-Id", duplicateRequestId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(submitBidRequest(listingId, new BigDecimal("831000.00")))))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("BID_ALREADY_EXISTS"))
-                .andExpect(jsonPath("$.error.message").value("Investor already has an active bid for this listing"));
+                .andExpectAll(marketplaceProblem(
+                        409,
+                        "BID_ALREADY_EXISTS",
+                        "An active bid already exists for this listing",
+                        "urn:optrabidz:request:" + duplicateRequestId,
+                        duplicateRequestId
+                ))
+                .andReturn();
+        assertBodyExcludes(
+                duplicateResult,
+                "Investor already has an active bid for this listing",
+                "MARKETPLACE.BID.ALREADY_EXISTS"
+        );
 
-        mockMvc.perform(post("/api/v1/bids")
+        String accessRequestId = "kan-28-marketplace-access";
+        MvcResult accessResult = mockMvc.perform(post("/api/v1/bids")
+                        .session(startup.session())
+                        .cookie(startup.xsrfCookie())
+                        .header("X-CSRF-TOKEN", startup.csrfToken())
+                        .header("X-Request-Id", accessRequestId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(submitBidRequest(listingId, new BigDecimal("832000.00")))))
+                .andExpectAll(marketplaceProblem(
+                        403,
+                        "MARKETPLACE_ACCESS_DENIED",
+                        "You are not authorized to perform this marketplace action",
+                        "urn:optrabidz:request:" + accessRequestId,
+                        accessRequestId
+                ))
+                .andReturn();
+        assertBodyExcludes(
+                accessResult,
+                "STARTUP",
+                "INVESTOR",
+                "MARKETPLACE.ACCESS.DENIED"
+        );
+    }
+
+    @Test
+    void missingMarketplaceResourcesUseSafeProblemDetails() throws Exception {
+        long missingId = Long.MAX_VALUE;
+        String listingRequestId = "kan-28-listing-not-found";
+        MvcResult listingResult = mockMvc.perform(get(
+                        "/api/v1/funding-listings/{listingId}",
+                        missingId
+                ).header("X-Request-Id", listingRequestId))
+                .andExpectAll(marketplaceProblem(
+                        404,
+                        "LISTING_NOT_FOUND",
+                        "The requested listing was not found",
+                        "urn:optrabidz:request:" + listingRequestId,
+                        listingRequestId
+                ))
+                .andReturn();
+        assertBodyExcludes(
+                listingResult,
+                Long.toString(missingId),
+                "MARKETPLACE.LISTING.NOT_FOUND"
+        );
+
+        AuthenticatedClient investor = registerAndLogin(RoleType.INVESTOR);
+        String bidRequestId = "kan-28-bid-not-found";
+        MvcResult bidResult = mockMvc.perform(get("/api/v1/bids/{bidId}", missingId)
+                        .session(investor.session())
+                        .cookie(investor.xsrfCookie())
+                        .header("X-Request-Id", bidRequestId))
+                .andExpectAll(marketplaceProblem(
+                        404,
+                        "BID_NOT_FOUND",
+                        "The requested bid was not found",
+                        "urn:optrabidz:request:" + bidRequestId,
+                        bidRequestId
+                ))
+                .andReturn();
+        assertBodyExcludes(
+                bidResult,
+                Long.toString(missingId),
+                "MARKETPLACE.BID.NOT_FOUND"
+        );
+
+        String agreementRequestId = "kan-28-agreement-not-found";
+        MvcResult agreementResult = mockMvc.perform(get(
+                        "/api/v1/agreements/{agreementId}",
+                        missingId
+                )
+                        .session(investor.session())
+                        .cookie(investor.xsrfCookie())
+                        .header("X-Request-Id", agreementRequestId))
+                .andExpectAll(marketplaceProblem(
+                        404,
+                        "AGREEMENT_NOT_FOUND",
+                        "The requested agreement was not found",
+                        "urn:optrabidz:request:" + agreementRequestId,
+                        agreementRequestId
+                ))
+                .andReturn();
+        assertBodyExcludes(
+                agreementResult,
+                Long.toString(missingId),
+                "MARKETPLACE.AGREEMENT.NOT_FOUND"
+        );
+    }
+
+    @Test
+    void listingStateAndFundingModelFailuresUseSafeProblemDetails() throws Exception {
+        AuthenticatedClient startup = eligibleStartup("Listing Failure Startup");
+        Long listingId = createAndPublishListing(
+                startup,
+                "Listing State Failure",
+                new BigDecimal("856789.01")
+        );
+
+        String stateRequestId = "kan-28-listing-state";
+        MvcResult stateResult = mockMvc.perform(patch(
+                        "/api/v1/funding-listings/{listingId}",
+                        listingId
+                )
+                        .session(startup.session())
+                        .cookie(startup.xsrfCookie())
+                        .header("X-CSRF-TOKEN", startup.csrfToken())
+                        .header("X-Request-Id", stateRequestId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(updateListingRequest(
+                                "Invalid update",
+                                new BigDecimal("856790.01")
+                        ))))
+                .andExpectAll(marketplaceProblem(
+                        409,
+                        "LISTING_STATE_CONFLICT",
+                        "The requested action conflicts with the current listing state",
+                        "urn:optrabidz:request:" + stateRequestId,
+                        stateRequestId
+                ))
+                .andReturn();
+        assertBodyExcludes(
+                stateResult,
+                "OPEN",
+                "Listing " + listingId,
+                "MARKETPLACE.LISTING.STATE_CONFLICT"
+        );
+
+        String modelRequestId = "kan-28-unsupported-funding-model";
+        Map<String, Object> equityRequest = Map.of(
+                "fundingModel", "EQUITY",
+                "title", "Unsupported equity listing",
+                "fundingPurposeDescription",
+                "Funds needed for working capital and business expansion.",
+                "debtTerms", listingDebtTerms(new BigDecimal("860000.00"))
+        );
+        MvcResult modelResult = mockMvc.perform(post("/api/v1/funding-listings")
+                        .session(startup.session())
+                        .cookie(startup.xsrfCookie())
+                        .header("X-CSRF-TOKEN", startup.csrfToken())
+                        .header("X-Request-Id", modelRequestId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(equityRequest)))
+                .andExpectAll(marketplaceProblem(
+                        422,
+                        "UNSUPPORTED_FUNDING_MODEL",
+                        "The requested funding model is not supported",
+                        "urn:optrabidz:request:" + modelRequestId,
+                        modelRequestId
+                ))
+                .andReturn();
+        assertBodyExcludes(
+                modelResult,
+                "EQUITY",
+                "MARKETPLACE.FUNDING_MODEL.UNSUPPORTED"
+        );
+    }
+
+    @Test
+    void bidStateAndAcceptanceFailuresUseSafeProblemDetails() throws Exception {
+        AuthenticatedClient startup = eligibleStartup("Bid Failure Startup");
+        Long listingId = createAndPublishListing(
+                startup,
+                "Bid Failure Listing",
+                new BigDecimal("867890.12")
+        );
+        AuthenticatedClient firstInvestor = eligibleInvestor("Bid Failure Investor One");
+        AuthenticatedClient secondInvestor = eligibleInvestor("Bid Failure Investor Two");
+        Long firstBidId = submitBid(
+                firstInvestor,
+                listingId,
+                new BigDecimal("850000.00")
+        );
+        Long secondBidId = submitBid(
+                secondInvestor,
+                listingId,
+                new BigDecimal("851000.00")
+        );
+
+        mockMvc.perform(post("/api/v1/bids/{bidId}/actions/withdraw", secondBidId)
+                        .session(secondInvestor.session())
+                        .cookie(secondInvestor.xsrfCookie())
+                        .header("X-CSRF-TOKEN", secondInvestor.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("reason", "Changed investment strategy"))))
+                .andExpect(status().isOk());
+
+        String bidStateRequestId = "kan-28-bid-state";
+        MvcResult bidStateResult = mockMvc.perform(post(
+                        "/api/v1/bids/{bidId}/actions/withdraw",
+                        secondBidId
+                )
+                        .session(secondInvestor.session())
+                        .cookie(secondInvestor.xsrfCookie())
+                        .header("X-CSRF-TOKEN", secondInvestor.csrfToken())
+                        .header("X-Request-Id", bidStateRequestId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("reason", "Repeated withdrawal"))))
+                .andExpectAll(marketplaceProblem(
+                        409,
+                        "BID_STATE_CONFLICT",
+                        "The requested action conflicts with the current bid state",
+                        "urn:optrabidz:request:" + bidStateRequestId,
+                        bidStateRequestId
+                ))
+                .andReturn();
+        assertBodyExcludes(
+                bidStateResult,
+                "SUBMITTED",
+                "Bid " + secondBidId,
+                "MARKETPLACE.BID.STATE_CONFLICT"
+        );
+
+        mockMvc.perform(post("/api/v1/bids/{bidId}/actions/accept", firstBidId)
                         .session(startup.session())
                         .cookie(startup.xsrfCookie())
                         .header("X-CSRF-TOKEN", startup.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(submitBidRequest(listingId, new BigDecimal("832000.00")))))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("Role is not allowed to perform this operation"));
+                        .content(json(Map.of("confirmation", "ACCEPT"))))
+                .andExpect(status().isOk());
+
+        String acceptanceRequestId = "kan-28-bid-acceptance";
+        MvcResult acceptanceResult = mockMvc.perform(post(
+                        "/api/v1/bids/{bidId}/actions/accept",
+                        secondBidId
+                )
+                        .session(startup.session())
+                        .cookie(startup.xsrfCookie())
+                        .header("X-CSRF-TOKEN", startup.csrfToken())
+                        .header("X-Request-Id", acceptanceRequestId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("confirmation", "ACCEPT"))))
+                .andExpectAll(marketplaceProblem(
+                        409,
+                        "BID_ACCEPTANCE_CONFLICT",
+                        "The bid cannot be accepted in the current marketplace state",
+                        "urn:optrabidz:request:" + acceptanceRequestId,
+                        acceptanceRequestId
+                ))
+                .andReturn();
+        assertBodyExcludes(
+                acceptanceResult,
+                "AGREEMENT_REACHED",
+                "Listing " + listingId,
+                "bid " + secondBidId,
+                "MARKETPLACE.BID.ACCEPTANCE_CONFLICT"
+        );
     }
 
     @Test
@@ -357,9 +625,8 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(createListingRequest("CSRF Listing", new BigDecimal("765432.10")))))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("CSRF validation failed"));
+                .andExpect(jsonPath("$.code").value("CSRF_VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.detail").value("Request security validation failed"));
     }
 
     private AuthenticatedClient eligibleStartup(String publicDisplayName) throws Exception {
@@ -502,5 +769,36 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
     private String readText(MvcResult result, String jsonPointer) throws Exception {
         JsonNode node = objectMapper.readTree(result.getResponse().getContentAsString()).at(jsonPointer);
         return node.asText();
+    }
+
+    private ResultMatcher[] marketplaceProblem(
+            int expectedStatus,
+            String code,
+            String detail,
+            String instance,
+            String requestId
+    ) {
+        return new ResultMatcher[] {
+                result -> assertThat(result.getResponse().getStatus())
+                        .isEqualTo(expectedStatus),
+                content().contentTypeCompatibleWith(
+                        MediaType.APPLICATION_PROBLEM_JSON),
+                jsonPath("$.status").value(expectedStatus),
+                jsonPath("$.code").value(code),
+                jsonPath("$.detail").value(detail),
+                jsonPath("$.instance").value(instance),
+                jsonPath("$.requestId").value(requestId),
+                jsonPath("$.timestamp").isString(),
+                jsonPath("$.success").doesNotExist(),
+                jsonPath("$.error").doesNotExist()
+        };
+    }
+
+    private void assertBodyExcludes(
+            MvcResult result,
+            String... protectedValues
+    ) throws Exception {
+        assertThat(result.getResponse().getContentAsString())
+                .doesNotContain(protectedValues);
     }
 }

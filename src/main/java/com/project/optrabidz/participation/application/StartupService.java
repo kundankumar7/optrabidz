@@ -6,9 +6,9 @@ import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.participation.application.event.ParticipationProfileChangedEvent;
 import com.project.optrabidz.participation.application.dto.request.CreateStartupRequest;
 import com.project.optrabidz.participation.application.dto.response.StartupResponse;
-import com.project.optrabidz.participation.application.exception.InvalidRoleException;
-import com.project.optrabidz.participation.application.exception.ParticipationAlreadyExistsException;
-import com.project.optrabidz.participation.application.exception.ParticipationNotFoundException;
+import com.project.optrabidz.participation.application.exception.ParticipationAuthorizationException;
+import com.project.optrabidz.participation.application.exception.StartupAlreadyExistsException;
+import com.project.optrabidz.participation.application.exception.StartupNotFoundException;
 import com.project.optrabidz.participation.domain.model.Startup;
 import com.project.optrabidz.participation.domain.model.StartupLegalRegistration;
 import com.project.optrabidz.participation.domain.repository.StartupRepository;
@@ -33,7 +33,7 @@ public class StartupService {
         ensureRole(roleType, RoleType.STARTUP);
 
         if (startupRepository.existsByAccountId(accountId)) {
-            throw new ParticipationAlreadyExistsException("Startup already exists for this account");
+            throw new StartupAlreadyExistsException(accountId);
         }
 
         Startup startup = Startup.establish(
@@ -63,7 +63,7 @@ public class StartupService {
         ensureRole(roleType, RoleType.STARTUP);
 
         Startup startup = startupRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Startup not found for this account"));
+                .orElseThrow(() -> new StartupNotFoundException(accountId));
 
         return toResponse(startup);
     }
@@ -73,7 +73,7 @@ public class StartupService {
         ensureRole(roleType, RoleType.STARTUP);
 
         Startup startup = startupRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Startup not found for this account"));
+                .orElseThrow(() -> new StartupNotFoundException(accountId));
 
         startup.updateRepresentation(
                 request.legalEntityName(),
@@ -122,7 +122,7 @@ public class StartupService {
 
     private void ensureRole(RoleType actualRole, RoleType expectedRole) {
         if (actualRole != expectedRole) {
-            throw new InvalidRoleException("Role is not allowed to perform this operation");
+            throw new ParticipationAuthorizationException(actualRole, expectedRole);
         }
     }
 }

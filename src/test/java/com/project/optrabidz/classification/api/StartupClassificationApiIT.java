@@ -8,10 +8,13 @@ import org.springframework.http.MediaType;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -95,9 +98,15 @@ class StartupClassificationApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(startupClassification("SECTOR", "SAAS"))))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("DUPLICATE_OPERATION"))
-                .andExpect(jsonPath("$.error.message").value("Startup classification already exists"));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.code").value("STARTUP_CLASSIFICATION_ALREADY_EXISTS"))
+                .andExpect(jsonPath("$.detail").value("The startup classification already exists"))
+                .andExpect(jsonPath("$.requestId").isNotEmpty())
+                .andExpect(jsonPath("$.timestamp").isNotEmpty())
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(content().string(not(containsString("SAAS"))));
     }
 
     @Test
@@ -111,9 +120,8 @@ class StartupClassificationApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(startupClassification("GEOGRAPHY", "INDIA"))))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"))
-                .andExpect(jsonPath("$.error.message").value("CSRF validation failed"));
+                .andExpect(jsonPath("$.code").value("CSRF_VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.detail").value("Request security validation failed"));
     }
 
     @Test
@@ -125,19 +133,62 @@ class StartupClassificationApiIT extends ApiIntegrationTestSupport {
                         .session(investor.session())
                         .cookie(investor.xsrfCookie()))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("AUTHORIZATION_FAILED"));
+                .andExpect(jsonPath("$.code").value("AUTHORIZATION_FAILED"))
+                .andExpect(jsonPath("$.detail").value("You are not authorized to perform this action"));
 
         mockMvc.perform(post("/api/v1/startup-classifications")
                         .session(startupWithoutProfile.session())
                         .cookie(startupWithoutProfile.xsrfCookie())
                         .header("X-CSRF-TOKEN", startupWithoutProfile.csrfToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(startupClassification("SECTOR", "SAAS"))))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json(startupClassification("SECTOR", "SAAS"))))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(422))
+                .andExpect(jsonPath("$.code").value("STARTUP_CLASSIFICATION_PROFILE_REQUIRED"))
+                .andExpect(jsonPath("$.detail").value(
+                        "Create a startup profile before managing classifications"
+                ));
+    }
+
+    @Test
+    void missingStartupClassificationUsesNotFoundProblem() throws Exception {
+        AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
+        createStartupProfileForClassification(startup);
+
+        mockMvc.perform(delete("/api/v1/startup-classifications/me")
+                        .queryParam("classificationType", "SECTOR")
+                        .queryParam("classificationValue", "MISSING-STARTUP")
+                        .session(startup.session())
+                        .cookie(startup.xsrfCookie())
+                        .header("X-CSRF-TOKEN", startup.csrfToken()))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("RESOURCE_NOT_FOUND"))
-                .andExpect(jsonPath("$.error.message").value("Startup actor not found for account"));
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value("STARTUP_CLASSIFICATION_NOT_FOUND"))
+                .andExpect(jsonPath("$.detail").value(
+                        "The requested startup classification was not found"
+                ))
+                .andExpect(content().string(not(containsString("MISSING-STARTUP"))));
+    }
+
+    @Test
+    void blankStartupClassificationFieldRemainsAValidationProblem() throws Exception {
+        AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
+        createStartupProfileForClassification(startup);
+
+        mockMvc.perform(post("/api/v1/startup-classifications")
+                        .session(startup.session())
+                        .cookie(startup.xsrfCookie())
+                        .header("X-CSRF-TOKEN", startup.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(startupClassification("SECTOR", " "))))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.violations").isArray())
+                .andExpect(jsonPath("$.violations").isNotEmpty());
     }
 
     private void createStartupProfileForClassification(AuthenticatedClient startup) throws Exception {

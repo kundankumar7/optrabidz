@@ -1,8 +1,7 @@
 package com.project.optrabidz.financial.application;
 
 import com.project.optrabidz.common.api.pagination.PageResponse;
-import com.project.optrabidz.common.api.exception.ApiException;
-import com.project.optrabidz.common.api.exception.ErrorCode;
+import com.project.optrabidz.common.error.ApplicationException;
 import com.project.optrabidz.common.event.EventPublisher;
 import com.project.optrabidz.financial.application.command.PaymentAttemptConfirmationCommand;
 import com.project.optrabidz.financial.application.command.PaymentAttemptFailureCommand;
@@ -14,20 +13,21 @@ import com.project.optrabidz.financial.application.dto.response.RepaymentInstall
 import com.project.optrabidz.financial.application.dto.response.RepaymentProgressResponse;
 import com.project.optrabidz.financial.application.dto.response.RepaymentResponse;
 import com.project.optrabidz.financial.application.dto.response.SettlementResponse;
-import com.project.optrabidz.financial.application.exception.FinancialAccessException;
-import com.project.optrabidz.financial.application.exception.InvalidPaymentStateException;
-import com.project.optrabidz.financial.application.exception.InvalidRepaymentStateException;
-import com.project.optrabidz.financial.application.exception.InvalidSettlementStateException;
+import com.project.optrabidz.financial.application.exception.FinancialOperationNotAllowedException;
 import com.project.optrabidz.financial.application.exception.PaymentAlreadyConfirmedException;
 import com.project.optrabidz.financial.application.exception.PaymentAttemptNotFoundException;
 import com.project.optrabidz.financial.application.exception.PaymentIntentExpiredException;
 import com.project.optrabidz.financial.application.exception.PaymentIntentNotFoundException;
 import com.project.optrabidz.financial.application.exception.PaymentIntentNotActiveException;
+import com.project.optrabidz.financial.application.exception.PaymentProviderMismatchException;
+import com.project.optrabidz.financial.application.exception.PaymentStateConflictException;
 import com.project.optrabidz.financial.application.exception.RepaymentInstallmentNotFoundException;
 import com.project.optrabidz.financial.application.exception.RepaymentInstallmentNotPayableException;
 import com.project.optrabidz.financial.application.exception.RepaymentNotFoundException;
+import com.project.optrabidz.financial.application.exception.RepaymentStateConflictException;
 import com.project.optrabidz.financial.application.exception.SettlementNotFoundException;
 import com.project.optrabidz.financial.application.exception.SettlementNotPayableException;
+import com.project.optrabidz.financial.application.exception.SettlementStateConflictException;
 import com.project.optrabidz.financial.application.exception.UnsupportedPaymentMethodException;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentPaidEvent;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentPaymentFailedEvent;
@@ -62,7 +62,8 @@ import com.project.optrabidz.marketplace.domain.model.FundingListing;
 import com.project.optrabidz.marketplace.domain.model.RepaymentPlanType;
 import com.project.optrabidz.marketplace.domain.repository.AgreementRepository;
 import com.project.optrabidz.marketplace.domain.repository.FundingListingRepository;
-import com.project.optrabidz.participation.application.exception.ParticipationNotFoundException;
+import com.project.optrabidz.participation.application.exception.InvestorNotFoundException;
+import com.project.optrabidz.participation.application.exception.StartupNotFoundException;
 import com.project.optrabidz.participation.domain.model.Investor;
 import com.project.optrabidz.participation.domain.model.Startup;
 import com.project.optrabidz.participation.domain.repository.InvestorRepository;
@@ -82,6 +83,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -140,14 +142,12 @@ public class FinancialService {
 
     @Transactional(readOnly = true)
     public SettlementResponse getSettlement(Long accountId, RoleType roleType, Long settlementId) {
-        Settlement settlement = getSettlement(settlementId);
-        ensureSettlementVisible(accountId, roleType, settlement);
-        return toSettlementResponse(settlement);
+        return toSettlementResponse(getSettlementForViewer(accountId, roleType, settlementId));
     }
 
     @Transactional(readOnly = true)
     public PageResponse<SettlementResponse> getMyInvestorSettlements(Long accountId, RoleType roleType, int page, int size) {
-        ensureRole(roleType, RoleType.INVESTOR);
+        ensureFinancialRole(roleType, RoleType.INVESTOR);
         Investor investor = getInvestorByAccount(accountId);
         Page<SettlementResponse> settlements = settlementRepository
                 .findByInvestorId(investor.getInvestorId(), pageRequest(page, size))
@@ -157,7 +157,7 @@ public class FinancialService {
 
     @Transactional(readOnly = true)
     public PageResponse<SettlementResponse> getMyStartupSettlements(Long accountId, RoleType roleType, int page, int size) {
-        ensureRole(roleType, RoleType.STARTUP);
+        ensureFinancialRole(roleType, RoleType.STARTUP);
         Startup startup = getStartupByAccount(accountId);
         Page<SettlementResponse> settlements = settlementRepository
                 .findByStartupId(startup.getStartupId(), pageRequest(page, size))
@@ -167,12 +167,11 @@ public class FinancialService {
 
     @Transactional
     public PaymentIntentResponse createSettlementPaymentIntent(Long accountId, RoleType roleType, Long settlementId) {
-        ensureRole(roleType, RoleType.INVESTOR);
-        Settlement settlement = getSettlement(settlementId);
+        ensureFinancialRole(roleType, RoleType.INVESTOR);
         Investor investor = getInvestorByAccount(accountId);
-        if (!settlement.getInvestorId().equals(investor.getInvestorId())) {
-            throw new FinancialAccessException("Investor can pay only own settlement");
-        }
+        Settlement settlement = settlementRepository
+                .findByIdForInvestor(settlementId, investor.getInvestorId())
+                .orElseThrow(() -> settlementNotFound(settlementId));
         ensureSettlementPayable(settlement);
 
         return paymentIntentRepository.findActiveBySettlementId(settlementId)
@@ -182,9 +181,8 @@ public class FinancialService {
 
     @Transactional(readOnly = true)
     public RepaymentResponse getRepayment(Long accountId, RoleType roleType, Long repaymentId) {
-        Repayment repayment = getRepayment(repaymentId);
-        ensureRepaymentVisible(accountId, roleType, repayment);
-        return toRepaymentResponse(repayment);
+        return toRepaymentResponse(getRepaymentForViewer(
+                accountId, roleType, repaymentId));
     }
 
     @Transactional(readOnly = true)
@@ -195,8 +193,7 @@ public class FinancialService {
                                                                                RepaymentInstallmentPaymentView paymentView,
                                                                                int page,
                                                                                int size) {
-        Repayment repayment = getRepayment(repaymentId);
-        ensureRepaymentVisible(accountId, roleType, repayment);
+        getRepaymentForViewer(accountId, roleType, repaymentId);
         Collection<RepaymentInstallmentState> states = resolveInstallmentStates(installmentState, paymentView);
         Page<RepaymentInstallmentResponse> installments = repaymentInstallmentRepository
                 .findByRepaymentIdAndStates(repaymentId, states, installmentPageRequest(page, size))
@@ -208,16 +205,14 @@ public class FinancialService {
     public RepaymentInstallmentResponse getRepaymentInstallment(Long accountId,
                                                                RoleType roleType,
                                                                Long installmentId) {
-        RepaymentInstallment installment = getRepaymentInstallment(installmentId);
-        Repayment repayment = getRepayment(installment.getRepaymentId());
-        ensureRepaymentVisible(accountId, roleType, repayment);
-        return toRepaymentInstallmentResponse(installment);
+        return toRepaymentInstallmentResponse(getRepaymentInstallmentForViewer(
+                accountId, roleType, installmentId));
     }
 
     @Transactional(readOnly = true)
     public RepaymentProgressResponse getRepaymentProgress(Long accountId, RoleType roleType, Long agreementId) {
-        Agreement agreement = getAgreement(agreementId);
-        ensureAgreementVisible(accountId, roleType, agreement);
+        Agreement agreement = getAgreementForViewer(
+                accountId, roleType, agreementId);
         return repaymentRepository.getProgressByAgreementId(agreementId)
                 .map(progress -> toRepaymentProgressResponse(agreement, progress))
                 .orElseGet(() -> emptyRepaymentProgressResponse(agreement));
@@ -225,7 +220,7 @@ public class FinancialService {
 
     @Transactional(readOnly = true)
     public PageResponse<RepaymentResponse> getMyInvestorRepayments(Long accountId, RoleType roleType, int page, int size) {
-        ensureRole(roleType, RoleType.INVESTOR);
+        ensureFinancialRole(roleType, RoleType.INVESTOR);
         Investor investor = getInvestorByAccount(accountId);
         Page<RepaymentResponse> repayments = repaymentRepository
                 .findByInvestorId(investor.getInvestorId(), pageRequest(page, size))
@@ -240,7 +235,7 @@ public class FinancialService {
                                                                                          RepaymentInstallmentPaymentView paymentView,
                                                                                          int page,
                                                                                          int size) {
-        ensureRole(roleType, RoleType.INVESTOR);
+        ensureFinancialRole(roleType, RoleType.INVESTOR);
         Investor investor = getInvestorByAccount(accountId);
         Collection<RepaymentInstallmentState> states = resolveInstallmentStates(installmentState, paymentView);
         Page<RepaymentInstallmentResponse> installments = repaymentInstallmentRepository
@@ -251,7 +246,7 @@ public class FinancialService {
 
     @Transactional(readOnly = true)
     public PageResponse<RepaymentResponse> getMyStartupRepayments(Long accountId, RoleType roleType, int page, int size) {
-        ensureRole(roleType, RoleType.STARTUP);
+        ensureFinancialRole(roleType, RoleType.STARTUP);
         Startup startup = getStartupByAccount(accountId);
         Page<RepaymentResponse> repayments = repaymentRepository
                 .findByStartupId(startup.getStartupId(), pageRequest(page, size))
@@ -266,7 +261,7 @@ public class FinancialService {
                                                                                         RepaymentInstallmentPaymentView paymentView,
                                                                                         int page,
                                                                                         int size) {
-        ensureRole(roleType, RoleType.STARTUP);
+        ensureFinancialRole(roleType, RoleType.STARTUP);
         Startup startup = getStartupByAccount(accountId);
         Collection<RepaymentInstallmentState> states = resolveInstallmentStates(installmentState, paymentView);
         Page<RepaymentInstallmentResponse> installments = repaymentInstallmentRepository
@@ -279,21 +274,36 @@ public class FinancialService {
     public PaymentIntentResponse createRepaymentInstallmentPaymentIntent(Long accountId,
                                                                         RoleType roleType,
                                                                         Long installmentId) {
-        ensureRole(roleType, RoleType.STARTUP);
-        RepaymentInstallment installment = getRepaymentInstallment(installmentId);
-        Repayment repayment = getRepayment(installment.getRepaymentId());
+        ensureFinancialRole(roleType, RoleType.STARTUP);
         Startup startup = getStartupByAccount(accountId);
-        if (!repayment.getStartupId().equals(startup.getStartupId())) {
-            throw new FinancialAccessException("Startup can pay only own repayment");
-        }
+        RepaymentInstallment installment = repaymentInstallmentRepository
+                .findByIdForStartup(installmentId, startup.getStartupId())
+                .orElseThrow(() -> repaymentInstallmentNotFound(installmentId));
+        Repayment repayment = repaymentRepository.findByIdForStartup(
+                        installment.getRepaymentId(), startup.getStartupId())
+                .orElseThrow(() -> repaymentNotFound(
+                        installment.getRepaymentId()));
 
+        return createAuthorizedRepaymentInstallmentPaymentIntent(
+                repayment, installment);
+    }
+
+    private PaymentIntentResponse createAuthorizedRepaymentInstallmentPaymentIntent(
+            Repayment repayment,
+            RepaymentInstallment installment
+    ) {
+        Long installmentId = installment.getRepaymentInstallmentId();
         return paymentIntentRepository.findActiveByRepaymentInstallmentId(installmentId)
                 .map(this::toPaymentIntentResponse)
                 .orElseGet(() -> {
                     ensureRepaymentInstallmentPayable(installment);
                     Instant now = Instant.now();
                     PaymentIntent intent = createRepaymentInstallmentIntent(repayment, installment);
-                    repaymentInstallmentRepository.markPaymentInProgress(installmentId, now);
+                    int updatedCount = repaymentInstallmentRepository
+                            .markPaymentInProgress(installmentId, now);
+                    if (updatedCount == 0) {
+                        return classifyPaymentInProgressRace(installmentId);
+                    }
                     repaymentRepository.refreshStatus(repayment.getRepaymentId(), now);
                     return toPaymentIntentResponse(intent);
                 });
@@ -301,21 +311,20 @@ public class FinancialService {
 
     @Transactional
     public PaymentIntentResponse createRepaymentPaymentIntent(Long accountId, RoleType roleType, Long repaymentId) {
-        Repayment repayment = getRepayment(repaymentId);
-        ensureRepaymentVisible(accountId, roleType, repayment);
+        ensureFinancialRole(roleType, RoleType.STARTUP);
+        Startup startup = getStartupByAccount(accountId);
+        Repayment repayment = repaymentRepository.findByIdForStartup(
+                        repaymentId, startup.getStartupId())
+                .orElseThrow(() -> repaymentNotFound(repaymentId));
         RepaymentInstallment nextInstallment = repaymentInstallmentRepository.findNextPayableByRepaymentId(repaymentId)
                 .orElseThrow(() -> new RepaymentInstallmentNotPayableException("No payable repayment installment found"));
-        return createRepaymentInstallmentPaymentIntent(
-                accountId,
-                roleType,
-                nextInstallment.getRepaymentInstallmentId()
-        );
+        return createAuthorizedRepaymentInstallmentPaymentIntent(
+                repayment, nextInstallment);
     }
 
     @Transactional(readOnly = true)
     public PaymentIntentResponse getPaymentIntent(Long accountId, RoleType roleType, Long paymentIntentId) {
-        PaymentIntent paymentIntent = getPaymentIntent(paymentIntentId);
-        ensurePaymentIntentVisible(accountId, roleType, paymentIntent);
+        PaymentIntent paymentIntent = getVisiblePaymentIntent(accountId, roleType, paymentIntentId);
         return toPaymentIntentResponse(paymentIntent);
     }
 
@@ -324,8 +333,7 @@ public class FinancialService {
                                                        RoleType roleType,
                                                        Long paymentIntentId,
                                                        CreatePaymentAttemptRequest request) {
-        PaymentIntent paymentIntent = getPaymentIntent(paymentIntentId);
-        ensurePaymentActor(accountId, roleType, paymentIntent);
+        PaymentIntent paymentIntent = getActionablePaymentIntent(accountId, roleType, paymentIntentId);
         ensurePaymentIntentActive(paymentIntent);
 
         String providerCode = normalizeProviderCode(request == null ? null : request.providerCode());
@@ -368,24 +376,25 @@ public class FinancialService {
     }
 
     private PaymentAttemptResponse confirmPaymentAttempt(PaymentAttemptConfirmationCommand command) {
-        PaymentAttempt attempt = getPaymentAttempt(command.paymentAttemptId());
-        ensureProviderAttempt(attempt, command.providerCode());
-        PaymentIntent paymentIntent = getPaymentIntent(attempt.getPaymentIntentId());
+        PaymentAttempt attempt = getPaymentAttempt(command);
         if (command.authenticatedActorRequired()) {
-            ensurePaymentActor(command.actorAccountId(), command.actorRole(), paymentIntent);
+            ensureLocalAttempt(attempt);
         }
+        PaymentIntent paymentIntent = getPaymentIntent(attempt.getPaymentIntentId());
         Instant now = Instant.now();
         int confirmedAttemptCount = paymentAttemptRepository.confirmActive(
                 command.paymentAttemptId(),
                 command.providerPaymentId(),
                 now
         );
-        PaymentAttempt confirmedAttempt = getPaymentAttempt(command.paymentAttemptId());
+        PaymentAttempt confirmedAttempt = getPaymentAttempt(command);
         if (confirmedAttemptCount == 0) {
             if (confirmedAttempt.getAttemptState() == PaymentAttemptState.CONFIRMED) {
                 return toPaymentAttemptResponse(confirmedAttempt);
             }
-            throw new InvalidPaymentStateException("Payment attempt is not active");
+            throw new PaymentStateConflictException(
+                    "Payment attempt cannot be confirmed from its current state"
+            );
         }
 
         int confirmedIntentCount = paymentIntentRepository.confirmActive(paymentIntent.getPaymentIntentId(), now);
@@ -421,12 +430,11 @@ public class FinancialService {
     }
 
     private PaymentAttemptResponse failPaymentAttempt(PaymentAttemptFailureCommand command) {
-        PaymentAttempt attempt = getPaymentAttempt(command.paymentAttemptId());
-        ensureProviderAttempt(attempt, command.providerCode());
-        PaymentIntent paymentIntent = getPaymentIntent(attempt.getPaymentIntentId());
+        PaymentAttempt attempt = getPaymentAttempt(command);
         if (command.authenticatedActorRequired()) {
-            ensurePaymentActor(command.actorAccountId(), command.actorRole(), paymentIntent);
+            ensureLocalAttempt(attempt);
         }
+        PaymentIntent paymentIntent = getPaymentIntent(attempt.getPaymentIntentId());
         Instant now = Instant.now();
         int failedAttemptCount = paymentAttemptRepository.failActive(
                 command.paymentAttemptId(),
@@ -434,12 +442,14 @@ public class FinancialService {
                 command.failureMessage(),
                 now
         );
-        PaymentAttempt failedAttempt = getPaymentAttempt(command.paymentAttemptId());
+        PaymentAttempt failedAttempt = getPaymentAttempt(command);
         if (failedAttemptCount == 0) {
             if (failedAttempt.getAttemptState() == PaymentAttemptState.FAILED) {
                 return toPaymentAttemptResponse(failedAttempt);
             }
-            throw new InvalidPaymentStateException("Payment attempt is not active");
+            throw new PaymentStateConflictException(
+                    "Payment attempt cannot be failed from its current state"
+            );
         }
 
         int failedIntentCount = paymentIntentRepository.failActive(
@@ -575,7 +585,7 @@ public class FinancialService {
                     now
             );
             if (confirmedCount == 0) {
-                ensureAlreadyConfirmedBySameIntent(settlement, paymentIntent.getPaymentIntentId());
+                ensureAlreadyConfirmedBySameIntent(settlement.getSettlementId(), paymentIntent.getPaymentIntentId());
                 return;
             }
             createRepaymentScheduleIfMissing(settlement, now);
@@ -599,7 +609,11 @@ public class FinancialService {
                 now
         );
         if (confirmedCount == 0) {
-            ensureAlreadyConfirmedBySameIntent(installment, paymentIntent.getPaymentIntentId());
+            if (alreadyPaidBySameIntent(
+                    installment.getRepaymentInstallmentId(),
+                    paymentIntent.getPaymentIntentId())) {
+                return;
+            }
         }
         repaymentRepository.refreshStatus(installment.getRepaymentId(), now);
         eventPublisher.publish(new RepaymentInstallmentPaidEvent(
@@ -695,60 +709,6 @@ public class FinancialService {
                 .toInstant();
     }
 
-    private void ensureSettlementVisible(Long accountId, RoleType roleType, Settlement settlement) {
-        if (roleType == RoleType.ADMIN) {
-            return;
-        }
-        if (roleType == RoleType.STARTUP && getStartupByAccount(accountId).getStartupId().equals(settlement.getStartupId())) {
-            return;
-        }
-        if (roleType == RoleType.INVESTOR && getInvestorByAccount(accountId).getInvestorId().equals(settlement.getInvestorId())) {
-            return;
-        }
-        throw new FinancialAccessException("You are not authorized to view this settlement");
-    }
-
-    private void ensureRepaymentVisible(Long accountId, RoleType roleType, Repayment repayment) {
-        if (roleType == RoleType.ADMIN) {
-            return;
-        }
-        if (roleType == RoleType.STARTUP && getStartupByAccount(accountId).getStartupId().equals(repayment.getStartupId())) {
-            return;
-        }
-        if (roleType == RoleType.INVESTOR && getInvestorByAccount(accountId).getInvestorId().equals(repayment.getInvestorId())) {
-            return;
-        }
-        throw new FinancialAccessException("You are not authorized to view this repayment");
-    }
-
-    private void ensureAgreementVisible(Long accountId, RoleType roleType, Agreement agreement) {
-        if (roleType == RoleType.ADMIN) {
-            return;
-        }
-        if (roleType == RoleType.STARTUP && getStartupByAccount(accountId).getStartupId().equals(agreement.getStartupId())) {
-            return;
-        }
-        if (roleType == RoleType.INVESTOR && getInvestorByAccount(accountId).getInvestorId().equals(agreement.getInvestorId())) {
-            return;
-        }
-        throw new FinancialAccessException("You are not authorized to view this agreement repayment progress");
-    }
-
-    private void ensurePaymentIntentVisible(Long accountId, RoleType roleType, PaymentIntent paymentIntent) {
-        if (roleType == RoleType.ADMIN || paymentIntent.getPayerAccountId().equals(accountId)
-                || paymentIntent.getPayeeAccountId().equals(accountId)) {
-            return;
-        }
-        throw new FinancialAccessException("You are not authorized to view this payment intent");
-    }
-
-    private void ensurePaymentActor(Long accountId, RoleType roleType, PaymentIntent paymentIntent) {
-        if (roleType == RoleType.ADMIN || paymentIntent.getPayerAccountId().equals(accountId)) {
-            return;
-        }
-        throw new FinancialAccessException("Only payer can perform this payment action");
-    }
-
     private void ensureSettlementPayable(Settlement settlement) {
         if (settlement.getSettlementState() != SettlementState.SETTLEMENT_PENDING) {
             throw new SettlementNotPayableException("Settlement is not pending");
@@ -776,11 +736,11 @@ public class FinancialService {
         }
     }
 
-    private ApiException paymentIntentNotActiveException(Long paymentIntentId) {
+    private ApplicationException paymentIntentNotActiveException(Long paymentIntentId) {
         return paymentIntentNotActiveException(getPaymentIntent(paymentIntentId));
     }
 
-    private ApiException paymentIntentNotActiveException(PaymentIntent paymentIntent) {
+    private ApplicationException paymentIntentNotActiveException(PaymentIntent paymentIntent) {
         if (paymentIntent.getPaymentState() == PaymentState.PAYMENT_CONFIRMED) {
             return new PaymentAlreadyConfirmedException("Payment is already confirmed");
         }
@@ -802,36 +762,59 @@ public class FinancialService {
     }
 
     private void ensureLocalAttempt(PaymentAttempt attempt) {
-        ensureProviderAttempt(attempt, LocalPaymentStrategy.PROVIDER_CODE);
-    }
-
-    private void ensureProviderAttempt(PaymentAttempt attempt, String providerCode) {
         if (!LocalPaymentStrategy.PROVIDER_CODE.equalsIgnoreCase(attempt.getProviderCode())) {
-            if (LocalPaymentStrategy.PROVIDER_CODE.equalsIgnoreCase(providerCode)) {
-                throw new UnsupportedPaymentMethodException("Only LOCAL payment attempts can use this local endpoint");
-            }
-        }
-        if (!attempt.getProviderCode().equalsIgnoreCase(providerCode)) {
-            throw new UnsupportedPaymentMethodException("Payment attempt does not belong to this provider");
+            throw new PaymentProviderMismatchException(
+                    "Local endpoint received a non-local payment attempt"
+            );
         }
     }
 
-    private void ensureAlreadyConfirmedBySameIntent(Settlement settlement, Long paymentIntentId) {
-        Settlement latestSettlement = getSettlement(settlement.getSettlementId());
+    private void ensureAlreadyConfirmedBySameIntent(Long settlementId, Long paymentIntentId) {
+        Settlement latestSettlement = getSettlement(settlementId);
         if (latestSettlement.getSettlementState() == SettlementState.SETTLEMENT_CONFIRMED
                 && paymentIntentId.equals(latestSettlement.getConfirmedPaymentIntentId())) {
             return;
         }
-        throw new SettlementNotPayableException("Settlement is not pending");
+        throw new SettlementStateConflictException(
+                "Settlement " + settlementId + " changed before payment intent " + paymentIntentId
+                        + " could confirm it"
+        );
     }
 
-    private void ensureAlreadyConfirmedBySameIntent(RepaymentInstallment installment, Long paymentIntentId) {
-        RepaymentInstallment latestInstallment = getRepaymentInstallment(installment.getRepaymentInstallmentId());
+    private PaymentIntentResponse classifyPaymentInProgressRace(
+            Long installmentId
+    ) {
+        RepaymentInstallment latestInstallment = getRepaymentInstallment(
+                installmentId);
+        if (latestInstallment.getInstallmentState()
+                == RepaymentInstallmentState.PAYMENT_IN_PROGRESS) {
+            PaymentIntent canonicalIntent = paymentIntentRepository
+                    .findActiveByRepaymentInstallmentId(installmentId)
+                    .orElseThrow(() -> repaymentStateConflict(installmentId));
+            return toPaymentIntentResponse(canonicalIntent);
+        }
+        throw repaymentStateConflict(installmentId);
+    }
+
+    private boolean alreadyPaidBySameIntent(
+            Long installmentId,
+            Long paymentIntentId
+    ) {
+        RepaymentInstallment latestInstallment = getRepaymentInstallment(
+                installmentId);
         if (latestInstallment.getInstallmentState() == RepaymentInstallmentState.PAID
                 && paymentIntentId.equals(latestInstallment.getConfirmedPaymentIntentId())) {
-            return;
+            return true;
         }
-        throw new RepaymentInstallmentNotPayableException("Repayment installment is not payable");
+        throw repaymentStateConflict(installmentId);
+    }
+
+    private RepaymentStateConflictException repaymentStateConflict(
+            Long installmentId
+    ) {
+        return new RepaymentStateConflictException(
+                "Repayment installment " + installmentId
+                        + " conditional transition was rejected");
     }
 
     private String normalizeProviderCode(String providerCode) {
@@ -843,17 +826,75 @@ public class FinancialService {
 
     private Settlement getSettlement(Long settlementId) {
         return settlementRepository.findById(settlementId)
-                .orElseThrow(() -> new SettlementNotFoundException("Settlement not found"));
+                .orElseThrow(() -> settlementNotFound(settlementId));
+    }
+
+    private Settlement getSettlementForViewer(Long accountId, RoleType roleType, Long settlementId) {
+        Optional<Settlement> settlement = switch (roleType) {
+            case ADMIN -> settlementRepository.findById(settlementId);
+            case STARTUP -> settlementRepository.findByIdForStartup(
+                    settlementId,
+                    getStartupByAccount(accountId).getStartupId()
+            );
+            case INVESTOR -> settlementRepository.findByIdForInvestor(
+                    settlementId,
+                    getInvestorByAccount(accountId).getInvestorId()
+            );
+        };
+        return settlement.orElseThrow(() -> settlementNotFound(settlementId));
+    }
+
+    private SettlementNotFoundException settlementNotFound(Long settlementId) {
+        return new SettlementNotFoundException("Settlement " + settlementId + " was not found in the permitted scope");
     }
 
     private Repayment getRepayment(Long repaymentId) {
         return repaymentRepository.findById(repaymentId)
-                .orElseThrow(() -> new RepaymentNotFoundException("Repayment not found"));
+                .orElseThrow(() -> repaymentNotFound(repaymentId));
+    }
+
+    private Repayment getRepaymentForViewer(
+            Long accountId,
+            RoleType roleType,
+            Long repaymentId
+    ) {
+        Optional<Repayment> result = switch (roleType) {
+            case ADMIN -> repaymentRepository.findById(repaymentId);
+            case STARTUP -> repaymentRepository.findByIdForStartup(
+                    repaymentId,
+                    getStartupByAccount(accountId).getStartupId()
+            );
+            case INVESTOR -> repaymentRepository.findByIdForInvestor(
+                    repaymentId,
+                    getInvestorByAccount(accountId).getInvestorId()
+            );
+        };
+        return result.orElseThrow(() -> repaymentNotFound(repaymentId));
     }
 
     private RepaymentInstallment getRepaymentInstallment(Long installmentId) {
         return repaymentInstallmentRepository.findById(installmentId)
-                .orElseThrow(() -> new RepaymentInstallmentNotFoundException("Repayment installment not found"));
+                .orElseThrow(() -> repaymentInstallmentNotFound(installmentId));
+    }
+
+    private RepaymentInstallment getRepaymentInstallmentForViewer(
+            Long accountId,
+            RoleType roleType,
+            Long installmentId
+    ) {
+        Optional<RepaymentInstallment> result = switch (roleType) {
+            case ADMIN -> repaymentInstallmentRepository.findById(installmentId);
+            case STARTUP -> repaymentInstallmentRepository.findByIdForStartup(
+                    installmentId,
+                    getStartupByAccount(accountId).getStartupId()
+            );
+            case INVESTOR -> repaymentInstallmentRepository.findByIdForInvestor(
+                    installmentId,
+                    getInvestorByAccount(accountId).getInvestorId()
+            );
+        };
+        return result.orElseThrow(() -> repaymentInstallmentNotFound(
+                installmentId));
     }
 
     private PaymentIntent getPaymentIntent(Long paymentIntentId) {
@@ -861,9 +902,52 @@ public class FinancialService {
                 .orElseThrow(() -> new PaymentIntentNotFoundException("Payment intent not found"));
     }
 
-    private PaymentAttempt getPaymentAttempt(Long paymentAttemptId) {
-        return paymentAttemptRepository.findById(paymentAttemptId)
-                .orElseThrow(() -> new PaymentAttemptNotFoundException("Payment attempt not found"));
+    private PaymentIntent getVisiblePaymentIntent(Long accountId, RoleType roleType, Long paymentIntentId) {
+        Optional<PaymentIntent> result = roleType == RoleType.ADMIN
+                ? paymentIntentRepository.findById(paymentIntentId)
+                : paymentIntentRepository.findByIdForParticipant(paymentIntentId, accountId);
+        return result.orElseThrow(() -> new PaymentIntentNotFoundException(
+                "Payment intent unavailable for participant lookup"
+        ));
+    }
+
+    private PaymentIntent getActionablePaymentIntent(Long accountId, RoleType roleType, Long paymentIntentId) {
+        Optional<PaymentIntent> result = roleType == RoleType.ADMIN
+                ? paymentIntentRepository.findById(paymentIntentId)
+                : paymentIntentRepository.findByIdForPayer(paymentIntentId, accountId);
+        return result.orElseThrow(() -> new PaymentIntentNotFoundException(
+                "Payment intent unavailable for payer lookup"
+        ));
+    }
+
+    private PaymentAttempt getPaymentAttempt(PaymentAttemptConfirmationCommand command) {
+        return command.authenticatedActorRequired()
+                ? getActorPaymentAttempt(
+                        command.actorAccountId(), command.actorRole(), command.paymentAttemptId())
+                : getProviderPaymentAttempt(command.providerCode(), command.paymentAttemptId());
+    }
+
+    private PaymentAttempt getPaymentAttempt(PaymentAttemptFailureCommand command) {
+        return command.authenticatedActorRequired()
+                ? getActorPaymentAttempt(
+                        command.actorAccountId(), command.actorRole(), command.paymentAttemptId())
+                : getProviderPaymentAttempt(command.providerCode(), command.paymentAttemptId());
+    }
+
+    private PaymentAttempt getActorPaymentAttempt(Long accountId, RoleType roleType, Long paymentAttemptId) {
+        Optional<PaymentAttempt> result = roleType == RoleType.ADMIN
+                ? paymentAttemptRepository.findById(paymentAttemptId)
+                : paymentAttemptRepository.findByIdForPayer(paymentAttemptId, accountId);
+        return result.orElseThrow(() -> new PaymentAttemptNotFoundException(
+                "Payment attempt unavailable for payer lookup"
+        ));
+    }
+
+    private PaymentAttempt getProviderPaymentAttempt(String providerCode, Long paymentAttemptId) {
+        return paymentAttemptRepository.findByIdForProvider(paymentAttemptId, providerCode)
+                .orElseThrow(() -> new PaymentAttemptNotFoundException(
+                        "Payment attempt unavailable for provider lookup"
+                ));
     }
 
     private Agreement getAgreement(Long agreementId) {
@@ -871,45 +955,71 @@ public class FinancialService {
                 .orElseThrow(() -> new IllegalStateException("Agreement not found for finance record"));
     }
 
+    private Agreement getAgreementForViewer(
+            Long accountId,
+            RoleType roleType,
+            Long agreementId
+    ) {
+        Optional<Agreement> result = switch (roleType) {
+            case ADMIN -> agreementRepository.findById(agreementId);
+            case STARTUP -> agreementRepository.findByIdForStartup(
+                    agreementId,
+                    getStartupByAccount(accountId).getStartupId()
+            );
+            case INVESTOR -> agreementRepository.findByIdForInvestor(
+                    agreementId,
+                    getInvestorByAccount(accountId).getInvestorId()
+            );
+        };
+        return result.orElseThrow(() -> repaymentProgressNotFound(agreementId));
+    }
+
+    private RepaymentNotFoundException repaymentNotFound(Long repaymentId) {
+        return new RepaymentNotFoundException(
+                "Repayment " + repaymentId + " is unavailable in permitted scope");
+    }
+
+    private RepaymentNotFoundException repaymentProgressNotFound(
+            Long agreementId
+    ) {
+        return new RepaymentNotFoundException(
+                "Repayment progress for agreement " + agreementId
+                        + " is unavailable in permitted scope");
+    }
+
+    private RepaymentInstallmentNotFoundException repaymentInstallmentNotFound(
+            Long installmentId
+    ) {
+        return new RepaymentInstallmentNotFoundException(
+                "Repayment installment " + installmentId
+                        + " is unavailable in permitted scope");
+    }
+
     private Startup getStartupByAccount(Long accountId) {
         return startupRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Startup not found for this account"));
+                .orElseThrow(() -> new StartupNotFoundException(accountId));
     }
 
     private Startup getStartupById(Long startupId) {
         return startupRepository.findById(startupId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Startup not found"));
+                .orElseThrow(() -> new StartupNotFoundException("startup", startupId));
     }
 
     private Investor getInvestorByAccount(Long accountId) {
         return investorRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Investor not found for this account"));
+                .orElseThrow(() -> new InvestorNotFoundException(accountId));
     }
 
     private Investor getInvestorById(Long investorId) {
         return investorRepository.findById(investorId)
-                .orElseThrow(() -> new ParticipationNotFoundException("Investor not found"));
+                .orElseThrow(() -> new InvestorNotFoundException("investor", investorId));
     }
 
-    private void ensureRole(RoleType actualRole, RoleType expectedRole) {
+    private void ensureFinancialRole(RoleType actualRole, RoleType expectedRole) {
         if (actualRole != expectedRole) {
-            throw new FinancialAccessException("Role is not allowed to perform this finance operation");
-        }
-    }
-
-    private void applySettlementTransition(Runnable transition) {
-        try {
-            transition.run();
-        } catch (IllegalStateException exception) {
-            throw new InvalidSettlementStateException(exception.getMessage());
-        }
-    }
-
-    private void applyRepaymentTransition(Runnable transition) {
-        try {
-            transition.run();
-        } catch (IllegalStateException exception) {
-            throw new InvalidRepaymentStateException(exception.getMessage());
+            throw new FinancialOperationNotAllowedException(
+                    "Role " + actualRole + " cannot perform an operation reserved for " + expectedRole
+            );
         }
     }
 
@@ -917,7 +1027,10 @@ public class FinancialService {
         try {
             transition.run();
         } catch (IllegalStateException exception) {
-            throw new InvalidPaymentStateException(exception.getMessage());
+            throw new PaymentStateConflictException(
+                    "Payment intent transition rejected for current state",
+                    exception
+            );
         }
     }
 
@@ -925,7 +1038,10 @@ public class FinancialService {
         try {
             return transition.apply();
         } catch (IllegalStateException exception) {
-            throw new InvalidPaymentStateException(exception.getMessage());
+            throw new PaymentStateConflictException(
+                    "Payment attempt transition rejected for current state",
+                    exception
+            );
         }
     }
 
@@ -948,12 +1064,6 @@ public class FinancialService {
 
     private Collection<RepaymentInstallmentState> resolveInstallmentStates(RepaymentInstallmentState installmentState,
                                                                            RepaymentInstallmentPaymentView paymentView) {
-        if (installmentState != null && paymentView != null) {
-            throw new ApiException(
-                    ErrorCode.VALIDATION_ERROR,
-                    "Use either installmentState or paymentView, not both"
-            );
-        }
         if (installmentState != null) {
             return java.util.List.of(installmentState);
         }

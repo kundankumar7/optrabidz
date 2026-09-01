@@ -4,11 +4,13 @@ import com.project.optrabidz.financial.domain.model.PaymentAttempt;
 import com.project.optrabidz.financial.domain.model.PaymentIntent;
 import com.project.optrabidz.financial.domain.model.PaymentMethodType;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 
 @Component
+@Profile({"dev", "test"})
 @ConditionalOnProperty(name = "optrabidz.financial.local-provider.enabled", havingValue = "true")
 public class LocalPaymentStrategy implements PaymentMethodStrategy {
     public static final String PROVIDER_CODE = "LOCAL";
