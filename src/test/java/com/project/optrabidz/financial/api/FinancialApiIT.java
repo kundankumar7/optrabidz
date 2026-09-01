@@ -270,7 +270,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         Long expiredIntentId = createSettlementPaymentIntent(expiredScenario.investor(), expiredSettlementId);
         jdbcTemplate.update("""
                 update payment_intent
-                set payment_state = 'PAYMENT_EXPIRED', expired_at = now()
+                set payment_state = 'PAYMENT_EXPIRED', expired_at = expires_at
                 where payment_intent_id = ?
                 """, expiredIntentId);
         mockMvc.perform(post("/api/v1/payment-intents/{paymentIntentId}/attempts", expiredIntentId)
@@ -1085,7 +1085,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         jdbcTemplate.update("""
                 update settlement
                 set settlement_state = 'SETTLEMENT_CANCELLED',
-                    cancelled_at = current_timestamp
+                    cancelled_at = created_at + interval '1 millisecond'
                 where settlement_id = ?
                 """, settlementId);
 
@@ -1117,7 +1117,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         int cancelled = jdbcTemplate.update("""
                 update settlement
                 set settlement_state = 'SETTLEMENT_CANCELLED',
-                    cancelled_at = current_timestamp
+                    cancelled_at = created_at + interval '1 millisecond'
                 where settlement_id = ?
                   and settlement_state = 'SETTLEMENT_PENDING'
                 """, settlementId);
@@ -1305,8 +1305,16 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         int cancelled = jdbcTemplate.update("""
                 update repayment_installment
                 set installment_status = 'CANCELLED',
-                    cancelled_at = current_timestamp,
-                    updated_at = current_timestamp
+                    cancelled_at = greatest(
+                            created_at,
+                            updated_at,
+                            coalesce(payment_started_at, created_at)
+                        ) + interval '1 millisecond',
+                    updated_at = greatest(
+                            created_at,
+                            updated_at,
+                            coalesce(payment_started_at, created_at)
+                        ) + interval '1 millisecond'
                 where repayment_installment_id = ?
                   and installment_status = 'NOT_STARTED'
                 """, scenario.installmentId());
@@ -1370,8 +1378,16 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         int cancelled = jdbcTemplate.update("""
                 update repayment_installment
                 set installment_status = 'CANCELLED',
-                    cancelled_at = current_timestamp,
-                    updated_at = current_timestamp
+                    cancelled_at = greatest(
+                            created_at,
+                            updated_at,
+                            coalesce(payment_started_at, created_at)
+                        ) + interval '1 millisecond',
+                    updated_at = greatest(
+                            created_at,
+                            updated_at,
+                            coalesce(payment_started_at, created_at)
+                        ) + interval '1 millisecond'
                 where repayment_installment_id = ?
                   and installment_status = 'PAYMENT_IN_PROGRESS'
                 """, scenario.installmentId());
