@@ -17,7 +17,7 @@ class RuntimeConfigurationPolicyTest {
 
     private static final List<String> PRIVILEGED_SWITCHES = List.of(
             "optrabidz.admin.bootstrap.enabled",
-            "optrabidz.admin.bootstrap.recovery-mode",
+            "optrabidz.admin.recovery.enabled",
             "optrabidz.financial.local-provider.enabled",
             "optrabidz.financial.sandbox-providers.enabled",
             "optrabidz.financial.webhook.providers.UPI.enabled",
@@ -62,11 +62,9 @@ class RuntimeConfigurationPolicyTest {
         Properties development = load("src/main/resources/application-dev.properties");
         Properties production = load("src/main/resources/application-prod.properties");
 
-        assertSafeSecretProperty(baseline, "optrabidz.admin.bootstrap.recovery-token");
         assertSafeSecretProperty(baseline, "optrabidz.admin.recovery.token");
         assertSafeSecretProperty(development, "spring.datasource.password");
         assertSafeSecretProperty(development, "optrabidz.admin.bootstrap.password");
-        assertSafeSecretProperty(development, "optrabidz.admin.bootstrap.recovery-token");
         assertSafeSecretProperty(development, "optrabidz.admin.recovery.token");
         assertSafeSecretProperty(development, "optrabidz.financial.webhook.providers.UPI.active-secret");
         assertSafeSecretProperty(development, "optrabidz.financial.webhook.providers.CARD.active-secret");
