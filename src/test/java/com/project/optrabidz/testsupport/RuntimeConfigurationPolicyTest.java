@@ -97,6 +97,21 @@ class RuntimeConfigurationPolicyTest {
         assertThat(isIgnored(".env.example")).isFalse();
     }
 
+    @Test
+    void secretScanningWorkflowIsPinnedAndScansFullHistory() throws IOException {
+        Path workflow = REPOSITORY_ROOT.resolve(".github/workflows/secret-scanning.yml");
+        assertThat(workflow).isRegularFile();
+
+        String content = Files.readString(workflow);
+        assertThat(content)
+                .contains("push:")
+                .contains("pull_request:")
+                .contains("workflow_dispatch:")
+                .contains("fetch-depth: 0")
+                .contains("gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e")
+                .contains("GITLEAKS_VERSION: 8.30.1");
+    }
+
     private static Properties load(String relativePath) throws IOException {
         Path path = REPOSITORY_ROOT.resolve(relativePath);
         assertThat(path).isRegularFile();
