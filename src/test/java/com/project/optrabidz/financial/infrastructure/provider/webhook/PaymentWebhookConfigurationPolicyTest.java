@@ -83,6 +83,17 @@ class PaymentWebhookConfigurationPolicyTest {
         assertThatCode(() -> validate(properties, "test")).doesNotThrowAnyException();
     }
 
+    @Test
+    void productionProfileWinsWhenDevelopmentIsAlsoActive() {
+        String developmentSecret = "dev-only-upi-webhook-secret-material-001";
+        PaymentWebhookProperties properties = properties(provider(true, developmentSecret, null, null));
+
+        assertThatThrownBy(() -> validate(properties, "prod", "dev"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("UPI")
+                .hasMessageNotContaining(developmentSecret);
+    }
+
     private static PaymentWebhookProperties properties(
             PaymentWebhookProperties.ProviderConfiguration provider) {
         PaymentWebhookProperties properties = new PaymentWebhookProperties();
@@ -104,9 +115,9 @@ class PaymentWebhookConfigurationPolicyTest {
         return provider;
     }
 
-    private static void validate(PaymentWebhookProperties properties, String profile) {
+    private static void validate(PaymentWebhookProperties properties, String... profiles) {
         MockEnvironment environment = new MockEnvironment();
-        environment.setActiveProfiles(profile);
+        environment.setActiveProfiles(profiles);
         new PaymentWebhookConfigurationPolicy(properties, environment, CLOCK)
                 .afterSingletonsInstantiated();
     }
