@@ -52,10 +52,18 @@ final class DocumentationStructureValidator {
         if (Files.isDirectory(docs)) {
             try (var paths = Files.walk(docs)) {
                 paths.filter(Files::isRegularFile)
-                        .filter(path -> path.getFileName().toString()
-                                .toLowerCase(Locale.ROOT).endsWith(".md"))
-                        .filter(path -> isReaderFacing(root, path))
-                        .forEach(markdown::add);
+                        .forEach(path -> {
+                            String relative = normalize(root.relativize(path));
+                            if (isWorkItemArtifact(root, path)) {
+                                violations.add(new Violation(relative,
+                                        "documentation contains a prohibited work-item artifact"));
+                            }
+                            if (path.getFileName().toString()
+                                    .toLowerCase(Locale.ROOT).endsWith(".md")
+                                    && isReaderFacing(root, path)) {
+                                markdown.add(path);
+                            }
+                        });
             }
         }
 
@@ -69,9 +77,16 @@ final class DocumentationStructureValidator {
                 .toList();
     }
 
+    private static boolean isWorkItemArtifact(Path root, Path path) {
+        String relative = "/" + normalize(root.relativize(path))
+                .toLowerCase(Locale.ROOT) + "/";
+        return relative.contains("/work-items/");
+    }
+
     private static boolean isReaderFacing(Path root, Path path) {
-        String relative = "/" + normalize(root.relativize(path)) + "/";
-        return !relative.contains("/work-items/")
+        String relative = "/" + normalize(root.relativize(path))
+                .toLowerCase(Locale.ROOT) + "/";
+        return !isWorkItemArtifact(root, path)
                 && !relative.contains("/assets/");
     }
 
@@ -79,7 +94,6 @@ final class DocumentationStructureValidator {
             List<Violation> violations) throws IOException {
         String relative = normalize(root.relativize(source));
         String markdown = Files.readString(source);
-        boolean workItem = relative.contains("/work-items/");
 
         Matcher fences = FENCE.matcher(markdown);
         while (fences.find()) {
@@ -100,10 +114,11 @@ final class DocumentationStructureValidator {
                 violations.add(new Violation(relative,
                         "reader-facing Markdown links Mermaid source"));
             }
-            if (!workItem && target.replace('\\', '/').contains("work-items/")
-                    && target.endsWith("implementation-plan.md")) {
+            String normalizedTarget = target.replace('\\', '/')
+                    .toLowerCase(Locale.ROOT);
+            if (normalizedTarget.contains("work-items/")) {
                 violations.add(new Violation(relative,
-                        "stable documentation links a work-item implementation plan"));
+                        "stable documentation links a prohibited work-item path"));
             }
         }
     }

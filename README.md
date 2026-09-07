@@ -13,13 +13,23 @@ integrations in this repository are local or sandbox implementations.
 Prerequisites: Java 21, Docker, and a running Docker Engine. The Maven wrapper
 is included.
 
-Start PostgreSQL 16:
+Create an ignored local configuration file:
 
 ```powershell
-docker run --name optrabidz-postgres -e POSTGRES_DB=optrabidz -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+Copy-Item .env.example .env
 ```
 
-Start the application with development-only integrations enabled:
+Choose a disposable local database password, place it in
+`OPTRABIDZ_DATASOURCE_PASSWORD` inside `.env`, and use the same value when
+starting PostgreSQL 16:
+
+```powershell
+$localDbPassword = Read-Host "Local PostgreSQL password"
+docker run --name optrabidz-postgres -e POSTGRES_DB=optrabidz -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=$localDbPassword -p 5432:5432 -d postgres:16
+```
+
+Leave every privileged and simulated capability switch in `.env` set to
+`false`, then start the application with the development profile:
 
 ```powershell
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"

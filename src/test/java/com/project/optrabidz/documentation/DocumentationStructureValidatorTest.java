@@ -32,7 +32,7 @@ class DocumentationStructureValidatorTest {
                         "required documentation entry does not exist",
                         "reader-facing Markdown links Mermaid source",
                         "reader-facing Markdown contains a Mermaid fence",
-                        "stable documentation links a work-item implementation plan");
+                        "stable documentation links a prohibited work-item path");
     }
 
     @Test
@@ -56,18 +56,36 @@ class DocumentationStructureValidatorTest {
     }
 
     @Test
-    void limitsReaderFacingRulesToStableGuidance() throws Exception {
+    void rejectsAnyWorkItemArtifact() throws Exception {
         writeRequiredEntries();
         write("docs/api/work-items/KAN-1/design.md", """
                 # Historical design
-
-                [Source](assets/flow.mmd)
-
-                ```mermaid
-                flowchart TB
-                A --> B
-                ```
                 """);
+
+        assertThat(DocumentationStructureValidator.findViolations(repository))
+                .containsExactly(new DocumentationStructureValidator.Violation(
+                        "docs/api/work-items/KAN-1/design.md",
+                        "documentation contains a prohibited work-item artifact"));
+    }
+
+    @Test
+    void rejectsStableLinksToAnyWorkItemPath() throws Exception {
+        writeRequiredEntries();
+        write("README.md", """
+                # Project
+
+                [Historical design](docs/api/work-items/KAN-1/design.md)
+                """);
+
+        assertThat(DocumentationStructureValidator.findViolations(repository))
+                .containsExactly(new DocumentationStructureValidator.Violation(
+                        "README.md",
+                        "stable documentation links a prohibited work-item path"));
+    }
+
+    @Test
+    void ignoresDiagramSourceMarkdownOutsideReaderFacingGuidance() throws Exception {
+        writeRequiredEntries();
         write("docs/database/assets/er-diagram-source.md", """
                 # Diagram source
 

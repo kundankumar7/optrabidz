@@ -37,7 +37,10 @@ public class PaymentWebhookConfigurationPolicy implements SmartInitializingSingl
     @Override
     public void afterSingletonsInstantiated() {
         validateGlobalLimits();
-        boolean developmentEnvironment = Arrays.stream(environment.getActiveProfiles())
+        boolean productionEnvironment = Arrays.stream(environment.getActiveProfiles())
+                .anyMatch("prod"::equals);
+        boolean developmentEnvironment = !productionEnvironment
+                && Arrays.stream(environment.getActiveProfiles())
                 .anyMatch(profile -> profile.equals("dev") || profile.equals("test"));
         properties.getProviders().forEach((providerCode, provider) ->
                 validateProvider(providerCode, provider, developmentEnvironment));
