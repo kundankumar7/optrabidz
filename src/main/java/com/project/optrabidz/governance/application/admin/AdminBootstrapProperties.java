@@ -7,12 +7,10 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "optrabidz.admin.bootstrap")
 public class AdminBootstrapProperties {
     private boolean enabled;
-    private boolean recoveryMode;
     private String email;
     private String password;
     private String publicDisplayName;
     private String organizationLabel;
-    private String recoveryToken;
 
     public BootstrapAdminCommand toBootstrapCommand() {
         return new BootstrapAdminCommand(email, password, publicDisplayName, organizationLabel);
@@ -24,14 +22,6 @@ public class AdminBootstrapProperties {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public boolean isRecoveryMode() {
-        return recoveryMode;
-    }
-
-    public void setRecoveryMode(boolean recoveryMode) {
-        this.recoveryMode = recoveryMode;
     }
 
     public String getEmail() {
@@ -64,13 +54,5 @@ public class AdminBootstrapProperties {
 
     public void setOrganizationLabel(String organizationLabel) {
         this.organizationLabel = organizationLabel;
-    }
-
-    public String getRecoveryToken() {
-        return recoveryToken;
-    }
-
-    public void setRecoveryToken(String recoveryToken) {
-        this.recoveryToken = recoveryToken;
     }
 }

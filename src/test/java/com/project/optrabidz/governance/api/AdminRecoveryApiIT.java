@@ -18,12 +18,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @TestPropertySource(properties = {
-        "optrabidz.admin.bootstrap.recovery-mode=true",
-        "optrabidz.admin.bootstrap.recovery-token=test-recovery-token-27"
+        "optrabidz.admin.recovery.enabled=true",
+        "optrabidz.admin.recovery.token=test-recovery-token-material-027"
 })
 class AdminRecoveryApiIT extends ApiIntegrationTestSupport {
 
-    private static final String CONFIGURED_TOKEN = "test-recovery-token-27";
+    private static final String CONFIGURED_TOKEN = "test-recovery-token-material-027";
 
     @Autowired
     private JdbcTemplate jdbcTemplate;

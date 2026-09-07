@@ -55,9 +55,14 @@ lifecycle rules, revocation strategy, migration plan, and security tests.
 ## Security Checks
 
 - Keep shared and production secrets in environment-specific secret storage,
-  never in source or docs. The repository currently contains explicitly
-  disposable `dev` defaults; do not reuse them, and remove them through the
-  planned configuration-hardening work before treating that profile as shared.
+  never in source or docs. The tracked `.env.example` contains disabled
+  switches and blank secret fields; the ignored `.env` is for local use only.
+- Keep GitHub secret scanning and push protection enabled. The pinned Gitleaks
+  workflow scans full Git history on pushes, pull requests, and manual runs;
+  confirmed exposure still requires revocation or rotation.
+- Treat startup rejection of an enabled feature with missing, malformed, or
+  profile-forbidden configuration as a security control. Diagnostics may name
+  the feature or key but must not reproduce its value.
 - Keep CSRF protection enabled for browser session flows.
 - Return neutral not-found results when a more specific response would reveal
   another caller's resource.

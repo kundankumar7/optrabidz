@@ -3,7 +3,7 @@ package com.project.optrabidz.governance.api;
 import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.common.error.ApplicationException;
 import com.project.optrabidz.governance.application.admin.AdminAuthorityTransferService;
-import com.project.optrabidz.governance.application.admin.AdminBootstrapProperties;
+import com.project.optrabidz.governance.application.admin.AdminRecoveryProperties;
 import com.project.optrabidz.governance.application.admin.AdminTransferResponse;
 import com.project.optrabidz.governance.application.admin.TransferAdminAuthorityCommand;
 import com.project.optrabidz.governance.application.admin.TransferAdminAuthorityRequest;
@@ -34,35 +34,35 @@ class AdminRecoveryControllerTest {
     @Mock
     private AdminAuthorityTransferService transferService;
 
-    private AdminBootstrapProperties properties;
+    private AdminRecoveryProperties properties;
     private AdminRecoveryController controller;
 
     @BeforeEach
     void setUp() {
-        properties = new AdminBootstrapProperties();
+        properties = new AdminRecoveryProperties();
         controller = new AdminRecoveryController(transferService, properties);
     }
 
     @Test
     void disabledRecoveryModeUsesDisclosureSafeDenial() {
-        properties.setRecoveryMode(false);
-        properties.setRecoveryToken(CONFIGURED_TOKEN);
+        properties.setEnabled(false);
+        properties.setToken(CONFIGURED_TOKEN);
 
         assertDenied(CONFIGURED_TOKEN, "GOVERNANCE.RECOVERY.MODE_DISABLED");
     }
 
     @Test
     void nullRecoveryTokenConfigurationUsesDisclosureSafeDenial() {
-        properties.setRecoveryMode(true);
-        properties.setRecoveryToken(null);
+        properties.setEnabled(true);
+        properties.setToken(null);
 
         assertDenied(SUBMITTED_TOKEN, "GOVERNANCE.RECOVERY.TOKEN_NOT_CONFIGURED");
     }
 
     @Test
     void blankRecoveryTokenConfigurationUsesDisclosureSafeDenial() {
-        properties.setRecoveryMode(true);
-        properties.setRecoveryToken("   ");
+        properties.setEnabled(true);
+        properties.setToken("   ");
 
         assertDenied(SUBMITTED_TOKEN, "GOVERNANCE.RECOVERY.TOKEN_NOT_CONFIGURED");
     }
@@ -111,8 +111,8 @@ class AdminRecoveryControllerTest {
     }
 
     private void configureRecovery() {
-        properties.setRecoveryMode(true);
-        properties.setRecoveryToken(CONFIGURED_TOKEN);
+        properties.setEnabled(true);
+        properties.setToken(CONFIGURED_TOKEN);
     }
 
     private void assertDenied(String submittedToken, String diagnosticCode) {
