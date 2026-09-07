@@ -89,27 +89,27 @@ class OpenApiProblemDetailsIT extends RealHttpIntegrationTestSupport {
                         "password", "Password01",
                         "role", "STARTUP"
                 ),
-                Map.of("X-Request-Id", "kan-43-validation")
+                Map.of("X-Request-Id", "openapi-validation-request")
         );
         assertRuntimeParity(
                 openApi,
                 validation,
                 "VALIDATION_ERROR",
                 "ValidationProblem",
-                "kan-43-validation"
+                "openapi-validation-request"
         );
         assertThat(readJson(validation).path("violations").isArray()).isTrue();
 
         HttpResponse<String> missingListing = client.get(
                 "/api/v1/funding-listings/" + Long.MAX_VALUE,
-                Map.of("X-Request-Id", "kan-43-not-found")
+                Map.of("X-Request-Id", "openapi-not-found-request")
         );
         assertRuntimeParity(
                 openApi,
                 missingListing,
                 "LISTING_NOT_FOUND",
                 "NotFoundProblem",
-                "kan-43-not-found"
+                "openapi-not-found-request"
         );
     }
 

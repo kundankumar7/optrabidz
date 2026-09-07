@@ -48,7 +48,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
     @Test
     void anonymousNotificationQueryUsesSharedAuthenticationBoundary()
             throws Exception {
-        String requestId = "kan-29-notification-authentication";
+        String requestId = "notification-authentication-request";
 
         mockMvc.perform(get("/api/v1/notifications/me")
                         .header("X-Request-Id", requestId))
@@ -185,7 +185,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                   and n.notification_name = 'ACCOUNT_REGISTERED'
                 """, Long.class, ownerAccountId);
 
-        String wrongOwnerRequestId = "kan-29-notification-private";
+        String wrongOwnerRequestId = "private-notification-request";
         MvcResult wrongOwner = mockMvc.perform(patch(
                         "/api/v1/notifications/{recipientId}/read", recipientId)
                         .session(other.session())
@@ -217,7 +217,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", owner.csrfToken()))
                 .andExpect(status().isOk());
 
-        String deletedRequestId = "kan-29-notification-deleted";
+        String deletedRequestId = "deleted-notification-request";
         mockMvc.perform(patch("/api/v1/notifications/{recipientId}/read", recipientId)
                         .session(owner.session())
                         .cookie(owner.xsrfCookie())
@@ -229,7 +229,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                         deletedRequestId
                 ));
 
-        String missingRequestId = "kan-29-notification-missing";
+        String missingRequestId = "missing-notification-request";
         mockMvc.perform(delete("/api/v1/notifications/{recipientId}", Long.MAX_VALUE)
                         .session(owner.session())
                         .cookie(owner.xsrfCookie())
@@ -250,12 +250,12 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
         long subscriptionId = createSubscription(
                 owner,
                 "PUSH",
-                "https://push.example.com/subscription/kan-29-private",
-                "kan-29-public-key",
-                "kan-29-auth-secret"
+                "https://push.example.com/subscription/private-subscription",
+                "test-public-key",
+                "test-auth-secret"
         );
 
-        String wrongOwnerRequestId = "kan-29-subscription-private";
+        String wrongOwnerRequestId = "subscription-owner-mismatch-request";
         MvcResult wrongOwner = mockMvc.perform(delete(
                         "/api/v1/notification-subscriptions/{subscriptionId}",
                         subscriptionId)
@@ -274,9 +274,9 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                 wrongOwner,
                 "accountId=",
                 "subscriptionId=",
-                "kan-29-private",
-                "kan-29-public-key",
-                "kan-29-auth-secret",
+                "private-subscription",
+                "test-public-key",
+                "test-auth-secret",
                 "NOTIFICATION.SUBSCRIPTION.NOT_FOUND"
         );
         assertThat(jdbcTemplate.queryForObject("""
@@ -293,7 +293,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", owner.csrfToken()))
                 .andExpect(status().isOk());
 
-        String revokedRequestId = "kan-29-subscription-revoked";
+        String revokedRequestId = "revoked-subscription-request";
         mockMvc.perform(delete(
                         "/api/v1/notification-subscriptions/{subscriptionId}",
                         subscriptionId)
@@ -307,7 +307,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                         revokedRequestId
                 ));
 
-        String missingRequestId = "kan-29-subscription-missing";
+        String missingRequestId = "missing-subscription-request";
         mockMvc.perform(delete(
                         "/api/v1/notification-subscriptions/{subscriptionId}",
                         Long.MAX_VALUE)

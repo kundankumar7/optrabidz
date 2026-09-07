@@ -21,7 +21,7 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
     private static final String FAULT_PATH =
             "/api/v1/notifications/__test/problem-details-fault";
     private static final String FAULT_SENTINEL =
-            "kan-42-password=secret jdbc:postgresql://private-host";
+            "test-password=secret jdbc:postgresql://private-host";
 
     @Test
     void registrationLoginAndMeUseARealPortAndCookieStore() throws Exception {
@@ -48,7 +48,7 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
     @Test
     void invalidRegistrationUsesValidationProblemDetails() throws Exception {
         RealHttpClient client = newClient();
-        String requestId = "kan-42-validation";
+        String requestId = "validation-problem-request";
         String rejectedEmail = "not-an-email";
 
         HttpResponse<String> response = client.post(
@@ -75,7 +75,7 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
     void anonymousProtectedRequestUsesAuthenticationProblemDetails()
             throws Exception {
         RealHttpClient client = newClient();
-        String requestId = "kan-42-authentication";
+        String requestId = "authentication-problem-request";
         String bearerSecret = "real-http-secret-token";
 
         HttpResponse<String> response = client.get(
@@ -105,7 +105,7 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
         assertThat(client.get("/api/v1/me", Map.of()).statusCode())
                 .isEqualTo(200);
         String csrfSecret = client.requiredCookie("XSRF-TOKEN");
-        String requestId = "kan-42-csrf";
+        String requestId = "csrf-problem-request";
 
         HttpResponse<String> response = client.postWithoutBody(
                 "/api/v1/auth/logout",
@@ -132,7 +132,7 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
     @Test
     void missingListingUsesApplicationProblemDetails() throws Exception {
         RealHttpClient client = newClient();
-        String requestId = "kan-42-listing-not-found";
+        String requestId = "listing-not-found-request";
 
         HttpResponse<String> response = client.get(
                 "/api/v1/funding-listings/" + Long.MAX_VALUE,
@@ -154,7 +154,7 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
         RealHttpClient client = newClient();
         String email = uniqueEmail("real-http-conflict");
         assertThat(register(client, email).statusCode()).isEqualTo(201);
-        String requestId = "kan-42-conflict";
+        String requestId = "conflict-problem-request";
 
         HttpResponse<String> response = client.post(
                 "/api/v1/auth/register",
@@ -182,7 +182,7 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
         String email = uniqueEmail("real-http-fault");
         assertThat(register(client, email).statusCode()).isEqualTo(201);
         assertThat(login(client, email).statusCode()).isEqualTo(200);
-        String requestId = "kan-42-internal-server-error";
+        String requestId = "internal-error-request";
 
         HttpResponse<String> response = client.get(
                 FAULT_PATH,
@@ -209,7 +209,7 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
     @Test
     void faultProbeRetainsTheProductionAuthenticationBoundary()
             throws Exception {
-        String requestId = "kan-42-fault-auth";
+        String requestId = "fault-authentication-request";
         assertProblem(
                 newClient().get(
                         FAULT_PATH,

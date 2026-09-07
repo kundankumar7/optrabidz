@@ -108,7 +108,7 @@ split the diagram.
    labelled PNG link in the primary owner.
 4. Render the selected publication entry.
 5. Run the structural checks and complete the desktop/mobile review.
-6. Record the result in the applicable Jira issue, pull request, or curated
+6. Record the result in the applicable work item, pull request, or curated
    Confluence review record.
 
 If validation fails, correct the declared source or publication asset. Do not

@@ -26,12 +26,12 @@ class MarketplaceSecurityIT extends ApiIntegrationTestSupport {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/funding-listings/{listingId}", Long.MAX_VALUE)
-                        .header("X-Request-Id", "kan-28-public-detail"))
+                        .header("X-Request-Id", "public-listing-detail-request"))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(
                         MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.code").value("LISTING_NOT_FOUND"))
-                .andExpect(jsonPath("$.requestId").value("kan-28-public-detail"));
+                .andExpect(jsonPath("$.requestId").value("public-listing-detail-request"));
     }
 
     @ParameterizedTest
@@ -43,12 +43,12 @@ class MarketplaceSecurityIT extends ApiIntegrationTestSupport {
     })
     void anonymousActorRequiredQueriesUseSharedAuthenticationBoundary(String path)
             throws Exception {
-        mockMvc.perform(get(path).header("X-Request-Id", "kan-28-security"))
+        mockMvc.perform(get(path).header("X-Request-Id", "listing-security-request"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(
                         MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"))
-                .andExpect(jsonPath("$.requestId").value("kan-28-security"));
+                .andExpect(jsonPath("$.requestId").value("listing-security-request"));
     }
 
     @Test
@@ -77,7 +77,7 @@ class MarketplaceSecurityIT extends ApiIntegrationTestSupport {
         mockMvc.perform(post("/api/v1/funding-listings")
                         .cookie(csrfCookie)
                         .header("X-CSRF-TOKEN", csrfCookie.getValue())
-                        .header("X-Request-Id", "kan-28-security-command")
+                        .header("X-Request-Id", "listing-security-command-request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(request)))
                 .andExpect(status().isUnauthorized())
@@ -85,6 +85,6 @@ class MarketplaceSecurityIT extends ApiIntegrationTestSupport {
                         MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"))
                 .andExpect(jsonPath("$.requestId").value(
-                        "kan-28-security-command"));
+                        "listing-security-command-request"));
     }
 }

@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentWebhookHttpIngressTest {
-    private static final String REQUEST_ID = "kan-36-request";
+    private static final String REQUEST_ID = "payment-webhook-request";
 
     @Mock
     private PaymentWebhookHttpRequestReader reader;

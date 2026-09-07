@@ -1,7 +1,7 @@
 ## Summary
 
 - Describe the user-visible or engineering outcome.
-- Identify the Jira work item and the affected module boundaries.
+- Identify the technical outcome and affected module boundaries.
 
 ## Verification
 

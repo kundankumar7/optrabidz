@@ -50,5 +50,5 @@ Eighteen module tests cover error, response, observability, and outbox behavior.
 ## Known gaps
 
 `ApiResponse` still mixes success formatting, legacy error support, metadata,
-and request-ID concerns. KAN-41 tracks separating those responsibilities before
-retiring the wrapper.
+and request-ID concerns. A dedicated API-response migration will separate those
+responsibilities before retiring the wrapper.

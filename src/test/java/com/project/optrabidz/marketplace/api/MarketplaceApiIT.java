@@ -153,7 +153,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
 
     @Test
     void publishingRequiresStartupClassificationWhenGovernanceRequiresIt() throws Exception {
-        String requestId = "kan-27-marketplace-governance";
+        String requestId = "marketplace-governance-request";
         AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
         createCompleteStartupProfile(startup, "Unclassified Startup");
 
@@ -304,7 +304,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.bidState").value("SUBMITTED"));
 
-        String duplicateRequestId = "kan-28-bid-already-exists";
+        String duplicateRequestId = "bid-already-exists-request";
         MvcResult duplicateResult = mockMvc.perform(post("/api/v1/bids")
                         .session(investor.session())
                         .cookie(investor.xsrfCookie())
@@ -326,7 +326,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                 "MARKETPLACE.BID.ALREADY_EXISTS"
         );
 
-        String accessRequestId = "kan-28-marketplace-access";
+        String accessRequestId = "marketplace-access-request";
         MvcResult accessResult = mockMvc.perform(post("/api/v1/bids")
                         .session(startup.session())
                         .cookie(startup.xsrfCookie())
@@ -353,7 +353,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
     @Test
     void missingMarketplaceResourcesUseSafeProblemDetails() throws Exception {
         long missingId = Long.MAX_VALUE;
-        String listingRequestId = "kan-28-listing-not-found";
+        String listingRequestId = "listing-not-found-request";
         MvcResult listingResult = mockMvc.perform(get(
                         "/api/v1/funding-listings/{listingId}",
                         missingId
@@ -373,7 +373,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
         );
 
         AuthenticatedClient investor = registerAndLogin(RoleType.INVESTOR);
-        String bidRequestId = "kan-28-bid-not-found";
+        String bidRequestId = "bid-not-found-request";
         MvcResult bidResult = mockMvc.perform(get("/api/v1/bids/{bidId}", missingId)
                         .session(investor.session())
                         .cookie(investor.xsrfCookie())
@@ -392,7 +392,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                 "MARKETPLACE.BID.NOT_FOUND"
         );
 
-        String agreementRequestId = "kan-28-agreement-not-found";
+        String agreementRequestId = "agreement-not-found-request";
         MvcResult agreementResult = mockMvc.perform(get(
                         "/api/v1/agreements/{agreementId}",
                         missingId
@@ -424,7 +424,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                 new BigDecimal("856789.01")
         );
 
-        String stateRequestId = "kan-28-listing-state";
+        String stateRequestId = "listing-state-request";
         MvcResult stateResult = mockMvc.perform(patch(
                         "/api/v1/funding-listings/{listingId}",
                         listingId
@@ -453,7 +453,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                 "MARKETPLACE.LISTING.STATE_CONFLICT"
         );
 
-        String modelRequestId = "kan-28-unsupported-funding-model";
+        String modelRequestId = "unsupported-funding-model-request";
         Map<String, Object> equityRequest = Map.of(
                 "fundingModel", "EQUITY",
                 "title", "Unsupported equity listing",
@@ -512,7 +512,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .content(json(Map.of("reason", "Changed investment strategy"))))
                 .andExpect(status().isOk());
 
-        String bidStateRequestId = "kan-28-bid-state";
+        String bidStateRequestId = "bid-state-request";
         MvcResult bidStateResult = mockMvc.perform(post(
                         "/api/v1/bids/{bidId}/actions/withdraw",
                         secondBidId
@@ -546,7 +546,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .content(json(Map.of("confirmation", "ACCEPT"))))
                 .andExpect(status().isOk());
 
-        String acceptanceRequestId = "kan-28-bid-acceptance";
+        String acceptanceRequestId = "bid-acceptance-request";
         MvcResult acceptanceResult = mockMvc.perform(post(
                         "/api/v1/bids/{bidId}/actions/accept",
                         secondBidId

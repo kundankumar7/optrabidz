@@ -17,7 +17,7 @@ class DocumentationStructureValidatorTest {
         write("README.md", """
                 # Project
 
-                [Internal plan](docs/api/work-items/KAN-1/implementation-plan.md)
+                [Internal plan](docs/api/work-items/sample-item/implementation-plan.md)
                 [Source](docs/api/assets/flow.mmd)
 
                 ```mermaid
@@ -58,13 +58,13 @@ class DocumentationStructureValidatorTest {
     @Test
     void rejectsAnyWorkItemArtifact() throws Exception {
         writeRequiredEntries();
-        write("docs/api/work-items/KAN-1/design.md", """
+        write("docs/api/work-items/sample-item/design.md", """
                 # Historical design
                 """);
 
         assertThat(DocumentationStructureValidator.findViolations(repository))
                 .containsExactly(new DocumentationStructureValidator.Violation(
-                        "docs/api/work-items/KAN-1/design.md",
+                        "docs/api/work-items/sample-item/design.md",
                         "documentation contains a prohibited work-item artifact"));
     }
 
@@ -74,7 +74,7 @@ class DocumentationStructureValidatorTest {
         write("README.md", """
                 # Project
 
-                [Historical design](docs/api/work-items/KAN-1/design.md)
+                [Historical design](docs/api/work-items/sample-item/design.md)
                 """);
 
         assertThat(DocumentationStructureValidator.findViolations(repository))

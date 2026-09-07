@@ -30,7 +30,7 @@ class AdminRecoveryApiIT extends ApiIntegrationTestSupport {
 
     @Test
     void invalidRecoveryTokenReturnsSafeAuthorizationProblem() throws Exception {
-        String requestId = "kan-27-recovery-denied";
+        String requestId = "recovery-denied-request";
         String rejectedToken = "rejected-recovery-token-27";
 
         MvcResult result = mockMvc.perform(post("/api/v1/admin/recovery/transfer")
@@ -62,7 +62,7 @@ class AdminRecoveryApiIT extends ApiIntegrationTestSupport {
 
     @Test
     void configuredRecoveryTokenWithoutActiveAdminReturnsSafeConflict() throws Exception {
-        String requestId = "kan-27-admin-unavailable";
+        String requestId = "administrator-unavailable-request";
         assertThat(activeAdminCount()).isZero();
 
         MvcResult result = mockMvc.perform(post("/api/v1/admin/recovery/transfer")

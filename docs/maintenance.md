@@ -23,8 +23,8 @@ request.
 
 1. Change code and tests.
 2. Identify affected rows in this map.
-3. Update only current guidance; keep delivery discussion in Jira and the pull
-   request.
+3. Update only current guidance; keep delivery discussion in the work tracker
+   and the pull request.
 4. Regenerate catalogues and diagrams from their canonical sources.
 5. Run documentation structure, link, catalogue, and diagram checks.
 

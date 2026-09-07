@@ -1,8 +1,8 @@
 # Documentation
 
 This portal contains current engineering guidance. Start with the task you
-need to complete; delivery history and review discussion belong in Jira and
-pull requests rather than the permanent documentation path.
+need to complete; delivery history and review discussion belong in the work
+tracker and pull requests rather than the permanent documentation path.
 
 ## Understand the system
 
@@ -29,7 +29,8 @@ pull requests rather than the permanent documentation path.
 ## Documentation Rules
 
 - Describe the current system, not the sequence of tickets that produced it.
-- Keep task tracking in Jira and code-review discussion in pull requests.
+- Keep task tracking in the work tracker and code-review discussion in pull
+  requests.
 - Record durable architectural choices as decision records.
 - Publish diagrams as SVG with a high-resolution PNG fallback.
 - Never include deployable credentials, secret material, personal paths, or
