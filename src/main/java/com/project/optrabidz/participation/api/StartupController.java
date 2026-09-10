@@ -1,15 +1,14 @@
 package com.project.optrabidz.participation.api;
 
-import com.project.optrabidz.common.api.response.ApiResponse;
-import com.project.optrabidz.common.api.response.MessageData;
-import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.participation.application.StartupService;
 import com.project.optrabidz.participation.application.dto.request.CreateStartupRequest;
 import com.project.optrabidz.participation.application.dto.response.StartupResponse;
 import com.project.optrabidz.security.application.AuthenticatedUserPrincipal;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/v1/startups")
@@ -21,34 +20,25 @@ public class StartupController {
     }
 
     @PostMapping
-    public SuccessResponse<MessageData> createStartup(@RequestBody @Valid CreateStartupRequest request,
-                                                      @org.springframework.security.core.annotation.AuthenticationPrincipal
-                                                      AuthenticatedUserPrincipal principal,
-                                                      HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                startupService.createStartup(principal.getAccountId(), principal.getRole(), request),
-                httpRequest
-        );
+    public ResponseEntity<StartupResponse> createStartup(
+            @RequestBody @Valid CreateStartupRequest request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal
+            AuthenticatedUserPrincipal principal) {
+        StartupResponse response = startupService.createStartup(
+                principal.getAccountId(), principal.getRole(), request);
+        return ResponseEntity.created(URI.create("/api/v1/startups/me")).body(response);
     }
 
     @GetMapping("/me")
-    public SuccessResponse<StartupResponse> getMyStartup(
-            @org.springframework.security.core.annotation.AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                startupService.getMyStartup(principal.getAccountId(), principal.getRole()),
-                httpRequest
-        );
+    public StartupResponse getMyStartup(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return startupService.getMyStartup(principal.getAccountId(), principal.getRole());
     }
 
     @PatchMapping("/me")
-    public SuccessResponse<MessageData> updateStartup(@RequestBody @Valid CreateStartupRequest request,
-                                                      @org.springframework.security.core.annotation.AuthenticationPrincipal
-                                                      AuthenticatedUserPrincipal principal,
-                                                      HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                startupService.updateStartup(principal.getAccountId(), principal.getRole(), request),
-                httpRequest
-        );
+    public StartupResponse updateStartup(@RequestBody @Valid CreateStartupRequest request,
+                                         @org.springframework.security.core.annotation.AuthenticationPrincipal
+                                         AuthenticatedUserPrincipal principal) {
+        return startupService.updateStartup(principal.getAccountId(), principal.getRole(), request);
     }
 }

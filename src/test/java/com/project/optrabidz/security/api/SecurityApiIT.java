@@ -37,8 +37,11 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
 
         register(email, INITIAL_PASSWORD, RoleType.STARTUP)
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Account created successfully"));
+                .andExpect(jsonPath("$.accountId").isNumber())
+                .andExpect(jsonPath("$.role").value("STARTUP"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist());
 
         AuthenticatedClient client = login(email, INITIAL_PASSWORD);
 
@@ -46,12 +49,14 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
                         .session(client.session())
                         .cookie(client.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.role").value("STARTUP"))
-                .andExpect(jsonPath("$.data.accountState").value("ACTIVE"))
-                .andExpect(jsonPath("$.data.profileStatus").value("INCOMPLETE"))
-                .andExpect(jsonPath("$.data.actorType").value("STARTUP"))
-                .andExpect(jsonPath("$.data.actorExists").value(false));
+                .andExpect(jsonPath("$.role").value("STARTUP"))
+                .andExpect(jsonPath("$.accountState").value("ACTIVE"))
+                .andExpect(jsonPath("$.profileStatus").value("INCOMPLETE"))
+                .andExpect(jsonPath("$.actorType").value("STARTUP"))
+                .andExpect(jsonPath("$.actorExists").value(false))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist());
     }
 
     @Test
@@ -145,9 +150,8 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
                         .session(client.session())
                         .cookie(client.xsrfCookie())
                         .header("X-CSRF-TOKEN", client.csrfToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Logged out successfully"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
     }
 
     @Test
@@ -166,9 +170,8 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
                                 "currentPassword", INITIAL_PASSWORD,
                                 "newPassword", CHANGED_PASSWORD
                         ))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Password updated successfully"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         loginAttempt(email, INITIAL_PASSWORD)
                 .andExpect(status().isUnauthorized())
@@ -180,7 +183,10 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
 
         loginAttempt(email, CHANGED_PASSWORD)
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.accountId").isNumber())
+                .andExpect(jsonPath("$.role").value("STARTUP"))
+                .andExpect(jsonPath("$.csrfToken").doesNotExist())
+                .andExpect(jsonPath("$.success").doesNotExist())
                 .andExpect(cookie().exists("XSRF-TOKEN"));
     }
 

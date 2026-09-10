@@ -31,18 +31,20 @@ class StartupClassificationApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", startup.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(startupClassification("GEOGRAPHY", "INDIA"))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Startup classification added successfully"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(get("/api/v1/startup-classifications/me")
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.startupId").isNumber())
-                .andExpect(jsonPath("$.data.classifications.length()").value(1))
-                .andExpect(jsonPath("$.data.classifications[0].type").value("GEOGRAPHY"))
-                .andExpect(jsonPath("$.data.classifications[0].value").value("INDIA"));
+                .andExpect(jsonPath("$.startupId").isNumber())
+                .andExpect(jsonPath("$.classifications.length()").value(1))
+                .andExpect(jsonPath("$.classifications[0].type").value("GEOGRAPHY"))
+                .andExpect(jsonPath("$.classifications[0].value").value("INDIA"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist());
 
         mockMvc.perform(put("/api/v1/startup-classifications/me")
                         .session(startup.session())
@@ -55,9 +57,8 @@ class StartupClassificationApiIT extends ApiIntegrationTestSupport {
                                         startupClassification("SECTOR", "FINTECH")
                                 )
                         ))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Startup classifications replaced successfully"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(delete("/api/v1/startup-classifications/me")
                         .queryParam("classificationType", "GEOGRAPHY")
@@ -65,17 +66,16 @@ class StartupClassificationApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie())
                         .header("X-CSRF-TOKEN", startup.csrfToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Startup classification removed successfully"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(get("/api/v1/startup-classifications/me")
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.classifications.length()").value(1))
-                .andExpect(jsonPath("$.data.classifications[0].type").value("SECTOR"))
-                .andExpect(jsonPath("$.data.classifications[0].value").value("FINTECH"));
+                .andExpect(jsonPath("$.classifications.length()").value(1))
+                .andExpect(jsonPath("$.classifications[0].type").value("SECTOR"))
+                .andExpect(jsonPath("$.classifications[0].value").value("FINTECH"));
     }
 
     @Test
@@ -89,7 +89,8 @@ class StartupClassificationApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", startup.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(startupClassification("SECTOR", "SAAS"))))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(post("/api/v1/startup-classifications")
                         .session(startup.session())
@@ -208,8 +209,7 @@ class StartupClassificationApiIT extends ApiIntegrationTestSupport {
                                         "value", "U12345KA2026PTC000001"
                                 ))
                         ))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(status().isCreated());
     }
 
     private Map<String, String> startupClassification(String type, String value) {

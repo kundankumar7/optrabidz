@@ -172,7 +172,8 @@ class AuthenticationServiceTest {
 
         var response = service.login(new LoginRequest(EMAIL, PASSWORD), httpRequest);
 
-        assertThat(response.message()).isEqualTo("Login successful");
+        assertThat(response.accountId()).isEqualTo(ACCOUNT_ID);
+        assertThat(response.role()).isEqualTo(RoleType.STARTUP);
         assertThat(httpRequest.getSession(false)).isNotNull();
         assertThat(httpRequest.getSession(false).getAttribute(
                 SecuritySessionConstants.DB_SESSION_ID_ATTRIBUTE)).isEqualTo(91L);
@@ -200,7 +201,8 @@ class AuthenticationServiceTest {
 
         var response = service.register(new SignupRequest(" MEMBER@EXAMPLE.COM ", PASSWORD, RoleType.STARTUP));
 
-        assertThat(response.message()).isEqualTo("Account created successfully");
+        assertThat(response.accountId()).isEqualTo(ACCOUNT_ID);
+        assertThat(response.role()).isEqualTo(RoleType.STARTUP);
         ArgumentCaptor<Credential> credentialCaptor = ArgumentCaptor.forClass(Credential.class);
         verify(credentialRepository).save(credentialCaptor.capture());
         assertThat(credentialCaptor.getValue().getEmail()).isEqualTo(EMAIL);
@@ -235,10 +237,8 @@ class AuthenticationServiceTest {
         when(passwordEncoder.matches(PASSWORD, PASSWORD_HASH)).thenReturn(true);
         when(passwordEncoder.encode("Changed01")).thenReturn("changed-hash");
 
-        var response = service.changePassword(
-                startup, new ChangePasswordRequest(PASSWORD, "Changed01"));
+        service.changePassword(startup, new ChangePasswordRequest(PASSWORD, "Changed01"));
 
-        assertThat(response.message()).isEqualTo("Password updated successfully");
         assertThat(credential.getPasswordHash()).isEqualTo("changed-hash");
         verify(credentialRepository).save(credential);
     }

@@ -16,7 +16,6 @@ import com.project.optrabidz.classification.application.port.out.ParticipationAc
 import com.project.optrabidz.classification.domain.model.StartupClassification;
 import com.project.optrabidz.classification.domain.model.StartupClassificationProfile;
 import com.project.optrabidz.classification.domain.repository.StartupClassificationRepository;
-import com.project.optrabidz.common.api.response.MessageData;
 import com.project.optrabidz.common.event.EventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +42,7 @@ public class StartupClassificationService implements StartupClassificationComman
 
     @Override
     @Transactional
-    public MessageData addClassification(AddStartupClassificationCommand command) {
+    public void addClassification(AddStartupClassificationCommand command) {
         Long startupId = resolveStartupId(command.accountId());
         StartupClassificationProfile profile = loadProfile(startupId);
 
@@ -63,12 +62,11 @@ public class StartupClassificationService implements StartupClassificationComman
         profile.declare(command.classificationType(), command.classificationValue());
         startupClassificationRepository.saveAll(profile);
         publishChanged(startupId, command.accountId());
-        return new MessageData("Startup classification added successfully");
     }
 
     @Override
     @Transactional
-    public MessageData replaceClassifications(ReplaceStartupClassificationsCommand command) {
+    public void replaceClassifications(ReplaceStartupClassificationsCommand command) {
         Long startupId = resolveStartupId(command.accountId());
         StartupClassificationProfile currentProfile = loadProfile(startupId);
         List<StartupClassification> entries = command.entries().stream()
@@ -79,12 +77,11 @@ public class StartupClassificationService implements StartupClassificationComman
         currentProfile.replaceAll(entries);
         startupClassificationRepository.saveAll(currentProfile);
         publishChanged(startupId, command.accountId());
-        return new MessageData("Startup classifications replaced successfully");
     }
 
     @Override
     @Transactional
-    public MessageData removeClassification(RemoveStartupClassificationCommand command) {
+    public void removeClassification(RemoveStartupClassificationCommand command) {
         Long startupId = resolveStartupId(command.accountId());
         StartupClassificationProfile profile = loadProfile(startupId);
         ensureClassificationExists(profile, command.classificationType(), command.classificationValue());
@@ -97,7 +94,6 @@ public class StartupClassificationService implements StartupClassificationComman
         profile.revoke(command.classificationType(), command.classificationValue());
         startupClassificationRepository.saveAll(profile);
         publishChanged(startupId, command.accountId());
-        return new MessageData("Startup classification removed successfully");
     }
 
     @Override

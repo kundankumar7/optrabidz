@@ -9,12 +9,9 @@ import com.project.optrabidz.classification.application.dto.request.ReplaceInves
 import com.project.optrabidz.classification.application.dto.response.InvestorPreferenceResponse;
 import com.project.optrabidz.classification.application.port.in.InvestorPreferenceCommandPort;
 import com.project.optrabidz.classification.application.port.in.InvestorPreferenceQueryPort;
-import com.project.optrabidz.common.api.response.ApiResponse;
-import com.project.optrabidz.common.api.response.MessageData;
-import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.security.application.AuthenticatedUserPrincipal;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,57 +28,49 @@ public class InvestorPreferenceController {
     }
 
     @PostMapping
-    public SuccessResponse<MessageData> addMyPreference(@RequestBody @Valid AddInvestorPreferenceRequest request,
-                                                        @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                        HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                commandPort.addPreference(new AddInvestorPreferenceCommand(
-                        principal.getAccountId(),
-                        request.preferenceType(),
-                        request.preferenceValue()
-                )),
-                httpRequest
-        );
+    public ResponseEntity<Void> addMyPreference(
+            @RequestBody @Valid AddInvestorPreferenceRequest request,
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        commandPort.addPreference(new AddInvestorPreferenceCommand(
+                principal.getAccountId(),
+                request.preferenceType(),
+                request.preferenceValue()
+        ));
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/me")
-    public SuccessResponse<MessageData> replaceMyPreferences(
+    public ResponseEntity<Void> replaceMyPreferences(
             @RequestBody @Valid ReplaceInvestorPreferencesRequest request,
-            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                commandPort.replacePreferences(new ReplaceInvestorPreferencesCommand(
-                        principal.getAccountId(),
-                        request.preferences().stream()
-                                .map(entry -> new ClassificationEntryCommand(
-                                        entry.preferenceType(),
-                                        entry.preferenceValue()
-                                ))
-                                .toList()
-                )),
-                httpRequest
-        );
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        commandPort.replacePreferences(new ReplaceInvestorPreferencesCommand(
+                principal.getAccountId(),
+                request.preferences().stream()
+                        .map(entry -> new ClassificationEntryCommand(
+                                entry.preferenceType(),
+                                entry.preferenceValue()
+                        ))
+                        .toList()
+        ));
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/me")
-    public SuccessResponse<MessageData> removeMyPreference(@RequestParam String preferenceType,
-                                                           @RequestParam String preferenceValue,
-                                                           @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                           HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                commandPort.removePreference(new RemoveInvestorPreferenceCommand(
-                        principal.getAccountId(),
-                        preferenceType,
-                        preferenceValue
-                )),
-                httpRequest
-        );
+    public ResponseEntity<Void> removeMyPreference(
+            @RequestParam String preferenceType,
+            @RequestParam String preferenceValue,
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        commandPort.removePreference(new RemoveInvestorPreferenceCommand(
+                principal.getAccountId(),
+                preferenceType,
+                preferenceValue
+        ));
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/me")
-    public SuccessResponse<InvestorPreferenceResponse> getMyPreferences(
-            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(queryPort.getMyPreferences(principal.getAccountId()), httpRequest);
+    public InvestorPreferenceResponse getMyPreferences(
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return queryPort.getMyPreferences(principal.getAccountId());
     }
 }

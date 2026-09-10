@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 class StartupServiceTest {
 
     private static final Long ACCOUNT_ID = 41L;
+    private static final Long STARTUP_ID = 401L;
 
     @Mock
     private StartupRepository startupRepository;
@@ -76,10 +77,21 @@ class StartupServiceTest {
     @Test
     void successfulCreationPreservesPersistenceAndProfileEvent() {
         when(startupRepository.existsByAccountId(ACCOUNT_ID)).thenReturn(false);
+        when(startupRepository.save(any(Startup.class))).thenReturn(new Startup(
+                STARTUP_ID,
+                ACCOUNT_ID,
+                "Example Private Limited",
+                "IN",
+                "Example Startup",
+                "Builds useful software",
+                List.of("https://startup.example.com"),
+                List.of()
+        ));
 
         var response = service.createStartup(ACCOUNT_ID, RoleType.STARTUP, request());
 
-        assertThat(response.message()).isEqualTo("Startup created successfully");
+        assertThat(response.startupId()).isEqualTo(STARTUP_ID);
+        assertThat(response.publicDisplayName()).isEqualTo("Example Startup");
         ArgumentCaptor<Startup> startupCaptor = ArgumentCaptor.forClass(Startup.class);
         verify(startupRepository).save(startupCaptor.capture());
         assertThat(startupCaptor.getValue().getAccountId()).isEqualTo(ACCOUNT_ID);
@@ -88,6 +100,29 @@ class StartupServiceTest {
         verify(eventPublisher).publish(eventCaptor.capture());
         assertThat(eventCaptor.getValue().accountId()).isEqualTo(ACCOUNT_ID);
         assertThat(eventCaptor.getValue().roleType()).isEqualTo(RoleType.STARTUP);
+    }
+
+    @Test
+    void successfulUpdateReturnsThePersistedStartupRepresentation() {
+        Startup existing = new Startup(
+                STARTUP_ID,
+                ACCOUNT_ID,
+                "Old Private Limited",
+                "IN",
+                "Old Startup",
+                "Old description",
+                List.of(),
+                List.of()
+        );
+        when(startupRepository.findByAccountId(ACCOUNT_ID)).thenReturn(Optional.of(existing));
+        when(startupRepository.save(existing)).thenReturn(existing);
+
+        var response = service.updateStartup(ACCOUNT_ID, RoleType.STARTUP, request());
+
+        assertThat(response.startupId()).isEqualTo(STARTUP_ID);
+        assertThat(response.legalEntityName()).isEqualTo("Example Private Limited");
+        assertThat(response.publicDisplayName()).isEqualTo("Example Startup");
+        verify(eventPublisher).publish(any(ParticipationProfileChangedEvent.class));
     }
 
     private static CreateStartupRequest request() {

@@ -12,7 +12,6 @@ import com.project.optrabidz.security.application.dto.request.ChangePasswordRequ
 import com.project.optrabidz.security.application.dto.request.LoginRequest;
 import com.project.optrabidz.security.application.dto.request.SignupRequest;
 import com.project.optrabidz.security.application.dto.response.LoginResponse;
-import com.project.optrabidz.security.application.dto.response.MessageResponse;
 import com.project.optrabidz.security.application.dto.response.SignupResponse;
 import com.project.optrabidz.security.application.exception.CredentialNotFoundException;
 import com.project.optrabidz.security.application.exception.CurrentPasswordInvalidException;
@@ -95,7 +94,7 @@ public class AuthenticationService {
         ));
         identityCommandPort.activateAccount(new ActivateAccountCommand(accountId));
 
-        return new SignupResponse("Account created successfully");
+        return new SignupResponse(accountId, request.role());
     }
 
     @Transactional
@@ -138,19 +137,18 @@ public class AuthenticationService {
         terminateExistingSessionIfPresent(httpRequest);
         createManagedSession(httpRequest, account, credential);
 
-        return new LoginResponse("Login successful");
+        return new LoginResponse(account.accountId(), account.roleType());
     }
 
     @Transactional
-    public MessageResponse logout(HttpServletRequest httpRequest) {
+    public void logout(HttpServletRequest httpRequest) {
         terminateExistingSessionIfPresent(httpRequest);
         SecurityContextHolder.clearContext();
-        return new MessageResponse("Logged out successfully");
     }
 
     @Transactional
-    public MessageResponse changePassword(AuthenticatedUserPrincipal principal,
-                                          ChangePasswordRequest request) {
+    public void changePassword(AuthenticatedUserPrincipal principal,
+                               ChangePasswordRequest request) {
         if (principal.getRole() == RoleType.ADMIN) {
             throw new SecurityAuthorizationException(
                     principal.getAccountId(), "change password"
@@ -170,8 +168,6 @@ public class AuthenticationService {
 
         credential.changePassword(passwordEncoder.encode(request.newPassword()));
         credentialRepository.save(credential);
-
-        return new MessageResponse("Password updated successfully");
     }
 
     private void createManagedSession(HttpServletRequest httpRequest, AccountSnapshot account, Credential credential) {

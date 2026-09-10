@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 class InvestorServiceTest {
 
     private static final Long ACCOUNT_ID = 42L;
+    private static final Long INVESTOR_ID = 402L;
 
     @Mock
     private InvestorRepository investorRepository;
@@ -76,10 +77,19 @@ class InvestorServiceTest {
     @Test
     void successfulCreationPreservesPersistenceAndProfileEvent() {
         when(investorRepository.existsByAccountId(ACCOUNT_ID)).thenReturn(false);
+        when(investorRepository.save(any(Investor.class))).thenReturn(new Investor(
+                INVESTOR_ID,
+                ACCOUNT_ID,
+                "Example Investor",
+                "Invests in early-stage companies",
+                "Example Capital LLP",
+                List.of("https://investor.example.com")
+        ));
 
         var response = service.createInvestor(ACCOUNT_ID, RoleType.INVESTOR, request());
 
-        assertThat(response.message()).isEqualTo("Investor created successfully");
+        assertThat(response.investorId()).isEqualTo(INVESTOR_ID);
+        assertThat(response.publicDisplayName()).isEqualTo("Example Investor");
         ArgumentCaptor<Investor> investorCaptor = ArgumentCaptor.forClass(Investor.class);
         verify(investorRepository).save(investorCaptor.capture());
         assertThat(investorCaptor.getValue().getAccountId()).isEqualTo(ACCOUNT_ID);
@@ -88,6 +98,27 @@ class InvestorServiceTest {
         verify(eventPublisher).publish(eventCaptor.capture());
         assertThat(eventCaptor.getValue().accountId()).isEqualTo(ACCOUNT_ID);
         assertThat(eventCaptor.getValue().roleType()).isEqualTo(RoleType.INVESTOR);
+    }
+
+    @Test
+    void successfulUpdateReturnsThePersistedInvestorRepresentation() {
+        Investor existing = new Investor(
+                INVESTOR_ID,
+                ACCOUNT_ID,
+                "Old Investor",
+                "Old description",
+                "Old Capital LLP",
+                List.of()
+        );
+        when(investorRepository.findByAccountId(ACCOUNT_ID)).thenReturn(Optional.of(existing));
+        when(investorRepository.save(existing)).thenReturn(existing);
+
+        var response = service.updateInvestor(ACCOUNT_ID, RoleType.INVESTOR, request());
+
+        assertThat(response.investorId()).isEqualTo(INVESTOR_ID);
+        assertThat(response.publicDisplayName()).isEqualTo("Example Investor");
+        assertThat(response.legalEntityName()).isEqualTo("Example Capital LLP");
+        verify(eventPublisher).publish(any(ParticipationProfileChangedEvent.class));
     }
 
     private static CreateInvestorRequest request() {

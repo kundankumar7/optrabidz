@@ -103,15 +103,14 @@ class StartupClassificationServiceTest {
     }
 
     @Test
-    void successfulAddPreservesPersistenceEventAndResponse() {
+    void successfulAddPreservesPersistenceAndEvent() {
         when(participationActorQueryPort.findStartupIdByAccountId(ACCOUNT_ID))
                 .thenReturn(Optional.of(STARTUP_ID));
         when(startupClassificationRepository.findByStartupId(STARTUP_ID))
                 .thenReturn(Optional.empty());
 
-        var result = service.addClassification(addCommand());
+        service.addClassification(addCommand());
 
-        assertThat(result.message()).isEqualTo("Startup classification added successfully");
         ArgumentCaptor<StartupClassificationProfile> profileCaptor =
                 ArgumentCaptor.forClass(StartupClassificationProfile.class);
         verify(startupClassificationRepository).saveAll(profileCaptor.capture());

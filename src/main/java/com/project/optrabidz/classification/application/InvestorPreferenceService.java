@@ -16,7 +16,6 @@ import com.project.optrabidz.classification.application.port.out.ParticipationAc
 import com.project.optrabidz.classification.domain.model.InvestorPreference;
 import com.project.optrabidz.classification.domain.model.InvestorPreferenceProfile;
 import com.project.optrabidz.classification.domain.repository.InvestorPreferenceRepository;
-import com.project.optrabidz.common.api.response.MessageData;
 import com.project.optrabidz.common.event.EventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +42,7 @@ public class InvestorPreferenceService implements InvestorPreferenceCommandPort,
 
     @Override
     @Transactional
-    public MessageData addPreference(AddInvestorPreferenceCommand command) {
+    public void addPreference(AddInvestorPreferenceCommand command) {
         Long investorId = resolveInvestorId(command.accountId());
         InvestorPreferenceProfile profile = loadProfile(investorId);
 
@@ -60,12 +59,11 @@ public class InvestorPreferenceService implements InvestorPreferenceCommandPort,
         profile.declare(command.preferenceType(), command.preferenceValue());
         investorPreferenceRepository.saveAll(profile);
         publishChanged(investorId, command.accountId());
-        return new MessageData("Investor preference added successfully");
     }
 
     @Override
     @Transactional
-    public MessageData replacePreferences(ReplaceInvestorPreferencesCommand command) {
+    public void replacePreferences(ReplaceInvestorPreferencesCommand command) {
         Long investorId = resolveInvestorId(command.accountId());
         InvestorPreferenceProfile currentProfile = loadProfile(investorId);
         List<InvestorPreference> entries = command.entries().stream()
@@ -76,12 +74,11 @@ public class InvestorPreferenceService implements InvestorPreferenceCommandPort,
         currentProfile.replaceAll(entries);
         investorPreferenceRepository.saveAll(currentProfile);
         publishChanged(investorId, command.accountId());
-        return new MessageData("Investor preferences replaced successfully");
     }
 
     @Override
     @Transactional
-    public MessageData removePreference(RemoveInvestorPreferenceCommand command) {
+    public void removePreference(RemoveInvestorPreferenceCommand command) {
         Long investorId = resolveInvestorId(command.accountId());
         InvestorPreferenceProfile profile = loadProfile(investorId);
         ensurePreferenceExists(profile, command.preferenceType(), command.preferenceValue());
@@ -94,7 +91,6 @@ public class InvestorPreferenceService implements InvestorPreferenceCommandPort,
         profile.revoke(command.preferenceType(), command.preferenceValue());
         investorPreferenceRepository.saveAll(profile);
         publishChanged(investorId, command.accountId());
-        return new MessageData("Investor preference removed successfully");
     }
 
     @Override
