@@ -1,5 +1,6 @@
 package com.project.optrabidz.common.api.response;
 
+import com.project.optrabidz.common.observability.RequestIdProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 
@@ -10,7 +11,7 @@ class ApiResponseTest {
     void preservesTheExistingSuccessContract() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setAttribute(
-                ApiResponse.REQUEST_ID_ATTRIBUTE,
+                RequestIdProvider.REQUEST_ID_ATTRIBUTE,
                 "success-request-123"
         );
 

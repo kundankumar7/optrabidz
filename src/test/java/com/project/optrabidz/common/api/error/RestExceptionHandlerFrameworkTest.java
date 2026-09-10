@@ -1,6 +1,6 @@
 package com.project.optrabidz.common.api.error;
 
-import com.project.optrabidz.common.api.response.RequestMetadataFilter;
+import com.project.optrabidz.common.observability.RequestMetadataFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
