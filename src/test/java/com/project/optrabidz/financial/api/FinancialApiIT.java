@@ -1546,10 +1546,10 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", startup.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(createListingRequest(title, amount))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.listingState").value("DRAFT"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.listingState").value("DRAFT"))
                 .andReturn();
-        Long listingId = readLong(createResult, "/data/listingId");
+        Long listingId = readLong(createResult, "/listingId");
 
         mockMvc.perform(post("/api/v1/funding-listings/{listingId}/actions/publish", listingId)
                         .session(startup.session())
@@ -1558,7 +1558,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.listingState").value("OPEN"));
+                .andExpect(jsonPath("$.listingState").value("OPEN"));
 
         return listingId;
     }
@@ -1570,10 +1570,10 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", investor.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(submitBidRequest(listingId, amount))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.bidState").value("SUBMITTED"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.bidState").value("SUBMITTED"))
                 .andReturn();
-        return readLong(bidResult, "/data/bidId");
+        return readLong(bidResult, "/bidId");
     }
 
     private Long acceptBid(AuthenticatedClient startup, Long bidId) throws Exception {
@@ -1584,10 +1584,10 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("confirmation", "ACCEPT"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.bid.bidState").value("ACCEPTED"))
-                .andExpect(jsonPath("$.data.listing.listingState").value("AGREEMENT_REACHED"))
+                .andExpect(jsonPath("$.bid.bidState").value("ACCEPTED"))
+                .andExpect(jsonPath("$.listing.listingState").value("AGREEMENT_REACHED"))
                 .andReturn();
-        return readLong(acceptResult, "/data/agreement/agreementId");
+        return readLong(acceptResult, "/agreement/agreementId");
     }
 
     private Long getInvestorSettlementId(AuthenticatedClient investor) throws Exception {

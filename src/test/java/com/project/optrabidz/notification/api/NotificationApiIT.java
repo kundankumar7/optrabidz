@@ -447,11 +447,11 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                                         "repaymentPlanType", "INSTALLMENT_MONTHLY"
                                 )
                         ))))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        return objectMapper.readTree(response).path("data").path("listingId").asLong();
+        return objectMapper.readTree(response).path("listingId").asLong();
     }
 
     private void publishListing(AuthenticatedClient startup, long listingId) throws Exception {
@@ -481,11 +481,11 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                                 ),
                                 "proposalMessage", "Investor bid used for notification integration testing."
                         ))))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        return objectMapper.readTree(response).path("data").path("bidId").asLong();
+        return objectMapper.readTree(response).path("bidId").asLong();
     }
 
     private void acceptBid(AuthenticatedClient startup, long bidId) throws Exception {

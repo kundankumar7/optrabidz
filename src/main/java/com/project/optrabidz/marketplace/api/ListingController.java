@@ -1,8 +1,6 @@
 package com.project.optrabidz.marketplace.api;
 
 import com.project.optrabidz.common.api.pagination.PageResponse;
-import com.project.optrabidz.common.api.response.ApiResponse;
-import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.marketplace.application.ListingService;
 import com.project.optrabidz.marketplace.application.MarketplaceDiscoveryService;
 import com.project.optrabidz.marketplace.application.dto.request.CloseListingRequest;
@@ -16,8 +14,8 @@ import com.project.optrabidz.marketplace.application.dto.response.RecommendedLis
 import com.project.optrabidz.marketplace.domain.model.FundingModel;
 import com.project.optrabidz.marketplace.domain.model.ListingState;
 import com.project.optrabidz.security.application.AuthenticatedUserPrincipal;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -29,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -65,134 +64,112 @@ public class ListingController {
                     ref = "#/components/responses/InternalServerProblem"
             )
     })
-    public SuccessResponse<ListingResponse> createListing(@RequestBody @Valid CreateListingRequest request,
-                                                          @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                          HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                listingService.createDraftListing(
-                        principal.getAccountId(),
-                        principal.getRole(),
-                        request
-                ),
-                httpRequest
+    public ResponseEntity<ListingResponse> createListing(
+            @RequestBody @Valid CreateListingRequest request,
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        ListingResponse response = listingService.createDraftListing(
+                principal.getAccountId(),
+                principal.getRole(),
+                request
         );
+        return ResponseEntity.created(
+                URI.create("/api/v1/funding-listings/" + response.listingId())
+        ).body(response);
     }
 
     @PatchMapping("/funding-listings/{listingId}")
-    public SuccessResponse<ListingResponse> updateListing(@PathVariable Long listingId,
-                                                          @RequestBody @Valid UpdateListingRequest request,
-                                                          @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                          HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                listingService.updateDraftListing(
-                        principal.getAccountId(),
-                        principal.getRole(),
-                        listingId,
-                        request
-                ),
-                httpRequest
+    public ListingResponse updateListing(@PathVariable Long listingId,
+                                         @RequestBody @Valid UpdateListingRequest request,
+                                         @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return listingService.updateDraftListing(
+                principal.getAccountId(),
+                principal.getRole(),
+                listingId,
+                request
         );
     }
 
     @PostMapping("/funding-listings/{listingId}/actions/publish")
-    public SuccessResponse<PublishListingResponse> publishListing(@PathVariable Long listingId,
-                                                                  @RequestBody(required = false) @Valid PublishListingRequest request,
-                                                                  @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                                  HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                listingService.publishListing(
-                        principal.getAccountId(),
-                        principal.getRole(),
-                        listingId,
-                        request
-                ),
-                httpRequest
+    public PublishListingResponse publishListing(
+            @PathVariable Long listingId,
+            @RequestBody(required = false) @Valid PublishListingRequest request,
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return listingService.publishListing(
+                principal.getAccountId(),
+                principal.getRole(),
+                listingId,
+                request
         );
     }
 
     @PostMapping("/funding-listings/{listingId}/actions/close")
-    public SuccessResponse<CloseListingResponse> closeListing(@PathVariable Long listingId,
-                                                              @RequestBody(required = false) CloseListingRequest request,
-                                                              @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                              HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                listingService.closeListing(
-                        principal.getAccountId(),
-                        principal.getRole(),
-                        listingId,
-                        request
-                ),
-                httpRequest
+    public CloseListingResponse closeListing(
+            @PathVariable Long listingId,
+            @RequestBody(required = false) CloseListingRequest request,
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return listingService.closeListing(
+                principal.getAccountId(),
+                principal.getRole(),
+                listingId,
+                request
         );
     }
 
     @GetMapping("/startups/me/funding-listings")
-    public SuccessResponse<PageResponse<ListingResponse>> getMyListings(
+    public PageResponse<ListingResponse> getMyListings(
             @RequestParam(required = false) ListingState state,
             @RequestParam(required = false) FundingModel fundingModel,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
-            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                listingService.getMyListings(
-                        principal.getAccountId(),
-                        principal.getRole(),
-                        state,
-                        fundingModel,
-                        page,
-                        size
-                ),
-                httpRequest
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return listingService.getMyListings(
+                principal.getAccountId(),
+                principal.getRole(),
+                state,
+                fundingModel,
+                page,
+                size
         );
     }
 
     @GetMapping("/funding-listings")
-    public SuccessResponse<PageResponse<ListingResponse>> browseListings(
+    public PageResponse<ListingResponse> browseListings(
             @RequestParam(required = false) FundingModel fundingModel,
             @RequestParam(required = false) BigDecimal minAmount,
             @RequestParam(required = false) BigDecimal maxAmount,
             @RequestParam(required = false) String currencyCode,
             @RequestParam(defaultValue = "NEWEST") String sort,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                marketplaceDiscoveryService.browseOpenListings(
-                        fundingModel,
-                        minAmount,
-                        maxAmount,
-                        currencyCode,
-                        sort,
-                        page,
-                        size
-                ),
-                httpRequest
+            @RequestParam(defaultValue = "20") int size) {
+        return marketplaceDiscoveryService.browseOpenListings(
+                fundingModel,
+                minAmount,
+                maxAmount,
+                currencyCode,
+                sort,
+                page,
+                size
         );
     }
 
     @GetMapping("/funding-listings/recommended")
-    public SuccessResponse<PageResponse<RecommendedListingResponse>> recommendedListings(
+    public PageResponse<RecommendedListingResponse> recommendedListings(
             @RequestParam(required = false) FundingModel fundingModel,
             @RequestParam(required = false) BigDecimal minAmount,
             @RequestParam(required = false) BigDecimal maxAmount,
             @RequestParam(required = false) String currencyCode,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
-            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                marketplaceDiscoveryService.getRecommendedListings(
-                        principal.getAccountId(),
-                        principal.getRole(),
-                        fundingModel,
-                        minAmount,
-                        maxAmount,
-                        currencyCode,
-                        page,
-                        size
-                ),
-                httpRequest
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return marketplaceDiscoveryService.getRecommendedListings(
+                principal.getAccountId(),
+                principal.getRole(),
+                fundingModel,
+                minAmount,
+                maxAmount,
+                currencyCode,
+                page,
+                size
         );
     }
 
@@ -211,17 +188,13 @@ public class ListingController {
                     ref = "#/components/responses/InternalServerProblem"
             )
     })
-    public SuccessResponse<ListingResponse> getListing(@PathVariable Long listingId,
-                                                       @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                       HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                listingService.getListingDetails(
-                        listingId,
-                        principal == null ? null : principal.getAccountId(),
-                        principal == null ? null : principal.getRole()
-                ),
-                httpRequest
+    public ListingResponse getListing(
+            @PathVariable Long listingId,
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return listingService.getListingDetails(
+                listingId,
+                principal == null ? null : principal.getAccountId(),
+                principal == null ? null : principal.getRole()
         );
     }
-
 }
