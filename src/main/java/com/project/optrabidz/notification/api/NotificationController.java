@@ -1,18 +1,16 @@
 package com.project.optrabidz.notification.api;
 
 import com.project.optrabidz.common.api.pagination.PageResponse;
-import com.project.optrabidz.common.api.response.ApiResponse;
-import com.project.optrabidz.common.api.response.MessageData;
-import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.notification.application.NotificationService;
 import com.project.optrabidz.notification.application.dto.request.CreateNotificationSubscriptionRequest;
 import com.project.optrabidz.notification.application.dto.response.NotificationFeedResponse;
+import com.project.optrabidz.notification.application.dto.response.MarkAllReadResponse;
 import com.project.optrabidz.notification.application.dto.response.NotificationResponse;
 import com.project.optrabidz.notification.application.dto.response.NotificationSubscriptionResponse;
 import com.project.optrabidz.notification.domain.model.ReadStatus;
 import com.project.optrabidz.security.application.AuthenticatedUserPrincipal;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,63 +32,51 @@ public class NotificationController {
     }
 
     @GetMapping("/notifications/me")
-    public SuccessResponse<PageResponse<NotificationResponse>> getMyNotifications(
+    public PageResponse<NotificationResponse> getMyNotifications(
             @RequestParam(required = false) ReadStatus readStatus,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
-            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                notificationService.getMyFeed(principal.getAccountId(), readStatus, page, size),
-                httpRequest
-        );
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return notificationService.getMyFeed(principal.getAccountId(), readStatus, page, size);
     }
 
     @GetMapping("/notifications/me/summary")
-    public SuccessResponse<NotificationFeedResponse> getMyNotificationSummary(
-            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                new NotificationFeedResponse(notificationService.unreadCount(principal.getAccountId())),
-                httpRequest
-        );
+    public NotificationFeedResponse getMyNotificationSummary(
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return new NotificationFeedResponse(notificationService.unreadCount(principal.getAccountId()));
     }
 
     @PatchMapping("/notifications/{recipientId}/read")
-    public SuccessResponse<MessageData> markRead(@PathVariable Long recipientId,
-                                                 @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                 HttpServletRequest httpRequest) {
+    public ResponseEntity<Void> markRead(@PathVariable Long recipientId,
+                                         @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
         notificationService.markRead(principal.getAccountId(), recipientId);
-        return ApiResponse.success(new MessageData("Notification marked as read"), httpRequest);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/notifications/me/read-all")
-    public SuccessResponse<MessageData> markAllRead(@AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                    HttpServletRequest httpRequest) {
+    public MarkAllReadResponse markAllRead(@AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
         int updated = notificationService.markAllRead(principal.getAccountId());
-        return ApiResponse.success(new MessageData("Marked " + updated + " notification(s) as read"), httpRequest);
+        return new MarkAllReadResponse(updated);
     }
 
     @DeleteMapping("/notifications/{recipientId}")
-    public SuccessResponse<MessageData> deleteNotification(@PathVariable Long recipientId,
-                                                           @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                           HttpServletRequest httpRequest) {
+    public ResponseEntity<Void> deleteNotification(@PathVariable Long recipientId,
+                                                   @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
         notificationService.delete(principal.getAccountId(), recipientId);
-        return ApiResponse.success(new MessageData("Notification deleted"), httpRequest);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/notification-subscriptions")
-    public SuccessResponse<NotificationSubscriptionResponse> createSubscription(@RequestBody @Valid CreateNotificationSubscriptionRequest request,
-                                                                                @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                                                HttpServletRequest httpRequest) {
-        return ApiResponse.success(notificationService.saveSubscription(principal.getAccountId(), request), httpRequest);
+    public NotificationSubscriptionResponse createSubscription(
+            @RequestBody @Valid CreateNotificationSubscriptionRequest request,
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return notificationService.saveSubscription(principal.getAccountId(), request);
     }
 
     @DeleteMapping("/notification-subscriptions/{subscriptionId}")
-    public SuccessResponse<MessageData> revokeSubscription(@PathVariable Long subscriptionId,
-                                                           @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                           HttpServletRequest httpRequest) {
+    public ResponseEntity<Void> revokeSubscription(@PathVariable Long subscriptionId,
+                                                   @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
         notificationService.revokeSubscription(principal.getAccountId(), subscriptionId);
-        return ApiResponse.success(new MessageData("Notification subscription revoked"), httpRequest);
+        return ResponseEntity.noContent().build();
     }
 }

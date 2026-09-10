@@ -3,9 +3,6 @@ package com.project.optrabidz.audit.api;
 import com.project.optrabidz.audit.application.AuditService;
 import com.project.optrabidz.audit.application.dto.response.AuditRecordResponse;
 import com.project.optrabidz.common.api.pagination.PageResponse;
-import com.project.optrabidz.common.api.response.ApiResponse;
-import com.project.optrabidz.common.api.response.SuccessResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +21,7 @@ public class AdminAuditController {
     }
 
     @GetMapping
-    public SuccessResponse<PageResponse<AuditRecordResponse>> searchAuditRecords(
+    public PageResponse<AuditRecordResponse> searchAuditRecords(
             @RequestParam(required = false) Long actorAccountId,
             @RequestParam(required = false) String sourceModule,
             @RequestParam(required = false) String action,
@@ -34,11 +31,8 @@ public class AdminAuditController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                auditService.search(actorAccountId, sourceModule, action, objectType, objectId, outcome, from, to, page, size),
-                httpRequest
-        );
+            @RequestParam(defaultValue = "20") int size) {
+        return auditService.search(
+                actorAccountId, sourceModule, action, objectType, objectId, outcome, from, to, page, size);
     }
 }

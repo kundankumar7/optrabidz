@@ -28,9 +28,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -170,7 +172,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         assertThat(unsupported.getResponse().getContentAsString()).doesNotContain(diagnosticSentinel);
 
         Long providerAttemptId = readLong(createPaymentAttempt(
-                scenario.investor(), paymentIntentId, "UPI", "UPI"), "/data/paymentAttemptId");
+                scenario.investor(), paymentIntentId, "UPI", "UPI"), "/paymentAttemptId");
         mockMvc.perform(post("/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm", providerAttemptId)
                         .header("X-Request-ID", "kan35-provider-mismatch")
                         .session(scenario.investor().session())
@@ -304,13 +306,16 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.settlementId").value(settlementId.intValue()))
-                .andExpect(jsonPath("$.data.agreementId").value(scenario.agreementId().intValue()))
-                .andExpect(jsonPath("$.data.amount").value(865432.10))
-                .andExpect(jsonPath("$.data.currencyCode").value("INR"))
-                .andExpect(jsonPath("$.data.debtTerms.principalAmount").value(865432.10))
-                .andExpect(jsonPath("$.data.debtTerms.repaymentPlanType").value("INSTALLMENT_MONTHLY"))
-                .andExpect(jsonPath("$.data.settlementState").value("SETTLEMENT_PENDING"));
+                .andExpect(jsonPath("$.settlementId").value(settlementId.intValue()))
+                .andExpect(jsonPath("$.agreementId").value(scenario.agreementId().intValue()))
+                .andExpect(jsonPath("$.amount").value(865432.10))
+                .andExpect(jsonPath("$.currencyCode").value("INR"))
+                .andExpect(jsonPath("$.debtTerms.principalAmount").value(865432.10))
+                .andExpect(jsonPath("$.debtTerms.repaymentPlanType").value("INSTALLMENT_MONTHLY"))
+                .andExpect(jsonPath("$.settlementState").value("SETTLEMENT_PENDING"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist());
 
         Long settlementPaymentIntentId = createSettlementPaymentIntent(scenario.investor(), settlementId);
         Long settlementAttemptId = createPaymentAttempt(scenario.investor(), settlementPaymentIntentId);
@@ -322,19 +327,19 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentAttemptId").value(settlementAttemptId.intValue()))
-                .andExpect(jsonPath("$.data.paymentIntentId").value(settlementPaymentIntentId.intValue()))
-                .andExpect(jsonPath("$.data.providerCode").value("LOCAL"))
-                .andExpect(jsonPath("$.data.methodType").value("OTHER"))
-                .andExpect(jsonPath("$.data.attemptState").value("CONFIRMED"))
-                .andExpect(jsonPath("$.data.providerPaymentId").value("LOCAL-PAYMENT-" + settlementAttemptId));
+                .andExpect(jsonPath("$.paymentAttemptId").value(settlementAttemptId.intValue()))
+                .andExpect(jsonPath("$.paymentIntentId").value(settlementPaymentIntentId.intValue()))
+                .andExpect(jsonPath("$.providerCode").value("LOCAL"))
+                .andExpect(jsonPath("$.methodType").value("OTHER"))
+                .andExpect(jsonPath("$.attemptState").value("CONFIRMED"))
+                .andExpect(jsonPath("$.providerPaymentId").value("LOCAL-PAYMENT-" + settlementAttemptId));
 
         mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.settlementState").value("SETTLEMENT_CONFIRMED"))
-                .andExpect(jsonPath("$.data.confirmedPaymentIntentId").value(settlementPaymentIntentId.intValue()));
+                .andExpect(jsonPath("$.settlementState").value("SETTLEMENT_CONFIRMED"))
+                .andExpect(jsonPath("$.confirmedPaymentIntentId").value(settlementPaymentIntentId.intValue()));
 
         Long repaymentId = getStartupRepaymentId(scenario.startup());
 
@@ -342,23 +347,23 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.agreementId").value(scenario.agreementId().intValue()))
-                .andExpect(jsonPath("$.data.totalInstallments").value(18))
-                .andExpect(jsonPath("$.data.paidInstallments").value(0))
-                .andExpect(jsonPath("$.data.unpaidInstallments").value(18))
-                .andExpect(jsonPath("$.data.repaymentState").value("NOT_STARTED"))
-                .andExpect(jsonPath("$.data.nextInstallmentNumber").value(1));
+                .andExpect(jsonPath("$.agreementId").value(scenario.agreementId().intValue()))
+                .andExpect(jsonPath("$.totalInstallments").value(18))
+                .andExpect(jsonPath("$.paidInstallments").value(0))
+                .andExpect(jsonPath("$.unpaidInstallments").value(18))
+                .andExpect(jsonPath("$.repaymentState").value("NOT_STARTED"))
+                .andExpect(jsonPath("$.nextInstallmentNumber").value(1));
 
         mockMvc.perform(get("/api/v1/repayments/{repaymentId}", repaymentId)
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.repaymentId").value(repaymentId.intValue()))
-                .andExpect(jsonPath("$.data.agreementId").value(scenario.agreementId().intValue()))
-                .andExpect(jsonPath("$.data.totalInstallments").value(18))
-                .andExpect(jsonPath("$.data.debtTerms.principalAmount").value(865432.10))
-                .andExpect(jsonPath("$.data.debtTerms.repaymentPlanType").value("INSTALLMENT_MONTHLY"))
-                .andExpect(jsonPath("$.data.repaymentState").value("NOT_STARTED"));
+                .andExpect(jsonPath("$.repaymentId").value(repaymentId.intValue()))
+                .andExpect(jsonPath("$.agreementId").value(scenario.agreementId().intValue()))
+                .andExpect(jsonPath("$.totalInstallments").value(18))
+                .andExpect(jsonPath("$.debtTerms.principalAmount").value(865432.10))
+                .andExpect(jsonPath("$.debtTerms.repaymentPlanType").value("INSTALLMENT_MONTHLY"))
+                .andExpect(jsonPath("$.repaymentState").value("NOT_STARTED"));
 
         mockMvc.perform(get("/api/v1/repayments/{repaymentId}/installments", repaymentId)
                         .queryParam("page", "1")
@@ -366,9 +371,9 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(18))
-                .andExpect(jsonPath("$.data.items[0].installmentNumber").value(1))
-                .andExpect(jsonPath("$.data.items[0].installmentState").value("NOT_STARTED"));
+                .andExpect(jsonPath("$.totalItems").value(18))
+                .andExpect(jsonPath("$.items[0].installmentNumber").value(1))
+                .andExpect(jsonPath("$.items[0].installmentState").value("NOT_STARTED"));
 
         mockMvc.perform(get("/api/v1/startups/me/repayment-installments")
                         .queryParam("paymentView", "YET_TO_BE_PAID")
@@ -377,8 +382,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(18))
-                .andExpect(jsonPath("$.data.items[0].installmentState").value("NOT_STARTED"));
+                .andExpect(jsonPath("$.totalItems").value(18))
+                .andExpect(jsonPath("$.items[0].installmentState").value("NOT_STARTED"));
 
         mockMvc.perform(get("/api/v1/investors/me/repayment-installments")
                         .queryParam("paymentView", "UNPAID")
@@ -387,7 +392,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(18));
+                .andExpect(jsonPath("$.totalItems").value(18));
 
         mockMvc.perform(get("/api/v1/repayments/{repaymentId}/installments", repaymentId)
                         .queryParam("installmentState", "NOT_STARTED")
@@ -429,15 +434,15 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentAttemptId").value(repaymentAttemptId.intValue()))
-                .andExpect(jsonPath("$.data.paymentIntentId").value(repaymentPaymentIntentId.intValue()))
-                .andExpect(jsonPath("$.data.attemptState").value("CONFIRMED"));
+                .andExpect(jsonPath("$.paymentAttemptId").value(repaymentAttemptId.intValue()))
+                .andExpect(jsonPath("$.paymentIntentId").value(repaymentPaymentIntentId.intValue()))
+                .andExpect(jsonPath("$.attemptState").value("CONFIRMED"));
 
         mockMvc.perform(get("/api/v1/repayments/{repaymentId}", repaymentId)
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.repaymentState").value("IN_PROGRESS"));
+                .andExpect(jsonPath("$.repaymentState").value("IN_PROGRESS"));
 
         mockMvc.perform(get("/api/v1/repayments/{repaymentId}/installments", repaymentId)
                         .queryParam("installmentState", "PAID")
@@ -446,8 +451,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].installmentState").value("PAID"));
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].installmentState").value("PAID"));
 
         mockMvc.perform(get("/api/v1/repayments/{repaymentId}/installments", repaymentId)
                         .queryParam("paymentView", "YET_TO_BE_PAID")
@@ -456,7 +461,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(17));
+                .andExpect(jsonPath("$.totalItems").value(17));
 
         mockMvc.perform(get("/api/v1/investors/me/repayment-installments")
                         .queryParam("installmentState", "PAID")
@@ -465,17 +470,17 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].installmentState").value("PAID"));
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].installmentState").value("PAID"));
 
         mockMvc.perform(get("/api/v1/agreements/{agreementId}/repayment-progress", scenario.agreementId())
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalInstallments").value(18))
-                .andExpect(jsonPath("$.data.paidInstallments").value(1))
-                .andExpect(jsonPath("$.data.unpaidInstallments").value(17))
-                .andExpect(jsonPath("$.data.nextInstallmentNumber").value(2));
+                .andExpect(jsonPath("$.totalInstallments").value(18))
+                .andExpect(jsonPath("$.paidInstallments").value(1))
+                .andExpect(jsonPath("$.unpaidInstallments").value(17))
+                .andExpect(jsonPath("$.nextInstallmentNumber").value(2));
     }
 
     @Test
@@ -493,8 +498,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 "UPI",
                 "UPI"
         );
-        Long paymentAttemptId = readLong(attemptResult, "/data/paymentAttemptId");
-        assertThat(readText(attemptResult, "/data/providerPayload")).contains("upi://pay");
+        Long paymentAttemptId = readLong(attemptResult, "/paymentAttemptId");
+        assertThat(readText(attemptResult, "/providerPayload")).contains("upi://pay");
 
         String rawPayload = json(Map.of(
                 "eventType", "PAYMENT_CONFIRMED",
@@ -515,8 +520,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.settlementState").value("SETTLEMENT_CONFIRMED"))
-                .andExpect(jsonPath("$.data.confirmedPaymentIntentId").value(paymentIntentId.intValue()));
+                .andExpect(jsonPath("$.settlementState").value("SETTLEMENT_CONFIRMED"))
+                .andExpect(jsonPath("$.confirmedPaymentIntentId").value(paymentIntentId.intValue()));
 
         mockMvc.perform(get("/api/v1/startups/me/repayments")
                         .queryParam("page", "1")
@@ -524,8 +529,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                 .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].repaymentState").value("NOT_STARTED"));
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].repaymentState").value("NOT_STARTED"));
     }
 
     @Test
@@ -549,8 +554,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 "CARD",
                 "CARD"
         );
-        Long upiAttemptId = readLong(upiAttemptResult, "/data/paymentAttemptId");
-        Long cardAttemptId = readLong(cardAttemptResult, "/data/paymentAttemptId");
+        Long upiAttemptId = readLong(upiAttemptResult, "/paymentAttemptId");
+        Long cardAttemptId = readLong(cardAttemptResult, "/paymentAttemptId");
 
         String upiPayload = json(Map.of(
                 "eventType", "PAYMENT_CONFIRMED",
@@ -583,7 +588,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentState").value("PAYMENT_CONFIRMED"));
+                .andExpect(jsonPath("$.paymentState").value("PAYMENT_CONFIRMED"));
 
         mockMvc.perform(get("/api/v1/startups/me/repayments")
                         .queryParam("page", "1")
@@ -591,7 +596,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                 .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1));
+                .andExpect(jsonPath("$.totalItems").value(1));
     }
 
     @Test
@@ -609,8 +614,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 "CARD",
                 "CARD"
         );
-        Long paymentAttemptId = readLong(attemptResult, "/data/paymentAttemptId");
-        assertThat(readText(attemptResult, "/data/providerPayload")).contains("card-checkout");
+        Long paymentAttemptId = readLong(attemptResult, "/paymentAttemptId");
+        assertThat(readText(attemptResult, "/providerPayload")).contains("card-checkout");
 
         String rawPayload = json(Map.of(
                 "eventType", "PAYMENT_FAILED",
@@ -628,8 +633,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentState").value("PAYMENT_FAILED"))
-                .andExpect(jsonPath("$.data.failureCode").value(
+                .andExpect(jsonPath("$.paymentState").value("PAYMENT_FAILED"))
+                .andExpect(jsonPath("$.failureCode").value(
                         "PROVIDER_REPORTED_FAILURE"
                 ));
 
@@ -637,7 +642,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.settlementState").value("SETTLEMENT_PENDING"));
+                .andExpect(jsonPath("$.settlementState").value("SETTLEMENT_PENDING"));
     }
 
     @Test
@@ -656,9 +661,9 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentIntentId").value(firstPaymentIntentId.intValue()))
-                .andExpect(jsonPath("$.data.paymentPurpose").value("SETTLEMENT"))
-                .andExpect(jsonPath("$.data.paymentState").value("CREATED"));
+                .andExpect(jsonPath("$.paymentIntentId").value(firstPaymentIntentId.intValue()))
+                .andExpect(jsonPath("$.paymentPurpose").value("SETTLEMENT"))
+                .andExpect(jsonPath("$.paymentState").value("CREATED"));
     }
 
     @Test
@@ -680,9 +685,9 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentPurpose").value("SETTLEMENT"))
-                .andExpect(jsonPath("$.data.settlementId").value(settlementId.intValue()))
-                .andExpect(jsonPath("$.data.paymentState").value("CREATED"));
+                .andExpect(jsonPath("$.paymentPurpose").value("SETTLEMENT"))
+                .andExpect(jsonPath("$.settlementId").value(settlementId.intValue()))
+                .andExpect(jsonPath("$.paymentState").value("CREATED"));
     }
 
     @Test
@@ -703,7 +708,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.attemptState").value("CONFIRMED"));
+                .andExpect(jsonPath("$.attemptState").value("CONFIRMED"));
 
         Long repaymentId = getStartupRepaymentId(scenario.startup());
 
@@ -717,9 +722,9 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentPurpose").value("REPAYMENT"))
-                .andExpect(jsonPath("$.data.repaymentInstallmentId").exists())
-                .andExpect(jsonPath("$.data.paymentState").value("CREATED"));
+                .andExpect(jsonPath("$.paymentPurpose").value("REPAYMENT"))
+                .andExpect(jsonPath("$.repaymentInstallmentId").exists())
+                .andExpect(jsonPath("$.paymentState").value("CREATED"));
     }
 
     @Test
@@ -740,7 +745,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.attemptState").value("CONFIRMED"));
+                .andExpect(jsonPath("$.attemptState").value("CONFIRMED"));
 
         Long repaymentId = getStartupRepaymentId(scenario.startup());
         Long installmentId = getFirstRepaymentInstallmentId(scenario.startup(), repaymentId);
@@ -755,9 +760,9 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentPurpose").value("REPAYMENT"))
-                .andExpect(jsonPath("$.data.repaymentInstallmentId").value(installmentId.intValue()))
-                .andExpect(jsonPath("$.data.paymentState").value("CREATED"));
+                .andExpect(jsonPath("$.paymentPurpose").value("REPAYMENT"))
+                .andExpect(jsonPath("$.repaymentInstallmentId").value(installmentId.intValue()))
+                .andExpect(jsonPath("$.paymentState").value("CREATED"));
     }
 
     @Test
@@ -778,8 +783,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.settlementState").value("SETTLEMENT_CONFIRMED"))
-                .andExpect(jsonPath("$.data.confirmedPaymentIntentId").value(paymentIntentId.intValue()));
+                .andExpect(jsonPath("$.settlementState").value("SETTLEMENT_CONFIRMED"))
+                .andExpect(jsonPath("$.confirmedPaymentIntentId").value(paymentIntentId.intValue()));
 
         mockMvc.perform(get("/api/v1/startups/me/repayments")
                         .queryParam("page", "1")
@@ -787,9 +792,9 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                 .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].agreementId").value(scenario.agreementId().intValue()))
-                .andExpect(jsonPath("$.data.items[0].repaymentState").value("NOT_STARTED"));
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].agreementId").value(scenario.agreementId().intValue()))
+                .andExpect(jsonPath("$.items[0].repaymentState").value("NOT_STARTED"));
 
         assertThat(count("select count(*) from repayment where agreement_id = ?", scenario.agreementId()))
                 .isEqualTo(1);
@@ -818,18 +823,18 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentAttemptId").value(paymentAttemptId.intValue()))
-                .andExpect(jsonPath("$.data.attemptState").value("FAILED"))
-                .andExpect(jsonPath("$.data.failureCode").value("LOCAL_FAILURE"))
-                .andExpect(jsonPath("$.data.failureMessage").value("Local payment failure was simulated"));
+                .andExpect(jsonPath("$.paymentAttemptId").value(paymentAttemptId.intValue()))
+                .andExpect(jsonPath("$.attemptState").value("FAILED"))
+                .andExpect(jsonPath("$.failureCode").value("LOCAL_FAILURE"))
+                .andExpect(jsonPath("$.failureMessage").value("Local payment failure was simulated"));
 
         mockMvc.perform(get("/api/v1/payment-intents/{paymentIntentId}", paymentIntentId)
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentState").value("PAYMENT_FAILED"))
-                .andExpect(jsonPath("$.data.failureCode").value("LOCAL_FAILURE"))
-                .andExpect(jsonPath("$.data.failureMessage").value("Local payment failure was simulated"));
+                .andExpect(jsonPath("$.paymentState").value("PAYMENT_FAILED"))
+                .andExpect(jsonPath("$.failureCode").value("LOCAL_FAILURE"))
+                .andExpect(jsonPath("$.failureMessage").value("Local payment failure was simulated"));
     }
 
     @Test
@@ -850,14 +855,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentState").value("PAYMENT_FAILED"))
-                .andExpect(jsonPath("$.data.failureCode").value("LOCAL_FAILURE"));
+                .andExpect(jsonPath("$.paymentState").value("PAYMENT_FAILED"))
+                .andExpect(jsonPath("$.failureCode").value("LOCAL_FAILURE"));
 
         mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.settlementState").value("SETTLEMENT_PENDING"));
+                .andExpect(jsonPath("$.settlementState").value("SETTLEMENT_PENDING"));
     }
 
     @Test
@@ -893,14 +898,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        String paymentState = readText(intentResult, "/data/paymentState");
+        String paymentState = readText(intentResult, "/paymentState");
         if ("PAYMENT_CONFIRMED".equals(paymentState)) {
             mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
                             .session(scenario.investor().session())
                             .cookie(scenario.investor().xsrfCookie()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.settlementState").value("SETTLEMENT_CONFIRMED"))
-                    .andExpect(jsonPath("$.data.confirmedPaymentIntentId").value(paymentIntentId.intValue()));
+                    .andExpect(jsonPath("$.settlementState").value("SETTLEMENT_CONFIRMED"))
+                    .andExpect(jsonPath("$.confirmedPaymentIntentId").value(paymentIntentId.intValue()));
 
             mockMvc.perform(get("/api/v1/startups/me/repayments")
                             .queryParam("page", "1")
@@ -908,7 +913,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                             .session(scenario.startup().session())
                             .cookie(scenario.startup().xsrfCookie()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.totalItems").value(1));
+                    .andExpect(jsonPath("$.totalItems").value(1));
             return;
         }
 
@@ -917,7 +922,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.settlementState").value("SETTLEMENT_PENDING"));
+                .andExpect(jsonPath("$.settlementState").value("SETTLEMENT_PENDING"));
 
         mockMvc.perform(get("/api/v1/startups/me/repayments")
                         .queryParam("page", "1")
@@ -925,7 +930,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(0));
+                .andExpect(jsonPath("$.totalItems").value(0));
     }
 
     @Test
@@ -1031,7 +1036,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                             .session(reader.session())
                             .cookie(reader.xsrfCookie()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.settlementId").value(settlementId.intValue()));
+                    .andExpect(jsonPath("$.settlementId").value(settlementId.intValue()));
         }
     }
 
@@ -1597,10 +1602,10 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(investor.session())
                 .cookie(investor.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].settlementState").value("SETTLEMENT_PENDING"))
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].settlementState").value("SETTLEMENT_PENDING"))
                 .andReturn();
-        return readLong(result, "/data/items/0/settlementId");
+        return readLong(result, "/items/0/settlementId");
     }
 
     private Long getStartupRepaymentId(AuthenticatedClient startup) throws Exception {
@@ -1610,10 +1615,10 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].repaymentState").value("NOT_STARTED"))
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].repaymentState").value("NOT_STARTED"))
                 .andReturn();
-        return readLong(result, "/data/items/0/repaymentId");
+        return readLong(result, "/items/0/repaymentId");
     }
 
     private Long createSettlementPaymentIntent(AuthenticatedClient investor, Long settlementId) throws Exception {
@@ -1623,12 +1628,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", investor.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentPurpose").value("SETTLEMENT"))
-                .andExpect(jsonPath("$.data.settlementId").value(settlementId.intValue()))
-                .andExpect(jsonPath("$.data.paymentState").value("CREATED"))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", matchesPattern(
+                        "/api/v1/payment-intents/\\d+")))
+                .andExpect(jsonPath("$.paymentPurpose").value("SETTLEMENT"))
+                .andExpect(jsonPath("$.settlementId").value(settlementId.intValue()))
+                .andExpect(jsonPath("$.paymentState").value("CREATED"))
                 .andReturn();
-        return readLong(result, "/data/paymentIntentId");
+        return readLong(result, "/paymentIntentId");
     }
 
     private MvcResult getRepaymentProblem(
@@ -1704,12 +1711,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", startup.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentPurpose").value("REPAYMENT"))
-                .andExpect(jsonPath("$.data.repaymentInstallmentId").exists())
-                .andExpect(jsonPath("$.data.paymentState").value("CREATED"))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", matchesPattern(
+                        "/api/v1/payment-intents/\\d+")))
+                .andExpect(jsonPath("$.paymentPurpose").value("REPAYMENT"))
+                .andExpect(jsonPath("$.repaymentInstallmentId").exists())
+                .andExpect(jsonPath("$.paymentState").value("CREATED"))
                 .andReturn();
-        return readLong(result, "/data/paymentIntentId");
+        return readLong(result, "/paymentIntentId");
     }
 
     private Long getFirstRepaymentInstallmentId(AuthenticatedClient startup, Long repaymentId) throws Exception {
@@ -1719,10 +1728,10 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(18))
-                .andExpect(jsonPath("$.data.items[0].installmentNumber").value(1))
+                .andExpect(jsonPath("$.totalItems").value(18))
+                .andExpect(jsonPath("$.items[0].installmentNumber").value(1))
                 .andReturn();
-        return readLong(result, "/data/items/0/repaymentInstallmentId");
+        return readLong(result, "/items/0/repaymentInstallmentId");
     }
 
     private Long createRepaymentInstallmentPaymentIntent(AuthenticatedClient startup, Long installmentId) throws Exception {
@@ -1732,17 +1741,19 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", startup.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentPurpose").value("REPAYMENT"))
-                .andExpect(jsonPath("$.data.repaymentInstallmentId").value(installmentId.intValue()))
-                .andExpect(jsonPath("$.data.paymentState").value("CREATED"))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", matchesPattern(
+                        "/api/v1/payment-intents/\\d+")))
+                .andExpect(jsonPath("$.paymentPurpose").value("REPAYMENT"))
+                .andExpect(jsonPath("$.repaymentInstallmentId").value(installmentId.intValue()))
+                .andExpect(jsonPath("$.paymentState").value("CREATED"))
                 .andReturn();
-        return readLong(result, "/data/paymentIntentId");
+        return readLong(result, "/paymentIntentId");
     }
 
     private Long createPaymentAttempt(AuthenticatedClient payer, Long paymentIntentId) throws Exception {
         MvcResult result = createPaymentAttempt(payer, paymentIntentId, "LOCAL", "OTHER");
-        return readLong(result, "/data/paymentAttemptId");
+        return readLong(result, "/paymentAttemptId");
     }
 
     private MvcResult createPaymentAttempt(AuthenticatedClient payer,
@@ -1758,12 +1769,13 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                                 "providerCode", providerCode,
                                 "methodType", methodType
                         ))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.paymentIntentId").value(paymentIntentId.intValue()))
-                .andExpect(jsonPath("$.data.providerCode").value(providerCode))
-                .andExpect(jsonPath("$.data.methodType").value(methodType))
-                .andExpect(jsonPath("$.data.attemptState").value("INITIATED"))
-                .andExpect(jsonPath("$.data.providerPayload").isNotEmpty())
+                .andExpect(status().isCreated())
+                .andExpect(header().doesNotExist("Location"))
+                .andExpect(jsonPath("$.paymentIntentId").value(paymentIntentId.intValue()))
+                .andExpect(jsonPath("$.providerCode").value(providerCode))
+                .andExpect(jsonPath("$.methodType").value(methodType))
+                .andExpect(jsonPath("$.attemptState").value("INITIATED"))
+                .andExpect(jsonPath("$.providerPayload").isNotEmpty())
                 .andReturn();
     }
 
