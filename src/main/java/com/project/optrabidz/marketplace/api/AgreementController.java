@@ -1,6 +1,6 @@
 package com.project.optrabidz.marketplace.api;
 
-import com.project.optrabidz.common.api.pagination.PageResponse;
+import com.project.optrabidz.common.application.pagination.PageResponse;
 import com.project.optrabidz.marketplace.application.AgreementService;
 import com.project.optrabidz.marketplace.application.dto.response.AgreementResponse;
 import com.project.optrabidz.security.application.AuthenticatedUserPrincipal;

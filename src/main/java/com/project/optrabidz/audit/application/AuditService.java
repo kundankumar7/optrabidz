@@ -5,7 +5,7 @@ import com.project.optrabidz.audit.application.policy.AuditDescriptor;
 import com.project.optrabidz.audit.application.policy.AuditPolicyRegistry;
 import com.project.optrabidz.audit.infrastructure.entity.AuditRecord;
 import com.project.optrabidz.audit.infrastructure.repository.JpaAuditRecordRepository;
-import com.project.optrabidz.common.api.pagination.PageResponse;
+import com.project.optrabidz.common.application.pagination.PageResponse;
 import com.project.optrabidz.common.outbox.OutboxEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

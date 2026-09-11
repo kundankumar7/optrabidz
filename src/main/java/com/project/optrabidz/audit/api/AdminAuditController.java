@@ -2,7 +2,7 @@ package com.project.optrabidz.audit.api;
 
 import com.project.optrabidz.audit.application.AuditService;
 import com.project.optrabidz.audit.application.dto.response.AuditRecordResponse;
-import com.project.optrabidz.common.api.pagination.PageResponse;
+import com.project.optrabidz.common.application.pagination.PageResponse;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
