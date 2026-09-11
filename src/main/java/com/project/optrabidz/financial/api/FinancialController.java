@@ -57,6 +57,21 @@ public class FinancialController {
     }
 
     @PostMapping("/settlements/{settlementId}/payment-intents")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "201",
+            description = "Payment intent created",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            implementation = PaymentIntentResponse.class)
+            ),
+            headers = @io.swagger.v3.oas.annotations.headers.Header(
+                    name = "Location",
+                    description = "URI of the created payment intent",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            type = "string", format = "uri")
+            )
+    )
     public ResponseEntity<PaymentIntentResponse> createSettlementPaymentIntent(
             @PathVariable Long settlementId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
@@ -143,6 +158,21 @@ public class FinancialController {
     }
 
     @PostMapping("/repayments/{repaymentId}/payment-intents")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "201",
+            description = "Payment intent created",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            implementation = PaymentIntentResponse.class)
+            ),
+            headers = @io.swagger.v3.oas.annotations.headers.Header(
+                    name = "Location",
+                    description = "URI of the created payment intent",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            type = "string", format = "uri")
+            )
+    )
     public ResponseEntity<PaymentIntentResponse> createRepaymentPaymentIntent(
             @PathVariable Long repaymentId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
@@ -152,6 +182,21 @@ public class FinancialController {
     }
 
     @PostMapping("/repayment-installments/{installmentId}/payment-intents")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "201",
+            description = "Payment intent created",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            implementation = PaymentIntentResponse.class)
+            ),
+            headers = @io.swagger.v3.oas.annotations.headers.Header(
+                    name = "Location",
+                    description = "URI of the created payment intent",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            type = "string", format = "uri")
+            )
+    )
     public ResponseEntity<PaymentIntentResponse> createRepaymentInstallmentPaymentIntent(
             @PathVariable Long installmentId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
@@ -167,6 +212,15 @@ public class FinancialController {
     }
 
     @PostMapping("/payment-intents/{paymentIntentId}/attempts")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "201",
+            description = "Payment attempt created",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            implementation = PaymentAttemptResponse.class)
+            )
+    )
     public ResponseEntity<PaymentAttemptResponse> createPaymentAttempt(
             @PathVariable Long paymentIntentId,
             @RequestBody(required = false) CreatePaymentAttemptRequest request,

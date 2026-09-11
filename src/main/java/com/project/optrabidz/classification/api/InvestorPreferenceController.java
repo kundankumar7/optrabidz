@@ -28,6 +28,10 @@ public class InvestorPreferenceController {
     }
 
     @PostMapping
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Preference added"
+    )
     public ResponseEntity<Void> addMyPreference(
             @RequestBody @Valid AddInvestorPreferenceRequest request,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
@@ -40,6 +44,10 @@ public class InvestorPreferenceController {
     }
 
     @PutMapping("/me")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Preferences replaced"
+    )
     public ResponseEntity<Void> replaceMyPreferences(
             @RequestBody @Valid ReplaceInvestorPreferencesRequest request,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
@@ -56,6 +64,10 @@ public class InvestorPreferenceController {
     }
 
     @DeleteMapping("/me")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Preference removed"
+    )
     public ResponseEntity<Void> removeMyPreference(
             @RequestParam String preferenceType,
             @RequestParam String preferenceValue,

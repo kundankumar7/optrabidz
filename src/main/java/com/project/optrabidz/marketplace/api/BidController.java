@@ -32,6 +32,21 @@ public class BidController {
     }
 
     @PostMapping("/bids")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "201",
+            description = "Bid submitted",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            implementation = BidResponse.class)
+            ),
+            headers = @io.swagger.v3.oas.annotations.headers.Header(
+                    name = "Location",
+                    description = "URI of the created bid",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            type = "string", format = "uri")
+            )
+    )
     public ResponseEntity<BidResponse> submitBid(
             @RequestBody @Valid SubmitBidRequest request,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {

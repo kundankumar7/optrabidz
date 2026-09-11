@@ -28,6 +28,10 @@ public class StartupClassificationController {
     }
 
     @PostMapping
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Classification added"
+    )
     public ResponseEntity<Void> addMyClassification(
             @RequestBody @Valid AddStartupClassificationRequest request,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
@@ -40,6 +44,10 @@ public class StartupClassificationController {
     }
 
     @PutMapping("/me")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Classifications replaced"
+    )
     public ResponseEntity<Void> replaceMyClassifications(
             @RequestBody @Valid ReplaceStartupClassificationsRequest request,
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
@@ -56,6 +64,10 @@ public class StartupClassificationController {
     }
 
     @DeleteMapping("/me")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Classification removed"
+    )
     public ResponseEntity<Void> removeMyClassification(
             @RequestParam String classificationType,
             @RequestParam String classificationValue,

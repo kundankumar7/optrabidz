@@ -20,6 +20,21 @@ public class StartupController {
     }
 
     @PostMapping
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "201",
+            description = "Startup profile created",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            implementation = StartupResponse.class)
+            ),
+            headers = @io.swagger.v3.oas.annotations.headers.Header(
+                    name = "Location",
+                    description = "URI of the created startup profile",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            type = "string", format = "uri")
+            )
+    )
     public ResponseEntity<StartupResponse> createStartup(
             @RequestBody @Valid CreateStartupRequest request,
             @org.springframework.security.core.annotation.AuthenticationPrincipal

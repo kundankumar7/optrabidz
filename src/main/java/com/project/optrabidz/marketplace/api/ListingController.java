@@ -44,6 +44,21 @@ public class ListingController {
     @PostMapping("/funding-listings")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "201",
+                    description = "Funding listing created",
+                    content = @io.swagger.v3.oas.annotations.media.Content(
+                            mediaType = "application/json",
+                            schema = @io.swagger.v3.oas.annotations.media.Schema(
+                                    implementation = ListingResponse.class)
+                    ),
+                    headers = @io.swagger.v3.oas.annotations.headers.Header(
+                            name = "Location",
+                            description = "URI of the created funding listing",
+                            schema = @io.swagger.v3.oas.annotations.media.Schema(
+                                    type = "string", format = "uri")
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
                     ref = "#/components/responses/ValidationProblem"
             ),
@@ -175,6 +190,15 @@ public class ListingController {
 
     @GetMapping("/funding-listings/{listingId}")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Funding listing",
+                    content = @io.swagger.v3.oas.annotations.media.Content(
+                            mediaType = "application/json",
+                            schema = @io.swagger.v3.oas.annotations.media.Schema(
+                                    implementation = ListingResponse.class)
+                    )
+            ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
                     ref = "#/components/responses/ValidationProblem"

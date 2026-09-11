@@ -6,9 +6,10 @@ Capability: [Platform support](../capabilities/platform-support.md)
 
 ## Purpose
 
-Provide shared Problem Details mapping, response and pagination contracts,
-request metadata, observability helpers, domain-event publication, and the
-transactional outbox runtime.
+Provide shared Problem Details mapping, pagination contracts, request
+correlation, observability helpers, domain-event publication, and the
+transactional outbox runtime. Capability modules own their concrete success
+DTOs.
 
 ## Entry points
 
@@ -43,12 +44,22 @@ recorded technical debt; `common` is not yet a dependency-free kernel.
 produce safe public failures. Sensitive-data masking and MDC helpers support
 server-side diagnostics.
 
+## HTTP contracts
+
+The common module owns shared pagination and RFC 9457 failure structures. It
+does not own a universal success envelope. Controllers return capability DTOs
+directly unless they need explicit HTTP status or headers. Request correlation
+remains an observability concern exposed through `X-Request-Id`, not a success
+payload field.
+
 ## Verification
 
-Eighteen module tests cover error, response, observability, and outbox behavior.
+Architecture tests keep API controllers independent of the retired response
+package and lock the supported controller return-style inventory. Error,
+observability, pagination, and outbox behavior remain covered independently.
 
 ## Known gaps
 
-`ApiResponse` still mixes success formatting, legacy error support, metadata,
-and request-ID concerns. A dedicated API-response migration will separate those
-responsibilities before retiring the wrapper.
+The module still imports `identity` and `security`, so it is not yet a
+dependency-free platform kernel. Retiring the universal success envelope does
+not remove that separate reverse-coupling debt.

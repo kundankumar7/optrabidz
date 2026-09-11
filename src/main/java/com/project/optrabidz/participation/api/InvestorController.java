@@ -20,6 +20,21 @@ public class InvestorController {
     }
 
     @PostMapping
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "201",
+            description = "Investor profile created",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            implementation = InvestorResponse.class)
+            ),
+            headers = @io.swagger.v3.oas.annotations.headers.Header(
+                    name = "Location",
+                    description = "URI of the created investor profile",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            type = "string", format = "uri")
+            )
+    )
     public ResponseEntity<InvestorResponse> createInvestor(
             @RequestBody @Valid CreateInvestorRequest request,
             @org.springframework.security.core.annotation.AuthenticationPrincipal

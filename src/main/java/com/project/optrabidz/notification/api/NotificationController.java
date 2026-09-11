@@ -47,6 +47,10 @@ public class NotificationController {
     }
 
     @PatchMapping("/notifications/{recipientId}/read")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Notification marked as read"
+    )
     public ResponseEntity<Void> markRead(@PathVariable Long recipientId,
                                          @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
         notificationService.markRead(principal.getAccountId(), recipientId);
@@ -60,6 +64,10 @@ public class NotificationController {
     }
 
     @DeleteMapping("/notifications/{recipientId}")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Notification deleted"
+    )
     public ResponseEntity<Void> deleteNotification(@PathVariable Long recipientId,
                                                    @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
         notificationService.delete(principal.getAccountId(), recipientId);
@@ -74,6 +82,10 @@ public class NotificationController {
     }
 
     @DeleteMapping("/notification-subscriptions/{subscriptionId}")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Notification subscription revoked"
+    )
     public ResponseEntity<Void> revokeSubscription(@PathVariable Long subscriptionId,
                                                    @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
         notificationService.revokeSubscription(principal.getAccountId(), subscriptionId);

@@ -24,6 +24,15 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "201",
+            description = "Account registered",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            implementation = SignupResponse.class)
+            )
+    )
     public ResponseEntity<SignupResponse> register(@Valid @RequestBody SignupRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(authenticationService.register(request));
@@ -31,6 +40,15 @@ public class AuthController {
 
     @PostMapping("/login")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Authenticated account",
+                    content = @io.swagger.v3.oas.annotations.media.Content(
+                            mediaType = "application/json",
+                            schema = @io.swagger.v3.oas.annotations.media.Schema(
+                                    implementation = LoginResponse.class)
+                    )
+            ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
                     ref = "#/components/responses/ValidationProblem"
@@ -50,12 +68,20 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Session ended"
+    )
     public ResponseEntity<Void> logout(HttpServletRequest httpRequest) {
         authenticationService.logout(httpRequest);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/change-password")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Password changed"
+    )
     public ResponseEntity<Void> changePassword(
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             @Valid @RequestBody ChangePasswordRequest request) {
