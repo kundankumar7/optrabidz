@@ -1,6 +1,6 @@
 package com.project.optrabidz.financial.api;
 
-import com.project.optrabidz.common.api.pagination.PageResponse;
+import com.project.optrabidz.common.application.pagination.PageResponse;
 import com.project.optrabidz.financial.application.FinancialService;
 import com.project.optrabidz.financial.application.dto.request.CreatePaymentAttemptRequest;
 import com.project.optrabidz.financial.application.dto.response.PaymentAttemptResponse;

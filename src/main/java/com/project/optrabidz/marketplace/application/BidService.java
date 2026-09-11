@@ -1,6 +1,6 @@
 package com.project.optrabidz.marketplace.application;
 
-import com.project.optrabidz.common.api.pagination.PageResponse;
+import com.project.optrabidz.common.application.pagination.PageResponse;
 import com.project.optrabidz.common.event.EventPublisher;
 import com.project.optrabidz.governance.application.common.GovernanceDecision;
 import com.project.optrabidz.governance.application.common.GovernanceException;

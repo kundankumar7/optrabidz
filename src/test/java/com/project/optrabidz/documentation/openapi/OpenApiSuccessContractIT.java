@@ -93,6 +93,8 @@ class OpenApiSuccessContractIT extends RealHttpIntegrationTestSupport {
 
         JsonNode directPage = response(
                 openApi, "/api/v1/funding-listings", "get", "200");
+        assertThat(responseSchema(directPage).path("$ref").asText())
+                .startsWith("#/components/schemas/PageResponse");
         assertThat(resolveSchema(openApi, directPage).path("properties").fieldNames())
                 .toIterable()
                 .containsExactlyInAnyOrder(

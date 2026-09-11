@@ -21,7 +21,8 @@ entry point rather than an HTTP endpoint.
 
 `ApplicationException`, error descriptors and categories form the
 transport-neutral error contract. `EventPublisher` and `DomainEvent` form the
-shared event boundary.
+shared event boundary. `common.application.pagination.PageResponse` is the
+shared, transport-neutral pagination result used by application services.
 
 ## Persistence
 
@@ -40,17 +41,19 @@ recorded technical debt; `common` is not yet a dependency-free kernel.
 
 ## Security and errors
 
+The `common.api.error` package owns HTTP Problem Details rendering.
 `ProblemDetailsFactory`, validation mapping, and the security response writer
 produce safe public failures. Sensitive-data masking and MDC helpers support
 server-side diagnostics.
 
 ## HTTP contracts
 
-The common module owns shared pagination and RFC 9457 failure structures. It
-does not own a universal success envelope. Controllers return capability DTOs
-directly unless they need explicit HTTP status or headers. Request correlation
-remains an observability concern exposed through `X-Request-Id`, not a success
-payload field.
+The common application boundary owns the shared pagination result; it is not
+an HTTP adapter type. The common HTTP API boundary owns RFC 9457 failure
+structures. The module does not own a universal success envelope. Controllers
+return capability DTOs directly unless they need explicit HTTP status or
+headers. Request correlation remains an observability concern exposed through
+`X-Request-Id`, not a success payload field.
 
 ## Verification
 

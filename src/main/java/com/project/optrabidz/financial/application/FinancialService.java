@@ -1,6 +1,6 @@
 package com.project.optrabidz.financial.application;
 
-import com.project.optrabidz.common.api.pagination.PageResponse;
+import com.project.optrabidz.common.application.pagination.PageResponse;
 import com.project.optrabidz.common.error.ApplicationException;
 import com.project.optrabidz.common.event.EventPublisher;
 import com.project.optrabidz.financial.application.command.PaymentAttemptConfirmationCommand;

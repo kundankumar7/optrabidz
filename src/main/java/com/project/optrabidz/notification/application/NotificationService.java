@@ -1,6 +1,6 @@
 package com.project.optrabidz.notification.application;
 
-import com.project.optrabidz.common.api.pagination.PageResponse;
+import com.project.optrabidz.common.application.pagination.PageResponse;
 import com.project.optrabidz.common.outbox.OutboxEvent;
 import com.project.optrabidz.notification.application.channel.NotificationChannelSelector;
 import com.project.optrabidz.notification.application.channel.NotificationDeliveryDispatcher;

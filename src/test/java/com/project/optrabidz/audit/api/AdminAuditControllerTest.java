@@ -2,7 +2,7 @@ package com.project.optrabidz.audit.api;
 
 import com.project.optrabidz.audit.application.AuditService;
 import com.project.optrabidz.audit.application.dto.response.AuditRecordResponse;
-import com.project.optrabidz.common.api.pagination.PageResponse;
+import com.project.optrabidz.common.application.pagination.PageResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

@@ -1,6 +1,6 @@
 package com.project.optrabidz.marketplace.application;
 
-import com.project.optrabidz.common.api.pagination.PageResponse;
+import com.project.optrabidz.common.application.pagination.PageResponse;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.marketplace.application.dto.response.ListingResponse;
 import com.project.optrabidz.marketplace.application.dto.response.RecommendedListingResponse;
