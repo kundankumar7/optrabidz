@@ -1,6 +1,6 @@
 package com.project.optrabidz.notification.api;
 
-import com.project.optrabidz.common.api.pagination.PageResponse;
+import com.project.optrabidz.common.application.pagination.PageResponse;
 import com.project.optrabidz.notification.application.NotificationService;
 import com.project.optrabidz.notification.application.dto.request.CreateNotificationSubscriptionRequest;
 import com.project.optrabidz.notification.application.dto.response.NotificationFeedResponse;

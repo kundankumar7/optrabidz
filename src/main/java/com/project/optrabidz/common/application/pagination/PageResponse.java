@@ -1,4 +1,4 @@
-package com.project.optrabidz.common.api.pagination;
+package com.project.optrabidz.common.application.pagination;
 
 import java.util.List;
 

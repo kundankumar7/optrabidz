@@ -1,6 +1,6 @@
 package com.project.optrabidz.marketplace.api;
 
-import com.project.optrabidz.common.api.pagination.PageResponse;
+import com.project.optrabidz.common.application.pagination.PageResponse;
 import com.project.optrabidz.marketplace.application.BidService;
 import com.project.optrabidz.marketplace.application.dto.request.BidActionRequest;
 import com.project.optrabidz.marketplace.application.dto.request.SubmitBidRequest;

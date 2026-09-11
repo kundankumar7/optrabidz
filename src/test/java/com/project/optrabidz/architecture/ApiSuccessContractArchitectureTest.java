@@ -3,7 +3,7 @@ package com.project.optrabidz.architecture;
 import com.project.optrabidz.audit.api.AdminAuditController;
 import com.project.optrabidz.classification.api.InvestorPreferenceController;
 import com.project.optrabidz.classification.api.StartupClassificationController;
-import com.project.optrabidz.common.api.pagination.PageResponse;
+import com.project.optrabidz.common.application.pagination.PageResponse;
 import com.project.optrabidz.financial.api.FinancialController;
 import com.project.optrabidz.financial.api.LocalPaymentSimulationController;
 import com.project.optrabidz.financial.api.PaymentProviderWebhookController;
