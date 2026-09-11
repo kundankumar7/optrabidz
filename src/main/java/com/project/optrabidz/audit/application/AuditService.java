@@ -10,11 +10,14 @@ import com.project.optrabidz.common.outbox.OutboxEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+
+import static com.project.optrabidz.audit.infrastructure.repository.AuditRecordSpecifications.matching;
 
 @Service
 public class AuditService {
@@ -59,16 +62,22 @@ public class AuditService {
                                                     int size) {
         int safePage = Math.max(page, 1);
         int safeSize = Math.min(Math.max(size, 1), 100);
-        Pageable pageable = PageRequest.of(safePage - 1, safeSize);
-        Page<AuditRecord> records = auditRecordRepository.search(
-                actorAccountId,
-                blankToNull(sourceModule),
-                blankToNull(action),
-                blankToNull(objectType),
-                blankToNull(objectId),
-                blankToNull(outcome),
-                from,
-                to,
+        Pageable pageable = PageRequest.of(
+                safePage - 1,
+                safeSize,
+                Sort.by(Sort.Direction.DESC, "recordedAt", "auditRecordId")
+        );
+        Page<AuditRecord> records = auditRecordRepository.findAll(
+                matching(
+                        actorAccountId,
+                        blankToNull(sourceModule),
+                        blankToNull(action),
+                        blankToNull(objectType),
+                        blankToNull(objectId),
+                        blankToNull(outcome),
+                        from,
+                        to
+                ),
                 pageable
         );
 
