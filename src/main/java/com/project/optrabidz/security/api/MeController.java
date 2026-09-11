@@ -1,14 +1,8 @@
 package com.project.optrabidz.security.api;
 
-import com.project.optrabidz.common.api.response.ApiResponse;
-import com.project.optrabidz.common.api.response.MessageData;
-import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.security.application.AuthenticatedUserPrincipal;
 import com.project.optrabidz.security.application.MeService;
-import com.project.optrabidz.security.application.dto.request.ChangePasswordRequest;
 import com.project.optrabidz.security.application.dto.response.MeResponse;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +18,15 @@ public class MeController {
     @GetMapping
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Current account",
+                    content = @io.swagger.v3.oas.annotations.media.Content(
+                            mediaType = "application/json",
+                            schema = @io.swagger.v3.oas.annotations.media.Schema(
+                                    implementation = MeResponse.class)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401",
                     ref = "#/components/responses/UnauthorizedProblem"
             ),
@@ -32,8 +35,7 @@ public class MeController {
                     ref = "#/components/responses/InternalServerProblem"
             )
     })
-    public SuccessResponse<MeResponse> getCurrentUser(@AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                      HttpServletRequest httpRequest) {
-        return ApiResponse.success(meService.getCurrentUser(principal), httpRequest);
+    public MeResponse getCurrentUser(@AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return meService.getCurrentUser(principal);
     }
 }

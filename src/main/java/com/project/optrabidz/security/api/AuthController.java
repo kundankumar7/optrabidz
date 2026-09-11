@@ -1,14 +1,11 @@
 package com.project.optrabidz.security.api;
 
-import com.project.optrabidz.common.api.response.ApiResponse;
-import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.security.application.AuthenticatedUserPrincipal;
 import com.project.optrabidz.security.application.AuthenticationService;
 import com.project.optrabidz.security.application.dto.request.ChangePasswordRequest;
 import com.project.optrabidz.security.application.dto.request.LoginRequest;
 import com.project.optrabidz.security.application.dto.request.SignupRequest;
 import com.project.optrabidz.security.application.dto.response.LoginResponse;
-import com.project.optrabidz.security.application.dto.response.MessageResponse;
 import com.project.optrabidz.security.application.dto.response.SignupResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -27,14 +24,31 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<SuccessResponse<SignupResponse>> register(@Valid @RequestBody SignupRequest request,
-                                                                    HttpServletRequest httpRequest) {
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "201",
+            description = "Account registered",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            implementation = SignupResponse.class)
+            )
+    )
+    public ResponseEntity<SignupResponse> register(@Valid @RequestBody SignupRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(authenticationService.register(request), httpRequest));
+                .body(authenticationService.register(request));
     }
 
     @PostMapping("/login")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Authenticated account",
+                    content = @io.swagger.v3.oas.annotations.media.Content(
+                            mediaType = "application/json",
+                            schema = @io.swagger.v3.oas.annotations.media.Schema(
+                                    implementation = LoginResponse.class)
+                    )
+            ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
                     ref = "#/components/responses/ValidationProblem"
@@ -48,24 +62,30 @@ public class AuthController {
                     ref = "#/components/responses/InternalServerProblem"
             )
     })
-    public ResponseEntity<SuccessResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request,
-                                                                HttpServletRequest httpRequest) {
-        return ResponseEntity.ok(ApiResponse.success(authenticationService.login(request, httpRequest), httpRequest));
+    public LoginResponse login(@Valid @RequestBody LoginRequest request,
+                               HttpServletRequest httpRequest) {
+        return authenticationService.login(request, httpRequest);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<SuccessResponse<MessageResponse>> logout(HttpServletRequest httpRequest) {
-        return ResponseEntity.ok(ApiResponse.success(authenticationService.logout(httpRequest), httpRequest));
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Session ended"
+    )
+    public ResponseEntity<Void> logout(HttpServletRequest httpRequest) {
+        authenticationService.logout(httpRequest);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<SuccessResponse<MessageResponse>> changePassword(
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Password changed"
+    )
+    public ResponseEntity<Void> changePassword(
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            @Valid @RequestBody ChangePasswordRequest request,
-            HttpServletRequest httpRequest) {
-        return ResponseEntity.ok(ApiResponse.success(
-                authenticationService.changePassword(principal, request),
-                httpRequest
-        ));
+            @Valid @RequestBody ChangePasswordRequest request) {
+        authenticationService.changePassword(principal, request);
+        return ResponseEntity.noContent().build();
     }
 }

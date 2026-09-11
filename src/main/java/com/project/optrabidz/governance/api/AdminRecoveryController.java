@@ -1,13 +1,10 @@
 package com.project.optrabidz.governance.api;
 
-import com.project.optrabidz.common.api.response.ApiResponse;
-import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.governance.application.admin.AdminAuthorityTransferService;
 import com.project.optrabidz.governance.application.admin.AdminRecoveryProperties;
 import com.project.optrabidz.governance.application.admin.AdminTransferResponse;
 import com.project.optrabidz.governance.application.admin.TransferAdminAuthorityRequest;
 import com.project.optrabidz.governance.application.admin.exception.AdminRecoveryAccessDeniedException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.*;
@@ -31,10 +28,9 @@ public class AdminRecoveryController {
     }
 
     @PostMapping("/transfer")
-    public SuccessResponse<AdminTransferResponse> transferAdminAuthority(
+    public AdminTransferResponse transferAdminAuthority(
             @RequestHeader(name = RECOVERY_TOKEN_HEADER, required = false) String recoveryToken,
-            @Valid @RequestBody TransferAdminAuthorityRequest request,
-            HttpServletRequest httpRequest) {
+            @Valid @RequestBody TransferAdminAuthorityRequest request) {
         assertRecoveryAccess(recoveryToken);
 
         Long newAdminAccountId = transferService.transferAuthority(
@@ -42,13 +38,7 @@ public class AdminRecoveryController {
                 properties.isEnabled()
         );
 
-        return ApiResponse.success(
-                new AdminTransferResponse(
-                        newAdminAccountId,
-                        "Admin authority transferred successfully"
-                ),
-                httpRequest
-        );
+        return new AdminTransferResponse(newAdminAccountId);
     }
 
     private void assertRecoveryAccess(String recoveryToken) {

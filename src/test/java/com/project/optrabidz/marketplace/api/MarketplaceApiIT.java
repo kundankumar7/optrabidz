@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -44,12 +45,16 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", startup.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(createListingRequest("Working Capital Listing", originalAmount))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.listingState").value("DRAFT"))
-                .andExpect(jsonPath("$.data.fundingModel").value("DEBT"))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", matchesPattern(
+                        "/api/v1/funding-listings/\\d+")))
+                .andExpect(jsonPath("$.listingState").value("DRAFT"))
+                .andExpect(jsonPath("$.fundingModel").value("DEBT"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist())
                 .andReturn();
-        Long listingId = readLong(createResult, "/data/listingId");
+        Long listingId = readLong(createResult, "/listingId");
 
         mockMvc.perform(patch("/api/v1/funding-listings/{listingId}", listingId)
                         .session(startup.session())
@@ -58,9 +63,9 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(updateListingRequest("Updated Working Capital Listing", updatedAmount))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.listingId").value(listingId.intValue()))
-                .andExpect(jsonPath("$.data.title").value("Updated Working Capital Listing"))
-                .andExpect(jsonPath("$.data.listingState").value("DRAFT"));
+                .andExpect(jsonPath("$.listingId").value(listingId.intValue()))
+                .andExpect(jsonPath("$.title").value("Updated Working Capital Listing"))
+                .andExpect(jsonPath("$.listingState").value("DRAFT"));
 
         mockMvc.perform(post("/api/v1/funding-listings/{listingId}/actions/publish", listingId)
                         .session(startup.session())
@@ -69,11 +74,10 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.listingId").value(listingId.intValue()))
-                .andExpect(jsonPath("$.data.listingState").value("OPEN"))
-                .andExpect(jsonPath("$.data.publishedAt").isNotEmpty())
-                .andExpect(jsonPath("$.data.expiresAt").isNotEmpty());
+                .andExpect(jsonPath("$.listingId").value(listingId.intValue()))
+                .andExpect(jsonPath("$.listingState").value("OPEN"))
+                .andExpect(jsonPath("$.publishedAt").isNotEmpty())
+                .andExpect(jsonPath("$.expiresAt").isNotEmpty());
 
         mockMvc.perform(get("/api/v1/startups/me/funding-listings")
                         .queryParam("state", "OPEN")
@@ -81,9 +85,9 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].listingId").value(listingId.intValue()))
-                .andExpect(jsonPath("$.data.items[0].listingState").value("OPEN"));
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].listingId").value(listingId.intValue()))
+                .andExpect(jsonPath("$.items[0].listingState").value("OPEN"));
 
         mockMvc.perform(get("/api/v1/funding-listings")
                         .queryParam("fundingModel", "DEBT")
@@ -93,14 +97,14 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .queryParam("page", "1")
                         .queryParam("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].listingId").value(listingId.intValue()))
-                .andExpect(jsonPath("$.data.items[0].listingState").value("OPEN"));
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].listingId").value(listingId.intValue()))
+                .andExpect(jsonPath("$.items[0].listingState").value("OPEN"));
 
         mockMvc.perform(get("/api/v1/funding-listings/{listingId}", listingId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.listingId").value(listingId.intValue()))
-                .andExpect(jsonPath("$.data.listingState").value("OPEN"));
+                .andExpect(jsonPath("$.listingId").value(listingId.intValue()))
+                .andExpect(jsonPath("$.listingState").value("OPEN"));
 
         mockMvc.perform(post("/api/v1/funding-listings/{listingId}/actions/close", listingId)
                         .session(startup.session())
@@ -109,9 +113,9 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("reason", "Test cleanup close"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.listingId").value(listingId.intValue()))
-                .andExpect(jsonPath("$.data.listingState").value("CLOSED"))
-                .andExpect(jsonPath("$.data.closedAt").isNotEmpty());
+                .andExpect(jsonPath("$.listingId").value(listingId.intValue()))
+                .andExpect(jsonPath("$.listingState").value("CLOSED"))
+                .andExpect(jsonPath("$.closedAt").isNotEmpty());
     }
 
     @Test
@@ -133,9 +137,9 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .queryParam("page", "1")
                         .queryParam("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(2))
-                .andExpect(jsonPath("$.data.items[0].listingId").value(secondListingId.intValue()))
-                .andExpect(jsonPath("$.data.items[1].listingId").value(firstListingId.intValue()));
+                .andExpect(jsonPath("$.totalItems").value(2))
+                .andExpect(jsonPath("$.items[0].listingId").value(secondListingId.intValue()))
+                .andExpect(jsonPath("$.items[1].listingId").value(firstListingId.intValue()));
 
         mockMvc.perform(get("/api/v1/funding-listings")
                         .queryParam("fundingModel", "DEBT")
@@ -146,9 +150,9 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .queryParam("page", "1")
                         .queryParam("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(2))
-                .andExpect(jsonPath("$.data.items[0].listingId").value(firstListingId.intValue()))
-                .andExpect(jsonPath("$.data.items[1].listingId").value(secondListingId.intValue()));
+                .andExpect(jsonPath("$.totalItems").value(2))
+                .andExpect(jsonPath("$.items[0].listingId").value(firstListingId.intValue()))
+                .andExpect(jsonPath("$.items[1].listingId").value(secondListingId.intValue()));
     }
 
     @Test
@@ -163,10 +167,12 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", startup.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(createListingRequest("Unclassified Listing", new BigDecimal("743210.00")))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.listingState").value("DRAFT"))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", matchesPattern(
+                        "/api/v1/funding-listings/\\d+")))
+                .andExpect(jsonPath("$.listingState").value("DRAFT"))
                 .andReturn();
-        Long listingId = readLong(createResult, "/data/listingId");
+        Long listingId = readLong(createResult, "/listingId");
 
         mockMvc.perform(post("/api/v1/funding-listings/{listingId}/actions/publish", listingId)
                         .session(startup.session())
@@ -211,9 +217,9 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .session(investor.session())
                         .cookie(investor.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].listing.listingId").value(listingId.intValue()))
-                .andExpect(jsonPath("$.data.items[0].recommendation.score").value(greaterThan(0)));
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].listing.listingId").value(listingId.intValue()))
+                .andExpect(jsonPath("$.items[0].recommendation.score").value(greaterThan(0)));
 
         MvcResult bidResult = mockMvc.perform(post("/api/v1/bids")
                         .session(investor.session())
@@ -221,19 +227,32 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", investor.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(submitBidRequest(listingId, new BigDecimal("825000.00")))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.listingId").value(listingId.intValue()))
-                .andExpect(jsonPath("$.data.bidState").value("SUBMITTED"))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", matchesPattern(
+                        "/api/v1/bids/\\d+")))
+                .andExpect(jsonPath("$.listingId").value(listingId.intValue()))
+                .andExpect(jsonPath("$.bidState").value("SUBMITTED"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist())
                 .andReturn();
-        Long bidId = readLong(bidResult, "/data/bidId");
+        Long bidId = readLong(bidResult, "/bidId");
 
         mockMvc.perform(get("/api/v1/investors/me/bids/by-listing/{listingId}", listingId)
                         .session(investor.session())
                         .cookie(investor.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.bidId").value(bidId.intValue()))
-                .andExpect(jsonPath("$.data.bidState").value("SUBMITTED"));
+                .andExpect(jsonPath("$.bidId").value(bidId.intValue()))
+                .andExpect(jsonPath("$.bidState").value("SUBMITTED"));
+
+        mockMvc.perform(get("/api/v1/investors/me/bids")
+                        .queryParam("state", "SUBMITTED")
+                        .session(investor.session())
+                        .cookie(investor.xsrfCookie()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].bidId").value(bidId.intValue()))
+                .andExpect(jsonPath("$.items[0].bidState").value("SUBMITTED"));
 
         mockMvc.perform(get("/api/v1/bids")
                         .queryParam("listingId", listingId.toString())
@@ -241,8 +260,8 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].bidId").value(bidId.intValue()));
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].bidId").value(bidId.intValue()));
 
         MvcResult acceptResult = mockMvc.perform(post("/api/v1/bids/{bidId}/actions/accept", bidId)
                         .session(startup.session())
@@ -251,42 +270,42 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("confirmation", "ACCEPT"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.bid.bidId").value(bidId.intValue()))
-                .andExpect(jsonPath("$.data.bid.bidState").value("ACCEPTED"))
-                .andExpect(jsonPath("$.data.listing.listingId").value(listingId.intValue()))
-                .andExpect(jsonPath("$.data.listing.listingState").value("AGREEMENT_REACHED"))
-                .andExpect(jsonPath("$.data.agreement.listingId").value(listingId.intValue()))
-                .andExpect(jsonPath("$.data.agreement.bidId").value(bidId.intValue()))
+                .andExpect(jsonPath("$.bid.bidId").value(bidId.intValue()))
+                .andExpect(jsonPath("$.bid.bidState").value("ACCEPTED"))
+                .andExpect(jsonPath("$.listing.listingId").value(listingId.intValue()))
+                .andExpect(jsonPath("$.listing.listingState").value("AGREEMENT_REACHED"))
+                .andExpect(jsonPath("$.agreement.listingId").value(listingId.intValue()))
+                .andExpect(jsonPath("$.agreement.bidId").value(bidId.intValue()))
                 .andReturn();
-        Long agreementId = readLong(acceptResult, "/data/agreement/agreementId");
+        Long agreementId = readLong(acceptResult, "/agreement/agreementId");
 
         mockMvc.perform(get("/api/v1/funding-listings/{listingId}/accepted-bid", listingId)
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.bidId").value(bidId.intValue()))
-                .andExpect(jsonPath("$.data.bidState").value("ACCEPTED"));
+                .andExpect(jsonPath("$.bidId").value(bidId.intValue()))
+                .andExpect(jsonPath("$.bidState").value("ACCEPTED"));
 
         mockMvc.perform(get("/api/v1/startups/me/agreements")
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].agreementId").value(agreementId.intValue()));
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].agreementId").value(agreementId.intValue()));
 
         mockMvc.perform(get("/api/v1/investors/me/agreements")
                         .session(investor.session())
                         .cookie(investor.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].agreementId").value(agreementId.intValue()));
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].agreementId").value(agreementId.intValue()));
 
         mockMvc.perform(get("/api/v1/agreements/{agreementId}", agreementId)
                         .session(investor.session())
                         .cookie(investor.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.agreementId").value(agreementId.intValue()))
-                .andExpect(jsonPath("$.data.debtTerms.principalAmount").value(825000.00));
+                .andExpect(jsonPath("$.agreementId").value(agreementId.intValue()))
+                .andExpect(jsonPath("$.debtTerms.principalAmount").value(825000.00));
     }
 
     @Test
@@ -301,8 +320,8 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", investor.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(submitBidRequest(listingId, new BigDecimal("830000.00")))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.bidState").value("SUBMITTED"));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.bidState").value("SUBMITTED"));
 
         String duplicateRequestId = "bid-already-exists-request";
         MvcResult duplicateResult = mockMvc.perform(post("/api/v1/bids")
@@ -594,25 +613,25 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.bidState").value("ACCEPTED"));
+                .andExpect(jsonPath("$.bidState").value("ACCEPTED"));
 
         String firstBidState = readText(mockMvc.perform(get("/api/v1/bids/{bidId}", firstBidId)
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andReturn(), "/data/bidState");
+                .andReturn(), "/bidState");
         String secondBidState = readText(mockMvc.perform(get("/api/v1/bids/{bidId}", secondBidId)
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andReturn(), "/data/bidState");
+                .andReturn(), "/bidState");
         assertThat(List.of(firstBidState, secondBidState)).containsExactlyInAnyOrder("ACCEPTED", "REJECTED");
 
         mockMvc.perform(get("/api/v1/startups/me/agreements")
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalItems").value(1));
+                .andExpect(jsonPath("$.totalItems").value(1));
     }
 
     @Test
@@ -652,10 +671,12 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", startup.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(createListingRequest(title, requestedAmount))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.listingState").value("DRAFT"))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", matchesPattern(
+                        "/api/v1/funding-listings/\\d+")))
+                .andExpect(jsonPath("$.listingState").value("DRAFT"))
                 .andReturn();
-        Long listingId = readLong(createResult, "/data/listingId");
+        Long listingId = readLong(createResult, "/listingId");
 
         mockMvc.perform(post("/api/v1/funding-listings/{listingId}/actions/publish", listingId)
                         .session(startup.session())
@@ -664,7 +685,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.listingState").value("OPEN"));
+                .andExpect(jsonPath("$.listingState").value("OPEN"));
 
         return listingId;
     }
@@ -676,10 +697,12 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", investor.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(submitBidRequest(listingId, proposedAmount))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.bidState").value("SUBMITTED"))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", matchesPattern(
+                        "/api/v1/bids/\\d+")))
+                .andExpect(jsonPath("$.bidState").value("SUBMITTED"))
                 .andReturn();
-        return readLong(bidResult, "/data/bidId");
+        return readLong(bidResult, "/bidId");
     }
 
     private List<Integer> acceptBidsConcurrently(AuthenticatedClient startup,

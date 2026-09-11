@@ -223,7 +223,7 @@ public class NotificationService {
                 .addValue("authSecret", request.authSecret())
                 .addValue("state", NotificationSubscriptionState.ACTIVE.name())
                 .addValue("now", Timestamp.from(now)), Long.class);
-        return new NotificationSubscriptionResponse(subscriptionId, "Notification subscription saved");
+        return new NotificationSubscriptionResponse(subscriptionId);
     }
 
     @Transactional

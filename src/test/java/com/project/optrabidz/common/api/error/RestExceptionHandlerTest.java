@@ -2,7 +2,7 @@ package com.project.optrabidz.common.api.error;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.optrabidz.common.api.response.RequestMetadataFilter;
+import com.project.optrabidz.common.observability.RequestMetadataFilter;
 import com.project.optrabidz.common.error.ApplicationException;
 import com.project.optrabidz.common.error.ErrorCategory;
 import com.project.optrabidz.common.error.ErrorDescriptor;

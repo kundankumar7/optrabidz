@@ -1,6 +1,5 @@
 package com.project.optrabidz.participation.application;
 
-import com.project.optrabidz.common.api.response.MessageData;
 import com.project.optrabidz.common.event.EventPublisher;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.participation.application.event.ParticipationProfileChangedEvent;
@@ -29,7 +28,7 @@ public class StartupService {
     }
 
     @Transactional
-    public MessageData createStartup(Long accountId, RoleType roleType, CreateStartupRequest request) {
+    public StartupResponse createStartup(Long accountId, RoleType roleType, CreateStartupRequest request) {
         ensureRole(roleType, RoleType.STARTUP);
 
         if (startupRepository.existsByAccountId(accountId)) {
@@ -52,10 +51,10 @@ public class StartupService {
                                 .toList()
         );
 
-        startupRepository.save(startup);
+        Startup savedStartup = startupRepository.save(startup);
         publishProfileChanged(accountId, roleType);
 
-        return new MessageData("Startup created successfully");
+        return toResponse(savedStartup);
     }
 
     @Transactional(readOnly = true)
@@ -69,7 +68,7 @@ public class StartupService {
     }
 
     @Transactional
-    public MessageData updateStartup(Long accountId, RoleType roleType, CreateStartupRequest request) {
+    public StartupResponse updateStartup(Long accountId, RoleType roleType, CreateStartupRequest request) {
         ensureRole(roleType, RoleType.STARTUP);
 
         Startup startup = startupRepository.findByAccountId(accountId)
@@ -90,9 +89,9 @@ public class StartupService {
                                 .toList()
         );
 
-        startupRepository.save(startup);
+        Startup savedStartup = startupRepository.save(startup);
         publishProfileChanged(accountId, roleType);
-        return new MessageData("Startup updated successfully");
+        return toResponse(savedStartup);
     }
 
     private void publishProfileChanged(Long accountId, RoleType roleType) {

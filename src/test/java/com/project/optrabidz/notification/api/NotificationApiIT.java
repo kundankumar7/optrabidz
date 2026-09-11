@@ -74,15 +74,17 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.totalItems").value(1))
-                .andExpect(jsonPath("$.data.items[0].notificationName").value("ACCOUNT_REGISTERED"))
-                .andExpect(jsonPath("$.data.items[0].readStatus").value("UNREAD"))
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].notificationName").value("ACCOUNT_REGISTERED"))
+                .andExpect(jsonPath("$.items[0].readStatus").value("UNREAD"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        JsonNode firstNotification = objectMapper.readTree(feedJson).path("data").path("items").get(0);
+        JsonNode firstNotification = objectMapper.readTree(feedJson).path("items").get(0);
         long recipientId = firstNotification.path("recipientId").asLong();
         long accountId = firstNotification.path("entityId").asLong();
 
@@ -90,20 +92,24 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.unreadCount").value(1));
+                .andExpect(jsonPath("$.unreadCount").value(1));
 
         mockMvc.perform(patch("/api/v1/notifications/{recipientId}/read", recipientId)
                         .session(startup.session())
                         .cookie(startup.xsrfCookie())
                         .header("X-CSRF-TOKEN", startup.csrfToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.message").value("Notification marked as read"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(patch("/api/v1/notifications/me/read-all")
                         .session(startup.session())
                         .cookie(startup.xsrfCookie())
                         .header("X-CSRF-TOKEN", startup.csrfToken()))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.updatedCount").value(0))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist());
 
         String subscriptionJson = mockMvc.perform(post("/api/v1/notification-subscriptions")
                         .session(startup.session())
@@ -117,27 +123,27 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                                 "authSecret", "auth-secret"
                         ))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.message").value("Notification subscription saved"))
-                .andExpect(jsonPath("$.data.subscriptionId").isNumber())
+                .andExpect(jsonPath("$.subscriptionId").isNumber())
+                .andExpect(jsonPath("$.message").doesNotExist())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        long subscriptionId = objectMapper.readTree(subscriptionJson).path("data").path("subscriptionId").asLong();
+        long subscriptionId = objectMapper.readTree(subscriptionJson).path("subscriptionId").asLong();
 
         mockMvc.perform(delete("/api/v1/notification-subscriptions/{subscriptionId}", subscriptionId)
                         .session(startup.session())
                         .cookie(startup.xsrfCookie())
                         .header("X-CSRF-TOKEN", startup.csrfToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.message").value("Notification subscription revoked"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(delete("/api/v1/notifications/{recipientId}", recipientId)
                         .session(startup.session())
                         .cookie(startup.xsrfCookie())
                         .header("X-CSRF-TOKEN", startup.csrfToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.message").value("Notification deleted"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         Integer auditRecords = jdbcTemplate.queryForObject("""
                 select count(*)
@@ -215,7 +221,8 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                         .session(owner.session())
                         .cookie(owner.xsrfCookie())
                         .header("X-CSRF-TOKEN", owner.csrfToken()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         String deletedRequestId = "deleted-notification-request";
         mockMvc.perform(patch("/api/v1/notifications/{recipientId}/read", recipientId)
@@ -291,7 +298,8 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                         .session(owner.session())
                         .cookie(owner.xsrfCookie())
                         .header("X-CSRF-TOKEN", owner.csrfToken()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         String revokedRequestId = "revoked-subscription-request";
         mockMvc.perform(delete(
@@ -447,11 +455,11 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                                         "repaymentPlanType", "INSTALLMENT_MONTHLY"
                                 )
                         ))))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        return objectMapper.readTree(response).path("data").path("listingId").asLong();
+        return objectMapper.readTree(response).path("listingId").asLong();
     }
 
     private void publishListing(AuthenticatedClient startup, long listingId) throws Exception {
@@ -481,11 +489,11 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                                 ),
                                 "proposalMessage", "Investor bid used for notification integration testing."
                         ))))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        return objectMapper.readTree(response).path("data").path("bidId").asLong();
+        return objectMapper.readTree(response).path("bidId").asLong();
     }
 
     private void acceptBid(AuthenticatedClient startup, long bidId) throws Exception {
@@ -509,7 +517,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        JsonNode items = objectMapper.readTree(response).path("data").path("items");
+        JsonNode items = objectMapper.readTree(response).path("items");
         assertThat(items.isArray()).isTrue();
         assertThat(items.size()).isGreaterThan(0);
         return items.get(0).path(fieldName).asLong();
@@ -522,11 +530,13 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", client.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.matchesPattern(
+                        "/api/v1/payment-intents/\\d+")))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        return objectMapper.readTree(response).path("data").path("paymentIntentId").asLong();
+        return objectMapper.readTree(response).path("paymentIntentId").asLong();
     }
 
     private long createLocalPaymentAttempt(AuthenticatedClient client, long paymentIntentId) throws Exception {
@@ -539,11 +549,12 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                                 "providerCode", "LOCAL",
                                 "methodType", "OTHER"
                         ))))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
+                .andExpect(header().doesNotExist("Location"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        return objectMapper.readTree(response).path("data").path("paymentAttemptId").asLong();
+        return objectMapper.readTree(response).path("paymentAttemptId").asLong();
     }
 
     private void confirmLocalPaymentAttempt(AuthenticatedClient client, long paymentAttemptId) throws Exception {
@@ -573,15 +584,13 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                                 "authSecret", authSecret == null ? "" : authSecret
                         ))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.message")
-                        .value("Notification subscription saved"))
-                .andExpect(jsonPath("$.data.subscriptionId").isNumber())
+                .andExpect(jsonPath("$.subscriptionId").isNumber())
+                .andExpect(jsonPath("$.message").doesNotExist())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
         return objectMapper.readTree(response)
-                .path("data")
                 .path("subscriptionId")
                 .asLong();
     }
@@ -638,7 +647,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        List<String> names = objectMapper.readTree(response).path("data").path("items").findValuesAsText("notificationName");
+        List<String> names = objectMapper.readTree(response).path("items").findValuesAsText("notificationName");
         assertThat(names).contains(notificationName);
     }
 

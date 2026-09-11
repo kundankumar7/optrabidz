@@ -19,6 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -52,8 +54,12 @@ public abstract class ApiIntegrationTestSupport extends PostgresIntegrationTestS
     protected AuthenticatedClient login(String email, String password) throws Exception {
         MvcResult loginResult = loginAttempt(email, password)
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Login successful"))
+                .andExpect(jsonPath("$.accountId").isNumber())
+                .andExpect(jsonPath("$.role").isString())
+                .andExpect(jsonPath("$.csrfToken").doesNotExist())
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist())
                 .andReturn();
 
         MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
@@ -104,8 +110,10 @@ public abstract class ApiIntegrationTestSupport extends PostgresIntegrationTestS
                                         "value", registrationValue
                                 ))
                         ))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/api/v1/startups/me"))
+                .andExpect(jsonPath("$.startupId").isNumber())
+                .andExpect(jsonPath("$.success").doesNotExist());
     }
 
     protected void createCompleteInvestorProfile(AuthenticatedClient investor) throws Exception {
@@ -124,8 +132,10 @@ public abstract class ApiIntegrationTestSupport extends PostgresIntegrationTestS
                                 "legalEntityName", publicDisplayName + " LLP",
                                 "webPresences", List.of("https://" + publicDisplayName.toLowerCase().replace(" ", "-") + ".example.com")
                         ))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/api/v1/investors/me"))
+                .andExpect(jsonPath("$.investorId").isNumber())
+                .andExpect(jsonPath("$.success").doesNotExist());
     }
 
     protected void addStartupClassification(AuthenticatedClient startup, String type, String value) throws Exception {
@@ -138,8 +148,8 @@ public abstract class ApiIntegrationTestSupport extends PostgresIntegrationTestS
                                 "classificationType", type,
                                 "classificationValue", value
                         ))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
     }
 
     protected void addInvestorPreference(AuthenticatedClient investor, String type, String value) throws Exception {
@@ -152,8 +162,8 @@ public abstract class ApiIntegrationTestSupport extends PostgresIntegrationTestS
                                 "preferenceType", type,
                                 "preferenceValue", value
                         ))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
     }
 
     protected String json(Object value) throws JsonProcessingException {

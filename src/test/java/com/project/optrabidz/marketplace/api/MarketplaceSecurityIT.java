@@ -23,7 +23,15 @@ class MarketplaceSecurityIT extends ApiIntegrationTestSupport {
     @Test
     void anonymousListingBrowseAndDetailRemainPublic() throws Exception {
         mockMvc.perform(get("/api/v1/funding-listings"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.page").isNumber())
+                .andExpect(jsonPath("$.size").isNumber())
+                .andExpect(jsonPath("$.totalItems").isNumber())
+                .andExpect(jsonPath("$.totalPages").isNumber())
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist());
 
         mockMvc.perform(get("/api/v1/funding-listings/{listingId}", Long.MAX_VALUE)
                         .header("X-Request-Id", "public-listing-detail-request"))

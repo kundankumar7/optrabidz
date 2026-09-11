@@ -22,6 +22,12 @@ Controllers may receive an authenticated principal and adapt it to an
 application command. They do not verify credentials, parse authentication
 tokens, or decide whether a session is valid.
 
+The login response contains authentication state only; it does not expose the
+CSRF token in JSON. Browser clients obtain the token from the CSRF cookie and
+return it in the `X-CSRF-TOKEN` header on protected state-changing requests.
+Request correlation likewise remains in the `X-Request-Id` response header
+rather than a success-body metadata object.
+
 ## Authorization Boundary
 
 Routes are classified as public, authenticated, or role-restricted in the

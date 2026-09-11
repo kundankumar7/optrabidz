@@ -29,19 +29,28 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
         String email = uniqueEmail("real-http-success");
 
         HttpResponse<String> registration = register(client, email);
+        JsonNode registrationBody = readJson(registration);
         assertThat(registration.statusCode()).isEqualTo(201);
-        assertThat(readJson(registration).path("success").asBoolean()).isTrue();
+        assertThat(registrationBody.path("accountId").asLong()).isPositive();
+        assertThat(registrationBody.path("role").asText()).isEqualTo("STARTUP");
+        assertThat(registrationBody.has("success")).isFalse();
+        assertThat(registrationBody.has("data")).isFalse();
 
         HttpResponse<String> login = login(client, email);
+        JsonNode loginBody = readJson(login);
         assertThat(login.statusCode()).isEqualTo(200);
+        assertThat(loginBody.path("accountId").asLong())
+                .isEqualTo(registrationBody.path("accountId").asLong());
+        assertThat(loginBody.path("role").asText()).isEqualTo("STARTUP");
+        assertThat(loginBody.has("csrfToken")).isFalse();
         assertThat(client.requiredCookie("JSESSIONID")).isNotBlank();
 
         HttpResponse<String> me = client.get("/api/v1/me", Map.of());
         JsonNode meBody = readJson(me);
         assertThat(me.statusCode()).isEqualTo(200);
-        assertThat(meBody.path("success").asBoolean()).isTrue();
-        assertThat(meBody.path("data").path("role").asText())
-                .isEqualTo("STARTUP");
+        assertThat(meBody.path("role").asText()).isEqualTo("STARTUP");
+        assertThat(meBody.has("success")).isFalse();
+        assertThat(meBody.has("data")).isFalse();
         assertThat(client.requiredCookie("XSRF-TOKEN")).isNotBlank();
     }
 
@@ -124,9 +133,8 @@ class RealHttpProblemDetailsIT extends RealHttpIntegrationTestSupport {
                 "/api/v1/auth/logout",
                 Map.of("X-CSRF-TOKEN", csrfSecret)
         );
-        assertThat(successfulLogout.statusCode()).isEqualTo(200);
-        assertThat(readJson(successfulLogout).path("success").asBoolean())
-                .isTrue();
+        assertThat(successfulLogout.statusCode()).isEqualTo(204);
+        assertThat(successfulLogout.body()).isEmpty();
     }
 
     @Test

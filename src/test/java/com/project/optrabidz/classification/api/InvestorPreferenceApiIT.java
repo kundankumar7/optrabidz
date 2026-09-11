@@ -31,18 +31,20 @@ class InvestorPreferenceApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", investor.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(investorPreference("GEOGRAPHY", "INDIA"))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Investor preference added successfully"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(get("/api/v1/investor-preferences/me")
                         .session(investor.session())
                         .cookie(investor.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.investorId").isNumber())
-                .andExpect(jsonPath("$.data.preferences.length()").value(1))
-                .andExpect(jsonPath("$.data.preferences[0].type").value("GEOGRAPHY"))
-                .andExpect(jsonPath("$.data.preferences[0].value").value("INDIA"));
+                .andExpect(jsonPath("$.investorId").isNumber())
+                .andExpect(jsonPath("$.preferences.length()").value(1))
+                .andExpect(jsonPath("$.preferences[0].type").value("GEOGRAPHY"))
+                .andExpect(jsonPath("$.preferences[0].value").value("INDIA"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist());
 
         mockMvc.perform(put("/api/v1/investor-preferences/me")
                         .session(investor.session())
@@ -55,9 +57,8 @@ class InvestorPreferenceApiIT extends ApiIntegrationTestSupport {
                                         investorPreference("SECTOR", "FINTECH")
                                 )
                         ))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Investor preferences replaced successfully"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(delete("/api/v1/investor-preferences/me")
                         .queryParam("preferenceType", "GEOGRAPHY")
@@ -65,17 +66,16 @@ class InvestorPreferenceApiIT extends ApiIntegrationTestSupport {
                         .session(investor.session())
                         .cookie(investor.xsrfCookie())
                         .header("X-CSRF-TOKEN", investor.csrfToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Investor preference removed successfully"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(get("/api/v1/investor-preferences/me")
                         .session(investor.session())
                         .cookie(investor.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.preferences.length()").value(1))
-                .andExpect(jsonPath("$.data.preferences[0].type").value("SECTOR"))
-                .andExpect(jsonPath("$.data.preferences[0].value").value("FINTECH"));
+                .andExpect(jsonPath("$.preferences.length()").value(1))
+                .andExpect(jsonPath("$.preferences[0].type").value("SECTOR"))
+                .andExpect(jsonPath("$.preferences[0].value").value("FINTECH"));
     }
 
     @Test
@@ -89,7 +89,8 @@ class InvestorPreferenceApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", investor.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(investorPreference("SECTOR", "SAAS"))))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
 
         mockMvc.perform(post("/api/v1/investor-preferences")
                         .session(investor.session())
@@ -203,8 +204,7 @@ class InvestorPreferenceApiIT extends ApiIntegrationTestSupport {
                                 "legalEntityName", "Classification Investor LLP",
                                 "webPresences", List.of("https://classification-investor.example.com")
                         ))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(status().isCreated());
     }
 
     private Map<String, String> investorPreference(String type, String value) {

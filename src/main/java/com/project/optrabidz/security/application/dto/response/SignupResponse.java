@@ -1,4 +1,6 @@
 package com.project.optrabidz.security.application.dto.response;
 
-public record SignupResponse(String message) {
+import com.project.optrabidz.identity.domain.model.RoleType;
+
+public record SignupResponse(Long accountId, RoleType role) {
 }

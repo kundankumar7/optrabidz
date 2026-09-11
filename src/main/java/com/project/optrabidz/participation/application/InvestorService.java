@@ -1,6 +1,5 @@
 package com.project.optrabidz.participation.application;
 
-import com.project.optrabidz.common.api.response.MessageData;
 import com.project.optrabidz.common.event.EventPublisher;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.participation.application.event.ParticipationProfileChangedEvent;
@@ -28,7 +27,7 @@ public class InvestorService {
     }
 
     @Transactional
-    public MessageData createInvestor(Long accountId, RoleType roleType, CreateInvestorRequest request) {
+    public InvestorResponse createInvestor(Long accountId, RoleType roleType, CreateInvestorRequest request) {
         ensureRole(roleType, RoleType.INVESTOR);
 
         if (investorRepository.existsByAccountId(accountId)) {
@@ -43,10 +42,10 @@ public class InvestorService {
                 request.webPresences()
         );
 
-        investorRepository.save(investor);
+        Investor savedInvestor = investorRepository.save(investor);
         publishProfileChanged(accountId, roleType);
 
-        return new MessageData("Investor created successfully");
+        return toResponse(savedInvestor);
     }
 
     @Transactional(readOnly = true)
@@ -60,7 +59,7 @@ public class InvestorService {
     }
 
     @Transactional
-    public MessageData updateInvestor(Long accountId, RoleType roleType, CreateInvestorRequest request) {
+    public InvestorResponse updateInvestor(Long accountId, RoleType roleType, CreateInvestorRequest request) {
         ensureRole(roleType, RoleType.INVESTOR);
 
         Investor investor = investorRepository.findByAccountId(accountId)
@@ -73,9 +72,9 @@ public class InvestorService {
                 request.webPresences()
         );
 
-        investorRepository.save(investor);
+        Investor savedInvestor = investorRepository.save(investor);
         publishProfileChanged(accountId, roleType);
-        return new MessageData("Investor updated successfully");
+        return toResponse(savedInvestor);
     }
 
     private void publishProfileChanged(Long accountId, RoleType roleType) {

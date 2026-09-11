@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,9 +28,9 @@ class ParticipationApiIT extends ApiIntegrationTestSupport {
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.role").value("STARTUP"))
-                .andExpect(jsonPath("$.data.profileStatus").value("INCOMPLETE"))
-                .andExpect(jsonPath("$.data.actorExists").value(false));
+                .andExpect(jsonPath("$.role").value("STARTUP"))
+                .andExpect(jsonPath("$.profileStatus").value("INCOMPLETE"))
+                .andExpect(jsonPath("$.actorExists").value(false));
 
         mockMvc.perform(post("/api/v1/startups")
                         .session(startup.session())
@@ -37,16 +38,20 @@ class ParticipationApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", startup.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(incompleteStartupRequest())))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Startup created successfully"));
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/api/v1/startups/me"))
+                .andExpect(jsonPath("$.startupId").isNumber())
+                .andExpect(jsonPath("$.publicDisplayName").value("Incomplete Startup"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist());
 
         mockMvc.perform(get("/api/v1/me")
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.profileStatus").value("INCOMPLETE"))
-                .andExpect(jsonPath("$.data.actorExists").value(true));
+                .andExpect(jsonPath("$.profileStatus").value("INCOMPLETE"))
+                .andExpect(jsonPath("$.actorExists").value(true));
 
         mockMvc.perform(patch("/api/v1/startups/me")
                         .session(startup.session())
@@ -55,25 +60,28 @@ class ParticipationApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(completeStartupRequest("Updated Startup Private Limited", "Updated Startup"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Startup updated successfully"));
+                .andExpect(jsonPath("$.legalEntityName").value("Updated Startup Private Limited"))
+                .andExpect(jsonPath("$.publicDisplayName").value("Updated Startup"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist());
 
         mockMvc.perform(get("/api/v1/startups/me")
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.legalEntityName").value("Updated Startup Private Limited"))
-                .andExpect(jsonPath("$.data.publicDisplayName").value("Updated Startup"))
-                .andExpect(jsonPath("$.data.webPresences[0]").value("https://startup.example.com"))
-                .andExpect(jsonPath("$.data.legalRegistrations[0].type").value("CIN"))
-                .andExpect(jsonPath("$.data.legalRegistrations[0].value").value("U12345KA2026PTC000001"));
+                .andExpect(jsonPath("$.legalEntityName").value("Updated Startup Private Limited"))
+                .andExpect(jsonPath("$.publicDisplayName").value("Updated Startup"))
+                .andExpect(jsonPath("$.webPresences[0]").value("https://startup.example.com"))
+                .andExpect(jsonPath("$.legalRegistrations[0].type").value("CIN"))
+                .andExpect(jsonPath("$.legalRegistrations[0].value").value("U12345KA2026PTC000001"));
 
         mockMvc.perform(get("/api/v1/me")
                         .session(startup.session())
                         .cookie(startup.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.profileStatus").value("COMPLETE"))
-                .andExpect(jsonPath("$.data.actorExists").value(true));
+                .andExpect(jsonPath("$.profileStatus").value("COMPLETE"))
+                .andExpect(jsonPath("$.actorExists").value(true));
     }
 
     @Test
@@ -86,17 +94,21 @@ class ParticipationApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", investor.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(investorRequest("Investor One", "Investor One Ventures LLP"))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Investor created successfully"));
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/api/v1/investors/me"))
+                .andExpect(jsonPath("$.investorId").isNumber())
+                .andExpect(jsonPath("$.publicDisplayName").value("Investor One"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist());
 
         mockMvc.perform(get("/api/v1/me")
                         .session(investor.session())
                         .cookie(investor.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.role").value("INVESTOR"))
-                .andExpect(jsonPath("$.data.profileStatus").value("COMPLETE"))
-                .andExpect(jsonPath("$.data.actorExists").value(true));
+                .andExpect(jsonPath("$.role").value("INVESTOR"))
+                .andExpect(jsonPath("$.profileStatus").value("COMPLETE"))
+                .andExpect(jsonPath("$.actorExists").value(true));
 
         mockMvc.perform(patch("/api/v1/investors/me")
                         .session(investor.session())
@@ -105,16 +117,19 @@ class ParticipationApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(investorRequest("Investor One Updated", "Investor One Capital LLP"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Investor updated successfully"));
+                .andExpect(jsonPath("$.publicDisplayName").value("Investor One Updated"))
+                .andExpect(jsonPath("$.legalEntityName").value("Investor One Capital LLP"))
+                .andExpect(jsonPath("$.success").doesNotExist())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.meta").doesNotExist());
 
         mockMvc.perform(get("/api/v1/investors/me")
                         .session(investor.session())
                         .cookie(investor.xsrfCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.publicDisplayName").value("Investor One Updated"))
-                .andExpect(jsonPath("$.data.legalEntityName").value("Investor One Capital LLP"))
-                .andExpect(jsonPath("$.data.webPresences[0]").value("https://investor.example.com"));
+                .andExpect(jsonPath("$.publicDisplayName").value("Investor One Updated"))
+                .andExpect(jsonPath("$.legalEntityName").value("Investor One Capital LLP"))
+                .andExpect(jsonPath("$.webPresences[0]").value("https://investor.example.com"));
     }
 
     @Test
@@ -172,7 +187,7 @@ class ParticipationApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", startup.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(incompleteStartupRequest())))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         expectApplicationProblem(
                 mockMvc.perform(post("/api/v1/startups")
