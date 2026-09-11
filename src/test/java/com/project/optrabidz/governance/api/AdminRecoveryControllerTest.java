@@ -1,6 +1,5 @@
 package com.project.optrabidz.governance.api;
 
-import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.common.error.ApplicationException;
 import com.project.optrabidz.governance.application.admin.AdminAuthorityTransferService;
 import com.project.optrabidz.governance.application.admin.AdminRecoveryProperties;
@@ -15,7 +14,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockHttpServletRequest;
+
+import java.lang.reflect.Method;
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -89,21 +90,31 @@ class AdminRecoveryControllerTest {
     }
 
     @Test
-    void matchingTokenDelegatesTheExistingTransferCommandAndSuccessResponse() {
+    void transferEndpointUsesTheDirectMinimalSuccessContract() {
+        Method transferMethod = Arrays.stream(AdminRecoveryController.class.getDeclaredMethods())
+                .filter(method -> method.getName().equals("transferAdminAuthority"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(transferMethod.getParameterCount()).isEqualTo(2);
+        assertThat(transferMethod.getReturnType()).isEqualTo(AdminTransferResponse.class);
+        assertThat(Arrays.stream(AdminTransferResponse.class.getRecordComponents())
+                .map(component -> component.getName()))
+                .containsExactly("newAdminAccountId");
+    }
+
+    @Test
+    void matchingTokenDelegatesTheExistingTransferCommand() {
         configureRecovery();
         when(transferService.transferAuthority(any(TransferAdminAuthorityCommand.class), eq(true)))
                 .thenReturn(88L);
 
-        SuccessResponse<AdminTransferResponse> response = controller.transferAdminAuthority(
+        AdminTransferResponse response = controller.transferAdminAuthority(
                 CONFIGURED_TOKEN,
-                request(),
-                new MockHttpServletRequest()
+                request()
         );
 
-        assertThat(response.success()).isTrue();
-        assertThat(response.data().newAdminAccountId()).isEqualTo(88L);
-        assertThat(response.data().message())
-                .isEqualTo("Admin authority transferred successfully");
+        assertThat(response.newAdminAccountId()).isEqualTo(88L);
         ArgumentCaptor<TransferAdminAuthorityCommand> command =
                 ArgumentCaptor.forClass(TransferAdminAuthorityCommand.class);
         verify(transferService).transferAuthority(command.capture(), eq(true));
@@ -118,8 +129,7 @@ class AdminRecoveryControllerTest {
     private void assertDenied(String submittedToken, String diagnosticCode) {
         Throwable thrown = catchThrowable(() -> controller.transferAdminAuthority(
                 submittedToken,
-                request(),
-                new MockHttpServletRequest()
+                request()
         ));
 
         assertThat(thrown).isInstanceOf(AdminRecoveryAccessDeniedException.class);

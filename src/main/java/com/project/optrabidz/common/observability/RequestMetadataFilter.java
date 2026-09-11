@@ -1,7 +1,5 @@
-package com.project.optrabidz.common.api.response;
+package com.project.optrabidz.common.observability;
 
-import com.project.optrabidz.common.observability.ObservabilityMdcKeys;
-import com.project.optrabidz.common.observability.RequestIdProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

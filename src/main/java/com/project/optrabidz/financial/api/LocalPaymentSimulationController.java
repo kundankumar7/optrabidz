@@ -1,11 +1,8 @@
 package com.project.optrabidz.financial.api;
 
-import com.project.optrabidz.common.api.response.ApiResponse;
-import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.financial.application.FinancialService;
 import com.project.optrabidz.financial.application.dto.response.PaymentAttemptResponse;
 import com.project.optrabidz.security.application.AuthenticatedUserPrincipal;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,24 +23,18 @@ public class LocalPaymentSimulationController {
     }
 
     @PostMapping("/payment-attempts/{paymentAttemptId}/actions/local-confirm")
-    public SuccessResponse<PaymentAttemptResponse> confirmLocalPaymentAttempt(
+    public PaymentAttemptResponse confirmLocalPaymentAttempt(
             @PathVariable Long paymentAttemptId,
-            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                financialService.confirmLocalPaymentAttempt(principal.getAccountId(), principal.getRole(), paymentAttemptId),
-                httpRequest
-        );
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return financialService.confirmLocalPaymentAttempt(
+                principal.getAccountId(), principal.getRole(), paymentAttemptId);
     }
 
     @PostMapping("/payment-attempts/{paymentAttemptId}/actions/local-fail")
-    public SuccessResponse<PaymentAttemptResponse> failLocalPaymentAttempt(
+    public PaymentAttemptResponse failLocalPaymentAttempt(
             @PathVariable Long paymentAttemptId,
-            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                financialService.failLocalPaymentAttempt(principal.getAccountId(), principal.getRole(), paymentAttemptId),
-                httpRequest
-        );
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return financialService.failLocalPaymentAttempt(
+                principal.getAccountId(), principal.getRole(), paymentAttemptId);
     }
 }

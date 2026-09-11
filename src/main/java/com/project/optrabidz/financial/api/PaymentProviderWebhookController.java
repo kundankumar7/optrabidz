@@ -24,6 +24,10 @@ public class PaymentProviderWebhookController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(NO_CONTENT)
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Webhook accepted"
+    )
     public void handleProviderWebhook(
             @PathVariable String providerCode,
             HttpServletRequest request) {

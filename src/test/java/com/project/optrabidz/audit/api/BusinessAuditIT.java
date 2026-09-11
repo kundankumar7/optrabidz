@@ -97,11 +97,11 @@ class BusinessAuditIT extends ApiIntegrationTestSupport {
                                         "repaymentPlanType", "INSTALLMENT_MONTHLY"
                                 )
                         ))))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        return objectMapper.readTree(response).path("data").path("listingId").asLong();
+        return objectMapper.readTree(response).path("listingId").asLong();
     }
 
     private void publishListing(AuthenticatedClient startup, long listingId) throws Exception {

@@ -1,12 +1,9 @@
 package com.project.optrabidz.marketplace.api;
 
 import com.project.optrabidz.common.api.pagination.PageResponse;
-import com.project.optrabidz.common.api.response.ApiResponse;
-import com.project.optrabidz.common.api.response.SuccessResponse;
 import com.project.optrabidz.marketplace.application.AgreementService;
 import com.project.optrabidz.marketplace.application.dto.response.AgreementResponse;
 import com.project.optrabidz.security.application.AuthenticatedUserPrincipal;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,50 +21,39 @@ public class AgreementController {
     }
 
     @GetMapping("/agreements/{agreementId}")
-    public SuccessResponse<AgreementResponse> getAgreement(@PathVariable Long agreementId,
-                                                           @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-                                                           HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                agreementService.getAgreementById(
-                        principal.getAccountId(),
-                        principal.getRole(),
-                        agreementId
-                ),
-                httpRequest
+    public AgreementResponse getAgreement(
+            @PathVariable Long agreementId,
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return agreementService.getAgreementById(
+                principal.getAccountId(),
+                principal.getRole(),
+                agreementId
         );
     }
 
     @GetMapping("/startups/me/agreements")
-    public SuccessResponse<PageResponse<AgreementResponse>> getMyStartupAgreements(
+    public PageResponse<AgreementResponse> getMyStartupAgreements(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
-            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                agreementService.getMyStartupAgreements(
-                        principal.getAccountId(),
-                        principal.getRole(),
-                        page,
-                        size
-                ),
-                httpRequest
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return agreementService.getMyStartupAgreements(
+                principal.getAccountId(),
+                principal.getRole(),
+                page,
+                size
         );
     }
 
     @GetMapping("/investors/me/agreements")
-    public SuccessResponse<PageResponse<AgreementResponse>> getMyInvestorAgreements(
+    public PageResponse<AgreementResponse> getMyInvestorAgreements(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
-            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            HttpServletRequest httpRequest) {
-        return ApiResponse.success(
-                agreementService.getMyInvestorAgreements(
-                        principal.getAccountId(),
-                        principal.getRole(),
-                        page,
-                        size
-                ),
-                httpRequest
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        return agreementService.getMyInvestorAgreements(
+                principal.getAccountId(),
+                principal.getRole(),
+                page,
+                size
         );
     }
 }

@@ -103,15 +103,14 @@ class InvestorPreferenceServiceTest {
     }
 
     @Test
-    void successfulAddPreservesPersistenceEventAndResponse() {
+    void successfulAddPreservesPersistenceAndEvent() {
         when(participationActorQueryPort.findInvestorIdByAccountId(ACCOUNT_ID))
                 .thenReturn(Optional.of(INVESTOR_ID));
         when(investorPreferenceRepository.findByInvestorId(INVESTOR_ID))
                 .thenReturn(Optional.empty());
 
-        var result = service.addPreference(addCommand());
+        service.addPreference(addCommand());
 
-        assertThat(result.message()).isEqualTo("Investor preference added successfully");
         ArgumentCaptor<InvestorPreferenceProfile> profileCaptor =
                 ArgumentCaptor.forClass(InvestorPreferenceProfile.class);
         verify(investorPreferenceRepository).saveAll(profileCaptor.capture());

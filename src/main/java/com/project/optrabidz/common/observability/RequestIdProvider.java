@@ -1,11 +1,11 @@
 package com.project.optrabidz.common.observability;
 
-import com.project.optrabidz.common.api.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.UUID;
 
 public final class RequestIdProvider {
+    public static final String REQUEST_ID_ATTRIBUTE = "optrabidz.requestId";
     public static final String REQUEST_ID_HEADER = "X-Request-Id";
 
     private RequestIdProvider() {
@@ -16,7 +16,7 @@ public final class RequestIdProvider {
             return UUID.randomUUID().toString();
         }
 
-        Object existing = request.getAttribute(ApiResponse.REQUEST_ID_ATTRIBUTE);
+        Object existing = request.getAttribute(REQUEST_ID_ATTRIBUTE);
         if (existing instanceof String requestId && !requestId.isBlank()) {
             return requestId;
         }
@@ -26,7 +26,7 @@ public final class RequestIdProvider {
                 ? inboundRequestId.trim()
                 : UUID.randomUUID().toString();
 
-        request.setAttribute(ApiResponse.REQUEST_ID_ATTRIBUTE, requestId);
+        request.setAttribute(REQUEST_ID_ATTRIBUTE, requestId);
         return requestId;
     }
 

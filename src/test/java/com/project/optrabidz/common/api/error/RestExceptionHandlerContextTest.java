@@ -1,6 +1,6 @@
 package com.project.optrabidz.common.api.error;
 
-import com.project.optrabidz.common.api.response.RequestMetadataFilter;
+import com.project.optrabidz.common.observability.RequestMetadataFilter;
 import com.project.optrabidz.common.observability.SecurityMdcFilter;
 import com.project.optrabidz.security.infrastructure.config.ActiveSessionFilter;
 import com.project.optrabidz.security.infrastructure.config.CsrfCookieFilter;

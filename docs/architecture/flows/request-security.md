@@ -19,6 +19,9 @@
 5. The owning service enforces resource ownership and business rules; route
    authorization is not a substitute for service authorization.
 6. A repository adapter commits the accepted state transition.
+7. The controller returns the concrete response DTO or page. It uses
+   `ResponseEntity` only when it must express an explicit status or header,
+   such as `201 Created` with `Location` or `204 No Content`.
 
 Authentication belongs to the security adapter. Controllers may consume the
 already authenticated principal, but they do not validate passwords, sessions,
@@ -30,6 +33,8 @@ JWTs, or OAuth2 tokens.
 `ProblemAccessDeniedHandler` handles authenticated callers without sufficient
 authority. Both use the shared Problem Details writer so security failures
 match the public API error shape without disclosing internal diagnostics.
+The request identifier remains in the `X-Request-Id` header; it is not added to
+successful response bodies.
 
 ## Provider webhook request
 
