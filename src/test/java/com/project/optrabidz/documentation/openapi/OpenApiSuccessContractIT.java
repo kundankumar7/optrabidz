@@ -135,8 +135,8 @@ class OpenApiSuccessContractIT extends RealHttpIntegrationTestSupport {
 
     private Set<String> operationsWithResponse(JsonNode openApi, String responseCode) {
         Set<String> operations = new HashSet<>();
-        openApi.path("paths").fields().forEachRemaining(pathEntry ->
-                pathEntry.getValue().fields().forEachRemaining(operationEntry -> {
+        openApi.path("paths").properties().forEach(pathEntry ->
+                pathEntry.getValue().properties().forEach(operationEntry -> {
                     if (operationEntry.getValue().path("responses").has(responseCode)) {
                         operations.add(operationEntry.getKey().toUpperCase()
                                 + " " + pathEntry.getKey());
@@ -187,7 +187,8 @@ class OpenApiSuccessContractIT extends RealHttpIntegrationTestSupport {
     }
 
     private void assertNoForbiddenSuccessProperties(JsonNode schemas) {
-        Iterator<Map.Entry<String, JsonNode>> entries = schemas.fields();
+        Iterator<Map.Entry<String, JsonNode>> entries =
+                schemas.properties().iterator();
         while (entries.hasNext()) {
             Map.Entry<String, JsonNode> entry = entries.next();
             if (entry.getKey().contains("ProblemDetails")) {
