@@ -1,6 +1,6 @@
 package com.project.optrabidz.notification.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.project.optrabidz.common.outbox.OutboxDispatcher;
 import com.project.optrabidz.notification.application.channel.NotificationDeliveryDispatcher;
 import com.project.optrabidz.identity.domain.model.RoleType;
@@ -116,7 +116,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                         """, String.class, accountId)
         );
         assertThat(notificationPayload).isEqualTo(outboxPayload);
-        assertThat(outboxPayload.fieldNames()).toIterable()
+        assertThat(outboxPayload.propertyNames())
                 .containsExactlyInAnyOrderElementsOf(Set.of(
                         "accountId", "roleType", "occurredAt"
                 ));
@@ -128,7 +128,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                 .isEqualTo("STARTUP");
         assertThat(Instant.parse(outboxPayload.path("occurredAt").asText()))
                 .isNotNull();
-        assertThat(auditDetails.fieldNames()).toIterable()
+        assertThat(auditDetails.propertyNames())
                 .containsExactlyInAnyOrderElementsOf(Set.of(
                         "accountId", "roleType"
                 ));
@@ -698,7 +698,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        List<String> names = objectMapper.readTree(response).path("items").findValuesAsText("notificationName");
+        List<String> names = objectMapper.readTree(response).path("items").findValuesAsString("notificationName");
         assertThat(names).contains(notificationName);
     }
 

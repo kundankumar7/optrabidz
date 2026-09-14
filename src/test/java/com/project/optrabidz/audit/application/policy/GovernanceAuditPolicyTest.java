@@ -1,6 +1,6 @@
 package com.project.optrabidz.audit.application.policy;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.project.optrabidz.audit.domain.model.AuditOutcome;
 import com.project.optrabidz.common.outbox.OutboxEvent;
 import com.project.optrabidz.governance.application.lifecycle.event.LifecycleRuleEnforcedEvent;
@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GovernanceAuditPolicyTest {
     private static final Instant NOW = Instant.parse("2026-05-26T00:00:00Z");
 
-    private final GovernanceAuditPolicy policy = new GovernanceAuditPolicy(new ObjectMapper());
+    private final GovernanceAuditPolicy policy = new GovernanceAuditPolicy(JsonMapper.builder().build());
 
     @Test
     void mapsChangedLifecycleRuleToSystemAuditDescriptor() {

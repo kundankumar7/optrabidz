@@ -1,7 +1,7 @@
 package com.project.optrabidz.security.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.security.infrastructure.config.SecuritySessionConstants;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;

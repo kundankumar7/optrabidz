@@ -1,6 +1,7 @@
 package com.project.optrabidz.audit.application;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.project.optrabidz.audit.application.policy.AuditPolicyRegistry;
 import com.project.optrabidz.audit.infrastructure.entity.AuditRecord;
 import com.project.optrabidz.audit.infrastructure.repository.JpaAuditRecordRepository;
@@ -13,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.aop.framework.ProxyFactory;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -47,7 +47,7 @@ class SecurityAuditServiceTest {
     void webhookSecurityRecordsContainOnlyBoundedMetadata() {
         AuditService auditService = mock(AuditService.class);
         SensitiveDataMasker sensitiveDataMasker = new SensitiveDataMasker();
-        ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
+        ObjectMapper objectMapper = JsonMapper.builder().build();
         SecurityAuditService service = new SecurityAuditService(
                 auditService,
                 new AuditRecordFactory(objectMapper, sensitiveDataMasker),
@@ -97,7 +97,7 @@ class SecurityAuditServiceTest {
         );
         doThrow(persistenceFailure).when(auditService).save(any());
         SensitiveDataMasker sensitiveDataMasker = new SensitiveDataMasker();
-        ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json().build();
+        ObjectMapper objectMapper = JsonMapper.builder().build();
         SecurityAuditService service = new SecurityAuditService(
                 auditService,
                 new AuditRecordFactory(objectMapper, sensitiveDataMasker),
@@ -126,9 +126,7 @@ class SecurityAuditServiceTest {
                 "database unavailable: secret-token"
         );
         SensitiveDataMasker sensitiveDataMasker = new SensitiveDataMasker();
-        ObjectMapper objectMapper = Jackson2ObjectMapperBuilder
-                .json()
-                .build();
+        ObjectMapper objectMapper = JsonMapper.builder().build();
         AuditRecordFactory auditRecordFactory = new AuditRecordFactory(
                 objectMapper,
                 sensitiveDataMasker

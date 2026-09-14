@@ -1,6 +1,6 @@
 package com.project.optrabidz.notification.application.rule;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.project.optrabidz.classification.application.event.InvestorPreferenceChangedEvent;
 import com.project.optrabidz.classification.application.event.StartupClassificationChangedEvent;
 import com.project.optrabidz.common.event.DomainEvent;
@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ProfileNotificationRuleTest {
     private static final Instant NOW = Instant.parse("2026-05-26T00:00:00Z");
 
-    private final ProfileNotificationRule rule = new ProfileNotificationRule(new ObjectMapper());
+    private final ProfileNotificationRule rule = new ProfileNotificationRule(JsonMapper.builder().build());
 
     @Test
     void usesCanonicalNotificationNamesForProfileEvents() {

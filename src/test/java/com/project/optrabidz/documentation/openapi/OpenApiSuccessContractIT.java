@@ -1,6 +1,6 @@
 package com.project.optrabidz.documentation.openapi;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.project.optrabidz.testsupport.RealHttpIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
 
@@ -156,8 +156,7 @@ class OpenApiSuccessContractIT extends RealHttpIntegrationTestSupport {
         });
 
         JsonNode directObject = response(openApi, "/api/v1/me", "get", "200");
-        assertThat(resolveSchema(openApi, directObject).path("properties").fieldNames())
-                .toIterable()
+        assertThat(resolveSchema(openApi, directObject).path("properties").propertyNames())
                 .containsExactlyInAnyOrder(
                         "role", "accountState", "profileStatus", "actorType", "actorExists")
                 .doesNotContain("success", "data", "meta", "csrfToken");
@@ -166,8 +165,7 @@ class OpenApiSuccessContractIT extends RealHttpIntegrationTestSupport {
                 openApi, "/api/v1/funding-listings", "get", "200");
         assertThat(responseSchema(directPage).path("$ref").asText())
                 .startsWith("#/components/schemas/PageResponse");
-        assertThat(resolveSchema(openApi, directPage).path("properties").fieldNames())
-                .toIterable()
+        assertThat(resolveSchema(openApi, directPage).path("properties").propertyNames())
                 .containsExactlyInAnyOrder(
                         "items", "page", "size", "totalItems", "totalPages");
 
@@ -175,8 +173,7 @@ class OpenApiSuccessContractIT extends RealHttpIntegrationTestSupport {
                 openApi, "/api/v1/funding-listings", "post", "201");
         assertThat(created.path("headers").path("Location").isMissingNode())
                 .isFalse();
-        assertThat(resolveSchema(openApi, created).path("properties").fieldNames())
-                .toIterable()
+        assertThat(resolveSchema(openApi, created).path("properties").propertyNames())
                 .contains("listingId")
                 .doesNotContain("success", "data", "meta", "csrfToken");
 
@@ -270,7 +267,7 @@ class OpenApiSuccessContractIT extends RealHttpIntegrationTestSupport {
         JsonNode content = response.path("content");
         JsonNode mediaType = content.has("application/json")
                 ? content.path("application/json")
-                : content.elements().next();
+                : content.values().iterator().next();
         return mediaType.path("schema");
     }
 
@@ -283,7 +280,7 @@ class OpenApiSuccessContractIT extends RealHttpIntegrationTestSupport {
                 continue;
             }
             JsonNode properties = entry.getValue().path("properties");
-            assertThat(properties.fieldNames()).toIterable()
+            assertThat(properties.propertyNames())
                     .as("schema %s", entry.getKey())
                     .doesNotContain("success", "data", "meta", "csrfToken");
         }

@@ -1,7 +1,7 @@
 package com.project.optrabidz.testsupport;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,7 +166,7 @@ public abstract class ApiIntegrationTestSupport extends PostgresIntegrationTestS
                 .andExpect(content().string(""));
     }
 
-    protected String json(Object value) throws JsonProcessingException {
+    protected String json(Object value) throws JacksonException {
         return objectMapper.writeValueAsString(value);
     }
 

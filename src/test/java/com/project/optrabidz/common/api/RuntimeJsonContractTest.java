@@ -1,7 +1,7 @@
 package com.project.optrabidz.common.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.project.optrabidz.financial.application.dto.response.PaymentIntentResponse;
 import com.project.optrabidz.financial.domain.model.PaymentPurpose;
 import com.project.optrabidz.financial.domain.model.PaymentState;
@@ -45,7 +45,7 @@ class RuntimeJsonContractTest {
         String json = objectMapper.writeValueAsString(response);
         JsonNode body = objectMapper.readTree(json);
 
-        assertThat(body.fieldNames()).toIterable()
+        assertThat(body.propertyNames())
                 .containsExactly(
                         "paymentIntentId",
                         "paymentPurpose",

@@ -1,6 +1,6 @@
 package com.project.optrabidz.common.api.error;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.project.optrabidz.testsupport.RealHttpIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.TestConfiguration;
