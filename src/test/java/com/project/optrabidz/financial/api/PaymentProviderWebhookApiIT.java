@@ -349,6 +349,10 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
                 """
                 {"eventType":"PAYMENT_CONFIRMED","paymentAttemptId":"1001",
                  "providerPaymentId":"UPI-1001","providerEventId":"evt-1001"}
+                """,
+                """
+                {"eventType":"PAYMENT_CONFIRMED","paymentAttemptId":1001,
+                 "providerPaymentId":"UPI-1001","providerEventId":"evt-1001"} true
                 """
         );
 
