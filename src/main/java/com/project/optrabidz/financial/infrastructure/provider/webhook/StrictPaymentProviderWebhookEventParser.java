@@ -1,12 +1,12 @@
 package com.project.optrabidz.financial.infrastructure.provider.webhook;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.StreamReadConstraints;
-import com.fasterxml.jackson.core.StreamReadFeature;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.core.StreamReadConstraints;
+import tools.jackson.core.StreamReadFeature;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectReader;
+import tools.jackson.databind.json.JsonMapper;
 import com.project.optrabidz.financial.application.command.PaymentProviderWebhookCommand;
 import com.project.optrabidz.financial.application.command.PaymentProviderWebhookEventType;
 import com.project.optrabidz.financial.application.dto.request.PaymentProviderWebhookRequest;

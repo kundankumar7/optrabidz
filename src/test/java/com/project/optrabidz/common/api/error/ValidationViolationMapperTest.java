@@ -145,7 +145,12 @@ class ValidationViolationMapperTest {
                         )),
                         null,
                         null,
-                        null
+                        null,
+                        (error, sourceType) -> {
+                            throw new IllegalArgumentException(
+                                    "No source object of the given type"
+                            );
+                        }
                 );
         MethodValidationResult methodResult = MethodValidationResult.create(
                 new MethodProbe(),

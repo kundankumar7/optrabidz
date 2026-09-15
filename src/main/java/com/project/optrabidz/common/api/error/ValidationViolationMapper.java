@@ -78,7 +78,7 @@ public final class ValidationViolationMapper {
             HandlerMethodValidationException exception
     ) {
         Objects.requireNonNull(exception, "exception must not be null");
-        return sortedDistinct(exception.getAllValidationResults()
+        return sortedDistinct(exception.getParameterValidationResults()
                 .stream()
                 .flatMap(this::toMethodViolations));
     }

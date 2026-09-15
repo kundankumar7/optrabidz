@@ -1,6 +1,6 @@
 package com.project.optrabidz.notification.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.project.optrabidz.common.outbox.OutboxDispatcher;
 import com.project.optrabidz.notification.application.channel.NotificationDeliveryDispatcher;
 import com.project.optrabidz.identity.domain.model.RoleType;
@@ -15,9 +15,11 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -86,7 +88,56 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
 
         JsonNode firstNotification = objectMapper.readTree(feedJson).path("items").get(0);
         long recipientId = firstNotification.path("recipientId").asLong();
+        long notificationId = firstNotification.path("notificationId").asLong();
         long accountId = firstNotification.path("entityId").asLong();
+
+        JsonNode outboxPayload = objectMapper.readTree(
+                jdbcTemplate.queryForObject("""
+                        select payload::text
+                        from event_outbox
+                        where event_type = 'AccountRegisteredEvent'
+                          and payload ->> 'accountId' = ?
+                        """, String.class, String.valueOf(accountId))
+        );
+        JsonNode notificationPayload = objectMapper.readTree(
+                jdbcTemplate.queryForObject("""
+                        select payload::text
+                        from notification
+                        where notification_id = ?
+                        """, String.class, notificationId)
+        );
+        JsonNode auditDetails = objectMapper.readTree(
+                jdbcTemplate.queryForObject("""
+                        select details::text
+                        from audit_record
+                        where event_type = 'AccountRegisteredEvent'
+                          and action = 'ACCOUNT_REGISTERED'
+                          and actor_account_id = ?
+                        """, String.class, accountId)
+        );
+        assertThat(notificationPayload).isEqualTo(outboxPayload);
+        assertThat(outboxPayload.propertyNames())
+                .containsExactlyInAnyOrderElementsOf(Set.of(
+                        "accountId", "roleType", "occurredAt"
+                ));
+        assertThat(outboxPayload.path("accountId").isIntegralNumber())
+                .isTrue();
+        assertThat(outboxPayload.path("accountId").asLong())
+                .isEqualTo(accountId);
+        assertThat(outboxPayload.path("roleType").asText())
+                .isEqualTo("STARTUP");
+        assertThat(Instant.parse(outboxPayload.path("occurredAt").asText()))
+                .isNotNull();
+        assertThat(auditDetails.propertyNames())
+                .containsExactlyInAnyOrderElementsOf(Set.of(
+                        "accountId", "roleType"
+                ));
+        assertThat(auditDetails.path("accountId").isIntegralNumber())
+                .isTrue();
+        assertThat(auditDetails.path("accountId").asLong())
+                .isEqualTo(accountId);
+        assertThat(auditDetails.path("roleType").asText())
+                .isEqualTo("STARTUP");
 
         mockMvc.perform(get("/api/v1/notifications/me/summary")
                         .session(startup.session())
@@ -647,7 +698,7 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        List<String> names = objectMapper.readTree(response).path("items").findValuesAsText("notificationName");
+        List<String> names = objectMapper.readTree(response).path("items").findValuesAsString("notificationName");
         assertThat(names).contains(notificationName);
     }
 

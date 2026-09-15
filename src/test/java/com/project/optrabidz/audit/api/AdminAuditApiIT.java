@@ -1,6 +1,6 @@
 package com.project.optrabidz.audit.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
@@ -313,7 +313,7 @@ class AdminAuditApiIT extends ApiIntegrationTestSupport {
     }
 
     private List<Long> itemIds(JsonNode response) {
-        return response.path("items").findValuesAsText("auditRecordId").stream()
+        return response.path("items").findValuesAsString("auditRecordId").stream()
                 .map(Long::valueOf)
                 .toList();
     }

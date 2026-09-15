@@ -1,13 +1,15 @@
 package com.project.optrabidz.common.api.error;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.json.ProblemDetailJacksonMixin;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -22,8 +24,9 @@ class SecurityProblemResponseWriterTest {
     private static final Instant NOW =
             Instant.parse("2026-08-15T04:00:00Z");
 
-    private final ObjectMapper objectMapper =
-            Jackson2ObjectMapperBuilder.json().build();
+    private final ObjectMapper objectMapper = JsonMapper.builder()
+            .addMixIn(ProblemDetail.class, ProblemDetailJacksonMixin.class)
+            .build();
     private final SecurityProblemResponseWriter writer =
             new SecurityProblemResponseWriter(
                     new ProblemDetailsFactory(

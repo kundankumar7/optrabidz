@@ -1,6 +1,6 @@
 package com.project.optrabidz.notification.application.rule;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.project.optrabidz.common.outbox.OutboxEvent;
 import com.project.optrabidz.governance.application.admin.event.AdminAuthorityTransferredEvent;
 import org.junit.jupiter.api.Test;
@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GovernanceNotificationRuleTest {
     private static final Instant NOW = Instant.parse("2026-05-26T00:00:00Z");
 
-    private final GovernanceNotificationRule rule = new GovernanceNotificationRule(new ObjectMapper());
+    private final GovernanceNotificationRule rule = new GovernanceNotificationRule(JsonMapper.builder().build());
 
     @Test
     void createsSeparateNotificationsForNewAndRevokedAdmin() {

@@ -1,7 +1,8 @@
 package com.project.optrabidz.common.application.pagination;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PageResponseTest {
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = JsonMapper.builder().build();
 
     @Test
     void normalizesNullItemsToAnImmutableEmptyList() {
@@ -41,7 +42,7 @@ class PageResponseTest {
         JsonNode json = objectMapper.valueToTree(
                 new PageResponse<>(List.of("first"), 2, 10, 1, 1));
 
-        assertThat(json.fieldNames()).toIterable()
+        assertThat(json.propertyNames())
                 .containsExactlyInAnyOrder(
                         "items", "page", "size", "totalItems", "totalPages");
         assertThat(json.path("items").get(0).asText()).isEqualTo("first");

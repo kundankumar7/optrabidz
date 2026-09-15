@@ -1,6 +1,8 @@
 package com.project.optrabidz.documentation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -55,9 +57,12 @@ final class DiagramPublicationValidator {
 
         Inventory inventory;
         try {
-            inventory = new ObjectMapper().readValue(inventoryPath.toFile(),
+            inventory = JsonMapper.builder()
+                    .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                    .build()
+                    .readValue(inventoryPath.toFile(),
                     Inventory.class);
-        } catch (IOException exception) {
+        } catch (JacksonException exception) {
             return List.of(new Violation("catalogue", normalize(CATALOG),
                     "diagram publication catalogue is invalid JSON"));
         }

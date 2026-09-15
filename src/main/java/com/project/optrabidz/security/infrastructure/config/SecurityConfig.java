@@ -13,7 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Configuration
@@ -106,11 +106,14 @@ public class SecurityConfig {
     }
 
     private RequestMatcher[] publicPostMatchers() {
+        PathPatternRequestMatcher.Builder paths =
+                PathPatternRequestMatcher.withDefaults();
         return new RequestMatcher[] {
-                new AntPathRequestMatcher("/api/v1/auth/register", "POST"),
-                new AntPathRequestMatcher("/api/v1/auth/login", "POST"),
-                new AntPathRequestMatcher("/api/v1/admin/recovery/transfer", "POST"),
-                new AntPathRequestMatcher("/api/v1/payment-providers/*/webhooks", "POST")
+                paths.matcher(HttpMethod.POST, "/api/v1/auth/register"),
+                paths.matcher(HttpMethod.POST, "/api/v1/auth/login"),
+                paths.matcher(HttpMethod.POST, "/api/v1/admin/recovery/transfer"),
+                paths.matcher(HttpMethod.POST,
+                        "/api/v1/payment-providers/{provider}/webhooks")
         };
     }
 

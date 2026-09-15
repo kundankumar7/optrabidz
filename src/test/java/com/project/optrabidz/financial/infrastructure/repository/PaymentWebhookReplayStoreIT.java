@@ -11,7 +11,7 @@ import com.project.optrabidz.testsupport.PostgresTestDataFixture;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class PaymentWebhookReplayStoreIT extends PostgresJpaIntegrationTestSupport {
     private static final Instant NOW = Instant.parse("2026-08-25T00:00:00Z");
-    private static final String EVENT_PREFIX = "kan32-store-";
+    private static final String EVENT_PREFIX = "webhook-store-";
 
     @Autowired
     private PaymentWebhookReplayStore store;
@@ -209,7 +209,7 @@ class PaymentWebhookReplayStoreIT extends PostgresJpaIntegrationTestSupport {
     private PaymentReference createPaymentReference() {
         PostgresTestDataFixture.PaymentReference reference =
                 new PostgresTestDataFixture(jdbcTemplate, NOW)
-                        .createSettlementReference("kan32-store-" + UUID.randomUUID());
+                        .createSettlementReference("webhook-store-" + UUID.randomUUID());
         Long paymentIntentId = jdbcTemplate.queryForObject("""
                 insert into payment_intent (
                     payment_purpose,
@@ -231,7 +231,7 @@ class PaymentWebhookReplayStoreIT extends PostgresJpaIntegrationTestSupport {
                 reference.referenceId(),
                 reference.payerAccountId(),
                 reference.payeeAccountId(),
-                "kan32-store-" + UUID.randomUUID(),
+                "webhook-store-" + UUID.randomUUID(),
                 Timestamp.from(NOW.minusSeconds(30)),
                 Timestamp.from(NOW.plusSeconds(900))
         );
@@ -250,7 +250,7 @@ class PaymentWebhookReplayStoreIT extends PostgresJpaIntegrationTestSupport {
                 ) returning payment_attempt_id
                 """, Long.class,
                 paymentIntentId,
-                "kan32-store-order-" + UUID.randomUUID(),
+                "webhook-store-order-" + UUID.randomUUID(),
                 Timestamp.from(NOW.minusSeconds(20)),
                 Timestamp.from(NOW.minusSeconds(10))
         );

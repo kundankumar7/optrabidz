@@ -121,6 +121,16 @@ class ExceptionArchitectureTest {
                     .as("production code must use the neutral error contract");
 
     @ArchTest
+    static final ArchRule PRODUCTION_CODE_USES_ONLY_CURRENT_JACKSON_CORE_AND_DATABIND =
+            noClasses()
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "com.fasterxml.jackson.core..",
+                            "com.fasterxml.jackson.databind..",
+                            "com.fasterxml.jackson.datatype.."
+                    )
+                    .as("production code must use the current Jackson core and databind packages");
+
+    @ArchTest
     static final ArchRule PRODUCTION_CODE_DOES_NOT_DEPEND_INWARD_ON_DOCUMENTATION =
             noClasses()
                     .that().resideOutsideOfPackage("..documentation..")
@@ -140,6 +150,7 @@ class ExceptionArchitectureTest {
                     .that().haveSimpleName("PaymentProviderWebhookController")
                     .should().dependOnClassesThat().resideInAnyPackage(
                             "com.fasterxml.jackson..",
+                            "tools.jackson..",
                             "..financial.application.port.."
                     )
                     .as("the webhook controller may only map HTTP and delegate to its ingress boundary");
@@ -177,6 +188,7 @@ class ExceptionArchitectureTest {
                             "org.springframework.jdbc..",
                             "org.springframework.data..",
                             "com.fasterxml.jackson..",
+                            "tools.jackson..",
                             "org.postgresql.."
                     )
                     .as("the webhook replay port must remain independent of transport and persistence frameworks");
