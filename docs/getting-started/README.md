@@ -174,6 +174,12 @@ Use the same local Swagger UI tab so the browser retains the session cookie:
 3. Clear the password from the visible Swagger request field. Do not capture or
    share a screenshot containing the request.
 
+Development Swagger UI reads the `XSRF-TOKEN` cookie issued by the application
+and sends it as the `X-CSRF-TOKEN` header for protected state-changing
+requests. A `CSRF_VALIDATION_FAILED` response means that browser security
+contract was not satisfied; do not disable CSRF to work around it. Log in again
+in the same Swagger tab before retrying.
+
 ## 9. Disable bootstrap and remove one-time values
 
 The administrator account is now stored in PostgreSQL and does not depend on

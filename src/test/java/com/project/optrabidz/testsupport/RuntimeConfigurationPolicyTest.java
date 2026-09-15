@@ -72,6 +72,18 @@ class RuntimeConfigurationPolicyTest {
     }
 
     @Test
+    void developmentSwaggerCopiesTheCsrfCookieIntoTheRequiredHeader() throws IOException {
+        Properties development = load("src/main/resources/application-dev.properties");
+
+        assertThat(development.getProperty("springdoc.swagger-ui.csrf.enabled"))
+                .isEqualTo("true");
+        assertThat(development.getProperty("springdoc.swagger-ui.csrf.cookie-name"))
+                .isEqualTo("XSRF-TOKEN");
+        assertThat(development.getProperty("springdoc.swagger-ui.csrf.header-name"))
+                .isEqualTo("X-CSRF-TOKEN");
+    }
+
+    @Test
     void trackedRuntimeProfilesContainNoOperationalSecretFallbacks() throws IOException {
         Properties baseline = load("src/main/resources/application.properties");
         Properties development = load("src/main/resources/application-dev.properties");
