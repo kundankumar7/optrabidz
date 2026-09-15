@@ -1,6 +1,6 @@
 package com.project.optrabidz.documentation.openapi;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.project.optrabidz.documentation.error.PublicErrorCatalogue;
 import com.project.optrabidz.documentation.error.PublicErrorDefinition;
 import com.project.optrabidz.testsupport.RealHttpIntegrationTestSupport;

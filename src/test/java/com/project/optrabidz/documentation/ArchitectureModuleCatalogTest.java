@@ -2,8 +2,8 @@ package com.project.optrabidz.documentation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +34,7 @@ class ArchitectureModuleCatalogTest {
 
     @Test
     void catalogContainsOnlyIntentionalOwnershipForEveryProductionModule() throws Exception {
-        JsonNode definitions = new ObjectMapper().readTree(CATALOG.toFile()).path("modules");
+        JsonNode definitions = JsonMapper.builder().build().readTree(CATALOG.toFile()).path("modules");
         Map<String, JsonNode> modules = new TreeMap<>();
         definitions.forEach(definition -> modules.put(definition.path("name").asText(), definition));
 
@@ -45,7 +45,7 @@ class ArchitectureModuleCatalogTest {
             String module = entry.getKey();
             JsonNode definition = entry.getValue();
             Set<String> fields = new TreeSet<>();
-            definition.fieldNames().forEachRemaining(fields::add);
+            fields.addAll(definition.propertyNames());
 
             assertThat(fields)
                     .as("catalog fields for %s", module)

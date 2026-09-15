@@ -1,7 +1,7 @@
 package com.project.optrabidz.notification.application.rule;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.project.optrabidz.common.outbox.OutboxEvent;
 import org.springframework.stereotype.Component;
 

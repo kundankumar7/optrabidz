@@ -14,7 +14,6 @@ import java.util.List;
 public class ClassificationPersistenceMapper {
     public StartupClassificationEntity toEntity(StartupClassification classification, Long startupId) {
         StartupClassificationEntity entity = new StartupClassificationEntity();
-        entity.setStartupClassificationId(classification.getStartupClassificationId());
         entity.setStartupId(startupId);
         entity.setClassificationType(classification.getClassificationType());
         entity.setClassificationValue(classification.getClassificationValue());
@@ -23,7 +22,6 @@ public class ClassificationPersistenceMapper {
 
     public InvestorPreferenceEntity toEntity(InvestorPreference preference, Long investorId) {
         InvestorPreferenceEntity entity = new InvestorPreferenceEntity();
-        entity.setInvestorPreferenceId(preference.getInvestorPreferenceId());
         entity.setInvestorId(investorId);
         entity.setPreferenceType(preference.getPreferenceType());
         entity.setPreferenceValue(preference.getPreferenceValue());

@@ -1,7 +1,7 @@
 package com.project.optrabidz.audit.application;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.project.optrabidz.audit.application.policy.AuditDescriptor;
 import com.project.optrabidz.audit.domain.model.AuditOutcome;
 import com.project.optrabidz.audit.infrastructure.entity.AuditRecord;
@@ -128,7 +128,7 @@ public class AuditRecordFactory {
         }
         try {
             return sensitiveDataMasker.mask(objectMapper.writeValueAsString(details));
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             return "{}";
         }
     }

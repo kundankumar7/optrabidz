@@ -1,7 +1,7 @@
 package com.project.optrabidz.audit.application;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.project.optrabidz.audit.domain.model.AuditOutcome;
 import com.project.optrabidz.common.observability.OperationalEventLogger;
 import com.project.optrabidz.common.observability.RequestIdProvider;
@@ -178,7 +178,7 @@ public class SecurityAuditService {
         try {
             Map<String, String> ordered = new LinkedHashMap<>(values);
             return sensitiveDataMasker.mask(objectMapper.writeValueAsString(ordered));
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             return "{}";
         }
     }

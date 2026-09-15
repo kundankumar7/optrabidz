@@ -2,7 +2,7 @@ package com.project.optrabidz.documentation.database;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.project.optrabidz.documentation.database.DatabaseSchemaSnapshot.ForeignKey;
 import com.project.optrabidz.documentation.database.DatabaseSchemaSnapshot.NamedObject;
 import java.nio.file.Files;
@@ -72,7 +72,7 @@ class DatabaseDocumentationContractIT {
 
     private void writeDiagnosticReport(DatabaseSchemaSnapshot schema) throws Exception {
         Files.createDirectories(REPORT.getParent());
-        new ObjectMapper().writerWithDefaultPrettyPrinter().writeValue(REPORT.toFile(), schema);
+        JsonMapper.builder().build().writerWithDefaultPrettyPrinter().writeValue(REPORT.toFile(), schema);
     }
 
     private void assertExtractionBaseline(DatabaseSchemaSnapshot schema) {

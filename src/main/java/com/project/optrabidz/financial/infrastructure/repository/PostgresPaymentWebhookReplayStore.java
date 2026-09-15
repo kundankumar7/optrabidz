@@ -1,7 +1,7 @@
 package com.project.optrabidz.financial.infrastructure.repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.project.optrabidz.financial.application.port.PaymentWebhookReplayStore;
 import com.project.optrabidz.financial.application.replay.PaymentWebhookReplayContent;
 import com.project.optrabidz.financial.application.replay.PaymentWebhookReplayEvent;
@@ -149,7 +149,7 @@ public class PostgresPaymentWebhookReplayStore implements PaymentWebhookReplaySt
     private String serialize(PaymentWebhookReplayContent content) {
         try {
             return objectMapper.writeValueAsString(content);
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             throw new IllegalStateException(
                     "Payment webhook replay content could not be serialized",
                     exception
@@ -163,7 +163,7 @@ public class PostgresPaymentWebhookReplayStore implements PaymentWebhookReplaySt
                     payload,
                     PaymentWebhookReplayContent.class
             );
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             throw new IllegalStateException(
                     "Payment webhook replay content could not be deserialized",
                     exception

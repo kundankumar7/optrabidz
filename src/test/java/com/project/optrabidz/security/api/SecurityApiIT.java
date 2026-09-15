@@ -1,13 +1,15 @@
 package com.project.optrabidz.security.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 import com.project.optrabidz.identity.domain.model.RoleType;
+import com.project.optrabidz.security.infrastructure.config.SecuritySessionConstants;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -112,6 +114,7 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
     @Test
     void mutatingProtectedEndpointRequiresMatchingCsrfHeader() throws Exception {
         AuthenticatedClient client = registerAndLogin(RoleType.STARTUP);
+        long persistedSessionId = persistedSessionId(client);
 
         MvcResult result = expectSecurityProblem(
                 mockMvc.perform(post("/api/v1/auth/logout")
@@ -152,6 +155,69 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
                         .header("X-CSRF-TOKEN", client.csrfToken()))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
+
+        assertThat(sessionStatus(persistedSessionId))
+                .isEqualTo("TERMINATED");
+    }
+
+    @Test
+    void loginReplacesAnExistingSessionAndRestoresTheReplacement()
+            throws Exception {
+        String email = uniqueEmail("session-replacement");
+        register(email, INITIAL_PASSWORD, RoleType.STARTUP)
+                .andExpect(status().isCreated());
+        AuthenticatedClient first = login(email, INITIAL_PASSWORD);
+        long firstPersistedSessionId = persistedSessionId(first);
+        String firstHttpSessionId = first.session().getId();
+
+        MvcResult secondLogin = mockMvc.perform(post("/api/v1/auth/login")
+                        .session(first.session())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "email", email,
+                                "password", INITIAL_PASSWORD
+                        ))))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        MockHttpSession replacement = (MockHttpSession) secondLogin
+                .getRequest()
+                .getSession(false);
+        assertThat(replacement).isNotNull();
+        assertThat(replacement.getId()).isNotEqualTo(firstHttpSessionId);
+        long replacementPersistedSessionId = (Long) replacement.getAttribute(
+                SecuritySessionConstants.DB_SESSION_ID_ATTRIBUTE);
+        assertThat(replacementPersistedSessionId)
+                .isNotEqualTo(firstPersistedSessionId);
+        assertThat(sessionStatus(firstPersistedSessionId))
+                .isEqualTo("TERMINATED");
+        assertThat(sessionStatus(replacementPersistedSessionId))
+                .isEqualTo("ACTIVE");
+
+        mockMvc.perform(get("/api/v1/me").session(replacement))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("STARTUP"));
+    }
+
+    @Test
+    void expiredPersistedSessionCannotBeRestored() throws Exception {
+        AuthenticatedClient client = registerAndLogin(RoleType.STARTUP);
+        long persistedSessionId = persistedSessionId(client);
+        jdbcTemplate.update("""
+                update session
+                set created_at = now() - interval '2 hours',
+                    expires_at = now() - interval '1 hour'
+                where session_id = ?
+                """, persistedSessionId);
+
+        mockMvc.perform(get("/api/v1/me")
+                        .session(client.session())
+                        .cookie(client.xsrfCookie()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code")
+                        .value("AUTHENTICATION_REQUIRED"));
+
+        assertThat(sessionStatus(persistedSessionId)).isEqualTo("EXPIRED");
     }
 
     @Test
@@ -381,6 +447,21 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.violations").doesNotExist())
                 .andExpect(jsonPath("$.success").doesNotExist())
                 .andExpect(jsonPath("$.error").doesNotExist());
+    }
+
+    private long persistedSessionId(AuthenticatedClient client) {
+        Object sessionId = client.session().getAttribute(
+                SecuritySessionConstants.DB_SESSION_ID_ATTRIBUTE);
+        assertThat(sessionId).isInstanceOf(Long.class);
+        return (Long) sessionId;
+    }
+
+    private String sessionStatus(long sessionId) {
+        return jdbcTemplate.queryForObject("""
+                select session_status::text
+                from session
+                where session_id = ?
+                """, String.class, sessionId);
     }
 
     private ResultActions expectApplicationProblem(

@@ -1,7 +1,7 @@
 package com.project.optrabidz.common.outbox;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.project.optrabidz.common.event.DomainEvent;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +40,7 @@ public class OutboxWriter {
     private String serialize(DomainEvent event) {
         try {
             return objectMapper.writeValueAsString(event);
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             throw new IllegalStateException("Domain event could not be serialized for outbox", exception);
         }
     }

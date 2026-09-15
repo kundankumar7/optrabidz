@@ -2,8 +2,8 @@ package com.project.optrabidz.documentation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -89,7 +89,7 @@ class ArchitectureDocumentationCoverageTest {
 
     @Test
     void publicationCatalogueContainsTheApprovedArchitectureFigures() throws Exception {
-        JsonNode diagrams = new ObjectMapper().readTree(ARCHITECTURE_ROOT
+        JsonNode diagrams = JsonMapper.builder().build().readTree(ARCHITECTURE_ROOT
                 .resolve("diagram-publication/diagram-publications.json").toFile())
                 .path("diagrams");
         Set<String> ids = new java.util.TreeSet<>();
@@ -100,7 +100,7 @@ class ArchitectureDocumentationCoverageTest {
 
     @Test
     void everyModuleHasAnOwnedPageWithTheReviewerSections() throws Exception {
-        JsonNode modules = new ObjectMapper().readTree(MODULE_CATALOG.toFile()).path("modules");
+        JsonNode modules = JsonMapper.builder().build().readTree(MODULE_CATALOG.toFile()).path("modules");
         String moduleIndex = Files.readString(ARCHITECTURE_ROOT.resolve("modules/README.md"));
 
         for (JsonNode module : modules) {
