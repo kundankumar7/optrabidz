@@ -67,42 +67,62 @@ Flyway applies all migrations in version order and writes their versions and
 checksums to `flyway_schema_history`. Hibernate then validates its entity
 mappings against the migrated schema.
 
-For the default local environment, start the named PostgreSQL container:
+For the default local environment, prepare the ignored `.env` file and start
+the Compose PostgreSQL service:
 
 ```powershell
-docker run --name optrabidz-postgres -e POSTGRES_DB=optrabidz -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+docker compose up -d postgres
+docker compose ps
 ```
 
-Then start the application:
-
-```powershell
-.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
-```
+Wait for the service to report `healthy`, then follow
+[Getting Started](../getting-started/README.md#5-start-the-application).
 
 ## Resetting the Disposable Local Database
 
 > **Warning:** The following procedure permanently deletes every record in the
-> explicitly named `optrabidz-postgres` local container. Use it only when that
-> database contains disposable development data. Never use it for a database
-> whose data must be preserved.
+> project-scoped `optrabidz_postgres-data` volume. Use it only when that volume
+> contains disposable local development data. Never use it for a native,
+> shared, staging, production, or otherwise valuable database.
 
-1. Stop the OptraBidz application.
-2. Remove only the named local container:
-
-   ```powershell
-   docker rm -f optrabidz-postgres
-   ```
-
-3. Recreate the named PostgreSQL 16 container:
+1. Open a terminal at the OptraBidz repository root.
+2. Inspect the exact project service and volume before deletion:
 
    ```powershell
-   docker run --name optrabidz-postgres -e POSTGRES_DB=optrabidz -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+   docker compose ps
+   docker volume inspect optrabidz_postgres-data
    ```
 
-4. Start OptraBidz and confirm that Flyway applies every migration successfully.
+3. Stop the OptraBidz application.
+4. After confirming that the inspected volume contains only disposable local
+   data, remove the current Compose project resources and its declared volume:
 
-This procedure deliberately names one container. Do not substitute a broad
-container, volume, directory, or database deletion command.
+   ```powershell
+   docker compose down --volumes
+   ```
+
+5. Confirm that only the named local volume is gone. This command should report
+   that the volume does not exist:
+
+   ```powershell
+   docker volume inspect optrabidz_postgres-data
+   ```
+
+6. Recreate PostgreSQL with the password currently stored in the ignored
+   `.env` file:
+
+   ```powershell
+   docker compose up -d postgres
+   docker compose ps
+   ```
+
+7. Wait for `healthy`, start OptraBidz, and confirm that Flyway applies every
+   migration successfully before Hibernate validates the resulting schema.
+
+Because `compose.yaml` fixes the project name and declares only the
+`postgres` service and `optrabidz_postgres-data` volume, this procedure is
+narrowly scoped. Do not substitute a broad container, volume, directory, or
+database cleanup command.
 
 ## Populated Database Upgrade Gate
 

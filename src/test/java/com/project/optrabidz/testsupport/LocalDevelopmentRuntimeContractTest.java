@@ -16,6 +16,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LocalDevelopmentRuntimeContractTest {
     private static final Path REPOSITORY_ROOT = Path.of("").toAbsolutePath().normalize();
+    private static final Path ROOT_README = REPOSITORY_ROOT.resolve("README.md");
+    private static final Path GETTING_STARTED =
+            REPOSITORY_ROOT.resolve("docs/getting-started/README.md");
+    private static final Path OPERATIONS =
+            REPOSITORY_ROOT.resolve("docs/operations/README.md");
+    private static final Path MIGRATIONS =
+            REPOSITORY_ROOT.resolve("docs/database/migrations.md");
     private static final String CONTRACT_PASSWORD = "local-contract-password";
 
     @Test
@@ -81,6 +88,90 @@ class LocalDevelopmentRuntimeContractTest {
         assertThat(environment.getProperty("OPTRABIDZ_DATASOURCE_PASSWORD")).isEmpty();
     }
 
+    @Test
+    void rootReadmeLinksToCanonicalGettingStartedGuide() throws IOException {
+        String readme = Files.readString(ROOT_README);
+
+        assertThat(readme)
+                .contains("[Getting Started](docs/getting-started/README.md)")
+                .doesNotContain("docker run");
+    }
+
+    @Test
+    void gettingStartedExplainsDockerAsLocalDatabasePackaging() throws IOException {
+        String guide = Files.readString(GETTING_STARTED);
+
+        assertThat(guide)
+                .contains("Docker Compose", "PostgreSQL 16", "IntelliJ", "Maven")
+                .doesNotContain("docker run");
+    }
+
+    @Test
+    void gettingStartedDocumentsNativePostgresAlternative() throws IOException {
+        String guide = Files.readString(GETTING_STARTED);
+
+        assertThat(guide)
+                .contains("Native PostgreSQL 16")
+                .contains("OPTRABIDZ_DATASOURCE_URL")
+                .contains("OPTRABIDZ_DATASOURCE_USERNAME")
+                .contains("OPTRABIDZ_DATASOURCE_PASSWORD");
+    }
+
+    @Test
+    void gettingStartedProvidesOneOrderedCloneToLoginJourney() throws IOException {
+        String guide = Files.readString(GETTING_STARTED);
+
+        assertAppearsInOrder(
+                guide,
+                ".env.example",
+                "docker compose up -d postgres",
+                "/actuator/health/readiness",
+                "/swagger-ui.html",
+                "OPTRABIDZ_ADMIN_BOOTSTRAP_ENABLED=true",
+                "/api/v1/auth/login",
+                "/api/v1/me",
+                "OPTRABIDZ_ADMIN_BOOTSTRAP_ENABLED=false");
+    }
+
+    @Test
+    void operationsDistinguishStopFromDestructiveReset() throws IOException {
+        String operations = Files.readString(OPERATIONS).toLowerCase();
+
+        assertThat(operations)
+                .contains("docker compose stop postgres")
+                .contains("docker compose start postgres")
+                .contains("../database/migrations.md")
+                .doesNotContain("docker compose down --volumes");
+    }
+
+    @Test
+    void resetGuidanceNamesOnlyProjectScopedLocalResources() throws IOException {
+        String migrations = Files.readString(MIGRATIONS).toLowerCase();
+
+        assertThat(migrations)
+                .contains("optrabidz_postgres-data")
+                .contains("docker compose down --volumes")
+                .doesNotContain("docker system prune")
+                .doesNotContain("docker volume prune")
+                .doesNotContain("docker rm -f");
+    }
+
+    @Test
+    void adminWalkthroughRequiresBootstrapDisableAndSecretRemoval() throws IOException {
+        String guide = Files.readString(GETTING_STARTED);
+
+        assertAppearsInOrder(
+                guide,
+                "OPTRABIDZ_ADMIN_BOOTSTRAP_ENABLED=true",
+                "/api/v1/auth/login",
+                "/api/v1/me",
+                "OPTRABIDZ_ADMIN_BOOTSTRAP_ENABLED=false",
+                "OPTRABIDZ_ADMIN_BOOTSTRAP_EMAIL=",
+                "OPTRABIDZ_ADMIN_BOOTSTRAP_PASSWORD=",
+                "OPTRABIDZ_ADMIN_BOOTSTRAP_DISPLAY_NAME=",
+                "OPTRABIDZ_ADMIN_BOOTSTRAP_ORGANIZATION=");
+    }
+
     private static JsonNode resolvedComposeConfiguration() throws Exception {
         ProcessResult result = runCompose(true);
         assertThat(result.exitCode()).as(result.output()).isZero();
@@ -106,6 +197,17 @@ class LocalDevelopmentRuntimeContractTest {
         Process process = builder.start();
         String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         return new ProcessResult(process.waitFor(), output);
+    }
+
+    private static void assertAppearsInOrder(String content, String... markers) {
+        int previousIndex = -1;
+        for (String marker : markers) {
+            int currentIndex = content.indexOf(marker, previousIndex + 1);
+            assertThat(currentIndex)
+                    .as("expected '%s' after the previous journey step", marker)
+                    .isGreaterThan(previousIndex);
+            previousIndex = currentIndex;
+        }
     }
 
     private record ProcessResult(int exitCode, String output) {
