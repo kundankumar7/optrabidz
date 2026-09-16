@@ -51,8 +51,8 @@ class DiagramPublicationValidatorTest {
                     "sourceType": "CURATED_SVG",
                     "source": "docs/assets/flow.svg",
                     "githubSvg": "docs/assets/flow.svg",
-                    "jiraPng": "docs/assets/flow.png",
-                    "jiraPngRequired": true,
+                    "legacyReviewPng": "docs/assets/flow.png",
+                    "legacyReviewPngRequired": true,
                     "owner": "docs/errors.md",
                     "remediation": "PASS"
                   }]
