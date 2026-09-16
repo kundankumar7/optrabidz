@@ -64,6 +64,8 @@ public class SecurityConfig {
                                 HttpMethod.PATCH,
                                 "/api/v1/funding-listings/*"
                         ).authenticated()
+                        .requestMatchers(intentionalPublicGetMatchers())
+                        .permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/change-password",
@@ -103,6 +105,18 @@ public class SecurityConfig {
     @Bean
     public CsrfTokenRequestHandler csrfTokenRequestHandler() {
         return new CsrfTokenRequestAttributeHandler();
+    }
+
+    private RequestMatcher[] intentionalPublicGetMatchers() {
+        PathPatternRequestMatcher.Builder paths =
+                PathPatternRequestMatcher.withDefaults();
+        return new RequestMatcher[] {
+                paths.matcher(HttpMethod.GET, "/api/v1/funding-listings"),
+                paths.matcher(HttpMethod.GET,
+                        "/api/v1/funding-listings/{listingId:[0-9]+}"),
+                paths.matcher(HttpMethod.GET, "/actuator/health/liveness"),
+                paths.matcher(HttpMethod.GET, "/actuator/health/readiness")
+        };
     }
 
     private RequestMatcher[] publicPostMatchers() {
