@@ -50,4 +50,4 @@ smoke behavior.
 ## Known gaps
 
 Documentation is repository- and Springdoc-backed; there is no independent
-documentation service or automatic Confluence publication pipeline.
+documentation service or automatic external publication pipeline.
