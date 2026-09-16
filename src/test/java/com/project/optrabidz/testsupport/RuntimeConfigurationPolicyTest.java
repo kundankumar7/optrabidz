@@ -15,6 +15,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RuntimeConfigurationPolicyTest {
     private static final Path REPOSITORY_ROOT = Path.of("").toAbsolutePath().normalize();
 
+    private static final String SPRING_BOOT_4_USER_DETAILS_AUTO_CONFIGURATION =
+            "org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration";
+
+    private static final String SPRING_BOOT_3_USER_DETAILS_AUTO_CONFIGURATION =
+            "org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration";
+
     private static final List<String> PRIVILEGED_SWITCHES = List.of(
             "optrabidz.admin.bootstrap.enabled",
             "optrabidz.admin.recovery.enabled",
@@ -44,6 +50,15 @@ class RuntimeConfigurationPolicyTest {
     }
 
     @Test
+    void sharedBaselineDisablesTheSpringBoot4GeneratedUser() throws IOException {
+        Properties baseline = load("src/main/resources/application.properties");
+
+        assertThat(baseline.getProperty("spring.autoconfigure.exclude"))
+                .contains(SPRING_BOOT_4_USER_DETAILS_AUTO_CONFIGURATION)
+                .doesNotContain(SPRING_BOOT_3_USER_DETAILS_AUTO_CONFIGURATION);
+    }
+
+    @Test
     void developmentProfileUsesOptionalLocalEnvironmentAndDisabledOptIns() throws IOException {
         Properties development = load("src/main/resources/application-dev.properties");
 
@@ -54,6 +69,18 @@ class RuntimeConfigurationPolicyTest {
                 .allSatisfy(key -> assertThat(development.getProperty(key))
                         .as(key)
                         .matches("\\$\\{[A-Z0-9_]+:false}"));
+    }
+
+    @Test
+    void developmentSwaggerCopiesTheCsrfCookieIntoTheRequiredHeader() throws IOException {
+        Properties development = load("src/main/resources/application-dev.properties");
+
+        assertThat(development.getProperty("springdoc.swagger-ui.csrf.enabled"))
+                .isEqualTo("true");
+        assertThat(development.getProperty("springdoc.swagger-ui.csrf.cookie-name"))
+                .isEqualTo("XSRF-TOKEN");
+        assertThat(development.getProperty("springdoc.swagger-ui.csrf.header-name"))
+                .isEqualTo("X-CSRF-TOKEN");
     }
 
     @Test

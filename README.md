@@ -10,33 +10,15 @@ integrations in this repository are local or sandbox implementations.
 
 ## Run Locally
 
-Prerequisites: Java 21, Docker, and a running Docker Engine. The Maven wrapper
-is included.
+Local development requires Java 21, Git, and PostgreSQL 16. Docker Compose is
+the recommended way to run PostgreSQL locally, while an existing compatible
+native PostgreSQL 16 installation is also supported. The Maven wrapper is
+included, so a separate Maven installation is not required.
 
-Create an ignored local configuration file:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Choose a disposable local database password, place it in
-`OPTRABIDZ_DATASOURCE_PASSWORD` inside `.env`, and use the same value when
-starting PostgreSQL 16:
-
-```powershell
-$localDbPassword = Read-Host "Local PostgreSQL password"
-docker run --name optrabidz-postgres -e POSTGRES_DB=optrabidz -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=$localDbPassword -p 5432:5432 -d postgres:16
-```
-
-Leave every privileged and simulated capability switch in `.env` set to
-`false`, then start the application with the development profile:
-
-```powershell
-.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
-```
-
-Open Swagger UI at `http://localhost:8080/swagger-ui.html`. API
-documentation is disabled by default outside the development profile.
+Follow [Getting Started](docs/getting-started/README.md) for the complete path
+from a fresh clone to a verified local administrator session. The local
+Compose service and ignored `.env` file are development conveniences, not the
+production deployment model.
 
 ## Architecture
 
@@ -50,6 +32,7 @@ audit and notification processing after business data commits.
 
 Use the [documentation portal](docs/README.md) to navigate by task:
 
+- [getting started](docs/getting-started/README.md)
 - [system architecture](docs/architecture/README.md)
 - [API and error contract](docs/api/README.md)
 - [database design and migrations](docs/database/README.md)

@@ -21,7 +21,107 @@ Production requires `OPTRABIDZ_DATASOURCE_URL`,
 `OPTRABIDZ_DATASOURCE_USERNAME`, and `OPTRABIDZ_DATASOURCE_PASSWORD`.
 `OPTRABIDZ_API_DOCS_ENABLED` may explicitly enable the OpenAPI document while
 Swagger UI remains disabled. This guide names configuration keys only; do not
-copy credential values into commands, logs, tickets, or documentation.
+copy credential values into commands, logs, shared messages, or documentation.
+
+## Local Runtime Lifecycle
+
+Run these commands from the repository root. The Compose project contains only
+the local PostgreSQL service. Spring Boot runs separately through Maven or
+IntelliJ and should be stopped before PostgreSQL maintenance.
+
+Inspect the service without displaying its environment:
+
+```powershell
+docker compose ps
+docker compose logs --tail 100 postgres
+```
+
+Stop PostgreSQL while preserving both its container and named data volume:
+
+```powershell
+docker compose stop postgres
+```
+
+Resume that stopped container with its existing data:
+
+```powershell
+docker compose start postgres
+docker compose ps
+```
+
+To remove the project container and network while preserving the named data
+volume, use:
+
+```powershell
+docker compose down
+```
+
+Resume after `down` by recreating the service against the preserved volume:
+
+```powershell
+docker compose up -d postgres
+docker compose ps
+```
+
+Do not add the volume-removal option to routine stop or shutdown commands.
+Permanent reset is a separate operation owned by the
+[database migration guide](../database/migrations.md#resetting-the-disposable-local-database).
+
+The Compose project name is fixed as `optrabidz`. Different checkouts on the
+same computer therefore refer to the same local project and
+`optrabidz_postgres-data` volume. Manage only one active local Compose
+database at a time.
+
+## Local Runtime Troubleshooting
+
+### Port 5432 is occupied
+
+Identify the listener before taking action:
+
+```powershell
+Get-NetTCPConnection -LocalPort 5432 -ErrorAction SilentlyContinue
+docker ps --filter publish=5432
+```
+
+Do not stop, remove, or reconfigure an unrelated process or container. Either
+stop the known local service through its normal owner or use compatible Native
+PostgreSQL 16 and update all three datasource values consistently.
+
+### PostgreSQL is not healthy
+
+Run `docker compose ps` and `docker compose logs --tail 100 postgres`. Check
+that Docker Engine is running and that `.env` contains a non-blank
+`OPTRABIDZ_DATASOURCE_PASSWORD`. Do not place the value in diagnostic output.
+
+### The datasource password no longer matches
+
+The PostgreSQL image uses its configured password only when
+`optrabidz_postgres-data` is first initialized. Editing `.env` later does not
+change the existing database role. Restore the original local value, change
+the role password through PostgreSQL administration, or—only when every record
+is disposable—use the reviewed reset procedure in the
+[database migration guide](../database/migrations.md#resetting-the-disposable-local-database).
+
+### Flyway or Hibernate blocks startup
+
+Read the first migration or schema-validation error and follow the
+[database migration guide](../database/migrations.md). Never reset a database
+whose data must be preserved merely to make startup succeed.
+
+### Administrator bootstrap blocks startup
+
+Confirm that bootstrap and recovery are not both enabled. When bootstrap is
+enabled, all four administrator identity fields must be present and valid.
+After successful provisioning, stop the application, set
+`OPTRABIDZ_ADMIN_BOOTSTRAP_ENABLED=false`, blank every one-time bootstrap
+field, and restart.
+
+### Bootstrap was left enabled
+
+Stop the application and remove the retained one-time values immediately. An
+existing administrator remains stored in PostgreSQL; disabling bootstrap does
+not delete or disable that account. Restart and verify readiness, login, and
+`GET /api/v1/me`.
 
 ## Privileged Operations
 
@@ -136,4 +236,5 @@ Before a release:
 7. record a rollback or forward-recovery checkpoint.
 
 Never publish credentials, webhook secrets, access tokens, database dumps, or
-machine-specific filesystem paths in repository documentation or tickets.
+machine-specific filesystem paths in repository documentation or shared
+messages.
