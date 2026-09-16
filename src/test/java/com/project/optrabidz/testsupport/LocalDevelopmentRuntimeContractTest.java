@@ -65,6 +65,7 @@ class LocalDevelopmentRuntimeContractTest {
         JsonNode postgres = resolvedComposeConfiguration().path("services").path("postgres");
         JsonNode publishedPort = postgres.path("ports").get(0);
 
+        assertThat(publishedPort.path("host_ip").asText()).isEqualTo("127.0.0.1");
         assertThat(publishedPort.path("published").asText()).isEqualTo("5432");
         assertThat(publishedPort.path("target").asInt()).isEqualTo(5432);
         assertThat(publishedPort.path("protocol").asText()).isEqualTo("tcp");
