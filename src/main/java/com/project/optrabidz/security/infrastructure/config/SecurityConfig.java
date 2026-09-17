@@ -78,7 +78,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/startup-classifications/**").hasRole("STARTUP")
                         .requestMatchers("/api/v1/investor-preferences/**").hasRole("INVESTOR")
-                        .anyRequest().permitAll()
+                        .anyRequest().denyAll()
                 )
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)

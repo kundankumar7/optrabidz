@@ -1,5 +1,6 @@
 package com.project.optrabidz.marketplace.api;
 
+import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,40 @@ class MarketplaceSecurityIT extends ApiIntegrationTestSupport {
                         MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.code").value("LISTING_NOT_FOUND"))
                 .andExpect(jsonPath("$.requestId").value("public-listing-detail-request"));
+    }
+
+    @Test
+    void anonymousNonNumericListingPathUsesDefaultDenyBoundary()
+            throws Exception {
+        mockMvc.perform(get("/api/v1/funding-listings/export")
+                        .header("X-Request-Id",
+                                "anonymous-listing-default-deny-request"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(
+                        MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value(
+                        "AUTHENTICATION_REQUIRED"))
+                .andExpect(jsonPath("$.requestId").value(
+                        "anonymous-listing-default-deny-request"));
+    }
+
+    @Test
+    void authenticatedNonNumericListingPathUsesDefaultDenyBoundary()
+            throws Exception {
+        AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
+
+        mockMvc.perform(get("/api/v1/funding-listings/export")
+                        .session(startup.session())
+                        .cookie(startup.xsrfCookie())
+                        .header("X-Request-Id",
+                                "authenticated-listing-default-deny-request"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(
+                        MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value(
+                        "AUTHORIZATION_FAILED"))
+                .andExpect(jsonPath("$.requestId").value(
+                        "authenticated-listing-default-deny-request"));
     }
 
     @ParameterizedTest
