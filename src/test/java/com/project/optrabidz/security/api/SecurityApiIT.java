@@ -221,6 +221,29 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
     }
 
     @Test
+    void terminatedPersistedSessionCannotBeRestored() throws Exception {
+        AuthenticatedClient client = registerAndLogin(RoleType.STARTUP);
+        long persistedSessionId = persistedSessionId(client);
+        jdbcTemplate.update("""
+                update session
+                set session_status = 'TERMINATED'
+                where session_id = ?
+                """, persistedSessionId);
+
+        mockMvc.perform(get("/api/v1/me")
+                        .session(client.session())
+                        .cookie(client.xsrfCookie()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentType(
+                        MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code")
+                        .value("AUTHENTICATION_REQUIRED"));
+
+        assertThat(sessionStatus(persistedSessionId))
+                .isEqualTo("TERMINATED");
+    }
+
+    @Test
     void changePasswordAcceptsCurrentPasswordAndRejectsOldPasswordAfterward() throws Exception {
         String email = uniqueEmail("startup-password");
         register(email, INITIAL_PASSWORD, RoleType.STARTUP)
