@@ -3,7 +3,6 @@ package com.project.optrabidz.notification.application.channel;
 import com.project.optrabidz.notification.domain.model.ChannelDeliveryStatus;
 import com.project.optrabidz.notification.domain.model.ChannelType;
 import com.project.optrabidz.notification.domain.model.NotificationDeliveryAttemptStatus;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -35,15 +34,14 @@ public class NotificationDeliveryDispatcher {
                                           NotificationChannelRegistry channelRegistry,
                                           NotificationChannelProxy channelProxy,
                                           TransactionTemplate transactionTemplate,
-                                          @Value("${optrabidz.notification.dispatcher.batch-size:50}") int batchSize,
-                                          @Value("${optrabidz.notification.dispatcher.max-attempts:3}") int maxAttempts,
-                                          @Value("${optrabidz.notification.dispatcher.worker-id:}") String configuredWorkerId) {
+                                          NotificationDispatcherProperties properties) {
         this.jdbcTemplate = jdbcTemplate;
         this.channelRegistry = channelRegistry;
         this.channelProxy = channelProxy;
         this.transactionTemplate = transactionTemplate;
-        this.batchSize = Math.max(batchSize, 1);
-        this.maxAttempts = Math.max(maxAttempts, 1);
+        this.batchSize = properties.getBatchSize();
+        this.maxAttempts = properties.getMaxAttempts();
+        String configuredWorkerId = properties.getWorkerId();
         this.workerId = configuredWorkerId == null || configuredWorkerId.isBlank()
                 ? "notification-" + UUID.randomUUID()
                 : configuredWorkerId;

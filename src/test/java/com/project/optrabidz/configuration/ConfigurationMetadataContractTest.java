@@ -38,6 +38,19 @@ class ConfigurationMetadataContractTest {
             "optrabidz.governance.lifecycle.scheduler.initial-delay-ms",
             "optrabidz.governance.lifecycle.scheduler.fixed-delay-ms",
             "optrabidz.marketplace.listing.default-expiry-days",
+            "optrabidz.outbox.dispatcher.enabled",
+            "optrabidz.outbox.dispatcher.initial-delay-ms",
+            "optrabidz.outbox.dispatcher.fixed-delay-ms",
+            "optrabidz.outbox.dispatcher.batch-size",
+            "optrabidz.outbox.dispatcher.worker-id",
+            "optrabidz.notification.dispatcher.enabled",
+            "optrabidz.notification.dispatcher.initial-delay-ms",
+            "optrabidz.notification.dispatcher.fixed-delay-ms",
+            "optrabidz.notification.dispatcher.batch-size",
+            "optrabidz.notification.dispatcher.max-attempts",
+            "optrabidz.notification.dispatcher.worker-id",
+            "optrabidz.notification.channels.email.enabled",
+            "optrabidz.notification.channels.push.enabled",
             "optrabidz.security.session-duration",
             "optrabidz.security.max-login-failures",
             "optrabidz.financial.settlement.expiry-minutes",
@@ -86,6 +99,19 @@ class ConfigurationMetadataContractTest {
         assertProperty(properties, "optrabidz.governance.lifecycle.scheduler.initial-delay-ms", "java.lang.Long", 60000L);
         assertProperty(properties, "optrabidz.governance.lifecycle.scheduler.fixed-delay-ms", "java.lang.Long", 300000L);
         assertProperty(properties, "optrabidz.marketplace.listing.default-expiry-days", "java.lang.Integer", 14);
+        assertProperty(properties, "optrabidz.outbox.dispatcher.enabled", "java.lang.Boolean", true);
+        assertProperty(properties, "optrabidz.outbox.dispatcher.initial-delay-ms", "java.lang.Long", 5000L);
+        assertProperty(properties, "optrabidz.outbox.dispatcher.fixed-delay-ms", "java.lang.Long", 5000L);
+        assertProperty(properties, "optrabidz.outbox.dispatcher.batch-size", "java.lang.Integer", 50);
+        assertProperty(properties, "optrabidz.outbox.dispatcher.worker-id", "java.lang.String", "");
+        assertProperty(properties, "optrabidz.notification.dispatcher.enabled", "java.lang.Boolean", true);
+        assertProperty(properties, "optrabidz.notification.dispatcher.initial-delay-ms", "java.lang.Long", 5000L);
+        assertProperty(properties, "optrabidz.notification.dispatcher.fixed-delay-ms", "java.lang.Long", 5000L);
+        assertProperty(properties, "optrabidz.notification.dispatcher.batch-size", "java.lang.Integer", 50);
+        assertProperty(properties, "optrabidz.notification.dispatcher.max-attempts", "java.lang.Integer", 3);
+        assertProperty(properties, "optrabidz.notification.dispatcher.worker-id", "java.lang.String", "");
+        assertProperty(properties, "optrabidz.notification.channels.email.enabled", "java.lang.Boolean", true);
+        assertProperty(properties, "optrabidz.notification.channels.push.enabled", "java.lang.Boolean", true);
         assertProperty(properties, "optrabidz.financial.settlement.expiry-minutes", "java.lang.Long", 30L);
         assertProperty(properties, "optrabidz.financial.payment-intent.expiry-minutes", "java.lang.Long", 15L);
         assertProperty(properties, "optrabidz.financial.webhook.providers.UPI.enabled", "java.lang.Boolean", false);
