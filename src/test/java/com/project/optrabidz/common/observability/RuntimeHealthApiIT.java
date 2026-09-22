@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 
 class RuntimeHealthApiIT extends ApiIntegrationTestSupport {
@@ -20,10 +22,23 @@ class RuntimeHealthApiIT extends ApiIntegrationTestSupport {
         assertHealthyStatusOnlyProbe("/actuator/health/readiness");
     }
 
-    @Test
-    void doesNotExposeSensitiveManagementEndpoints() throws Exception {
-        mockMvc.perform(get("/actuator/env"))
-                .andExpect(status().isNotFound());
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/actuator",
+            "/actuator/health",
+            "/actuator/env"
+    })
+    void rejectsUnclassifiedManagementEndpoints(String path) throws Exception {
+        mockMvc.perform(get(path)
+                        .header("X-Request-Id",
+                                "management-default-deny-request"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(
+                        MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value(
+                        "AUTHENTICATION_REQUIRED"))
+                .andExpect(jsonPath("$.requestId").value(
+                        "management-default-deny-request"));
     }
 
     private void assertHealthyStatusOnlyProbe(String path) throws Exception {
