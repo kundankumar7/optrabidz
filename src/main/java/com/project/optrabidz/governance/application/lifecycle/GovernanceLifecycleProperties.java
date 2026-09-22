@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "optrabidz.governance.lifecycle")
 public class GovernanceLifecycleProperties {
+    /** Maximum number of lifecycle records processed in one expiry pass. */
     private int expiryBatchSize = 100;
 
     public int getExpiryBatchSize() {

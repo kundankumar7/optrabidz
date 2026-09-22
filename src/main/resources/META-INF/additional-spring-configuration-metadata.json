@@ -1,0 +1,109 @@
+{
+  "properties": [
+    {
+      "name": "optrabidz.security.session-duration",
+      "type": "java.time.Duration",
+      "description": "Duration of an authenticated user session.",
+      "defaultValue": "PT8H"
+    },
+    {
+      "name": "optrabidz.security.max-login-failures",
+      "type": "java.lang.Integer",
+      "description": "Maximum number of failed login attempts allowed before login is blocked.",
+      "defaultValue": 5
+    },
+    {
+      "name": "optrabidz.governance.lifecycle.scheduler.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether scheduled governance lifecycle expiry processing is enabled.",
+      "defaultValue": true
+    },
+    {
+      "name": "optrabidz.governance.lifecycle.scheduler.initial-delay-ms",
+      "type": "java.lang.Long",
+      "description": "Initial delay in milliseconds before governance lifecycle expiry processing starts.",
+      "defaultValue": 60000
+    },
+    {
+      "name": "optrabidz.governance.lifecycle.scheduler.fixed-delay-ms",
+      "type": "java.lang.Long",
+      "description": "Delay in milliseconds between governance lifecycle expiry processing runs.",
+      "defaultValue": 300000
+    },
+    {
+      "name": "optrabidz.marketplace.listing.default-expiry-days",
+      "type": "java.lang.Integer",
+      "description": "Default number of days before a published funding listing expires.",
+      "defaultValue": 14
+    },
+    {
+      "name": "optrabidz.financial.settlement.expiry-minutes",
+      "type": "java.lang.Long",
+      "description": "Number of minutes before an unsettled financial settlement expires.",
+      "defaultValue": 30
+    },
+    {
+      "name": "optrabidz.financial.payment-intent.expiry-minutes",
+      "type": "java.lang.Long",
+      "description": "Number of minutes before an incomplete payment intent expires.",
+      "defaultValue": 15
+    },
+    {
+      "name": "optrabidz.financial.webhook.providers.UPI.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether webhook processing is enabled for the UPI provider.",
+      "defaultValue": false
+    },
+    {
+      "name": "optrabidz.financial.webhook.providers.UPI.active-secret",
+      "type": "java.lang.String",
+      "description": "Current secret used to verify UPI provider webhook signatures."
+    },
+    {
+      "name": "optrabidz.financial.webhook.providers.UPI.previous-secret",
+      "type": "java.lang.String",
+      "description": "Previous UPI provider webhook secret accepted temporarily during secret rotation."
+    },
+    {
+      "name": "optrabidz.financial.webhook.providers.UPI.previous-secret-valid-until",
+      "type": "java.time.Instant",
+      "description": "Time after which the previous UPI provider webhook secret is no longer accepted."
+    },
+    {
+      "name": "optrabidz.financial.webhook.providers.CARD.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether webhook processing is enabled for the card provider.",
+      "defaultValue": false
+    },
+    {
+      "name": "optrabidz.financial.webhook.providers.CARD.active-secret",
+      "type": "java.lang.String",
+      "description": "Current secret used to verify card provider webhook signatures."
+    },
+    {
+      "name": "optrabidz.financial.webhook.providers.CARD.previous-secret",
+      "type": "java.lang.String",
+      "description": "Previous card provider webhook secret accepted temporarily during secret rotation."
+    },
+    {
+      "name": "optrabidz.financial.webhook.providers.CARD.previous-secret-valid-until",
+      "type": "java.time.Instant",
+      "description": "Time after which the previous card provider webhook secret is no longer accepted."
+    }
+  ],
+  "hints": [
+    {
+      "name": "optrabidz.financial.webhook.providers.keys",
+      "values": [
+        {
+          "value": "UPI",
+          "description": "UPI payment provider."
+        },
+        {
+          "value": "CARD",
+          "description": "Card payment provider."
+        }
+      ]
+    }
+  ]
+}

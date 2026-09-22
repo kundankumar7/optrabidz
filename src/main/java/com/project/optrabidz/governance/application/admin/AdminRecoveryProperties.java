@@ -6,7 +6,10 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "optrabidz.admin.recovery")
 public class AdminRecoveryProperties {
+    /** Whether the administrator recovery endpoint is enabled. */
     private boolean enabled;
+
+    /** Private token required by the administrator recovery endpoint. */
     private String token;
 
     public boolean isEnabled() {
