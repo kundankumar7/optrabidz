@@ -50,7 +50,7 @@ class PublicErrorCatalogueTest {
                 "security-application",
                 "spring-security"
         );
-        assertThat(catalogue.entries()).hasSize(69);
+        assertThat(catalogue.entries()).hasSize(70);
     }
 
     @Test

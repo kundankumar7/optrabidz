@@ -9,6 +9,7 @@ import com.project.optrabidz.security.application.exception.CurrentPasswordInval
 import com.project.optrabidz.security.application.exception.EmailAlreadyRegisteredException;
 import com.project.optrabidz.security.application.exception.InvalidCredentialsException;
 import com.project.optrabidz.security.application.exception.PasswordPolicyViolationException;
+import com.project.optrabidz.security.application.exception.PasswordReuseNotAllowedException;
 import com.project.optrabidz.security.application.exception.SecurityAuthorizationException;
 import com.project.optrabidz.security.application.exception.SelfRegistrationNotAllowedException;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,9 @@ class SecurityErrorContractTest {
         assertThat(SecurityErrors.PASSWORD_POLICY_VIOLATION).isEqualTo(descriptor(
                 "PASSWORD_POLICY_VIOLATION", ErrorCategory.VALIDATION,
                 "Password must contain at least one letter and one digit"));
+        assertThat(SecurityErrors.PASSWORD_REUSE_NOT_ALLOWED).isEqualTo(descriptor(
+                "PASSWORD_REUSE_NOT_ALLOWED", ErrorCategory.VALIDATION,
+                "New password must be different from current password"));
         assertThat(SecurityErrors.SELF_REGISTRATION_NOT_ALLOWED).isEqualTo(descriptor(
                 "SELF_REGISTRATION_NOT_ALLOWED", ErrorCategory.BUSINESS_RULE,
                 "Only startup or investor accounts can self-register"));
@@ -65,6 +69,8 @@ class SecurityErrorContractTest {
                 new CredentialNotFoundException(41L);
         PasswordPolicyViolationException passwordPolicy =
                 new PasswordPolicyViolationException();
+        PasswordReuseNotAllowedException passwordReuse =
+                new PasswordReuseNotAllowedException(41L);
         SelfRegistrationNotAllowedException registrationRole =
                 new SelfRegistrationNotAllowedException(RoleType.ADMIN);
         SecurityAuthorizationException authorization =
@@ -83,6 +89,8 @@ class SecurityErrorContractTest {
                 "SECURITY.CREDENTIAL.NOT_FOUND", "41");
         assertThat(passwordPolicy.diagnosticCode())
                 .isEqualTo("SECURITY.PASSWORD.POLICY_VIOLATION");
+        assertFailure(passwordReuse, SecurityErrors.PASSWORD_REUSE_NOT_ALLOWED,
+                "SECURITY.PASSWORD.REUSE_NOT_ALLOWED", "41");
         assertFailure(registrationRole, SecurityErrors.SELF_REGISTRATION_NOT_ALLOWED,
                 "SECURITY.REGISTRATION.ROLE_NOT_ALLOWED", "ADMIN");
         assertFailure(authorization, SecurityErrors.AUTHORIZATION_FAILED,

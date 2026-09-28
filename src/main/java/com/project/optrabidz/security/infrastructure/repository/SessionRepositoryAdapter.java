@@ -34,6 +34,15 @@ public class SessionRepositoryAdapter implements SessionRepository {
     }
 
     @Override
+    public int terminateActiveByAccountId(Long accountId) {
+        return jpaSessionRepository.terminateActiveByAccountId(
+                accountId,
+                SessionStatus.ACTIVE,
+                SessionStatus.TERMINATED
+        );
+    }
+
+    @Override
     public void expireExpiredSessions(Instant cutoff) {
         jpaSessionRepository.expireExpiredSessions(cutoff, SessionStatus.ACTIVE, SessionStatus.EXPIRED);
     }

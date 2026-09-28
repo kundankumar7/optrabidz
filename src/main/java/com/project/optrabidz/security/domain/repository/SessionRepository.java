@@ -10,5 +10,7 @@ public interface SessionRepository {
 
     Optional<Session> findById(Long sessionId);
 
+    int terminateActiveByAccountId(Long accountId);
+
     void expireExpiredSessions(Instant cutoff);
 }
