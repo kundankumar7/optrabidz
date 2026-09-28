@@ -2,6 +2,7 @@ package com.project.optrabidz.security.application;
 
 import com.project.optrabidz.audit.application.SecurityAuditService;
 import com.project.optrabidz.common.error.ApplicationException;
+import com.project.optrabidz.common.event.EventPublisher;
 import com.project.optrabidz.identity.application.command.ActivateAccountCommand;
 import com.project.optrabidz.identity.application.command.CreateAccountCommand;
 import com.project.optrabidz.identity.application.port.IdentityCommandPort;
@@ -14,12 +15,12 @@ import com.project.optrabidz.security.application.dto.request.ChangePasswordRequ
 import com.project.optrabidz.security.application.dto.request.LoginRequest;
 import com.project.optrabidz.security.application.dto.request.SignupRequest;
 import com.project.optrabidz.security.application.error.SecurityErrors;
+import com.project.optrabidz.security.application.event.CredentialPasswordChangedEvent;
 import com.project.optrabidz.security.application.exception.CredentialNotFoundException;
 import com.project.optrabidz.security.application.exception.CurrentPasswordInvalidException;
 import com.project.optrabidz.security.application.exception.EmailAlreadyRegisteredException;
 import com.project.optrabidz.security.application.exception.InvalidCredentialsException;
 import com.project.optrabidz.security.application.exception.PasswordPolicyViolationException;
-import com.project.optrabidz.security.application.exception.SecurityAuthorizationException;
 import com.project.optrabidz.security.application.exception.SelfRegistrationNotAllowedException;
 import com.project.optrabidz.security.domain.model.Credential;
 import com.project.optrabidz.security.domain.model.CredentialStatus;
@@ -79,6 +80,8 @@ class AuthenticationServiceTest {
     @Mock
     private SecurityAuditService securityAuditService;
     @Mock
+    private EventPublisher eventPublisher;
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     private AuthenticationService service;
@@ -93,6 +96,7 @@ class AuthenticationServiceTest {
                 sessionRepository,
                 loginAttemptRepository,
                 securityAuditService,
+                eventPublisher,
                 passwordEncoder,
                 Duration.ofHours(8),
                 5
@@ -211,20 +215,15 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    void changePasswordUsesTypedFailuresAndPreservesSuccessFlow() {
-        AuthenticatedUserPrincipal admin = principal(RoleType.ADMIN);
-        assertThatThrownBy(() -> service.changePassword(
-                admin, new ChangePasswordRequest(PASSWORD, "Changed01")))
-                .isInstanceOf(SecurityAuthorizationException.class);
-
+    void changePasswordUsesTypedFailuresWithoutProducingSuccessSideEffects() {
         AuthenticatedUserPrincipal startup = principal(RoleType.STARTUP);
-        when(credentialRepository.findByAccountId(ACCOUNT_ID)).thenReturn(Optional.empty());
+        when(credentialRepository.findByAccountIdForUpdate(ACCOUNT_ID)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.changePassword(
                 startup, new ChangePasswordRequest(PASSWORD, "Changed01")))
                 .isInstanceOf(CredentialNotFoundException.class);
 
         Credential credential = credential(CredentialStatus.ACTIVE);
-        when(credentialRepository.findByAccountId(ACCOUNT_ID)).thenReturn(Optional.of(credential));
+        when(credentialRepository.findByAccountIdForUpdate(ACCOUNT_ID)).thenReturn(Optional.of(credential));
         when(passwordEncoder.matches(PASSWORD, PASSWORD_HASH)).thenReturn(false);
         assertThatThrownBy(() -> service.changePassword(
                 startup, new ChangePasswordRequest(PASSWORD, "Changed01")))
@@ -234,13 +233,59 @@ class AuthenticationServiceTest {
                 startup, new ChangePasswordRequest(PASSWORD, "onlyletters")))
                 .isInstanceOf(PasswordPolicyViolationException.class);
 
+        verify(sessionRepository, never()).terminateActiveByAccountId(any());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(RoleType.class)
+    void everyRoleCanRotateItsOwnPasswordAndTerminateAllActiveSessions(RoleType roleType) {
+        Credential credential = credential(CredentialStatus.ACTIVE);
+        when(credentialRepository.findByAccountIdForUpdate(ACCOUNT_ID))
+                .thenReturn(Optional.of(credential));
         when(passwordEncoder.matches(PASSWORD, PASSWORD_HASH)).thenReturn(true);
         when(passwordEncoder.encode("Changed01")).thenReturn("changed-hash");
+        when(sessionRepository.terminateActiveByAccountId(ACCOUNT_ID)).thenReturn(2);
 
-        service.changePassword(startup, new ChangePasswordRequest(PASSWORD, "Changed01"));
+        service.changePassword(
+                principal(roleType),
+                new ChangePasswordRequest(PASSWORD, "Changed01")
+        );
 
         assertThat(credential.getPasswordHash()).isEqualTo("changed-hash");
         verify(credentialRepository).save(credential);
+        verify(sessionRepository).terminateActiveByAccountId(ACCOUNT_ID);
+
+        ArgumentCaptor<CredentialPasswordChangedEvent> eventCaptor =
+                ArgumentCaptor.forClass(CredentialPasswordChangedEvent.class);
+        verify(eventPublisher).publish(eventCaptor.capture());
+        CredentialPasswordChangedEvent event = eventCaptor.getValue();
+        assertThat(event.accountId()).isEqualTo(ACCOUNT_ID);
+        assertThat(event.actorRole()).isEqualTo(roleType);
+        assertThat(event.terminatedSessionCount()).isEqualTo(2);
+        assertThat(event.occurredAt()).isNotNull();
+        assertThat(event.toString())
+                .doesNotContain(PASSWORD, "Changed01", PASSWORD_HASH, "changed-hash");
+    }
+
+    @Test
+    void changePasswordRejectsImmediateReuseWithoutWritingCredential() {
+        Credential credential = credential(CredentialStatus.ACTIVE);
+        when(credentialRepository.findByAccountIdForUpdate(ACCOUNT_ID))
+                .thenReturn(Optional.of(credential));
+        when(passwordEncoder.matches(PASSWORD, PASSWORD_HASH)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.changePassword(
+                principal(RoleType.STARTUP),
+                new ChangePasswordRequest(PASSWORD, PASSWORD)
+        )).isInstanceOfSatisfying(ApplicationException.class, failure ->
+                assertThat(failure.descriptor().code())
+                        .isEqualTo("PASSWORD_REUSE_NOT_ALLOWED"));
+
+        assertThat(credential.getPasswordHash()).isEqualTo(PASSWORD_HASH);
+        verify(credentialRepository, never()).save(any());
+        verify(sessionRepository, never()).terminateActiveByAccountId(any());
+        verify(eventPublisher, never()).publish(any());
     }
 
     private void configureLoginRejection(LoginRejectionScenario scenario) {

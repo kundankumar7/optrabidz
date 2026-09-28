@@ -38,6 +38,12 @@ public class CredentialRepositoryAdapter implements CredentialRepository {
     }
 
     @Override
+    public Optional<Credential> findByAccountIdForUpdate(Long accountId) {
+        return jpaCredentialRepository.findByAccountIdForUpdate(accountId)
+                .map(securityPersistenceMapper::toDomain);
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
         return jpaCredentialRepository.existsByEmailIgnoreCase(email);
     }

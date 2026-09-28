@@ -1,5 +1,6 @@
 package com.project.optrabidz.audit.api;
 
+import com.project.optrabidz.common.outbox.OutboxDispatcher;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,100 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class SecurityAuditIT extends ApiIntegrationTestSupport {
     @Autowired
+    private OutboxDispatcher outboxDispatcher;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Test
+    void passwordChangeProducesOneSafeAuditRecordWithActorContext() throws Exception {
+        String email = uniqueEmail("audit-password-change");
+        register(email, DEFAULT_PASSWORD, RoleType.STARTUP)
+                .andExpect(status().isCreated());
+        AuthenticatedClient client = login(email, DEFAULT_PASSWORD);
+        Long accountId = jdbcTemplate.queryForObject("""
+                select account_id
+                from credential
+                where lower(email) = lower(?)
+                """, Long.class, email);
+        String newPassword = "ChangedPassword01";
+
+        mockMvc.perform(post("/api/v1/auth/change-password")
+                        .session(client.session())
+                        .cookie(client.xsrfCookie())
+                        .header("X-CSRF-TOKEN", client.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "currentPassword", DEFAULT_PASSWORD,
+                                "newPassword", newPassword
+                        ))))
+                .andExpect(status().isNoContent());
+
+        String outboxPayload = jdbcTemplate.queryForObject("""
+                select payload::text
+                from event_outbox
+                where event_type = 'CredentialPasswordChangedEvent'
+                  and aggregate_id = ?
+                """, String.class, String.valueOf(accountId));
+        String eventId = jdbcTemplate.queryForObject("""
+                select event_id
+                from event_outbox
+                where event_type = 'CredentialPasswordChangedEvent'
+                  and aggregate_id = ?
+                """, String.class, String.valueOf(accountId));
+        assertThat(outboxPayload)
+                .contains("\"accountId\": " + accountId)
+                .contains("\"actorRole\": \"STARTUP\"")
+                .contains("\"terminatedSessionCount\": 1")
+                .doesNotContain(DEFAULT_PASSWORD, newPassword, email, "passwordHash");
+
+        dispatchUntilProcessed(eventId);
+        outboxDispatcher.dispatchPending();
+
+        assertThat(jdbcTemplate.queryForObject("""
+                select count(*)
+                from audit_record
+                where event_type = 'CredentialPasswordChangedEvent'
+                  and object_id = ?
+                """, Long.class, String.valueOf(accountId))).isEqualTo(1L);
+
+        Map<String, Object> audit = jdbcTemplate.queryForMap("""
+                select source_module, action, object_type, actor_account_id,
+                       actor_role, outcome, details::text as details
+                from audit_record
+                where event_type = 'CredentialPasswordChangedEvent'
+                  and object_id = ?
+                """, String.valueOf(accountId));
+
+        assertThat(audit.get("source_module")).isEqualTo("SECURITY");
+        assertThat(audit.get("action")).isEqualTo("PASSWORD_CHANGED");
+        assertThat(audit.get("object_type")).isEqualTo("CREDENTIAL");
+        assertThat(audit.get("actor_account_id")).isEqualTo(accountId);
+        assertThat(audit.get("actor_role")).isEqualTo("STARTUP");
+        assertThat(audit.get("outcome")).isEqualTo("SUCCESS");
+        assertThat(audit.get("details").toString())
+                .contains("\"terminatedSessionCount\": 1")
+                .doesNotContain(DEFAULT_PASSWORD, newPassword, email, "passwordHash");
+    }
+
+    private void dispatchUntilProcessed(String eventId) {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            String state = jdbcTemplate.queryForObject(
+                    "select event_status from event_outbox where event_id = ?",
+                    String.class,
+                    eventId
+            );
+            if ("PROCESSED".equals(state)) {
+                return;
+            }
+            assertThat(outboxDispatcher.dispatchPending()).isPositive();
+        }
+        assertThat(jdbcTemplate.queryForObject(
+                "select event_status from event_outbox where event_id = ?",
+                String.class,
+                eventId
+        )).isEqualTo("PROCESSED");
+    }
 
     @Test
     void failedLoginCreatesMaskedSecurityAuditRecord() throws Exception {

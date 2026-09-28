@@ -129,6 +129,25 @@ Bootstrap and recovery are mutually exclusive. Enabling both prevents startup.
 Missing or invalid enabled-feature configuration also prevents readiness, and
 the diagnostic names the feature without reproducing the submitted value.
 
+### Routine Account Password Rotation
+
+For an authenticated administrator, startup, or investor, use
+`POST /api/v1/auth/change-password` with `currentPassword` and `newPassword`.
+Send the existing session cookie and matching `X-CSRF-TOKEN`; never place either
+password in a URL, command history, log, ticket, or shared message.
+
+On `204 No Content`, discard the old browser session and sign in again with the
+new password. All active persisted sessions for the account are terminated,
+including sessions on other devices. The response confirms that the password,
+session updates, and outbox event committed; the outbox dispatcher creates the
+`PASSWORD_CHANGED` audit record afterward. Verify the new login and, when audit
+evidence is required, wait for normal outbox dispatch before searching the
+audit records.
+
+Changing datasource values in `.env` affects PostgreSQL connectivity, not an
+OptraBidz application account. Do not edit a credential hash directly in the
+database for routine rotation.
+
 ### First Administrator Provisioning
 
 Use this only when no active administrator exists:

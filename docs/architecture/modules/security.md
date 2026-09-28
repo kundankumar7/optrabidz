@@ -6,8 +6,8 @@ Capability: [Identity and access](../capabilities/identity-access.md)
 
 ## Purpose
 
-Own credential provisioning, password login, server-side sessions, login
-attempts, current-principal lookup, CSRF, route policy, and safe security
+Own credential provisioning, password login and rotation, server-side sessions,
+login attempts, current-principal lookup, CSRF, route policy, and safe security
 failure adapters.
 
 ## Entry points
@@ -31,7 +31,10 @@ repositories through JPA adapters.
 ## Events
 
 Registration publishes the shared account event through identity/common flows.
-The security module has no outbox processor of its own.
+Successful password rotation publishes `CredentialPasswordChangedEvent` in the
+same transaction as the credential and session changes. The common outbox
+dispatcher later passes that event to the audit module's security policy; the
+security module does not own an outbox processor.
 
 ## Dependencies
 
@@ -46,8 +49,9 @@ authenticate it.
 
 ## Verification
 
-Eight module tests cover authentication, authorization responses, filters,
-session state, credentials, and HTTP security behavior.
+Module and PostgreSQL integration tests cover authentication, authorization
+responses, filters, password rotation, session invalidation, safe outbox data,
+audit idempotency, credentials, and HTTP security behavior.
 
 ## Known gaps
 

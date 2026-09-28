@@ -20,4 +20,15 @@ public interface JpaSessionRepository extends JpaRepository<Session, Long> {
     void expireExpiredSessions(@Param("cutoff") Instant cutoff,
                                @Param("activeStatus") SessionStatus activeStatus,
                                @Param("expiredStatus") SessionStatus expiredStatus);
+
+    @Modifying
+    @Query("""
+            update Session session
+               set session.sessionStatus = :terminatedStatus
+             where session.accountId = :accountId
+               and session.sessionStatus = :activeStatus
+            """)
+    int terminateActiveByAccountId(@Param("accountId") Long accountId,
+                                   @Param("activeStatus") SessionStatus activeStatus,
+                                   @Param("terminatedStatus") SessionStatus terminatedStatus);
 }

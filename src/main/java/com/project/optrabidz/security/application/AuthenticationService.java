@@ -1,6 +1,7 @@
 package com.project.optrabidz.security.application;
 
 import com.project.optrabidz.audit.application.SecurityAuditService;
+import com.project.optrabidz.common.event.EventPublisher;
 import com.project.optrabidz.identity.application.command.ActivateAccountCommand;
 import com.project.optrabidz.identity.application.command.CreateAccountCommand;
 import com.project.optrabidz.identity.application.port.IdentityCommandPort;
@@ -13,12 +14,13 @@ import com.project.optrabidz.security.application.dto.request.LoginRequest;
 import com.project.optrabidz.security.application.dto.request.SignupRequest;
 import com.project.optrabidz.security.application.dto.response.LoginResponse;
 import com.project.optrabidz.security.application.dto.response.SignupResponse;
+import com.project.optrabidz.security.application.event.CredentialPasswordChangedEvent;
 import com.project.optrabidz.security.application.exception.CredentialNotFoundException;
 import com.project.optrabidz.security.application.exception.CurrentPasswordInvalidException;
 import com.project.optrabidz.security.application.exception.EmailAlreadyRegisteredException;
 import com.project.optrabidz.security.application.exception.InvalidCredentialsException;
 import com.project.optrabidz.security.application.exception.PasswordPolicyViolationException;
-import com.project.optrabidz.security.application.exception.SecurityAuthorizationException;
+import com.project.optrabidz.security.application.exception.PasswordReuseNotAllowedException;
 import com.project.optrabidz.security.application.exception.SelfRegistrationNotAllowedException;
 import com.project.optrabidz.security.domain.model.Credential;
 import com.project.optrabidz.security.domain.model.CredentialStatus;
@@ -52,6 +54,7 @@ public class AuthenticationService {
     private final SessionRepository sessionRepository;
     private final LoginAttemptRepository loginAttemptRepository;
     private final SecurityAuditService securityAuditService;
+    private final EventPublisher eventPublisher;
     private final PasswordEncoder passwordEncoder;
     private final Duration sessionDuration;
     private final int maxLoginFailures;
@@ -62,6 +65,7 @@ public class AuthenticationService {
                                  SessionRepository sessionRepository,
                                  LoginAttemptRepository loginAttemptRepository,
                                  SecurityAuditService securityAuditService,
+                                 EventPublisher eventPublisher,
                                  PasswordEncoder passwordEncoder,
                                  @Value("${optrabidz.security.session-duration:PT8H}") Duration sessionDuration,
                                  @Value("${optrabidz.security.max-login-failures:5}") int maxLoginFailures) {
@@ -71,6 +75,7 @@ public class AuthenticationService {
         this.sessionRepository = sessionRepository;
         this.loginAttemptRepository = loginAttemptRepository;
         this.securityAuditService = securityAuditService;
+        this.eventPublisher = eventPublisher;
         this.passwordEncoder = passwordEncoder;
         this.sessionDuration = sessionDuration;
         this.maxLoginFailures = maxLoginFailures;
@@ -149,15 +154,9 @@ public class AuthenticationService {
     @Transactional
     public void changePassword(AuthenticatedUserPrincipal principal,
                                ChangePasswordRequest request) {
-        if (principal.getRole() == RoleType.ADMIN) {
-            throw new SecurityAuthorizationException(
-                    principal.getAccountId(), "change password"
-            );
-        }
-
         validatePasswordPolicy(request.newPassword());
 
-        Credential credential = credentialRepository.findByAccountId(principal.getAccountId())
+        Credential credential = credentialRepository.findByAccountIdForUpdate(principal.getAccountId())
                 .orElseThrow(() -> new CredentialNotFoundException(
                         principal.getAccountId()
                 ));
@@ -166,8 +165,19 @@ public class AuthenticationService {
             throw new CurrentPasswordInvalidException(principal.getAccountId());
         }
 
+        if (passwordEncoder.matches(request.newPassword(), credential.getPasswordHash())) {
+            throw new PasswordReuseNotAllowedException(principal.getAccountId());
+        }
+
         credential.changePassword(passwordEncoder.encode(request.newPassword()));
         credentialRepository.save(credential);
+        int terminatedSessionCount = sessionRepository.terminateActiveByAccountId(principal.getAccountId());
+        eventPublisher.publish(new CredentialPasswordChangedEvent(
+                principal.getAccountId(),
+                principal.getRole(),
+                terminatedSessionCount,
+                Instant.now()
+        ));
     }
 
     private void createManagedSession(HttpServletRequest httpRequest, AccountSnapshot account, Credential credential) {
