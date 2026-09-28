@@ -52,13 +52,19 @@ class SecurityAuditIT extends ApiIntegrationTestSupport {
                 where event_type = 'CredentialPasswordChangedEvent'
                   and aggregate_id = ?
                 """, String.class, String.valueOf(accountId));
+        String eventId = jdbcTemplate.queryForObject("""
+                select event_id
+                from event_outbox
+                where event_type = 'CredentialPasswordChangedEvent'
+                  and aggregate_id = ?
+                """, String.class, String.valueOf(accountId));
         assertThat(outboxPayload)
                 .contains("\"accountId\": " + accountId)
                 .contains("\"actorRole\": \"STARTUP\"")
                 .contains("\"terminatedSessionCount\": 1")
                 .doesNotContain(DEFAULT_PASSWORD, newPassword, email, "passwordHash");
 
-        outboxDispatcher.dispatchPending();
+        dispatchUntilProcessed(eventId);
         outboxDispatcher.dispatchPending();
 
         assertThat(jdbcTemplate.queryForObject("""
@@ -85,6 +91,25 @@ class SecurityAuditIT extends ApiIntegrationTestSupport {
         assertThat(audit.get("details").toString())
                 .contains("\"terminatedSessionCount\": 1")
                 .doesNotContain(DEFAULT_PASSWORD, newPassword, email, "passwordHash");
+    }
+
+    private void dispatchUntilProcessed(String eventId) {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            String state = jdbcTemplate.queryForObject(
+                    "select event_status from event_outbox where event_id = ?",
+                    String.class,
+                    eventId
+            );
+            if ("PROCESSED".equals(state)) {
+                return;
+            }
+            assertThat(outboxDispatcher.dispatchPending()).isPositive();
+        }
+        assertThat(jdbcTemplate.queryForObject(
+                "select event_status from event_outbox where event_id = ?",
+                String.class,
+                eventId
+        )).isEqualTo("PROCESSED");
     }
 
     @Test
