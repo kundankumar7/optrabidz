@@ -8,10 +8,12 @@ import com.project.optrabidz.security.application.dto.request.SignupRequest;
 import com.project.optrabidz.security.application.dto.response.LoginResponse;
 import com.project.optrabidz.security.application.dto.response.SignupResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -84,8 +86,14 @@ public class AuthController {
     )
     public ResponseEntity<Void> changePassword(
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
-            @Valid @RequestBody ChangePasswordRequest request) {
+            @Valid @RequestBody ChangePasswordRequest request,
+            HttpServletRequest httpRequest) {
         authenticationService.changePassword(principal, request);
+        HttpSession existingSession = httpRequest.getSession(false);
+        if (existingSession != null) {
+            existingSession.invalidate();
+        }
+        SecurityContextHolder.clearContext();
         return ResponseEntity.noContent().build();
     }
 }
