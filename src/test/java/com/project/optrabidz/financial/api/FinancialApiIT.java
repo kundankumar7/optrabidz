@@ -2,8 +2,11 @@ package com.project.optrabidz.financial.api;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
+import com.project.optrabidz.financial.application.FinancialService;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
+import com.project.optrabidz.testsupport.PostgresTestDataFixture;
+import com.project.optrabidz.testsupport.PostgresTestDataFixture.PaymentReference;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -44,6 +47,56 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private FinancialService financialService;
+
+    @Test
+    void scheduledOverdueTransitionPublishesOnlyOnce() {
+        Instant now = Instant.parse("2026-09-29T12:00:00Z");
+        PaymentReference reference = new PostgresTestDataFixture(jdbcTemplate, now)
+                .createRepaymentInstallmentReference("scheduled overdue event");
+        jdbcTemplate.update("""
+                update repayment_installment
+                set due_at = ?, updated_at = ?
+                where repayment_installment_id = ?
+                """, java.sql.Timestamp.from(now.minusSeconds(60)),
+                java.sql.Timestamp.from(now), reference.referenceId());
+
+        assertThat(financialService.markOverdueRepaymentInstallments(now, 10)).isEqualTo(1);
+        assertThat(financialService.markOverdueRepaymentInstallments(now, 10)).isZero();
+
+        assertThat(count("""
+                select count(*) from event_outbox
+                where event_type = 'RepaymentInstallmentOverdueEvent'
+                  and payload ->> 'repaymentInstallmentId' = ?
+                  and payload ->> 'source' = 'SCHEDULE'
+                """, reference.referenceId().toString())).isEqualTo(1);
+    }
+
+    @Test
+    void expiryPublishesOverdueOnlyWhenInstallmentIsDue() {
+        Instant now = Instant.parse("2026-09-29T12:00:00Z");
+        PostgresTestDataFixture fixture = new PostgresTestDataFixture(jdbcTemplate, now);
+        PaymentReference future = fixture.createRepaymentInstallmentReference("future expiry event");
+        PaymentReference due = fixture.createRepaymentInstallmentReference("due expiry event");
+        prepareExpiringRepaymentIntent(future, now, now.plusSeconds(60), "future-expiry");
+        prepareExpiringRepaymentIntent(due, now, now.minusSeconds(60), "due-expiry");
+
+        assertThat(financialService.expirePendingPaymentIntents(now, 10)).isEqualTo(2);
+
+        assertThat(count("""
+                select count(*) from event_outbox
+                where event_type = 'RepaymentInstallmentOverdueEvent'
+                  and payload ->> 'repaymentInstallmentId' = ?
+                """, future.referenceId().toString())).isZero();
+        assertThat(count("""
+                select count(*) from event_outbox
+                where event_type = 'RepaymentInstallmentOverdueEvent'
+                  and payload ->> 'repaymentInstallmentId' = ?
+                  and payload ->> 'source' = 'PAYMENT_INTENT_EXPIRY'
+                """, due.referenceId().toString())).isEqualTo(1);
+    }
 
     @Test
     void missingAndNonOwnedPaymentIntentsHaveIndistinguishableProblemDetails() throws Exception {
@@ -2277,6 +2330,32 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "agreementId",
                         "FINANCIAL.SETTLEMENT"
                 );
+    }
+
+    private void prepareExpiringRepaymentIntent(PaymentReference reference,
+                                                Instant now,
+                                                Instant dueAt,
+                                                String idempotencyKey) {
+        jdbcTemplate.update("""
+                update repayment_installment
+                set installment_status = 'PAYMENT_IN_PROGRESS',
+                    due_at = ?,
+                    payment_started_at = ?,
+                    updated_at = ?
+                where repayment_installment_id = ?
+                """, java.sql.Timestamp.from(dueAt), java.sql.Timestamp.from(now.minusSeconds(90)),
+                java.sql.Timestamp.from(now), reference.referenceId());
+        jdbcTemplate.update("""
+                insert into payment_intent (
+                    payment_purpose, repayment_installment_id,
+                    payer_account_id, payee_account_id,
+                    amount, currency_code, payment_state, idempotency_key,
+                    created_at, expires_at
+                )
+                values ('REPAYMENT', ?, ?, ?, 550000.00, 'INR', 'CREATED', ?, ?, ?)
+                """, reference.referenceId(), reference.payerAccountId(), reference.payeeAccountId(),
+                idempotencyKey, java.sql.Timestamp.from(now.minusSeconds(120)),
+                java.sql.Timestamp.from(now.minusSeconds(1)));
     }
 
     private long count(String sql, Object... arguments) {

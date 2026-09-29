@@ -8,6 +8,9 @@ import com.project.optrabidz.financial.application.dto.response.SettlementRespon
 import com.project.optrabidz.financial.application.exception.PaymentAlreadyConfirmedException;
 import com.project.optrabidz.financial.application.exception.UnsupportedPaymentMethodException;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentPaidEvent;
+import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueEvent;
+import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueSource;
+import com.project.optrabidz.financial.application.event.RepaymentInstallmentPaymentFailedEvent;
 import com.project.optrabidz.common.error.ApplicationException;
 import com.project.optrabidz.common.error.ErrorDescriptor;
 import com.project.optrabidz.financial.application.strategy.LocalPaymentStrategy;
@@ -737,6 +740,54 @@ class FinancialServiceTest {
         verify(repaymentInstallmentRepository).markPaymentFailed(
                 REPAYMENT_INSTALLMENT_ID, "Payment intent expired", now);
         verify(repaymentRepository).refreshStatus(REPAYMENT_ID, now);
+    }
+
+    @Test
+    void expiryBeforeDueKeepsGenericFailureWithoutOverdueEvent() {
+        Instant now = now();
+        stubExpiredRepaymentIntent(now, RepaymentInstallmentState.PAYMENT_FAILED);
+
+        service.expirePendingPaymentIntents(now, 1);
+
+        verify(eventPublisher, never()).publish(any(RepaymentInstallmentOverdueEvent.class));
+    }
+
+    @Test
+    void expiryAtOrAfterDuePublishesOverdueEventOnce() {
+        Instant now = now();
+        stubExpiredRepaymentIntent(now, RepaymentInstallmentState.OVERDUE);
+
+        service.expirePendingPaymentIntents(now, 1);
+
+        ArgumentCaptor<RepaymentInstallmentOverdueEvent> event =
+                ArgumentCaptor.forClass(RepaymentInstallmentOverdueEvent.class);
+        verify(eventPublisher).publish(event.capture());
+        assertThat(event.getValue().paymentIntentId()).isEqualTo(PAYMENT_INTENT_ID);
+        assertThat(event.getValue().actorAccountId()).isNull();
+        assertThat(event.getValue().source()).isEqualTo(RepaymentInstallmentOverdueSource.PAYMENT_INTENT_EXPIRY);
+        assertThat(event.getValue().reason()).isEqualTo("Payment intent expired");
+    }
+
+    @Test
+    void schedulerPublishesOnlyTheFirstOverdueTransition() {
+        Instant now = now();
+        when(repaymentInstallmentRepository.findOverdueEligibleIds(now, 10))
+                .thenReturn(List.of(REPAYMENT_INSTALLMENT_ID), List.of(REPAYMENT_INSTALLMENT_ID));
+        when(repaymentInstallmentRepository.markOverdueReturning(List.of(REPAYMENT_INSTALLMENT_ID), now))
+                .thenReturn(List.of(REPAYMENT_INSTALLMENT_ID), List.of());
+        when(repaymentInstallmentRepository.findById(REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(Optional.of(repaymentInstallment(RepaymentInstallmentState.OVERDUE, null)));
+        when(repaymentRepository.findById(REPAYMENT_ID)).thenReturn(Optional.of(repayment()));
+
+        assertThat(service.markOverdueRepaymentInstallments(now, 10)).isEqualTo(1);
+        assertThat(service.markOverdueRepaymentInstallments(now, 10)).isZero();
+
+        ArgumentCaptor<RepaymentInstallmentOverdueEvent> event =
+                ArgumentCaptor.forClass(RepaymentInstallmentOverdueEvent.class);
+        verify(eventPublisher).publish(event.capture());
+        assertThat(event.getValue().source()).isEqualTo(RepaymentInstallmentOverdueSource.SCHEDULE);
+        assertThat(event.getValue().actorAccountId()).isNull();
+        assertThat(event.getValue().paymentIntentId()).isNull();
     }
 
     @Test
@@ -1668,6 +1719,32 @@ class FinancialServiceTest {
     }
 
     @Test
+    void repaymentFailureBeforeDuePublishesGenericFailureOnly() {
+        stubRepaymentFailure(RepaymentInstallmentState.PAYMENT_FAILED);
+
+        service.failLocalPaymentAttempt(STARTUP_ACCOUNT_ID, RoleType.STARTUP, PAYMENT_ATTEMPT_ID);
+
+        verify(eventPublisher).publish(any(RepaymentInstallmentPaymentFailedEvent.class));
+        verify(eventPublisher, never()).publish(any(RepaymentInstallmentOverdueEvent.class));
+    }
+
+    @Test
+    void repaymentFailureAtOrAfterDuePublishesOverdueInsteadOfGenericFailure() {
+        stubRepaymentFailure(RepaymentInstallmentState.OVERDUE);
+
+        service.failLocalPaymentAttempt(STARTUP_ACCOUNT_ID, RoleType.STARTUP, PAYMENT_ATTEMPT_ID);
+
+        ArgumentCaptor<RepaymentInstallmentOverdueEvent> event =
+                ArgumentCaptor.forClass(RepaymentInstallmentOverdueEvent.class);
+        verify(eventPublisher).publish(event.capture());
+        verify(eventPublisher, never()).publish(any(RepaymentInstallmentPaymentFailedEvent.class));
+        assertThat(event.getValue().source()).isEqualTo(RepaymentInstallmentOverdueSource.PAYMENT_FAILURE);
+        assertThat(event.getValue().actorAccountId()).isEqualTo(STARTUP_ACCOUNT_ID);
+        assertThat(event.getValue().paymentIntentId()).isEqualTo(PAYMENT_INTENT_ID);
+        assertThat(event.getValue().reason()).isEqualTo("Local payment failure was simulated");
+    }
+
+    @Test
     void providerCallbackCanFailPaymentAttemptThroughSharedCommandPath() {
         PaymentAttempt attempt = initiatedLocalAttempt();
         PaymentAttempt failedAttempt = failedLocalAttempt("UPI_DECLINED", "UPI provider declined the payment");
@@ -1794,6 +1871,55 @@ class FinancialServiceTest {
         when(repaymentInstallmentRepository.findById(
                         REPAYMENT_INSTALLMENT_ID))
                 .thenReturn(Optional.ofNullable(latestInstallment));
+    }
+
+    private void stubExpiredRepaymentIntent(Instant now, RepaymentInstallmentState resultingState) {
+        when(paymentIntentRepository.expireExpiredActiveReturning(now, 1))
+                .thenReturn(List.of(new ExpiredPaymentIntentReference(
+                        PAYMENT_INTENT_ID,
+                        PaymentPurpose.REPAYMENT,
+                        null,
+                        REPAYMENT_INSTALLMENT_ID
+                )));
+        when(repaymentInstallmentRepository.findById(REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(
+                        Optional.of(repaymentInstallment(RepaymentInstallmentState.PAYMENT_IN_PROGRESS, null)),
+                        Optional.of(repaymentInstallment(resultingState, null))
+                );
+        when(repaymentInstallmentRepository.markPaymentFailed(
+                REPAYMENT_INSTALLMENT_ID, "Payment intent expired", now))
+                .thenReturn(1);
+        if (resultingState == RepaymentInstallmentState.OVERDUE) {
+            when(repaymentRepository.findById(REPAYMENT_ID)).thenReturn(Optional.of(repayment()));
+        }
+    }
+
+    private void stubRepaymentFailure(RepaymentInstallmentState resultingState) {
+        PaymentIntent pendingIntent = repaymentPaymentIntent(PaymentState.PAYMENT_PENDING);
+        PaymentIntent failedIntent = repaymentPaymentIntent(PaymentState.PAYMENT_FAILED);
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(initiatedLocalAttempt()), Optional.of(failedLocalAttempt()));
+        when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
+                .thenReturn(Optional.of(pendingIntent), Optional.of(failedIntent));
+        when(paymentAttemptRepository.failActive(
+                eq(PAYMENT_ATTEMPT_ID), eq("LOCAL_FAILURE"),
+                eq("Local payment failure was simulated"), any(Instant.class)))
+                .thenReturn(1);
+        when(paymentIntentRepository.failActive(
+                eq(PAYMENT_INTENT_ID), eq("LOCAL_FAILURE"),
+                eq("Local payment failure was simulated"), any(Instant.class)))
+                .thenReturn(1);
+        when(repaymentInstallmentRepository.findById(REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(
+                        Optional.of(repaymentInstallment(RepaymentInstallmentState.PAYMENT_IN_PROGRESS, null)),
+                        Optional.of(repaymentInstallment(resultingState, null))
+                );
+        when(repaymentRepository.findById(REPAYMENT_ID)).thenReturn(Optional.of(repayment()));
+        when(repaymentInstallmentRepository.markPaymentFailed(
+                eq(REPAYMENT_INSTALLMENT_ID),
+                eq("Local payment failure was simulated"),
+                any(Instant.class)))
+                .thenReturn(1);
     }
 
     private void stubRepaymentConfirmation(

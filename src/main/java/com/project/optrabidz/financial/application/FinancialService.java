@@ -30,6 +30,8 @@ import com.project.optrabidz.financial.application.exception.SettlementNotPayabl
 import com.project.optrabidz.financial.application.exception.SettlementStateConflictException;
 import com.project.optrabidz.financial.application.exception.UnsupportedPaymentMethodException;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentPaidEvent;
+import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueEvent;
+import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueSource;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentPaymentFailedEvent;
 import com.project.optrabidz.financial.application.event.SettlementConfirmedEvent;
 import com.project.optrabidz.financial.application.strategy.LocalPaymentStrategy;
@@ -493,12 +495,30 @@ public class FinancialService {
         }
         RepaymentInstallment installment = getRepaymentInstallment(paymentIntent.getRepaymentInstallmentId());
         Repayment repayment = getRepayment(installment.getRepaymentId());
-        repaymentInstallmentRepository.markPaymentFailed(
+        String normalizedReason = reason == null || reason.isBlank() ? "Payment failed" : reason;
+        int changedCount = repaymentInstallmentRepository.markPaymentFailed(
                 installment.getRepaymentInstallmentId(),
-                reason == null || reason.isBlank() ? "Payment failed" : reason,
+                normalizedReason,
                 now
         );
+        if (changedCount == 0) {
+            return;
+        }
         repaymentRepository.refreshStatus(installment.getRepaymentId(), now);
+        RepaymentInstallment updatedInstallment =
+                getRepaymentInstallment(installment.getRepaymentInstallmentId());
+        if (updatedInstallment.getInstallmentState() == RepaymentInstallmentState.OVERDUE) {
+            publishOverdueEvent(
+                    updatedInstallment,
+                    repayment,
+                    paymentIntent.getPaymentIntentId(),
+                    paymentIntent.getPayerAccountId(),
+                    RepaymentInstallmentOverdueSource.PAYMENT_FAILURE,
+                    normalizedReason,
+                    now
+            );
+            return;
+        }
         eventPublisher.publish(new RepaymentInstallmentPaymentFailedEvent(
                 installment.getRepaymentInstallmentId(),
                 repayment.getRepaymentId(),
@@ -507,7 +527,7 @@ public class FinancialService {
                 repayment.getInvestorId(),
                 paymentIntent.getPaymentIntentId(),
                 paymentIntent.getPayerAccountId(),
-                reason == null || reason.isBlank() ? "Payment failed" : reason,
+                normalizedReason,
                 now
         ));
     }
@@ -536,6 +556,19 @@ public class FinancialService {
         );
         if (changedCount > 0) {
             repaymentRepository.refreshStatus(installment.getRepaymentId(), now);
+            RepaymentInstallment updatedInstallment =
+                    getRepaymentInstallment(installment.getRepaymentInstallmentId());
+            if (updatedInstallment.getInstallmentState() == RepaymentInstallmentState.OVERDUE) {
+                publishOverdueEvent(
+                        updatedInstallment,
+                        getRepayment(updatedInstallment.getRepaymentId()),
+                        reference.paymentIntentId(),
+                        null,
+                        RepaymentInstallmentOverdueSource.PAYMENT_INTENT_EXPIRY,
+                        "Payment intent expired",
+                        now
+                );
+            }
         }
     }
 
@@ -550,10 +583,48 @@ public class FinancialService {
         if (installmentIds.isEmpty()) {
             return 0;
         }
-        java.util.List<Long> repaymentIds = repaymentInstallmentRepository.findRepaymentIdsByInstallmentIds(installmentIds);
-        int changedCount = repaymentInstallmentRepository.markOverdue(installmentIds, now);
+        java.util.List<Long> changedInstallmentIds =
+                repaymentInstallmentRepository.markOverdueReturning(installmentIds, now);
+        if (changedInstallmentIds.isEmpty()) {
+            return 0;
+        }
+        java.util.List<Long> repaymentIds =
+                repaymentInstallmentRepository.findRepaymentIdsByInstallmentIds(changedInstallmentIds);
         repaymentIds.forEach(repaymentId -> repaymentRepository.refreshStatus(repaymentId, now));
-        return changedCount;
+        changedInstallmentIds.forEach(installmentId -> {
+            RepaymentInstallment installment = getRepaymentInstallment(installmentId);
+            publishOverdueEvent(
+                    installment,
+                    getRepayment(installment.getRepaymentId()),
+                    null,
+                    null,
+                    RepaymentInstallmentOverdueSource.SCHEDULE,
+                    "Repayment installment due date passed",
+                    now
+            );
+        });
+        return changedInstallmentIds.size();
+    }
+
+    private void publishOverdueEvent(RepaymentInstallment installment,
+                                     Repayment repayment,
+                                     Long paymentIntentId,
+                                     Long actorAccountId,
+                                     RepaymentInstallmentOverdueSource source,
+                                     String reason,
+                                     Instant occurredAt) {
+        eventPublisher.publish(new RepaymentInstallmentOverdueEvent(
+                installment.getRepaymentInstallmentId(),
+                repayment.getRepaymentId(),
+                repayment.getAgreementId(),
+                repayment.getStartupId(),
+                repayment.getInvestorId(),
+                paymentIntentId,
+                actorAccountId,
+                source,
+                reason,
+                occurredAt
+        ));
     }
 
     private Settlement createNewSettlement(Agreement agreement) {

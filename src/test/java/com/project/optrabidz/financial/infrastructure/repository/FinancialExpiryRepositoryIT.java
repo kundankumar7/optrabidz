@@ -165,10 +165,10 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
         ));
 
         List<Long> ids = repaymentInstallmentRepository.findOverdueEligibleIds(NOW, 10);
-        int overdueCount = repaymentInstallmentRepository.markOverdue(ids, NOW);
+        List<Long> changedIds = repaymentInstallmentRepository.markOverdueReturning(ids, NOW);
         repaymentRepository.refreshStatus(repayment.getRepaymentId(), NOW);
 
-        assertThat(overdueCount).isEqualTo(1);
+        assertThat(changedIds).containsExactly(overdue.getRepaymentInstallmentId());
         assertThat(repaymentInstallmentRepository.findById(overdue.getRepaymentInstallmentId()))
                 .isPresent()
                 .get()
@@ -272,7 +272,7 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
 
         int overdueCount = runTwoWorkers(() -> {
             List<Long> ids = repaymentInstallmentRepository.findOverdueEligibleIds(NOW, 3);
-            return repaymentInstallmentRepository.markOverdue(ids, NOW);
+            return repaymentInstallmentRepository.markOverdueReturning(ids, NOW).size();
         });
 
         assertThat(overdueCount).isEqualTo(5);

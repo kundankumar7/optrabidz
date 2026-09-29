@@ -14,6 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,6 +58,34 @@ class RepaymentInstallmentRepositoryIT extends PostgresJpaIntegrationTestSupport
         assertThat(repository.findById(installmentId)).isPresent();
     }
 
+    @Test
+    void markOverdueReturningReturnsOnlyChangedInstallments() {
+        Agreement agreement = testData.createAgreement("overdue transition");
+        Long repaymentId = insertRepayment(agreement);
+        Long eligibleId = insertInstallment(repaymentId, 1, "NOT_STARTED", NOW.minusSeconds(60));
+        Long alreadyOverdueId = insertInstallment(repaymentId, 2, "OVERDUE", NOW.minusSeconds(120));
+        Long futureId = insertInstallment(repaymentId, 3, "NOT_STARTED", NOW.plusSeconds(60));
+
+        List<Long> changedIds = repository.markOverdueReturning(
+                List.of(eligibleId, alreadyOverdueId, futureId),
+                NOW
+        );
+
+        assertThat(changedIds).containsExactly(eligibleId);
+        assertThat(repository.findById(eligibleId))
+                .isPresent()
+                .get()
+                .satisfies(installment -> {
+                    assertThat(installment.getInstallmentState().name()).isEqualTo("OVERDUE");
+                    assertThat(installment.getOverdueAt()).isEqualTo(NOW);
+                });
+        assertThat(repository.findById(futureId))
+                .isPresent()
+                .get()
+                .satisfies(installment ->
+                        assertThat(installment.getInstallmentState().name()).isEqualTo("NOT_STARTED"));
+    }
+
     private Long insertRepayment(Agreement agreement) {
         return jdbcTemplate.queryForObject("""
                 insert into repayment (
@@ -74,14 +103,21 @@ class RepaymentInstallmentRepositoryIT extends PostgresJpaIntegrationTestSupport
     }
 
     private Long insertInstallment(Long repaymentId) {
+        return insertInstallment(repaymentId, 1, "NOT_STARTED", NOW.plusSeconds(86_400));
+    }
+
+    private Long insertInstallment(Long repaymentId, int installmentNumber, String state, Instant dueAt) {
+        Instant createdAt = dueAt.isBefore(NOW) ? dueAt.minusSeconds(3_600) : NOW;
         return jdbcTemplate.queryForObject("""
                 insert into repayment_installment (
                     repayment_id, installment_number, installment_status, amount,
-                    currency_code, due_at, created_at, updated_at
+                    currency_code, due_at, overdue_at, created_at, updated_at
                 )
-                values (?, 1, 'NOT_STARTED', 550000.00, 'INR', ?, ?, ?)
+                values (?, ?, ?::repayment_installment_status_enum, 550000.00, 'INR', ?,
+                        case when ? = 'OVERDUE' then ?::timestamptz else null::timestamptz end, ?, ?)
                 returning repayment_installment_id
-                """, Long.class, repaymentId, Timestamp.from(NOW.plusSeconds(86_400)),
-                Timestamp.from(NOW), Timestamp.from(NOW));
+                """, Long.class, repaymentId, installmentNumber, state, Timestamp.from(dueAt), state,
+                Timestamp.from(NOW.minusSeconds(30)), Timestamp.from(createdAt),
+                Timestamp.from(NOW));
     }
 }
