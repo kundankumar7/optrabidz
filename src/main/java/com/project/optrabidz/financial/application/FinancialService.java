@@ -736,7 +736,10 @@ public class FinancialService {
     private Instant dueAtFor(AgreementDebtTerms debtTerms, int repaymentNumber, Instant scheduleStart) {
         long months = switch (debtTerms.getRepaymentPlanType()) {
             case INSTALLMENT_MONTHLY -> repaymentNumber;
-            case INSTALLMENT_QUARTERLY -> repaymentNumber * 3L;
+            case INSTALLMENT_QUARTERLY -> Math.min(
+                    repaymentNumber * 3L,
+                    debtTerms.getTenureMonths()
+            );
             case ONE_TIME -> debtTerms.getOneTimeRepaymentDueAfterMonths();
         };
         return scheduleStart.atZone(ZoneOffset.UTC)

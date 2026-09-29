@@ -52,6 +52,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -61,6 +62,7 @@ import org.springframework.dao.DataRetrievalFailureException;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -1095,6 +1097,8 @@ class FinancialServiceTest {
         assertThat(repayment.getTotalRepayableAmount()).isEqualByComparingTo("636625.00");
         assertThat(repayment.getTotalInstallments()).isEqualTo(18);
         assertThat(repayment.getRepaymentState()).isEqualTo(RepaymentState.NOT_STARTED);
+        assertThat(repayment.getFinalDueAt()).isEqualTo(
+                repayment.getStartedAt().atZone(ZoneOffset.UTC).plusMonths(18).toInstant());
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<RepaymentInstallment>> installmentCaptor = ArgumentCaptor.forClass(List.class);
@@ -1107,10 +1111,58 @@ class FinancialServiceTest {
         assertThat(firstInstallment.getInstallmentNumber()).isEqualTo(1);
         assertThat(firstInstallment.getAmount()).isEqualByComparingTo("35368.06");
         assertThat(firstInstallment.getInstallmentState()).isEqualTo(RepaymentInstallmentState.NOT_STARTED);
+        assertThat(firstInstallment.getDueAt()).isEqualTo(
+                repayment.getStartedAt().atZone(ZoneOffset.UTC).plusMonths(1).toInstant());
         assertThat(finalInstallment.getInstallmentNumber()).isEqualTo(18);
         assertThat(finalInstallment.getAmount()).isEqualByComparingTo("35367.98");
+        assertThat(finalInstallment.getDueAt()).isEqualTo(repayment.getFinalDueAt());
         assertThat(installments.stream().map(RepaymentInstallment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add))
                 .isEqualByComparingTo("636625.00");
+    }
+
+    @ParameterizedTest(name = "quarterly tenure {0} months ends at {1}")
+    @CsvSource({
+            "2, '2'",
+            "5, '3,5'",
+            "6, '3,6'",
+            "7, '3,6,7'"
+    })
+    void quarterlyRepaymentScheduleEndsAtTenureBoundary(
+            int tenureMonths,
+            String expectedDueMonths
+    ) {
+        stubSuccessfulSettlementConfirmation(quarterlyAgreement(tenureMonths));
+
+        service.confirmLocalPaymentAttempt(
+                INVESTOR_ACCOUNT_ID,
+                RoleType.INVESTOR,
+                PAYMENT_ATTEMPT_ID
+        );
+
+        ArgumentCaptor<Repayment> repaymentCaptor = ArgumentCaptor.forClass(Repayment.class);
+        verify(repaymentRepository).save(repaymentCaptor.capture());
+        Repayment repayment = repaymentCaptor.getValue();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<RepaymentInstallment>> installmentCaptor = ArgumentCaptor.forClass(List.class);
+        verify(repaymentInstallmentRepository).saveAll(installmentCaptor.capture());
+        List<RepaymentInstallment> installments = installmentCaptor.getValue();
+        List<Long> dueMonths = java.util.Arrays.stream(expectedDueMonths.split(","))
+                .map(Long::parseLong)
+                .toList();
+        List<Instant> expectedDueDates = dueMonths.stream()
+                .map(months -> repayment.getStartedAt().atZone(ZoneOffset.UTC)
+                        .plusMonths(months)
+                        .toInstant())
+                .toList();
+
+        assertThat(installments).hasSize(dueMonths.size());
+        assertThat(installments).extracting(RepaymentInstallment::getDueAt)
+                .containsExactlyElementsOf(expectedDueDates);
+        assertThat(repayment.getFinalDueAt()).isEqualTo(expectedDueDates.getLast());
+        assertThat(installments.stream()
+                .map(RepaymentInstallment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add))
+                .isEqualByComparingTo(repayment.getTotalRepayableAmount());
     }
 
     @Test
@@ -1147,7 +1199,8 @@ class FinancialServiceTest {
         assertThat(repayment.getAgreementId()).isEqualTo(AGREEMENT_ID);
         assertThat(repayment.getTotalInstallments()).isEqualTo(1);
         assertThat(repayment.getTotalRepayableAmount()).isEqualByComparingTo("554812.50");
-        assertThat(Duration.between(now(), repayment.getFinalDueAt()).toDays()).isBetween(27L, 31L);
+        assertThat(repayment.getFinalDueAt()).isEqualTo(
+                repayment.getStartedAt().atZone(ZoneOffset.UTC).plusMonths(1).toInstant());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<RepaymentInstallment>> installmentCaptor = ArgumentCaptor.forClass(List.class);
         verify(repaymentInstallmentRepository).saveAll(installmentCaptor.capture());
@@ -1155,6 +1208,7 @@ class FinancialServiceTest {
                 .satisfies(installment -> {
                     assertThat(installment.getInstallmentNumber()).isEqualTo(1);
                     assertThat(installment.getAmount()).isEqualByComparingTo("554812.50");
+                    assertThat(installment.getDueAt()).isEqualTo(repayment.getFinalDueAt());
                 });
     }
 
@@ -1693,6 +1747,33 @@ class FinancialServiceTest {
                 .thenReturn(confirmedCount);
     }
 
+    private void stubSuccessfulSettlementConfirmation(Agreement confirmedAgreement) {
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(initiatedLocalAttempt()), Optional.of(confirmedLocalAttempt()));
+        when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
+                .thenReturn(
+                        Optional.of(settlementPaymentIntent(PaymentState.PAYMENT_PENDING)),
+                        Optional.of(settlementPaymentIntent(PaymentState.PAYMENT_CONFIRMED))
+                );
+        when(paymentAttemptRepository.confirmActive(
+                eq(PAYMENT_ATTEMPT_ID),
+                eq("LOCAL-PAYMENT-" + PAYMENT_ATTEMPT_ID),
+                any(Instant.class)))
+                .thenReturn(1);
+        when(paymentIntentRepository.confirmActive(eq(PAYMENT_INTENT_ID), any(Instant.class)))
+                .thenReturn(1);
+        when(settlementRepository.findById(SETTLEMENT_ID)).thenReturn(Optional.of(settlement()));
+        when(settlementRepository.confirmPending(
+                eq(SETTLEMENT_ID), eq(PAYMENT_INTENT_ID), any(Instant.class)))
+                .thenReturn(1);
+        when(repaymentRepository.findByAgreementId(AGREEMENT_ID)).thenReturn(Optional.empty());
+        when(agreementRepository.findById(AGREEMENT_ID)).thenReturn(Optional.of(confirmedAgreement));
+        when(repaymentRepository.save(any(Repayment.class)))
+                .thenAnswer(invocation -> withRepaymentId(invocation.getArgument(0), 9001L));
+        when(repaymentInstallmentRepository.saveAll(any()))
+                .thenAnswer(invocation -> List.copyOf(invocation.getArgument(0)));
+    }
+
     private static Agreement agreement() {
         return Agreement.builder()
                 .agreementId(AGREEMENT_ID)
@@ -1732,6 +1813,28 @@ class FinancialServiceTest {
                         18,
                         RepaymentPlanType.ONE_TIME,
                         1,
+                        now()
+                ))
+                .build();
+    }
+
+    private static Agreement quarterlyAgreement(int tenureMonths) {
+        return Agreement.builder()
+                .agreementId(AGREEMENT_ID)
+                .listingId(LISTING_ID)
+                .bidId(501L)
+                .startupId(STARTUP_ID)
+                .investorId(INVESTOR_ID)
+                .fundingModel(FundingModel.DEBT)
+                .createdAt(now())
+                .debtTerms(new AgreementDebtTerms(
+                        601L,
+                        AGREEMENT_ID,
+                        new BigDecimal("550000.00"),
+                        new BigDecimal("10.50"),
+                        tenureMonths,
+                        RepaymentPlanType.INSTALLMENT_QUARTERLY,
+                        null,
                         now()
                 ))
                 .build();

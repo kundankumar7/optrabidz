@@ -484,6 +484,64 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
     }
 
     @Test
+    void quarterlyRepaymentSchedulePersistsFinalInstallmentAtContractBoundary() throws Exception {
+        FinanceScenario scenario = createAcceptedBidScenario(
+                "Quarterly Boundary Startup",
+                "Quarterly Boundary Investor",
+                new BigDecimal("575432.10"),
+                5,
+                "INSTALLMENT_QUARTERLY"
+        );
+        Long settlementId = getInvestorSettlementId(scenario.investor());
+        Long paymentIntentId = createSettlementPaymentIntent(scenario.investor(), settlementId);
+        Long paymentAttemptId = createPaymentAttempt(scenario.investor(), paymentIntentId);
+
+        mockMvc.perform(post(
+                                "/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm",
+                                paymentAttemptId)
+                        .session(scenario.investor().session())
+                        .cookie(scenario.investor().xsrfCookie())
+                        .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk());
+
+        Long repaymentId = getStartupRepaymentId(scenario.startup());
+        assertThat(count("""
+                select count(*)
+                from repayment
+                where repayment_id = ?
+                  and repayment_plan_type = 'INSTALLMENT_QUARTERLY'
+                  and total_installments = 2
+                """, repaymentId)).isEqualTo(1);
+        assertThat(count("""
+                select count(*)
+                from repayment r
+                join repayment_installment ri on ri.repayment_id = r.repayment_id
+                where r.repayment_id = ?
+                  and (
+                    (ri.installment_number = 1 and ri.due_at = r.started_at + interval '3 months')
+                    or
+                    (ri.installment_number = 2 and ri.due_at = r.started_at + interval '5 months')
+                  )
+                """, repaymentId)).isEqualTo(2);
+        assertThat(count("""
+                select count(*)
+                from repayment r
+                join repayment_installment ri
+                  on ri.repayment_id = r.repayment_id
+                 and ri.installment_number = 2
+                where r.repayment_id = ?
+                  and r.final_due_at = ri.due_at
+                  and (
+                    select sum(amount)
+                    from repayment_installment
+                    where repayment_id = r.repayment_id
+                  ) = r.total_repayable_amount
+                """, repaymentId)).isEqualTo(1);
+    }
+
+    @Test
     void upiSandboxPaymentCanBeConfirmedThroughProviderWebhook() throws Exception {
         FinanceScenario scenario = createAcceptedBidScenario(
                 "Finance UPI Webhook Startup",
@@ -1513,10 +1571,27 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
     private FinanceScenario createAcceptedBidScenario(String startupName,
                                                       String investorName,
                                                       BigDecimal amount) throws Exception {
+        return createAcceptedBidScenario(
+                startupName,
+                investorName,
+                amount,
+                18,
+                "INSTALLMENT_MONTHLY"
+        );
+    }
+
+    private FinanceScenario createAcceptedBidScenario(
+            String startupName,
+            String investorName,
+            BigDecimal amount,
+            int tenureMonths,
+            String repaymentPlanType
+    ) throws Exception {
         AuthenticatedClient startup = eligibleStartup(startupName);
         AuthenticatedClient investor = eligibleInvestor(investorName);
-        Long listingId = createAndPublishListing(startup, startupName + " Listing", amount);
-        Long bidId = submitBid(investor, listingId, amount);
+        Long listingId = createAndPublishListing(
+                startup, startupName + " Listing", amount, tenureMonths, repaymentPlanType);
+        Long bidId = submitBid(investor, listingId, amount, tenureMonths, repaymentPlanType);
         Long agreementId = acceptBid(startup, bidId);
         return new FinanceScenario(startup, investor, listingId, bidId, agreementId);
     }
@@ -1580,12 +1655,23 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
     }
 
     private Long createAndPublishListing(AuthenticatedClient startup, String title, BigDecimal amount) throws Exception {
+        return createAndPublishListing(startup, title, amount, 18, "INSTALLMENT_MONTHLY");
+    }
+
+    private Long createAndPublishListing(
+            AuthenticatedClient startup,
+            String title,
+            BigDecimal amount,
+            int tenureMonths,
+            String repaymentPlanType
+    ) throws Exception {
         MvcResult createResult = mockMvc.perform(post("/api/v1/funding-listings")
                         .session(startup.session())
                         .cookie(startup.xsrfCookie())
                         .header("X-CSRF-TOKEN", startup.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(createListingRequest(title, amount))))
+                        .content(json(createListingRequest(
+                                title, amount, tenureMonths, repaymentPlanType))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.listingState").value("DRAFT"))
                 .andReturn();
@@ -1604,12 +1690,23 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
     }
 
     private Long submitBid(AuthenticatedClient investor, Long listingId, BigDecimal amount) throws Exception {
+        return submitBid(investor, listingId, amount, 18, "INSTALLMENT_MONTHLY");
+    }
+
+    private Long submitBid(
+            AuthenticatedClient investor,
+            Long listingId,
+            BigDecimal amount,
+            int tenureMonths,
+            String repaymentPlanType
+    ) throws Exception {
         MvcResult bidResult = mockMvc.perform(post("/api/v1/bids")
                         .session(investor.session())
                         .cookie(investor.xsrfCookie())
                         .header("X-CSRF-TOKEN", investor.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(submitBidRequest(listingId, amount))))
+                        .content(json(submitBidRequest(
+                                listingId, amount, tenureMonths, repaymentPlanType))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.bidState").value("SUBMITTED"))
                 .andReturn();
@@ -1939,6 +2036,15 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
     }
 
     private Map<String, Object> createListingRequest(String title, BigDecimal amount) {
+        return createListingRequest(title, amount, 18, "INSTALLMENT_MONTHLY");
+    }
+
+    private Map<String, Object> createListingRequest(
+            String title,
+            BigDecimal amount,
+            int tenureMonths,
+            String repaymentPlanType
+    ) {
         return Map.of(
                 "fundingModel", "DEBT",
                 "title", title,
@@ -1948,21 +2054,30 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "currencyCode", "INR",
                         "minimumInterestRate", new BigDecimal("8.50"),
                         "maximumInterestRate", new BigDecimal("12.75"),
-                        "requestedTenureMonths", 18,
-                        "repaymentPlanType", "INSTALLMENT_MONTHLY"
+                        "requestedTenureMonths", tenureMonths,
+                        "repaymentPlanType", repaymentPlanType
                 )
         );
     }
 
     private Map<String, Object> submitBidRequest(Long listingId, BigDecimal amount) {
+        return submitBidRequest(listingId, amount, 18, "INSTALLMENT_MONTHLY");
+    }
+
+    private Map<String, Object> submitBidRequest(
+            Long listingId,
+            BigDecimal amount,
+            int tenureMonths,
+            String repaymentPlanType
+    ) {
         return Map.of(
                 "listingId", listingId,
                 "fundingModel", "DEBT",
                 "debtTerms", Map.of(
                         "proposedAmount", amount,
                         "proposedInterestRate", new BigDecimal("10.25"),
-                        "proposedTenureMonths", 18,
-                        "repaymentPlanType", "INSTALLMENT_MONTHLY"
+                        "proposedTenureMonths", tenureMonths,
+                        "repaymentPlanType", repaymentPlanType
                 ),
                 "proposalMessage", "Funding offer for finance module integration testing."
         );
