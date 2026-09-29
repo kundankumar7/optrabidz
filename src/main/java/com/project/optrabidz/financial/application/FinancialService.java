@@ -952,9 +952,8 @@ public class FinancialService {
     }
 
     private PaymentIntent getActionablePaymentIntent(Long accountId, RoleType roleType, Long paymentIntentId) {
-        Optional<PaymentIntent> result = roleType == RoleType.ADMIN
-                ? paymentIntentRepository.findById(paymentIntentId)
-                : paymentIntentRepository.findByIdForPayer(paymentIntentId, accountId);
+        Optional<PaymentIntent> result = paymentIntentRepository.findByIdForPayer(
+                paymentIntentId, accountId);
         return result.orElseThrow(() -> new PaymentIntentNotFoundException(
                 "Payment intent unavailable for payer lookup"
         ));
@@ -975,9 +974,8 @@ public class FinancialService {
     }
 
     private PaymentAttempt getActorPaymentAttempt(Long accountId, RoleType roleType, Long paymentAttemptId) {
-        Optional<PaymentAttempt> result = roleType == RoleType.ADMIN
-                ? paymentAttemptRepository.findById(paymentAttemptId)
-                : paymentAttemptRepository.findByIdForPayer(paymentAttemptId, accountId);
+        Optional<PaymentAttempt> result = paymentAttemptRepository.findByIdForPayer(
+                paymentAttemptId, accountId);
         return result.orElseThrow(() -> new PaymentAttemptNotFoundException(
                 "Payment attempt unavailable for payer lookup"
         ));

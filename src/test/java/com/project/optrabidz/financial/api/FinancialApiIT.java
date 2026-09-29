@@ -139,6 +139,63 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
     }
 
     @Test
+    void administratorCanReadPaymentIntentButCannotPerformPayerMutations() throws Exception {
+        FinanceScenario scenario = createAcceptedBidScenario(
+                "Finance Administrator Boundary Startup",
+                "Finance Administrator Boundary Investor",
+                new BigDecimal("525432.10")
+        );
+        Long settlementId = getInvestorSettlementId(scenario.investor());
+        Long paymentIntentId = createSettlementPaymentIntent(scenario.investor(), settlementId);
+        AuthenticatedClient administrator = administrator();
+
+        mockMvc.perform(get("/api/v1/payment-intents/{paymentIntentId}", paymentIntentId)
+                        .session(administrator.session())
+                        .cookie(administrator.xsrfCookie()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paymentIntentId").value(paymentIntentId.intValue()));
+
+        mockMvc.perform(post("/api/v1/payment-intents/{paymentIntentId}/attempts", paymentIntentId)
+                        .header("X-Request-ID", "admin-attempt-creation-denied")
+                        .session(administrator.session())
+                        .cookie(administrator.xsrfCookie())
+                        .header("X-CSRF-TOKEN", administrator.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNotFound())
+                .andExpectAll(paymentProblem(
+                        404,
+                        "Resource not found",
+                        "PAYMENT_INTENT_NOT_FOUND",
+                        "The requested payment intent was not found",
+                        "admin-attempt-creation-denied"
+                ));
+
+        Long paymentAttemptId = createPaymentAttempt(scenario.investor(), paymentIntentId);
+        for (String action : List.of("local-confirm", "local-fail")) {
+            String requestId = "admin-" + action + "-denied";
+            mockMvc.perform(post(
+                                    "/api/v1/payment-attempts/{paymentAttemptId}/actions/{action}",
+                                    paymentAttemptId,
+                                    action)
+                            .header("X-Request-ID", requestId)
+                            .session(administrator.session())
+                            .cookie(administrator.xsrfCookie())
+                            .header("X-CSRF-TOKEN", administrator.csrfToken())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isNotFound())
+                    .andExpectAll(paymentProblem(
+                            404,
+                            "Resource not found",
+                            "PAYMENT_ATTEMPT_NOT_FOUND",
+                            "The requested payment attempt was not found",
+                            requestId
+                    ));
+        }
+    }
+
+    @Test
     void activePaymentRuleFailuresUseAllowlistedProblemDetails() throws Exception {
         FinanceScenario scenario = createAcceptedBidScenario(
                 "Finance Rule Contract Startup",

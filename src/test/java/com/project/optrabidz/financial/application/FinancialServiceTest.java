@@ -959,6 +959,22 @@ class FinancialServiceTest {
     }
 
     @Test
+    void administratorCannotCreatePaymentAttemptForVisibleIntent() {
+        assertPaymentFailure(
+                () -> service.createPaymentAttempt(
+                        999L,
+                        RoleType.ADMIN,
+                        PAYMENT_INTENT_ID,
+                        new CreatePaymentAttemptRequest(null, null)
+                ),
+                PAYMENT_INTENT_NOT_FOUND
+        );
+
+        verify(paymentIntentRepository).findByIdForPayer(PAYMENT_INTENT_ID, 999L);
+        verify(paymentIntentRepository, never()).findById(PAYMENT_INTENT_ID);
+    }
+
+    @Test
     void nonOwnedPayerIntentUsesNeutralNotFoundFailure() {
         when(paymentIntentRepository.findByIdForPayer(PAYMENT_INTENT_ID, STARTUP_ACCOUNT_ID))
                 .thenReturn(Optional.empty());
@@ -1027,17 +1043,25 @@ class FinancialServiceTest {
     }
 
     @Test
-    void administratorUsesGlobalAttemptLookupBeforeLocalProviderCheck() {
-        PaymentAttempt attempt = paymentAttempt("RAZORPAY", PaymentAttemptState.INITIATED);
-        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID)).thenReturn(Optional.of(attempt));
-
+    void administratorCannotConfirmLocalPaymentAttempt() {
         assertPaymentFailure(
                 () -> service.confirmLocalPaymentAttempt(999L, RoleType.ADMIN, PAYMENT_ATTEMPT_ID),
-                PAYMENT_PROVIDER_MISMATCH
+                PAYMENT_ATTEMPT_NOT_FOUND
         );
 
-        verify(paymentAttemptRepository).findById(PAYMENT_ATTEMPT_ID);
-        verify(paymentAttemptRepository, never()).findByIdForPayer(any(), any());
+        verify(paymentAttemptRepository).findByIdForPayer(PAYMENT_ATTEMPT_ID, 999L);
+        verify(paymentAttemptRepository, never()).findById(PAYMENT_ATTEMPT_ID);
+    }
+
+    @Test
+    void administratorCannotFailLocalPaymentAttempt() {
+        assertPaymentFailure(
+                () -> service.failLocalPaymentAttempt(999L, RoleType.ADMIN, PAYMENT_ATTEMPT_ID),
+                PAYMENT_ATTEMPT_NOT_FOUND
+        );
+
+        verify(paymentAttemptRepository).findByIdForPayer(PAYMENT_ATTEMPT_ID, 999L);
+        verify(paymentAttemptRepository, never()).findById(PAYMENT_ATTEMPT_ID);
     }
 
     @Test
