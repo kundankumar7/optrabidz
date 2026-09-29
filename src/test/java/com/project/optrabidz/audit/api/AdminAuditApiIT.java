@@ -51,7 +51,7 @@ class AdminAuditApiIT extends ApiIntegrationTestSupport {
         AdminContext context = administratorContext();
         AdminContext otherActor = administratorContext();
 
-        String actorScope = uniqueValue("KAN52_ACTOR");
+        String actorScope = uniqueValue("AUDIT_ACTOR");
         long actorMatch = insertAuditRecord(
                 context.accountId(), actorScope, "ACTOR", "AUDIT", "actor-match",
                 "SUCCESS", BASE_TIME);
@@ -63,59 +63,59 @@ class AdminAuditApiIT extends ApiIntegrationTestSupport {
                 "actorAccountId", context.accountId().toString()
         ), actorMatch, actorNonmatch);
 
-        String sourceAction = uniqueValue("KAN52_SOURCE_ACTION");
-        String sourceMatchValue = uniqueValue("KAN52_SOURCE_MATCH");
+        String sourceAction = uniqueValue("AUDIT_SOURCE_ACTION");
+        String sourceMatchValue = uniqueValue("AUDIT_SOURCE_MATCH");
         long sourceMatch = insertAuditRecord(
                 context.accountId(), sourceMatchValue, sourceAction, "AUDIT", "source-match",
                 "SUCCESS", BASE_TIME);
         long sourceNonmatch = insertAuditRecord(
-                context.accountId(), uniqueValue("KAN52_SOURCE_OTHER"), sourceAction,
+                context.accountId(), uniqueValue("AUDIT_SOURCE_OTHER"), sourceAction,
                 "AUDIT", "source-nonmatch", "SUCCESS", BASE_TIME);
         assertOnlyRecord(context.client(), Map.of(
                 "action", sourceAction,
                 "sourceModule", sourceMatchValue
         ), sourceMatch, sourceNonmatch);
 
-        String actionScope = uniqueValue("KAN52_ACTION_SCOPE");
-        String actionMatchValue = uniqueValue("KAN52_ACTION_MATCH");
+        String actionScope = uniqueValue("AUDIT_ACTION_SCOPE");
+        String actionMatchValue = uniqueValue("AUDIT_ACTION_MATCH");
         long actionMatch = insertAuditRecord(
                 context.accountId(), actionScope, actionMatchValue, "AUDIT", "action-match",
                 "SUCCESS", BASE_TIME);
         long actionNonmatch = insertAuditRecord(
-                context.accountId(), actionScope, uniqueValue("KAN52_ACTION_OTHER"),
+                context.accountId(), actionScope, uniqueValue("AUDIT_ACTION_OTHER"),
                 "AUDIT", "action-nonmatch", "SUCCESS", BASE_TIME);
         assertOnlyRecord(context.client(), Map.of(
                 "sourceModule", actionScope,
                 "action", actionMatchValue
         ), actionMatch, actionNonmatch);
 
-        String objectTypeScope = uniqueValue("KAN52_TYPE_SCOPE");
-        String objectTypeMatchValue = uniqueValue("KAN52_TYPE_MATCH");
+        String objectTypeScope = uniqueValue("AUDIT_TYPE_SCOPE");
+        String objectTypeMatchValue = uniqueValue("AUDIT_TYPE_MATCH");
         long objectTypeMatch = insertAuditRecord(
                 context.accountId(), objectTypeScope, "TYPE", objectTypeMatchValue,
                 "type-match", "SUCCESS", BASE_TIME);
         long objectTypeNonmatch = insertAuditRecord(
-                context.accountId(), objectTypeScope, "TYPE", uniqueValue("KAN52_TYPE_OTHER"),
+                context.accountId(), objectTypeScope, "TYPE", uniqueValue("AUDIT_TYPE_OTHER"),
                 "type-nonmatch", "SUCCESS", BASE_TIME);
         assertOnlyRecord(context.client(), Map.of(
                 "sourceModule", objectTypeScope,
                 "objectType", objectTypeMatchValue
         ), objectTypeMatch, objectTypeNonmatch);
 
-        String objectIdScope = uniqueValue("KAN52_ID_SCOPE");
-        String objectIdMatchValue = uniqueValue("KAN52_ID_MATCH");
+        String objectIdScope = uniqueValue("AUDIT_ID_SCOPE");
+        String objectIdMatchValue = uniqueValue("AUDIT_ID_MATCH");
         long objectIdMatch = insertAuditRecord(
                 context.accountId(), objectIdScope, "OBJECT_ID", "AUDIT", objectIdMatchValue,
                 "SUCCESS", BASE_TIME);
         long objectIdNonmatch = insertAuditRecord(
                 context.accountId(), objectIdScope, "OBJECT_ID", "AUDIT",
-                uniqueValue("KAN52_ID_OTHER"), "SUCCESS", BASE_TIME);
+                uniqueValue("AUDIT_ID_OTHER"), "SUCCESS", BASE_TIME);
         assertOnlyRecord(context.client(), Map.of(
                 "sourceModule", objectIdScope,
                 "objectId", objectIdMatchValue
         ), objectIdMatch, objectIdNonmatch);
 
-        String outcomeScope = uniqueValue("KAN52_OUTCOME_SCOPE");
+        String outcomeScope = uniqueValue("AUDIT_OUTCOME_SCOPE");
         long outcomeMatch = insertAuditRecord(
                 context.accountId(), outcomeScope, "OUTCOME", "AUDIT", "outcome-match",
                 "SUCCESS", BASE_TIME);
@@ -127,7 +127,7 @@ class AdminAuditApiIT extends ApiIntegrationTestSupport {
                 "outcome", "SUCCESS"
         ), outcomeMatch, outcomeNonmatch);
 
-        String fromScope = uniqueValue("KAN52_FROM_SCOPE");
+        String fromScope = uniqueValue("AUDIT_FROM_SCOPE");
         long fromBoundary = insertAuditRecord(
                 context.accountId(), fromScope, "FROM", "AUDIT", "from-boundary",
                 "SUCCESS", BASE_TIME);
@@ -139,7 +139,7 @@ class AdminAuditApiIT extends ApiIntegrationTestSupport {
                 "from", BASE_TIME.toString()
         ), fromBoundary, beforeFrom);
 
-        String toScope = uniqueValue("KAN52_TO_SCOPE");
+        String toScope = uniqueValue("AUDIT_TO_SCOPE");
         long toBoundary = insertAuditRecord(
                 context.accountId(), toScope, "TO", "AUDIT", "to-boundary",
                 "SUCCESS", BASE_TIME);
@@ -184,7 +184,7 @@ class AdminAuditApiIT extends ApiIntegrationTestSupport {
     @Test
     void omittedPagingParametersUseControllerDefaults() throws Exception {
         AdminContext context = administratorContext();
-        String sourceModule = uniqueValue("KAN52_DEFAULT_PAGE");
+        String sourceModule = uniqueValue("AUDIT_DEFAULT_PAGE");
         long matchingId = insertAuditRecord(
                 context.accountId(), sourceModule, "DEFAULT_PAGE", "AUDIT", "default-page",
                 "SUCCESS", BASE_TIME);
@@ -205,7 +205,7 @@ class AdminAuditApiIT extends ApiIntegrationTestSupport {
     @Test
     void combinedFiltersExcludeTheNonmatchingRecord() throws Exception {
         AdminContext context = administratorContext();
-        String sourceModule = uniqueValue("KAN52_COMBINED");
+        String sourceModule = uniqueValue("AUDIT_COMBINED");
         long matchingId = insertAuditRecord(
                 context.accountId(), sourceModule, "MATCHED", "PAYMENT", "attempt-1",
                 "SUCCESS", BASE_TIME);
@@ -231,7 +231,7 @@ class AdminAuditApiIT extends ApiIntegrationTestSupport {
     @Test
     void paginationOrdersByRecordedAtThenAuditRecordIdDescending() throws Exception {
         AdminContext context = administratorContext();
-        String sourceModule = uniqueValue("KAN52_ORDER");
+        String sourceModule = uniqueValue("AUDIT_ORDER");
         long firstInsertedId = insertAuditRecord(
                 context.accountId(), sourceModule, "ORDERED", "AUDIT", "first",
                 "SUCCESS", BASE_TIME);
@@ -253,7 +253,7 @@ class AdminAuditApiIT extends ApiIntegrationTestSupport {
     }
 
     private AdminContext administratorContext() throws Exception {
-        String email = uniqueEmail("kan52-admin");
+        String email = uniqueEmail("audit-admin");
         register(email, DEFAULT_PASSWORD, RoleType.INVESTOR)
                 .andExpect(status().isCreated());
         Long accountId = jdbcTemplate.queryForObject(
@@ -276,7 +276,7 @@ class AdminAuditApiIT extends ApiIntegrationTestSupport {
                     event_id, event_type, source_module, action, object_type, object_id,
                     actor_account_id, actor_role, outcome, request_id, details,
                     occurred_at, recorded_at
-                ) values (?, 'Kan52TestEvent', ?, ?, ?, ?, ?, 'ADMIN', ?, ?, '{}'::jsonb, ?, ?)
+                ) values (?, 'AdminAuditTestEvent', ?, ?, ?, ?, ?, 'ADMIN', ?, ?, '{}'::jsonb, ?, ?)
                 returning audit_record_id
                 """, Long.class,
                 UUID.randomUUID().toString(), sourceModule, action, objectType, objectId,

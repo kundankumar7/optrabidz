@@ -413,8 +413,16 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
         PostgresTestDataFixture.PaymentReference reference =
                 new PostgresTestDataFixture(jdbcTemplate, now)
                         .createRepaymentInstallmentReference(
-                                "kan32-api-" + label + "-" + UUID.randomUUID()
+                                "webhook-api-" + label + "-" + UUID.randomUUID()
                         );
+        jdbcTemplate.update("""
+                update repayment_installment
+                set installment_status = 'PAYMENT_IN_PROGRESS',
+                    payment_started_at = ?,
+                    updated_at = ?
+                where repayment_installment_id = ?
+                """, Timestamp.from(now.minusSeconds(30)), Timestamp.from(now),
+                reference.referenceId());
         Long paymentIntentId = jdbcTemplate.queryForObject("""
                 insert into payment_intent (
                     payment_purpose, settlement_id, repayment_installment_id,
@@ -428,7 +436,7 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
                 reference.referenceId(),
                 reference.payerAccountId(),
                 reference.payeeAccountId(),
-                "kan32-api-" + UUID.randomUUID(),
+                "webhook-api-" + UUID.randomUUID(),
                 Timestamp.from(now.minusSeconds(30)),
                 Timestamp.from(now.plusSeconds(900))
         );
@@ -442,7 +450,7 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
                 ) returning payment_attempt_id
                 """, Long.class,
                 paymentIntentId,
-                "kan32-order-" + UUID.randomUUID(),
+                "webhook-order-" + UUID.randomUUID(),
                 Timestamp.from(now.minusSeconds(20)),
                 Timestamp.from(now.minusSeconds(10))
         );
@@ -491,7 +499,7 @@ class PaymentProviderWebhookApiIT extends ApiIntegrationTestSupport {
     }
 
     private String uniqueEventId(String label) {
-        return "kan32-" + label + "-" + UUID.randomUUID();
+        return "webhook-" + label + "-" + UUID.randomUUID();
     }
 
     private Long replayCount(String eventId) {

@@ -110,7 +110,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         AuthenticatedClient unrelatedInvestor = eligibleInvestor("Finance Unrelated Intent Investor");
 
         MvcResult missing = mockMvc.perform(get("/api/v1/payment-intents/{paymentIntentId}", 9_999_999_991L)
-                        .header("X-Request-ID", "kan35-intent-missing")
+                        .header("X-Request-ID", "payment-intent-missing")
                         .session(unrelatedInvestor.session())
                         .cookie(unrelatedInvestor.xsrfCookie()))
                 .andExpect(status().isNotFound())
@@ -119,11 +119,11 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Resource not found",
                         "PAYMENT_INTENT_NOT_FOUND",
                         "The requested payment intent was not found",
-                        "kan35-intent-missing"
+                        "payment-intent-missing"
                 ))
                 .andReturn();
         MvcResult nonOwned = mockMvc.perform(get("/api/v1/payment-intents/{paymentIntentId}", paymentIntentId)
-                        .header("X-Request-ID", "kan35-intent-non-owned")
+                        .header("X-Request-ID", "payment-intent-non-owned")
                         .session(unrelatedInvestor.session())
                         .cookie(unrelatedInvestor.xsrfCookie()))
                 .andExpect(status().isNotFound())
@@ -132,7 +132,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Resource not found",
                         "PAYMENT_INTENT_NOT_FOUND",
                         "The requested payment intent was not found",
-                        "kan35-intent-non-owned"
+                        "payment-intent-non-owned"
                 ))
                 .andReturn();
 
@@ -154,7 +154,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         MvcResult missing = mockMvc.perform(post(
                                 "/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm",
                                 9_999_999_992L)
-                        .header("X-Request-ID", "kan35-attempt-missing")
+                        .header("X-Request-ID", "payment-attempt-missing")
                         .session(unrelatedInvestor.session())
                         .cookie(unrelatedInvestor.xsrfCookie())
                         .header("X-CSRF-TOKEN", unrelatedInvestor.csrfToken())
@@ -166,13 +166,13 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Resource not found",
                         "PAYMENT_ATTEMPT_NOT_FOUND",
                         "The requested payment attempt was not found",
-                        "kan35-attempt-missing"
+                        "payment-attempt-missing"
                 ))
                 .andReturn();
         MvcResult nonOwned = mockMvc.perform(post(
                                 "/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm",
                                 paymentAttemptId)
-                        .header("X-Request-ID", "kan35-attempt-non-owned")
+                        .header("X-Request-ID", "payment-attempt-non-owned")
                         .session(unrelatedInvestor.session())
                         .cookie(unrelatedInvestor.xsrfCookie())
                         .header("X-CSRF-TOKEN", unrelatedInvestor.csrfToken())
@@ -184,7 +184,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Resource not found",
                         "PAYMENT_ATTEMPT_NOT_FOUND",
                         "The requested payment attempt was not found",
-                        "kan35-attempt-non-owned"
+                        "payment-attempt-non-owned"
                 ))
                 .andReturn();
 
@@ -261,7 +261,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
 
         MvcResult unsupported = mockMvc.perform(post(
                                 "/api/v1/payment-intents/{paymentIntentId}/attempts", paymentIntentId)
-                        .header("X-Request-ID", "kan35-method-unsupported")
+                        .header("X-Request-ID", "payment-method-unsupported")
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie())
                         .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
@@ -276,7 +276,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Business rule violation",
                         "PAYMENT_METHOD_UNSUPPORTED",
                         "The selected payment method is not supported",
-                        "kan35-method-unsupported"
+                        "payment-method-unsupported"
                 ))
                 .andReturn();
         assertThat(unsupported.getResponse().getContentAsString()).doesNotContain(diagnosticSentinel);
@@ -284,7 +284,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         Long providerAttemptId = readLong(createPaymentAttempt(
                 scenario.investor(), paymentIntentId, "UPI", "UPI"), "/paymentAttemptId");
         mockMvc.perform(post("/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm", providerAttemptId)
-                        .header("X-Request-ID", "kan35-provider-mismatch")
+                        .header("X-Request-ID", "payment-provider-mismatch")
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie())
                         .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
@@ -296,7 +296,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Business rule violation",
                         "PAYMENT_PROVIDER_MISMATCH",
                         "The payment attempt cannot be handled by this provider",
-                        "kan35-provider-mismatch"
+                        "payment-provider-mismatch"
                 ));
 
         Long localAttemptId = createPaymentAttempt(scenario.investor(), paymentIntentId);
@@ -308,7 +308,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .content("{}"))
                 .andExpect(status().isOk());
         mockMvc.perform(post("/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm", localAttemptId)
-                        .header("X-Request-ID", "kan35-state-conflict")
+                        .header("X-Request-ID", "payment-state-conflict")
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie())
                         .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
@@ -320,10 +320,10 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Request conflict",
                         "PAYMENT_STATE_CONFLICT",
                         "The payment state no longer permits this operation",
-                        "kan35-state-conflict"
+                        "payment-state-conflict"
                 ));
         mockMvc.perform(post("/api/v1/payment-intents/{paymentIntentId}/attempts", paymentIntentId)
-                        .header("X-Request-ID", "kan35-intent-not-active")
+                        .header("X-Request-ID", "payment-intent-not-active")
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie())
                         .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
@@ -335,7 +335,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Request conflict",
                         "PAYMENT_INTENT_NOT_ACTIVE",
                         "The payment intent is not active",
-                        "kan35-intent-not-active"
+                        "payment-intent-not-active"
                 ));
     }
 
@@ -358,7 +358,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .content("{}"))
                 .andExpect(status().isOk());
         mockMvc.perform(post("/api/v1/payment-intents/{paymentIntentId}/attempts", confirmedIntentId)
-                        .header("X-Request-ID", "kan35-already-confirmed")
+                        .header("X-Request-ID", "payment-already-confirmed")
                         .session(confirmedScenario.investor().session())
                         .cookie(confirmedScenario.investor().xsrfCookie())
                         .header("X-CSRF-TOKEN", confirmedScenario.investor().csrfToken())
@@ -370,7 +370,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Request conflict",
                         "PAYMENT_ALREADY_CONFIRMED",
                         "The payment has already been confirmed",
-                        "kan35-already-confirmed"
+                        "payment-already-confirmed"
                 ));
 
         FinanceScenario expiredScenario = createAcceptedBidScenario(
@@ -386,7 +386,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 where payment_intent_id = ?
                 """, expiredIntentId);
         mockMvc.perform(post("/api/v1/payment-intents/{paymentIntentId}/attempts", expiredIntentId)
-                        .header("X-Request-ID", "kan35-intent-expired")
+                        .header("X-Request-ID", "payment-intent-expired")
                         .session(expiredScenario.investor().session())
                         .cookie(expiredScenario.investor().xsrfCookie())
                         .header("X-CSRF-TOKEN", expiredScenario.investor().csrfToken())
@@ -398,7 +398,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Request conflict",
                         "PAYMENT_INTENT_EXPIRED",
                         "The payment intent has expired",
-                        "kan35-intent-expired"
+                        "payment-intent-expired"
                 ));
     }
 
@@ -769,14 +769,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 "providerEventId", "evt-card-late-" + cardAttemptId
         ));
         mockMvc.perform(signedWebhook("CARD", cardPayload, CARD_WEBHOOK_SECRET)
-                        .header("X-Request-ID", "kan35-competing-provider"))
+                        .header("X-Request-ID", "payment-competing-provider"))
                 .andExpect(status().isConflict())
                 .andExpectAll(paymentProblem(
                         409,
                         "Request conflict",
                         "PAYMENT_ALREADY_CONFIRMED",
                         "The payment has already been confirmed",
-                        "kan35-competing-provider"
+                        "payment-competing-provider"
                 ));
 
         mockMvc.perform(get("/api/v1/payment-intents/{paymentIntentId}", paymentIntentId)
@@ -1174,7 +1174,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         AuthenticatedClient unrelatedInvestor = eligibleInvestor("Finance Other Settlement Investor");
 
         MvcResult missing = mockMvc.perform(get("/api/v1/settlements/{settlementId}", Long.MAX_VALUE)
-                        .header("X-Request-ID", "kan37-settlement-missing")
+                        .header("X-Request-ID", "settlement-missing")
                         .session(unrelatedInvestor.session())
                         .cookie(unrelatedInvestor.xsrfCookie()))
                 .andExpect(status().isNotFound())
@@ -1183,11 +1183,11 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Resource not found",
                         "SETTLEMENT_NOT_FOUND",
                         "The requested settlement was not found",
-                        "kan37-settlement-missing"
+                        "settlement-missing"
                 ))
                 .andReturn();
         MvcResult nonOwned = mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
-                        .header("X-Request-ID", "kan37-settlement-non-owned")
+                        .header("X-Request-ID", "settlement-non-owned")
                         .session(unrelatedInvestor.session())
                         .cookie(unrelatedInvestor.xsrfCookie()))
                 .andExpect(status().isNotFound())
@@ -1196,7 +1196,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Resource not found",
                         "SETTLEMENT_NOT_FOUND",
                         "The requested settlement was not found",
-                        "kan37-settlement-non-owned"
+                        "settlement-non-owned"
                 ))
                 .andReturn();
 
@@ -1218,27 +1218,27 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         MvcResult missing = createSettlementIntentFailure(
                 unrelatedInvestor,
                 Long.MAX_VALUE,
-                "kan37-intent-missing",
+                "settlement-intent-missing",
                 status().isNotFound(),
                 paymentProblem(
                         404,
                         "Resource not found",
                         "SETTLEMENT_NOT_FOUND",
                         "The requested settlement was not found",
-                        "kan37-intent-missing"
+                        "settlement-intent-missing"
                 )
         );
         MvcResult nonOwned = createSettlementIntentFailure(
                 unrelatedInvestor,
                 settlementId,
-                "kan37-intent-non-owned",
+                "settlement-intent-non-owned",
                 status().isNotFound(),
                 paymentProblem(
                         404,
                         "Resource not found",
                         "SETTLEMENT_NOT_FOUND",
                         "The requested settlement was not found",
-                        "kan37-intent-non-owned"
+                        "settlement-intent-non-owned"
                 )
         );
 
@@ -1282,27 +1282,27 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         MvcResult realSettlement = createSettlementIntentFailure(
                 scenario.startup(),
                 settlementId,
-                "kan37-startup-real",
+                "settlement-startup-real",
                 status().isForbidden(),
                 paymentProblem(
                         403,
                         "Access denied",
                         "FINANCIAL_OPERATION_NOT_ALLOWED",
                         "This financial operation is not allowed",
-                        "kan37-startup-real"
+                        "settlement-startup-real"
                 )
         );
         MvcResult missingSettlement = createSettlementIntentFailure(
                 scenario.startup(),
                 Long.MAX_VALUE,
-                "kan37-startup-missing",
+                "settlement-startup-missing",
                 status().isForbidden(),
                 paymentProblem(
                         403,
                         "Access denied",
                         "FINANCIAL_OPERATION_NOT_ALLOWED",
                         "This financial operation is not allowed",
-                        "kan37-startup-missing"
+                        "settlement-startup-missing"
                 )
         );
 
@@ -1327,14 +1327,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         createSettlementIntentFailure(
                 scenario.investor(),
                 settlementId,
-                "kan37-settlement-not-payable",
+                "settlement-not-payable",
                 status().isConflict(),
                 paymentProblem(
                         409,
                         "Request conflict",
                         "SETTLEMENT_NOT_PAYABLE",
                         "The settlement cannot be paid in its current state",
-                        "kan37-settlement-not-payable"
+                        "settlement-not-payable"
                 )
         );
     }
@@ -1359,7 +1359,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         assertThat(cancelled).isEqualTo(1);
 
         mockMvc.perform(post("/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm", paymentAttemptId)
-                        .header("X-Request-ID", "kan37-settlement-conflict")
+                        .header("X-Request-ID", "settlement-conflict")
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie())
                         .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
@@ -1371,7 +1371,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Request conflict",
                         "SETTLEMENT_STATE_CONFLICT",
                         "The settlement state no longer permits this operation",
-                        "kan37-settlement-conflict"
+                        "settlement-conflict"
                 ));
 
         assertThat(jdbcTemplate.queryForObject("""
@@ -1408,24 +1408,24 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
     void repaymentResourcesAndPaymentActionsHideMissingVersusNonOwnedIds()
             throws Exception {
         RepaymentScenario scenario = createRepaymentScenario(
-                "KAN34 Disclosure",
+                "Repayment Disclosure",
                 new BigDecimal("505432.10")
         );
         AuthenticatedClient unrelatedStartup = eligibleStartup(
-                "KAN34 Unrelated Startup");
+                "Repayment Unrelated Startup");
         long missingId = Long.MAX_VALUE;
 
         assertEquivalentRepaymentProblems(
                 getRepaymentProblem(
                         unrelatedStartup,
                         "/api/v1/repayments/" + missingId,
-                        "kan34-repayment-missing",
+                        "repayment-missing",
                         "REPAYMENT_NOT_FOUND",
                         "The requested repayment was not found"),
                 getRepaymentProblem(
                         unrelatedStartup,
                         "/api/v1/repayments/" + scenario.repaymentId(),
-                        "kan34-repayment-non-owned",
+                        "repayment-non-owned",
                         "REPAYMENT_NOT_FOUND",
                         "The requested repayment was not found")
         );
@@ -1433,14 +1433,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 getRepaymentProblem(
                         unrelatedStartup,
                         "/api/v1/repayments/" + missingId + "/installments",
-                        "kan34-installments-missing",
+                        "repayment-installments-missing",
                         "REPAYMENT_NOT_FOUND",
                         "The requested repayment was not found"),
                 getRepaymentProblem(
                         unrelatedStartup,
                         "/api/v1/repayments/" + scenario.repaymentId()
                                 + "/installments",
-                        "kan34-installments-non-owned",
+                        "repayment-installments-non-owned",
                         "REPAYMENT_NOT_FOUND",
                         "The requested repayment was not found")
         );
@@ -1448,14 +1448,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 getRepaymentProblem(
                         unrelatedStartup,
                         "/api/v1/repayment-installments/" + missingId,
-                        "kan34-installment-missing",
+                        "repayment-installment-missing",
                         "REPAYMENT_INSTALLMENT_NOT_FOUND",
                         "The requested repayment installment was not found"),
                 getRepaymentProblem(
                         unrelatedStartup,
                         "/api/v1/repayment-installments/"
                                 + scenario.installmentId(),
-                        "kan34-installment-non-owned",
+                        "repayment-installment-non-owned",
                         "REPAYMENT_INSTALLMENT_NOT_FOUND",
                         "The requested repayment installment was not found")
         );
@@ -1464,14 +1464,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         unrelatedStartup,
                         "/api/v1/agreements/" + missingId
                                 + "/repayment-progress",
-                        "kan34-progress-missing",
+                        "repayment-progress-missing",
                         "REPAYMENT_NOT_FOUND",
                         "The requested repayment was not found"),
                 getRepaymentProblem(
                         unrelatedStartup,
                         "/api/v1/agreements/" + scenario.finance().agreementId()
                                 + "/repayment-progress",
-                        "kan34-progress-non-owned",
+                        "repayment-progress-non-owned",
                         "REPAYMENT_NOT_FOUND",
                         "The requested repayment was not found")
         );
@@ -1479,14 +1479,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 postRepaymentProblem(
                         unrelatedStartup,
                         "/api/v1/repayments/" + missingId + "/payment-intents",
-                        "kan34-repayment-intent-missing",
+                        "repayment-intent-missing",
                         "REPAYMENT_NOT_FOUND",
                         "The requested repayment was not found"),
                 postRepaymentProblem(
                         unrelatedStartup,
                         "/api/v1/repayments/" + scenario.repaymentId()
                                 + "/payment-intents",
-                        "kan34-repayment-intent-non-owned",
+                        "repayment-intent-non-owned",
                         "REPAYMENT_NOT_FOUND",
                         "The requested repayment was not found")
         );
@@ -1495,14 +1495,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         unrelatedStartup,
                         "/api/v1/repayment-installments/" + missingId
                                 + "/payment-intents",
-                        "kan34-installment-intent-missing",
+                        "repayment-installment-intent-missing",
                         "REPAYMENT_INSTALLMENT_NOT_FOUND",
                         "The requested repayment installment was not found"),
                 postRepaymentProblem(
                         unrelatedStartup,
                         "/api/v1/repayment-installments/"
                                 + scenario.installmentId() + "/payment-intents",
-                        "kan34-installment-intent-non-owned",
+                        "repayment-installment-intent-non-owned",
                         "REPAYMENT_INSTALLMENT_NOT_FOUND",
                         "The requested repayment installment was not found")
         );
@@ -1512,14 +1512,14 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
     void repaymentRoleAndInitialStateFailuresUseExactProblemDetails()
             throws Exception {
         RepaymentScenario scenario = createRepaymentScenario(
-                "KAN34 Boundary",
+                "Repayment Boundary",
                 new BigDecimal("495432.10")
         );
 
         MvcResult denied = mockMvc.perform(post(
                                 "/api/v1/repayments/{repaymentId}/payment-intents",
                                 scenario.repaymentId())
-                        .header("X-Request-ID", "kan34-role-denied")
+                        .header("X-Request-ID", "repayment-role-denied")
                         .session(scenario.finance().investor().session())
                         .cookie(scenario.finance().investor().xsrfCookie())
                         .header("X-CSRF-TOKEN",
@@ -1532,7 +1532,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Access denied",
                         "FINANCIAL_OPERATION_NOT_ALLOWED",
                         "This financial operation is not allowed",
-                        "kan34-role-denied"
+                        "repayment-role-denied"
                 ))
                 .andReturn();
         assertNoRepaymentDiagnostics(denied);
@@ -1558,7 +1558,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         MvcResult notPayable = mockMvc.perform(post(
                                 "/api/v1/repayment-installments/{installmentId}/payment-intents",
                                 scenario.installmentId())
-                        .header("X-Request-ID", "kan34-not-payable")
+                        .header("X-Request-ID", "repayment-not-payable")
                         .session(scenario.finance().startup().session())
                         .cookie(scenario.finance().startup().xsrfCookie())
                         .header("X-CSRF-TOKEN",
@@ -1571,7 +1571,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Request conflict",
                         "REPAYMENT_INSTALLMENT_NOT_PAYABLE",
                         "The repayment installment cannot be paid in its current state",
-                        "kan34-not-payable"
+                        "repayment-not-payable"
                 ))
                 .andReturn();
         assertNoRepaymentDiagnostics(notPayable);
@@ -1581,7 +1581,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
     void conditionalRepaymentConflictRollsBackPaymentAndJoinedEffects()
             throws Exception {
         RepaymentScenario scenario = createRepaymentScenario(
-                "KAN34 Rollback",
+                "Repayment Rollback",
                 new BigDecimal("485432.10")
         );
         Long paymentIntentId = createRepaymentInstallmentPaymentIntent(
@@ -1631,7 +1631,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         MvcResult conflict = mockMvc.perform(post(
                                 "/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm",
                                 paymentAttemptId)
-                        .header("X-Request-ID", "kan34-state-conflict")
+                        .header("X-Request-ID", "repayment-state-conflict")
                         .session(scenario.finance().startup().session())
                         .cookie(scenario.finance().startup().xsrfCookie())
                         .header("X-CSRF-TOKEN",
@@ -1644,7 +1644,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "Request conflict",
                         "REPAYMENT_STATE_CONFLICT",
                         "The repayment state no longer permits this operation",
-                        "kan34-state-conflict"
+                        "repayment-state-conflict"
                 ))
                 .andReturn();
         assertNoRepaymentDiagnostics(conflict);
