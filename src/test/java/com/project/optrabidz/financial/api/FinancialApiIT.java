@@ -395,6 +395,33 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.totalItems").value(18));
 
         mockMvc.perform(get("/api/v1/repayments/{repaymentId}/installments", repaymentId)
+                        .queryParam("page", "-1")
+                        .queryParam("size", "101")
+                        .session(scenario.startup().session())
+                        .cookie(scenario.startup().xsrfCookie()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.size").value(100));
+
+        mockMvc.perform(get("/api/v1/startups/me/repayment-installments")
+                        .queryParam("page", "0")
+                        .queryParam("size", "0")
+                        .session(scenario.startup().session())
+                        .cookie(scenario.startup().xsrfCookie()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.size").value(1));
+
+        mockMvc.perform(get("/api/v1/investors/me/repayment-installments")
+                        .queryParam("page", "0")
+                        .queryParam("size", "-1")
+                        .session(scenario.investor().session())
+                        .cookie(scenario.investor().xsrfCookie()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.size").value(1));
+
+        mockMvc.perform(get("/api/v1/repayments/{repaymentId}/installments", repaymentId)
                         .queryParam("installmentState", "NOT_STARTED")
                         .queryParam("paymentView", "UNPAID")
                         .session(scenario.startup().session())

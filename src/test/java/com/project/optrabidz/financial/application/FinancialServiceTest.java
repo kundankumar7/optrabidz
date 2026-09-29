@@ -58,6 +58,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataRetrievalFailureException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -316,6 +318,69 @@ class FinancialServiceTest {
                 repaymentInstallmentRepository,
                 paymentIntentRepository
         );
+    }
+
+    @Test
+    void sharedInstallmentListCapsPageSizeAndReportsEffectivePagination() {
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(startup()));
+        when(repaymentRepository.findByIdForStartup(REPAYMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.of(repayment()));
+        when(repaymentInstallmentRepository.findByRepaymentIdAndStates(
+                eq(REPAYMENT_ID), eq(List.of()), any(Pageable.class)))
+                .thenAnswer(invocation -> Page.empty(invocation.getArgument(2)));
+
+        var response = service.getRepaymentInstallments(
+                STARTUP_ACCOUNT_ID, RoleType.STARTUP, REPAYMENT_ID,
+                null, null, -1, 101);
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(repaymentInstallmentRepository).findByRepaymentIdAndStates(
+                eq(REPAYMENT_ID), eq(List.of()), pageable.capture());
+        assertThat(pageable.getValue().getPageNumber()).isZero();
+        assertThat(pageable.getValue().getPageSize()).isEqualTo(100);
+        assertThat(response.page()).isEqualTo(1);
+        assertThat(response.size()).isEqualTo(100);
+    }
+
+    @Test
+    void startupInstallmentListNormalizesSuppliedZeroSizeToOne() {
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(startup()));
+        when(repaymentInstallmentRepository.findByStartupIdAndStates(
+                eq(STARTUP_ID), eq(List.of()), any(Pageable.class)))
+                .thenAnswer(invocation -> Page.empty(invocation.getArgument(2)));
+
+        var response = service.getMyStartupRepaymentInstallments(
+                STARTUP_ACCOUNT_ID, RoleType.STARTUP, null, null, 0, 0);
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(repaymentInstallmentRepository).findByStartupIdAndStates(
+                eq(STARTUP_ID), eq(List.of()), pageable.capture());
+        assertThat(pageable.getValue().getPageNumber()).isZero();
+        assertThat(pageable.getValue().getPageSize()).isEqualTo(1);
+        assertThat(response.page()).isEqualTo(1);
+        assertThat(response.size()).isEqualTo(1);
+    }
+
+    @Test
+    void investorInstallmentListNormalizesSuppliedNegativeSizeToOne() {
+        when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(investor()));
+        when(repaymentInstallmentRepository.findByInvestorIdAndStates(
+                eq(INVESTOR_ID), eq(List.of()), any(Pageable.class)))
+                .thenAnswer(invocation -> Page.empty(invocation.getArgument(2)));
+
+        var response = service.getMyInvestorRepaymentInstallments(
+                INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, null, null, 2, -1);
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(repaymentInstallmentRepository).findByInvestorIdAndStates(
+                eq(INVESTOR_ID), eq(List.of()), pageable.capture());
+        assertThat(pageable.getValue().getPageNumber()).isEqualTo(1);
+        assertThat(pageable.getValue().getPageSize()).isEqualTo(1);
+        assertThat(response.page()).isEqualTo(2);
+        assertThat(response.size()).isEqualTo(1);
     }
 
     @Test

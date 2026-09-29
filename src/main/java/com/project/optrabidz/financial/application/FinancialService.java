@@ -89,6 +89,8 @@ import java.util.UUID;
 
 @Service
 public class FinancialService {
+    private static final int MAX_PAGE_SIZE = 100;
+
     private final SettlementRepository settlementRepository;
     private final RepaymentRepository repaymentRepository;
     private final RepaymentInstallmentRepository repaymentInstallmentRepository;
@@ -1084,20 +1086,36 @@ public class FinancialService {
     }
 
     private Pageable pageRequest(int page, int size) {
-        return PageRequest.of(Math.max(page, 1) - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return PageRequest.of(
+                normalizePage(page) - 1,
+                normalizeSize(size),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
     }
 
     private Pageable installmentPageRequest(int page, int size) {
-        return PageRequest.of(Math.max(page, 1) - 1, size, Sort.by(Sort.Direction.ASC, "installmentNumber"));
+        return PageRequest.of(
+                normalizePage(page) - 1,
+                normalizeSize(size),
+                Sort.by(Sort.Direction.ASC, "installmentNumber")
+        );
     }
 
     private Pageable installmentDuePageRequest(int page, int size) {
         return PageRequest.of(
-                Math.max(page, 1) - 1,
-                size,
+                normalizePage(page) - 1,
+                normalizeSize(size),
                 Sort.by(Sort.Direction.ASC, "dueAt")
                         .and(Sort.by(Sort.Direction.ASC, "repaymentInstallmentId"))
         );
+    }
+
+    private int normalizePage(int page) {
+        return Math.max(page, 1);
+    }
+
+    private int normalizeSize(int size) {
+        return Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
     }
 
     private Collection<RepaymentInstallmentState> resolveInstallmentStates(RepaymentInstallmentState installmentState,
@@ -1114,8 +1132,8 @@ public class FinancialService {
     private <T> PageResponse<T> toPageResponse(Page<T> pageData, int page, int size) {
         return new PageResponse<>(
                 pageData.getContent(),
-                Math.max(page, 1),
-                size,
+                normalizePage(page),
+                normalizeSize(size),
                 pageData.getTotalElements(),
                 pageData.getTotalPages()
         );
