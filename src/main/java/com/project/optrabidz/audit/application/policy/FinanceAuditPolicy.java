@@ -2,6 +2,7 @@ package com.project.optrabidz.audit.application.policy;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import com.project.optrabidz.audit.domain.model.AuditOutcome;
 import com.project.optrabidz.common.outbox.OutboxEvent;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +13,8 @@ public class FinanceAuditPolicy implements AuditPolicy {
     private static final Set<String> SUPPORTED_EVENTS = Set.of(
             "SettlementConfirmedEvent",
             "RepaymentInstallmentPaidEvent",
-            "RepaymentInstallmentPaymentFailedEvent"
+            "RepaymentInstallmentPaymentFailedEvent",
+            "RepaymentInstallmentOverdueEvent"
     );
 
     private final ObjectMapper objectMapper;
@@ -33,6 +35,7 @@ public class FinanceAuditPolicy implements AuditPolicy {
             case "SettlementConfirmedEvent" -> settlementConfirmed(payload);
             case "RepaymentInstallmentPaidEvent" -> repaymentInstallmentPaid(payload);
             case "RepaymentInstallmentPaymentFailedEvent" -> repaymentInstallmentPaymentFailed(payload);
+            case "RepaymentInstallmentOverdueEvent" -> repaymentInstallmentOverdue(payload);
             default -> throw new IllegalStateException("Unsupported finance audit event: " + event.getEventType());
         };
     }
@@ -76,6 +79,22 @@ public class FinanceAuditPolicy implements AuditPolicy {
         );
     }
 
+    private AuditDescriptor repaymentInstallmentOverdue(JsonNode payload) {
+        Long repaymentInstallmentId = JsonAuditPayload.longValue(payload, "repaymentInstallmentId");
+        Long actorAccountId = JsonAuditPayload.longValue(payload, "actorAccountId");
+        boolean systemDriven = actorAccountId == null;
+        return new AuditDescriptor(
+                "FINANCIAL",
+                "REPAYMENT_INSTALLMENT_OVERDUE",
+                "REPAYMENT_INSTALLMENT",
+                repaymentInstallmentId == null ? null : String.valueOf(repaymentInstallmentId),
+                actorAccountId,
+                systemDriven ? "SYSTEM" : "STARTUP",
+                systemDriven ? AuditOutcome.SYSTEM : AuditOutcome.FAILED,
+                commonFinanceDetails(payload, "repaymentInstallmentId", repaymentInstallmentId)
+        );
+    }
+
     private java.util.Map<String, Object> commonFinanceDetails(JsonNode payload,
                                                                String primaryKey,
                                                                Long primaryValue) {
@@ -86,6 +105,7 @@ public class FinanceAuditPolicy implements AuditPolicy {
                 "startupId", JsonAuditPayload.longValue(payload, "startupId"),
                 "investorId", JsonAuditPayload.longValue(payload, "investorId"),
                 "paymentIntentId", JsonAuditPayload.longValue(payload, "paymentIntentId"),
+                "source", JsonAuditPayload.textValue(payload, "source"),
                 "reason", JsonAuditPayload.textValue(payload, "reason")
         );
     }

@@ -51,5 +51,5 @@ public interface RepaymentInstallmentRepository {
 
     List<Long> findRepaymentIdsByInstallmentIds(Collection<Long> installmentIds);
 
-    int markOverdue(Collection<Long> installmentIds, Instant now);
+    List<Long> markOverdueReturning(Collection<Long> installmentIds, Instant now);
 }

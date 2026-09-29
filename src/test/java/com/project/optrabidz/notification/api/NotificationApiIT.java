@@ -1,7 +1,10 @@
 package com.project.optrabidz.notification.api;
 
 import tools.jackson.databind.JsonNode;
+import com.project.optrabidz.common.event.EventPublisher;
 import com.project.optrabidz.common.outbox.OutboxDispatcher;
+import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueEvent;
+import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueSource;
 import com.project.optrabidz.notification.application.channel.NotificationDeliveryDispatcher;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.security.infrastructure.config.SecuritySessionConstants;
@@ -40,6 +43,9 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private EventPublisher eventPublisher;
 
     @BeforeEach
     void clearAsynchronousStateFromOtherTests() {
@@ -485,6 +491,56 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
         assertFeedContains(startup, "REPAYMENT_INSTALLMENT_PAID");
         assertFeedContains(investor, "REPAYMENT_INSTALLMENT_PAID");
         assertNotificationAndAuditExist("RepaymentInstallmentPaidEvent", "REPAYMENT_INSTALLMENT_PAID");
+    }
+
+    @Test
+    void overdueEventNotifiesStartupAndInvestorExactlyOnceAcrossRedispatch() throws Exception {
+        AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
+        createCompleteStartupProfile(startup, "Overdue Notification Startup");
+        AuthenticatedClient investor = registerAndLogin(RoleType.INVESTOR);
+        createCompleteInvestorProfile(investor, "Overdue Notification Investor");
+        long startupAccountId = accountIdBySessionClient(startup);
+        long investorAccountId = accountIdBySessionClient(investor);
+        long startupId = jdbcTemplate.queryForObject(
+                "select startup_id from startup where account_id = ?", Long.class, startupAccountId);
+        long investorId = jdbcTemplate.queryForObject(
+                "select investor_id from investor where account_id = ?", Long.class, investorAccountId);
+        jdbcTemplate.update("delete from event_outbox");
+
+        eventPublisher.publish(new RepaymentInstallmentOverdueEvent(
+                8_000_101L,
+                8_000_201L,
+                8_000_301L,
+                startupId,
+                investorId,
+                null,
+                null,
+                RepaymentInstallmentOverdueSource.SCHEDULE,
+                "Repayment installment due date passed",
+                Instant.parse("2026-09-29T12:00:00Z")
+        ));
+
+        assertThat(outboxDispatcher.dispatchPending()).isEqualTo(1);
+        assertThat(outboxDispatcher.dispatchPending()).isZero();
+
+        assertThat(jdbcTemplate.queryForObject("""
+                select count(*) from notification
+                where event_type = 'RepaymentInstallmentOverdueEvent'
+                  and notification_name = 'REPAYMENT_INSTALLMENT_OVERDUE'
+                """, Integer.class)).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForList("""
+                select r.account_id
+                from notification_recipient r
+                join notification n on n.notification_id = r.notification_id
+                where n.event_type = 'RepaymentInstallmentOverdueEvent'
+                order by r.account_id
+                """, Long.class)).containsExactlyInAnyOrder(startupAccountId, investorAccountId);
+        assertFeedContains(startup, "REPAYMENT_INSTALLMENT_OVERDUE");
+        assertFeedContains(investor, "REPAYMENT_INSTALLMENT_OVERDUE");
+        assertNotificationAndAuditExist(
+                "RepaymentInstallmentOverdueEvent",
+                "REPAYMENT_INSTALLMENT_OVERDUE"
+        );
     }
 
     private long createListing(AuthenticatedClient startup) throws Exception {

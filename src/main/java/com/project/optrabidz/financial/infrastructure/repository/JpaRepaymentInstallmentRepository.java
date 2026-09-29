@@ -177,18 +177,4 @@ public interface JpaRepaymentInstallmentRepository extends JpaRepository<Repayme
             """, nativeQuery = true)
     List<Long> findRepaymentIdsByInstallmentIds(@Param("installmentIds") Collection<Long> installmentIds);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query(value = """
-            update repayment_installment
-            set installment_status = 'OVERDUE',
-                overdue_at = coalesce(overdue_at, :now),
-                updated_at = :now
-            where repayment_installment_id in (:installmentIds)
-              and installment_status in (
-                'NOT_STARTED'::repayment_installment_status_enum,
-                'PAYMENT_IN_PROGRESS'::repayment_installment_status_enum,
-                'PAYMENT_FAILED'::repayment_installment_status_enum
-              )
-            """, nativeQuery = true)
-    int markOverdue(@Param("installmentIds") Collection<Long> installmentIds, @Param("now") Instant now);
 }
