@@ -14,6 +14,7 @@ import com.project.optrabidz.financial.application.strategy.LocalPaymentStrategy
 import com.project.optrabidz.financial.application.strategy.PaymentMethodStrategy;
 import com.project.optrabidz.financial.application.strategy.PaymentMethodStrategyRegistry;
 import com.project.optrabidz.common.event.EventPublisher;
+import com.project.optrabidz.financial.domain.model.ExpiredPaymentIntentReference;
 import com.project.optrabidz.financial.domain.model.PaymentAttempt;
 import com.project.optrabidz.financial.domain.model.PaymentAttemptState;
 import com.project.optrabidz.financial.domain.model.PaymentIntent;
@@ -637,6 +638,114 @@ class FinancialServiceTest {
         assertThat(response.payeeAccountId()).isEqualTo(STARTUP_ACCOUNT_ID);
         assertThat(response.amount()).isEqualByComparingTo("550000.00");
         assertThat(response.paymentState()).isEqualTo(PaymentState.CREATED);
+    }
+
+    @Test
+    void mixedPurposeExpiryAppliesEffectsOnlyToReturnedRepaymentIntents() {
+        Instant now = now();
+        when(paymentIntentRepository.expireExpiredActiveReturning(now, 2))
+                .thenReturn(List.of(
+                        new ExpiredPaymentIntentReference(
+                                PAYMENT_INTENT_ID,
+                                PaymentPurpose.SETTLEMENT,
+                                SETTLEMENT_ID,
+                                null
+                        ),
+                        new ExpiredPaymentIntentReference(
+                                PAYMENT_INTENT_ID + 1,
+                                PaymentPurpose.REPAYMENT,
+                                null,
+                                REPAYMENT_INSTALLMENT_ID
+                        )
+                ));
+        when(repaymentInstallmentRepository.findById(REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(Optional.of(repaymentInstallment()));
+        when(repaymentInstallmentRepository.markPaymentFailed(
+                REPAYMENT_INSTALLMENT_ID, "Payment intent expired", now))
+                .thenReturn(1);
+
+        int expiredCount = service.expirePendingPaymentIntents(now, 2);
+
+        assertThat(expiredCount).isEqualTo(2);
+        verify(repaymentInstallmentRepository).markPaymentFailed(
+                REPAYMENT_INSTALLMENT_ID, "Payment intent expired", now);
+        verify(repaymentRepository).refreshStatus(REPAYMENT_ID, now);
+    }
+
+    @Test
+    void expiredByTimeRepaymentIntentCanBeReplacedImmediately() {
+        PaymentIntent staleIntent = PaymentIntent.builder()
+                .paymentIntentId(PAYMENT_INTENT_ID)
+                .paymentPurpose(PaymentPurpose.REPAYMENT)
+                .repaymentInstallmentId(REPAYMENT_INSTALLMENT_ID)
+                .payerAccountId(STARTUP_ACCOUNT_ID)
+                .payeeAccountId(INVESTOR_ACCOUNT_ID)
+                .amount(new BigDecimal("35368.06"))
+                .currencyCode("INR")
+                .paymentState(PaymentState.CREATED)
+                .idempotencyKey("stale-repayment-intent")
+                .createdAt(Instant.EPOCH)
+                .expiresAt(Instant.EPOCH.plusSeconds(900))
+                .build();
+        PaymentIntent replacement = withPaymentIntentId(
+                repaymentPaymentIntent(PaymentState.CREATED),
+                PAYMENT_INTENT_ID + 1
+        );
+        RepaymentInstallment inProgress = repaymentInstallment(
+                RepaymentInstallmentState.PAYMENT_IN_PROGRESS, null);
+        RepaymentInstallment failed = repaymentInstallment(
+                RepaymentInstallmentState.PAYMENT_FAILED, null);
+
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(startup()));
+        when(repaymentInstallmentRepository.findByIdForStartup(
+                REPAYMENT_INSTALLMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.of(inProgress));
+        when(repaymentRepository.findByIdForStartup(REPAYMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.of(repayment()));
+        when(paymentIntentRepository.findActiveByRepaymentInstallmentId(
+                REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(Optional.of(staleIntent), Optional.empty());
+        when(paymentIntentRepository.expireActiveByIdReturning(
+                eq(PAYMENT_INTENT_ID), any(Instant.class)))
+                .thenReturn(Optional.of(new ExpiredPaymentIntentReference(
+                        PAYMENT_INTENT_ID,
+                        PaymentPurpose.REPAYMENT,
+                        null,
+                        REPAYMENT_INSTALLMENT_ID
+                )));
+        when(repaymentInstallmentRepository.findById(REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(Optional.of(inProgress), Optional.of(failed));
+        when(repaymentInstallmentRepository.markPaymentFailed(
+                eq(REPAYMENT_INSTALLMENT_ID),
+                eq("Payment intent expired"),
+                any(Instant.class)))
+                .thenReturn(1);
+        when(startupRepository.findById(STARTUP_ID)).thenReturn(Optional.of(startup()));
+        when(investorRepository.findById(INVESTOR_ID)).thenReturn(Optional.of(investor()));
+        when(paymentIntentRepository.saveNewOrFindActiveByRepaymentInstallment(
+                any(PaymentIntent.class)))
+                .thenReturn(replacement);
+        when(repaymentInstallmentRepository.markPaymentInProgress(
+                eq(REPAYMENT_INSTALLMENT_ID), any(Instant.class)))
+                .thenReturn(1);
+
+        PaymentIntentResponse response =
+                service.createRepaymentInstallmentPaymentIntent(
+                        STARTUP_ACCOUNT_ID,
+                        RoleType.STARTUP,
+                        REPAYMENT_INSTALLMENT_ID
+                );
+
+        assertThat(response.paymentIntentId()).isEqualTo(PAYMENT_INTENT_ID + 1);
+        verify(paymentIntentRepository).expireActiveByIdReturning(
+                eq(PAYMENT_INTENT_ID), any(Instant.class));
+        verify(repaymentInstallmentRepository).markPaymentFailed(
+                eq(REPAYMENT_INSTALLMENT_ID),
+                eq("Payment intent expired"),
+                any(Instant.class));
+        verify(repaymentRepository, times(2))
+                .refreshStatus(eq(REPAYMENT_ID), any(Instant.class));
     }
 
     @Test

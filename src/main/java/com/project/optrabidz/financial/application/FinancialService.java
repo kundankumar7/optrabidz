@@ -35,6 +35,7 @@ import com.project.optrabidz.financial.application.event.SettlementConfirmedEven
 import com.project.optrabidz.financial.application.strategy.LocalPaymentStrategy;
 import com.project.optrabidz.financial.application.strategy.PaymentMethodStrategy;
 import com.project.optrabidz.financial.application.strategy.PaymentMethodStrategyRegistry;
+import com.project.optrabidz.financial.domain.model.ExpiredPaymentIntentReference;
 import com.project.optrabidz.financial.domain.model.PaymentAttempt;
 import com.project.optrabidz.financial.domain.model.PaymentAttemptState;
 import com.project.optrabidz.financial.domain.model.PaymentIntent;
@@ -172,11 +173,18 @@ public class FinancialService {
         Settlement settlement = settlementRepository
                 .findByIdForInvestor(settlementId, investor.getInvestorId())
                 .orElseThrow(() -> settlementNotFound(settlementId));
-        ensureSettlementPayable(settlement);
+        Instant now = Instant.now();
+        ensureSettlementPayable(settlement, now);
 
-        return paymentIntentRepository.findActiveBySettlementId(settlementId)
+        Optional<PaymentIntent> activeIntent = paymentIntentRepository.findActiveBySettlementId(settlementId);
+        if (activeIntent.isPresent() && !activeIntent.get().getExpiresAt().isAfter(now)) {
+            paymentIntentRepository.expireActiveByIdReturning(
+                    activeIntent.get().getPaymentIntentId(), now);
+            activeIntent = paymentIntentRepository.findActiveBySettlementId(settlementId);
+        }
+        return activeIntent
                 .map(this::toPaymentIntentResponse)
-                .orElseGet(() -> toPaymentIntentResponse(createSettlementIntent(settlement)));
+                .orElseGet(() -> toPaymentIntentResponse(createSettlementIntent(settlement, now)));
     }
 
     @Transactional(readOnly = true)
@@ -293,20 +301,31 @@ public class FinancialService {
             RepaymentInstallment installment
     ) {
         Long installmentId = installment.getRepaymentInstallmentId();
-        return paymentIntentRepository.findActiveByRepaymentInstallmentId(installmentId)
-                .map(this::toPaymentIntentResponse)
-                .orElseGet(() -> {
-                    ensureRepaymentInstallmentPayable(installment);
-                    Instant now = Instant.now();
-                    PaymentIntent intent = createRepaymentInstallmentIntent(repayment, installment);
-                    int updatedCount = repaymentInstallmentRepository
-                            .markPaymentInProgress(installmentId, now);
-                    if (updatedCount == 0) {
-                        return classifyPaymentInProgressRace(installmentId);
-                    }
-                    repaymentRepository.refreshStatus(repayment.getRepaymentId(), now);
-                    return toPaymentIntentResponse(intent);
-                });
+        Instant now = Instant.now();
+        Optional<PaymentIntent> activeIntent =
+                paymentIntentRepository.findActiveByRepaymentInstallmentId(installmentId);
+        if (activeIntent.isPresent() && !activeIntent.get().getExpiresAt().isAfter(now)) {
+            paymentIntentRepository.expireActiveByIdReturning(
+                            activeIntent.get().getPaymentIntentId(), now)
+                    .ifPresent(reference -> applyExpiredRepaymentEffect(reference, now));
+            activeIntent = paymentIntentRepository.findActiveByRepaymentInstallmentId(installmentId);
+            if (activeIntent.isEmpty()) {
+                installment = getRepaymentInstallment(installmentId);
+            }
+        }
+        if (activeIntent.isPresent()) {
+            return toPaymentIntentResponse(activeIntent.get());
+        }
+
+        ensureRepaymentInstallmentPayable(installment);
+        PaymentIntent intent = createRepaymentInstallmentIntent(repayment, installment, now);
+        int updatedCount = repaymentInstallmentRepository
+                .markPaymentInProgress(installmentId, now);
+        if (updatedCount == 0) {
+            return classifyPaymentInProgressRace(installmentId);
+        }
+        repaymentRepository.refreshStatus(repayment.getRepaymentId(), now);
+        return toPaymentIntentResponse(intent);
     }
 
     @Transactional
@@ -493,15 +512,29 @@ public class FinancialService {
 
     @Transactional
     public int expirePendingPaymentIntents(Instant now, int batchSize) {
-        java.util.List<Long> affectedInstallmentIds =
-                paymentIntentRepository.findExpiredActiveRepaymentInstallmentIds(now, batchSize);
-        int expiredCount = paymentIntentRepository.expireExpiredActive(now, batchSize);
-        for (Long installmentId : affectedInstallmentIds) {
-            RepaymentInstallment installment = getRepaymentInstallment(installmentId);
-            repaymentInstallmentRepository.markPaymentFailed(installmentId, "Payment intent expired", now);
+        java.util.List<ExpiredPaymentIntentReference> expired =
+                paymentIntentRepository.expireExpiredActiveReturning(now, batchSize);
+        expired.forEach(reference -> applyExpiredRepaymentEffect(reference, now));
+        return expired.size();
+    }
+
+    private void applyExpiredRepaymentEffect(
+            ExpiredPaymentIntentReference reference,
+            Instant now
+    ) {
+        if (reference.paymentPurpose() != PaymentPurpose.REPAYMENT) {
+            return;
+        }
+        RepaymentInstallment installment =
+                getRepaymentInstallment(reference.repaymentInstallmentId());
+        int changedCount = repaymentInstallmentRepository.markPaymentFailed(
+                installment.getRepaymentInstallmentId(),
+                "Payment intent expired",
+                now
+        );
+        if (changedCount > 0) {
             repaymentRepository.refreshStatus(installment.getRepaymentId(), now);
         }
-        return expiredCount;
     }
 
     @Transactional
@@ -542,10 +575,9 @@ public class FinancialService {
         }
     }
 
-    private PaymentIntent createSettlementIntent(Settlement settlement) {
+    private PaymentIntent createSettlementIntent(Settlement settlement, Instant now) {
         Startup startup = getStartupById(settlement.getStartupId());
         Investor investor = getInvestorById(settlement.getInvestorId());
-        Instant now = Instant.now();
         PaymentIntent paymentIntent = PaymentIntent.forSettlement(
                 settlement.getSettlementId(),
                 investor.getAccountId(),
@@ -559,10 +591,13 @@ public class FinancialService {
         return paymentIntentRepository.saveNewOrFindActiveBySettlement(paymentIntent);
     }
 
-    private PaymentIntent createRepaymentInstallmentIntent(Repayment repayment, RepaymentInstallment installment) {
+    private PaymentIntent createRepaymentInstallmentIntent(
+            Repayment repayment,
+            RepaymentInstallment installment,
+            Instant now
+    ) {
         Startup startup = getStartupById(repayment.getStartupId());
         Investor investor = getInvestorById(repayment.getInvestorId());
-        Instant now = Instant.now();
         PaymentIntent paymentIntent = PaymentIntent.forRepaymentInstallment(
                 installment.getRepaymentInstallmentId(),
                 startup.getAccountId(),
@@ -709,11 +744,11 @@ public class FinancialService {
                 .toInstant();
     }
 
-    private void ensureSettlementPayable(Settlement settlement) {
+    private void ensureSettlementPayable(Settlement settlement, Instant now) {
         if (settlement.getSettlementState() != SettlementState.SETTLEMENT_PENDING) {
             throw new SettlementNotPayableException("Settlement is not pending");
         }
-        if (!settlement.getExpiresAt().isAfter(Instant.now())) {
+        if (!settlement.getExpiresAt().isAfter(now)) {
             throw new SettlementNotPayableException("Settlement is expired");
         }
     }

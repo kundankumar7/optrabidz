@@ -202,7 +202,8 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
                 saveExpiredPaymentIntent("parallel intent 5", PaymentState.CREATED, "parallel-intent-5")
         ));
 
-        int expiredCount = runTwoWorkers(() -> paymentIntentRepository.expireExpiredActive(NOW, 3));
+        int expiredCount = runTwoWorkers(
+                () -> paymentIntentRepository.expireExpiredActiveReturning(NOW, 3).size());
 
         assertThat(expiredCount).isEqualTo(5);
         assertThat(inTransaction(() -> expiredIntentIds.stream()
@@ -211,6 +212,29 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
                 .map(PaymentIntent::getPaymentState)
                 .toList()))
                 .containsOnly(PaymentState.PAYMENT_EXPIRED);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void paymentIntentConfirmationAndExpiryLeaveExactlyOneTerminalState() throws Exception {
+        Long paymentIntentId = inTransaction(() -> saveExpiredPaymentIntent(
+                "confirmation expiry race",
+                PaymentState.CREATED,
+                "confirmation-expiry-race"
+        ));
+
+        int changedCount = runCompetingWorkers(
+                () -> paymentIntentRepository.confirmActive(
+                        paymentIntentId, NOW.minusSeconds(301)),
+                () -> paymentIntentRepository.expireActiveByIdReturning(
+                        paymentIntentId, NOW).isPresent() ? 1 : 0
+        );
+
+        assertThat(changedCount).isEqualTo(1);
+        assertThat(inTransaction(() -> paymentIntentRepository.findById(paymentIntentId)
+                .orElseThrow()
+                .getPaymentState()))
+                .isIn(PaymentState.PAYMENT_CONFIRMED, PaymentState.PAYMENT_EXPIRED);
     }
 
     @Test
@@ -280,6 +304,36 @@ class FinancialExpiryRepositoryIT extends PostgresJpaIntegrationTestSupport {
             executor.shutdownNow();
             assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
         }
+    }
+
+    private int runCompetingWorkers(Supplier<Integer> firstWorker,
+                                    Supplier<Integer> secondWorker) throws Exception {
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        Callable<Integer> firstTask = competingTask(firstWorker, ready, start);
+        Callable<Integer> secondTask = competingTask(secondWorker, ready, start);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<Integer> first = executor.submit(firstTask);
+            Future<Integer> second = executor.submit(secondTask);
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            return first.get() + second.get();
+        } finally {
+            executor.shutdownNow();
+            assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+        }
+    }
+
+    private Callable<Integer> competingTask(Supplier<Integer> worker,
+                                            CountDownLatch ready,
+                                            CountDownLatch start) {
+        return () -> {
+            ready.countDown();
+            assertThat(start.await(5, TimeUnit.SECONDS)).isTrue();
+            return inTransaction(worker);
+        };
     }
 
     private <T> T inTransaction(Supplier<T> work) {

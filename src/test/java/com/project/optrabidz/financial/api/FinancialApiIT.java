@@ -766,6 +766,41 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
     }
 
     @Test
+    void expiredByTimeRepaymentIntentCanBeReplacedImmediately() throws Exception {
+        RepaymentScenario scenario = createRepaymentScenario(
+                "Expired Repayment Intent Retry",
+                new BigDecimal("735432.10")
+        );
+        Long firstIntentId = createRepaymentInstallmentPaymentIntent(
+                scenario.finance().startup(), scenario.installmentId());
+        int expiredByTime = jdbcTemplate.update("""
+                update payment_intent
+                set created_at = now() - interval '2 minutes',
+                    expires_at = now() - interval '1 minute'
+                where payment_intent_id = ?
+                """, firstIntentId);
+        assertThat(expiredByTime).isEqualTo(1);
+
+        Long replacementIntentId = createRepaymentInstallmentPaymentIntent(
+                scenario.finance().startup(), scenario.installmentId());
+
+        assertThat(replacementIntentId).isNotEqualTo(firstIntentId);
+        assertThat(jdbcTemplate.queryForObject("""
+                select payment_state::text
+                from payment_intent
+                where payment_intent_id = ?
+                """, String.class, firstIntentId))
+                .isEqualTo("PAYMENT_EXPIRED");
+        assertThat(jdbcTemplate.queryForObject("""
+                select count(*)
+                from payment_intent
+                where repayment_installment_id = ?
+                  and payment_state in ('CREATED', 'PAYMENT_PENDING')
+                """, Long.class, scenario.installmentId()))
+                .isEqualTo(1L);
+    }
+
+    @Test
     void concurrentLocalSettlementConfirmationCreatesRepaymentOnlyOnce() throws Exception {
         FinanceScenario scenario = createAcceptedBidScenario(
                 "Finance Concurrent Confirm Startup",
