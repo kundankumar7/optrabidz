@@ -58,6 +58,14 @@ class PaymentWebhookReplayStoreIT extends PostgresJpaIntegrationTestSupport {
                 "delete from payment_webhook_event where provider_event_id like ?",
                 EVENT_PREFIX + "%"
         );
+        jdbcTemplate.update(
+                "delete from payment_attempt where provider_order_id like ?",
+                EVENT_PREFIX + "order-%"
+        );
+        jdbcTemplate.update(
+                "delete from payment_intent where idempotency_key like ?",
+                EVENT_PREFIX + "%"
+        );
     }
 
     @Test
