@@ -30,7 +30,7 @@ class DocumentationExposureIT extends ApiIntegrationTestSupport {
     private static final List<String> UI_PATHS = List.of(
             "/swagger-ui.html",
             "/swagger-ui/index.html",
-            "/webjars/swagger-ui/5.17.14/swagger-ui.css"
+            "/swagger-ui/swagger-ui.css"
     );
     private static final List<HttpMethod> MUTATING_METHODS = List.of(
             HttpMethod.POST,
@@ -77,6 +77,26 @@ class DocumentationExposureIT extends ApiIntegrationTestSupport {
 
         @Autowired
         private MockMvc contextMockMvc;
+
+        @Test
+        void exposesEnabledDocumentationReadsToAnonymousCallers()
+                throws Exception {
+            for (String path : API_DOC_PATHS) {
+                contextMockMvc.perform(get(path))
+                        .andExpect(status().isOk());
+            }
+
+            contextMockMvc.perform(get("/swagger-ui.html"))
+                    .andExpect(status().is3xxRedirection());
+            contextMockMvc.perform(get("/swagger-ui/index.html"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(
+                            MediaType.TEXT_HTML));
+            contextMockMvc.perform(get("/swagger-ui/swagger-ui.css"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(
+                            "text/css"));
+        }
 
         @Test
         void rejectsMutatingDocumentationRequestsWithoutCsrfHeader()

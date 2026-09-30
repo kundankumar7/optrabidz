@@ -1,6 +1,9 @@
 package com.project.optrabidz.audit.api;
 
 import com.project.optrabidz.common.outbox.OutboxDispatcher;
+import com.project.optrabidz.common.event.EventPublisher;
+import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueEvent;
+import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueSource;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
@@ -9,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.MediaType;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,6 +25,47 @@ class BusinessAuditIT extends ApiIntegrationTestSupport {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private EventPublisher eventPublisher;
+
+    @Test
+    void scheduledRepaymentOverdueCreatesSystemAuditWithoutSensitiveDetails() {
+        Instant occurredAt = Instant.parse("2026-09-29T12:00:00Z");
+        eventPublisher.publish(new RepaymentInstallmentOverdueEvent(
+                9_000_101L,
+                9_000_201L,
+                9_000_301L,
+                9_000_401L,
+                9_000_402L,
+                null,
+                null,
+                RepaymentInstallmentOverdueSource.SCHEDULE,
+                "Repayment installment due date passed",
+                occurredAt
+        ));
+
+        outboxDispatcher.dispatchPending();
+
+        Map<String, Object> audit = jdbcTemplate.queryForMap("""
+                select action, object_type, object_id, actor_account_id,
+                       actor_role, outcome, details::text as details
+                from audit_record
+                where event_type = 'RepaymentInstallmentOverdueEvent'
+                  and object_id = '9000101'
+                order by audit_record_id desc
+                limit 1
+                """);
+        assertThat(audit.get("action")).isEqualTo("REPAYMENT_INSTALLMENT_OVERDUE");
+        assertThat(audit.get("object_type")).isEqualTo("REPAYMENT_INSTALLMENT");
+        assertThat(audit.get("actor_account_id")).isNull();
+        assertThat(audit.get("actor_role")).isEqualTo("SYSTEM");
+        assertThat(audit.get("outcome").toString()).isEqualTo("SYSTEM");
+        assertThat(audit.get("details").toString())
+                .contains("\"source\": \"SCHEDULE\"")
+                .contains("\"reason\": \"Repayment installment due date passed\"")
+                .doesNotContain("occurredAt", "password", "token");
+    }
 
     @Test
     void businessOutboxAuditUsesPolicySummaryAndActorContext() throws Exception {

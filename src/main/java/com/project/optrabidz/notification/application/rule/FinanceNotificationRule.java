@@ -14,7 +14,8 @@ public class FinanceNotificationRule implements NotificationRule {
     private static final Set<String> SUPPORTED_EVENTS = Set.of(
             "SettlementConfirmedEvent",
             "RepaymentInstallmentPaidEvent",
-            "RepaymentInstallmentPaymentFailedEvent"
+            "RepaymentInstallmentPaymentFailedEvent",
+            "RepaymentInstallmentOverdueEvent"
     );
 
     private final ObjectMapper objectMapper;
@@ -64,6 +65,16 @@ public class FinanceNotificationRule implements NotificationRule {
                     JsonEventPayload.longValue(payload, "repaymentInstallmentId"),
                     "Repayment payment failed",
                     "A repayment installment payment attempt failed and needs attention."
+            );
+            case "RepaymentInstallmentOverdueEvent" -> financePlan(
+                    event,
+                    payload,
+                    "REPAYMENT_INSTALLMENT_OVERDUE",
+                    "FINANCE",
+                    "REPAYMENT_INSTALLMENT",
+                    JsonEventPayload.longValue(payload, "repaymentInstallmentId"),
+                    "Repayment installment overdue",
+                    "A repayment installment is overdue. Review the payment and take action."
             );
             default -> List.of();
         };

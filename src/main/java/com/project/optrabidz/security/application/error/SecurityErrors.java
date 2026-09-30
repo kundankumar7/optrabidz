@@ -37,6 +37,12 @@ public final class SecurityErrors {
             "Password must contain at least one letter and one digit"
     );
 
+    public static final ErrorDescriptor PASSWORD_REUSE_NOT_ALLOWED = descriptor(
+            "PASSWORD_REUSE_NOT_ALLOWED",
+            ErrorCategory.VALIDATION,
+            "New password must be different from current password"
+    );
+
     public static final ErrorDescriptor SELF_REGISTRATION_NOT_ALLOWED = descriptor(
             "SELF_REGISTRATION_NOT_ALLOWED",
             ErrorCategory.BUSINESS_RULE,
@@ -56,6 +62,7 @@ public final class SecurityErrors {
                 EMAIL_ALREADY_REGISTERED,
                 CREDENTIAL_NOT_FOUND,
                 PASSWORD_POLICY_VIOLATION,
+                PASSWORD_REUSE_NOT_ALLOWED,
                 SELF_REGISTRATION_NOT_ALLOWED,
                 AUTHORIZATION_FAILED
         );

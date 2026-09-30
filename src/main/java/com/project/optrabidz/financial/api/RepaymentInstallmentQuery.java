@@ -9,9 +9,21 @@ public record RepaymentInstallmentQuery(
         Integer page,
         Integer size
 ) {
+    private static final int DEFAULT_PAGE_SIZE = 20;
+    private static final int MAX_PAGE_SIZE = 100;
+
     public RepaymentInstallmentQuery {
-        page = page == null || page < 1 ? 1 : page;
-        size = size == null || size == 0 ? 20 : size;
+        page = normalizePage(page);
+        size = normalizeSize(size);
     }
 
+    private static int normalizePage(Integer page) {
+        return page == null || page < 1 ? 1 : page;
+    }
+
+    private static int normalizeSize(Integer size) {
+        return size == null
+                ? DEFAULT_PAGE_SIZE
+                : Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+    }
 }

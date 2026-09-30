@@ -11,5 +11,7 @@ public interface CredentialRepository {
 
     Optional<Credential> findByAccountId(Long accountId);
 
+    Optional<Credential> findByAccountIdForUpdate(Long accountId);
+
     boolean existsByEmail(String email);
 }

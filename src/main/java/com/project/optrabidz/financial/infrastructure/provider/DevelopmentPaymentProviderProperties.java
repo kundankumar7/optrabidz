@@ -6,7 +6,10 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "optrabidz.financial")
 public class DevelopmentPaymentProviderProperties {
+    /** Local payment provider settings. */
     private final ProviderSwitch localProvider = new ProviderSwitch();
+
+    /** Sandbox payment provider settings. */
     private final ProviderSwitch sandboxProviders = new ProviderSwitch();
 
     public ProviderSwitch getLocalProvider() {
@@ -18,6 +21,7 @@ public class DevelopmentPaymentProviderProperties {
     }
 
     public static final class ProviderSwitch {
+        /** Whether the provider is enabled. */
         private boolean enabled;
 
         public boolean isEnabled() {

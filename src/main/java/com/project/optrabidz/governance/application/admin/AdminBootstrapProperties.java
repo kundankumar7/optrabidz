@@ -6,10 +6,19 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "optrabidz.admin.bootstrap")
 public class AdminBootstrapProperties {
+    /** Whether administrator bootstrapping is enabled. */
     private boolean enabled;
+
+    /** Email address assigned to the bootstrap administrator. */
     private String email;
+
+    /** Initial password for the bootstrap administrator. */
     private String password;
+
+    /** Public display name assigned to the bootstrap administrator. */
     private String publicDisplayName;
+
+    /** Organization label assigned to the bootstrap administrator. */
     private String organizationLabel;
 
     public BootstrapAdminCommand toBootstrapCommand() {

@@ -28,6 +28,23 @@ return it in the `X-CSRF-TOKEN` header on protected state-changing requests.
 Request correlation likewise remains in the `X-Request-Id` response header
 rather than a success-body metadata object.
 
+## Password Rotation
+
+Every authenticated `ADMIN`, `STARTUP`, or `INVESTOR` account can rotate its
+own password through `POST /api/v1/auth/change-password`. The request requires
+the current password, a policy-compliant different password, the active session
+cookie, and the matching CSRF header.
+
+A successful `204 No Content` response means the credential change, termination
+of every active persisted session for that account, and the safe outbox event
+were committed together. The submitting HTTP session is invalidated as well,
+so every browser or client must log in again with the new password. The audit
+dispatcher later converts the outbox event into one `PASSWORD_CHANGED` audit
+record; the response does not wait for that asynchronous dispatch.
+
+Rejected password changes do not alter the credential or terminate sessions.
+Passwords and password hashes are excluded from the event and audit details.
+
 ## Authorization Boundary
 
 Routes are classified as public, authenticated, or role-restricted in the
@@ -70,6 +87,8 @@ lifecycle rules, revocation strategy, migration plan, and security tests.
   profile-forbidden configuration as a security control. Diagnostics may name
   the feature or key but must not reproduce its value.
 - Keep CSRF protection enabled for browser session flows.
+- Keep password changes on the authenticated self-service endpoint; do not
+  replace application-account passwords by editing `.env` or database hashes.
 - Return neutral not-found results when a more specific response would reveal
   another caller's resource.
 - Test unauthenticated, wrong-role, expired-session, CSRF, webhook-signature,

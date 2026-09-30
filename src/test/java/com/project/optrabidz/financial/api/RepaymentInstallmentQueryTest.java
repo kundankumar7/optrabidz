@@ -8,6 +8,8 @@ import jakarta.validation.Validator;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.Set;
 
@@ -59,13 +61,42 @@ class RepaymentInstallmentQueryTest {
     }
 
     @Test
-    void normalizesPaginationDefaultsWithoutChangingExplicitValues() {
-        assertThat(new RepaymentInstallmentQuery(null, null, 0, 0))
+    void defaultsPaginationOnlyWhenValuesAreAbsent() {
+        assertThat(new RepaymentInstallmentQuery(null, null, null, null))
                 .extracting(
                         RepaymentInstallmentQuery::page,
                         RepaymentInstallmentQuery::size
                 )
                 .containsExactly(1, 20);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "-1, 1",
+            "0, 1",
+            "1, 1",
+            "3, 3"
+    })
+    void normalizesPageToOneWhenSuppliedValueIsNotPositive(int supplied, int expected) {
+        assertThat(new RepaymentInstallmentQuery(null, null, supplied, 20).page())
+                .isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "-1, 1",
+            "0, 1",
+            "1, 1",
+            "100, 100",
+            "101, 100"
+    })
+    void boundsSuppliedPageSizeBetweenOneAndOneHundred(int supplied, int expected) {
+        assertThat(new RepaymentInstallmentQuery(null, null, 1, supplied).size())
+                .isEqualTo(expected);
+    }
+
+    @Test
+    void preservesExplicitPaginationWithinBounds() {
         assertThat(new RepaymentInstallmentQuery(null, null, 3, 50))
                 .extracting(
                         RepaymentInstallmentQuery::page,

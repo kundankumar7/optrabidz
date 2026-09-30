@@ -8,12 +8,16 @@ import com.project.optrabidz.financial.application.dto.response.SettlementRespon
 import com.project.optrabidz.financial.application.exception.PaymentAlreadyConfirmedException;
 import com.project.optrabidz.financial.application.exception.UnsupportedPaymentMethodException;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentPaidEvent;
+import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueEvent;
+import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueSource;
+import com.project.optrabidz.financial.application.event.RepaymentInstallmentPaymentFailedEvent;
 import com.project.optrabidz.common.error.ApplicationException;
 import com.project.optrabidz.common.error.ErrorDescriptor;
 import com.project.optrabidz.financial.application.strategy.LocalPaymentStrategy;
 import com.project.optrabidz.financial.application.strategy.PaymentMethodStrategy;
 import com.project.optrabidz.financial.application.strategy.PaymentMethodStrategyRegistry;
 import com.project.optrabidz.common.event.EventPublisher;
+import com.project.optrabidz.financial.domain.model.ExpiredPaymentIntentReference;
 import com.project.optrabidz.financial.domain.model.PaymentAttempt;
 import com.project.optrabidz.financial.domain.model.PaymentAttemptState;
 import com.project.optrabidz.financial.domain.model.PaymentIntent;
@@ -51,15 +55,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataRetrievalFailureException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -313,6 +321,69 @@ class FinancialServiceTest {
                 repaymentInstallmentRepository,
                 paymentIntentRepository
         );
+    }
+
+    @Test
+    void sharedInstallmentListCapsPageSizeAndReportsEffectivePagination() {
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(startup()));
+        when(repaymentRepository.findByIdForStartup(REPAYMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.of(repayment()));
+        when(repaymentInstallmentRepository.findByRepaymentIdAndStates(
+                eq(REPAYMENT_ID), eq(List.of()), any(Pageable.class)))
+                .thenAnswer(invocation -> Page.empty(invocation.getArgument(2)));
+
+        var response = service.getRepaymentInstallments(
+                STARTUP_ACCOUNT_ID, RoleType.STARTUP, REPAYMENT_ID,
+                null, null, -1, 101);
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(repaymentInstallmentRepository).findByRepaymentIdAndStates(
+                eq(REPAYMENT_ID), eq(List.of()), pageable.capture());
+        assertThat(pageable.getValue().getPageNumber()).isZero();
+        assertThat(pageable.getValue().getPageSize()).isEqualTo(100);
+        assertThat(response.page()).isEqualTo(1);
+        assertThat(response.size()).isEqualTo(100);
+    }
+
+    @Test
+    void startupInstallmentListNormalizesSuppliedZeroSizeToOne() {
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(startup()));
+        when(repaymentInstallmentRepository.findByStartupIdAndStates(
+                eq(STARTUP_ID), eq(List.of()), any(Pageable.class)))
+                .thenAnswer(invocation -> Page.empty(invocation.getArgument(2)));
+
+        var response = service.getMyStartupRepaymentInstallments(
+                STARTUP_ACCOUNT_ID, RoleType.STARTUP, null, null, 0, 0);
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(repaymentInstallmentRepository).findByStartupIdAndStates(
+                eq(STARTUP_ID), eq(List.of()), pageable.capture());
+        assertThat(pageable.getValue().getPageNumber()).isZero();
+        assertThat(pageable.getValue().getPageSize()).isEqualTo(1);
+        assertThat(response.page()).isEqualTo(1);
+        assertThat(response.size()).isEqualTo(1);
+    }
+
+    @Test
+    void investorInstallmentListNormalizesSuppliedNegativeSizeToOne() {
+        when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(investor()));
+        when(repaymentInstallmentRepository.findByInvestorIdAndStates(
+                eq(INVESTOR_ID), eq(List.of()), any(Pageable.class)))
+                .thenAnswer(invocation -> Page.empty(invocation.getArgument(2)));
+
+        var response = service.getMyInvestorRepaymentInstallments(
+                INVESTOR_ACCOUNT_ID, RoleType.INVESTOR, null, null, 2, -1);
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(repaymentInstallmentRepository).findByInvestorIdAndStates(
+                eq(INVESTOR_ID), eq(List.of()), pageable.capture());
+        assertThat(pageable.getValue().getPageNumber()).isEqualTo(1);
+        assertThat(pageable.getValue().getPageSize()).isEqualTo(1);
+        assertThat(response.page()).isEqualTo(2);
+        assertThat(response.size()).isEqualTo(1);
     }
 
     @Test
@@ -640,6 +711,162 @@ class FinancialServiceTest {
     }
 
     @Test
+    void mixedPurposeExpiryAppliesEffectsOnlyToReturnedRepaymentIntents() {
+        Instant now = now();
+        when(paymentIntentRepository.expireExpiredActiveReturning(now, 2))
+                .thenReturn(List.of(
+                        new ExpiredPaymentIntentReference(
+                                PAYMENT_INTENT_ID,
+                                PaymentPurpose.SETTLEMENT,
+                                SETTLEMENT_ID,
+                                null
+                        ),
+                        new ExpiredPaymentIntentReference(
+                                PAYMENT_INTENT_ID + 1,
+                                PaymentPurpose.REPAYMENT,
+                                null,
+                                REPAYMENT_INSTALLMENT_ID
+                        )
+                ));
+        when(repaymentInstallmentRepository.findById(REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(Optional.of(repaymentInstallment()));
+        when(repaymentInstallmentRepository.markPaymentFailed(
+                REPAYMENT_INSTALLMENT_ID, "Payment intent expired", now))
+                .thenReturn(1);
+
+        int expiredCount = service.expirePendingPaymentIntents(now, 2);
+
+        assertThat(expiredCount).isEqualTo(2);
+        verify(repaymentInstallmentRepository).markPaymentFailed(
+                REPAYMENT_INSTALLMENT_ID, "Payment intent expired", now);
+        verify(repaymentRepository).refreshStatus(REPAYMENT_ID, now);
+    }
+
+    @Test
+    void expiryBeforeDueKeepsGenericFailureWithoutOverdueEvent() {
+        Instant now = now();
+        stubExpiredRepaymentIntent(now, RepaymentInstallmentState.PAYMENT_FAILED);
+
+        service.expirePendingPaymentIntents(now, 1);
+
+        verify(eventPublisher, never()).publish(any(RepaymentInstallmentOverdueEvent.class));
+    }
+
+    @Test
+    void expiryAtOrAfterDuePublishesOverdueEventOnce() {
+        Instant now = now();
+        stubExpiredRepaymentIntent(now, RepaymentInstallmentState.OVERDUE);
+
+        service.expirePendingPaymentIntents(now, 1);
+
+        ArgumentCaptor<RepaymentInstallmentOverdueEvent> event =
+                ArgumentCaptor.forClass(RepaymentInstallmentOverdueEvent.class);
+        verify(eventPublisher).publish(event.capture());
+        assertThat(event.getValue().paymentIntentId()).isEqualTo(PAYMENT_INTENT_ID);
+        assertThat(event.getValue().actorAccountId()).isNull();
+        assertThat(event.getValue().source()).isEqualTo(RepaymentInstallmentOverdueSource.PAYMENT_INTENT_EXPIRY);
+        assertThat(event.getValue().reason()).isEqualTo("Payment intent expired");
+    }
+
+    @Test
+    void schedulerPublishesOnlyTheFirstOverdueTransition() {
+        Instant now = now();
+        when(repaymentInstallmentRepository.findOverdueEligibleIds(now, 10))
+                .thenReturn(List.of(REPAYMENT_INSTALLMENT_ID), List.of(REPAYMENT_INSTALLMENT_ID));
+        when(repaymentInstallmentRepository.markOverdueReturning(List.of(REPAYMENT_INSTALLMENT_ID), now))
+                .thenReturn(List.of(REPAYMENT_INSTALLMENT_ID), List.of());
+        when(repaymentInstallmentRepository.findById(REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(Optional.of(repaymentInstallment(RepaymentInstallmentState.OVERDUE, null)));
+        when(repaymentRepository.findById(REPAYMENT_ID)).thenReturn(Optional.of(repayment()));
+
+        assertThat(service.markOverdueRepaymentInstallments(now, 10)).isEqualTo(1);
+        assertThat(service.markOverdueRepaymentInstallments(now, 10)).isZero();
+
+        ArgumentCaptor<RepaymentInstallmentOverdueEvent> event =
+                ArgumentCaptor.forClass(RepaymentInstallmentOverdueEvent.class);
+        verify(eventPublisher).publish(event.capture());
+        assertThat(event.getValue().source()).isEqualTo(RepaymentInstallmentOverdueSource.SCHEDULE);
+        assertThat(event.getValue().actorAccountId()).isNull();
+        assertThat(event.getValue().paymentIntentId()).isNull();
+    }
+
+    @Test
+    void expiredByTimeRepaymentIntentCanBeReplacedImmediately() {
+        PaymentIntent staleIntent = PaymentIntent.builder()
+                .paymentIntentId(PAYMENT_INTENT_ID)
+                .paymentPurpose(PaymentPurpose.REPAYMENT)
+                .repaymentInstallmentId(REPAYMENT_INSTALLMENT_ID)
+                .payerAccountId(STARTUP_ACCOUNT_ID)
+                .payeeAccountId(INVESTOR_ACCOUNT_ID)
+                .amount(new BigDecimal("35368.06"))
+                .currencyCode("INR")
+                .paymentState(PaymentState.CREATED)
+                .idempotencyKey("stale-repayment-intent")
+                .createdAt(Instant.EPOCH)
+                .expiresAt(Instant.EPOCH.plusSeconds(900))
+                .build();
+        PaymentIntent replacement = withPaymentIntentId(
+                repaymentPaymentIntent(PaymentState.CREATED),
+                PAYMENT_INTENT_ID + 1
+        );
+        RepaymentInstallment inProgress = repaymentInstallment(
+                RepaymentInstallmentState.PAYMENT_IN_PROGRESS, null);
+        RepaymentInstallment failed = repaymentInstallment(
+                RepaymentInstallmentState.PAYMENT_FAILED, null);
+
+        when(startupRepository.findByAccountId(STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(startup()));
+        when(repaymentInstallmentRepository.findByIdForStartup(
+                REPAYMENT_INSTALLMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.of(inProgress));
+        when(repaymentRepository.findByIdForStartup(REPAYMENT_ID, STARTUP_ID))
+                .thenReturn(Optional.of(repayment()));
+        when(paymentIntentRepository.findActiveByRepaymentInstallmentId(
+                REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(Optional.of(staleIntent), Optional.empty());
+        when(paymentIntentRepository.expireActiveByIdReturning(
+                eq(PAYMENT_INTENT_ID), any(Instant.class)))
+                .thenReturn(Optional.of(new ExpiredPaymentIntentReference(
+                        PAYMENT_INTENT_ID,
+                        PaymentPurpose.REPAYMENT,
+                        null,
+                        REPAYMENT_INSTALLMENT_ID
+                )));
+        when(repaymentInstallmentRepository.findById(REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(Optional.of(inProgress), Optional.of(failed));
+        when(repaymentInstallmentRepository.markPaymentFailed(
+                eq(REPAYMENT_INSTALLMENT_ID),
+                eq("Payment intent expired"),
+                any(Instant.class)))
+                .thenReturn(1);
+        when(startupRepository.findById(STARTUP_ID)).thenReturn(Optional.of(startup()));
+        when(investorRepository.findById(INVESTOR_ID)).thenReturn(Optional.of(investor()));
+        when(paymentIntentRepository.saveNewOrFindActiveByRepaymentInstallment(
+                any(PaymentIntent.class)))
+                .thenReturn(replacement);
+        when(repaymentInstallmentRepository.markPaymentInProgress(
+                eq(REPAYMENT_INSTALLMENT_ID), any(Instant.class)))
+                .thenReturn(1);
+
+        PaymentIntentResponse response =
+                service.createRepaymentInstallmentPaymentIntent(
+                        STARTUP_ACCOUNT_ID,
+                        RoleType.STARTUP,
+                        REPAYMENT_INSTALLMENT_ID
+                );
+
+        assertThat(response.paymentIntentId()).isEqualTo(PAYMENT_INTENT_ID + 1);
+        verify(paymentIntentRepository).expireActiveByIdReturning(
+                eq(PAYMENT_INTENT_ID), any(Instant.class));
+        verify(repaymentInstallmentRepository).markPaymentFailed(
+                eq(REPAYMENT_INSTALLMENT_ID),
+                eq("Payment intent expired"),
+                any(Instant.class));
+        verify(repaymentRepository, times(2))
+                .refreshStatus(eq(REPAYMENT_ID), any(Instant.class));
+    }
+
+    @Test
     void investorCannotCreatePaymentIntentForAnotherInvestorSettlement() {
         Investor differentInvestor = new Investor(
                 99L,
@@ -783,6 +1010,22 @@ class FinancialServiceTest {
     }
 
     @Test
+    void administratorCannotCreatePaymentAttemptForVisibleIntent() {
+        assertPaymentFailure(
+                () -> service.createPaymentAttempt(
+                        999L,
+                        RoleType.ADMIN,
+                        PAYMENT_INTENT_ID,
+                        new CreatePaymentAttemptRequest(null, null)
+                ),
+                PAYMENT_INTENT_NOT_FOUND
+        );
+
+        verify(paymentIntentRepository).findByIdForPayer(PAYMENT_INTENT_ID, 999L);
+        verify(paymentIntentRepository, never()).findById(PAYMENT_INTENT_ID);
+    }
+
+    @Test
     void nonOwnedPayerIntentUsesNeutralNotFoundFailure() {
         when(paymentIntentRepository.findByIdForPayer(PAYMENT_INTENT_ID, STARTUP_ACCOUNT_ID))
                 .thenReturn(Optional.empty());
@@ -851,17 +1094,25 @@ class FinancialServiceTest {
     }
 
     @Test
-    void administratorUsesGlobalAttemptLookupBeforeLocalProviderCheck() {
-        PaymentAttempt attempt = paymentAttempt("RAZORPAY", PaymentAttemptState.INITIATED);
-        when(paymentAttemptRepository.findById(PAYMENT_ATTEMPT_ID)).thenReturn(Optional.of(attempt));
-
+    void administratorCannotConfirmLocalPaymentAttempt() {
         assertPaymentFailure(
                 () -> service.confirmLocalPaymentAttempt(999L, RoleType.ADMIN, PAYMENT_ATTEMPT_ID),
-                PAYMENT_PROVIDER_MISMATCH
+                PAYMENT_ATTEMPT_NOT_FOUND
         );
 
-        verify(paymentAttemptRepository).findById(PAYMENT_ATTEMPT_ID);
-        verify(paymentAttemptRepository, never()).findByIdForPayer(any(), any());
+        verify(paymentAttemptRepository).findByIdForPayer(PAYMENT_ATTEMPT_ID, 999L);
+        verify(paymentAttemptRepository, never()).findById(PAYMENT_ATTEMPT_ID);
+    }
+
+    @Test
+    void administratorCannotFailLocalPaymentAttempt() {
+        assertPaymentFailure(
+                () -> service.failLocalPaymentAttempt(999L, RoleType.ADMIN, PAYMENT_ATTEMPT_ID),
+                PAYMENT_ATTEMPT_NOT_FOUND
+        );
+
+        verify(paymentAttemptRepository).findByIdForPayer(PAYMENT_ATTEMPT_ID, 999L);
+        verify(paymentAttemptRepository, never()).findById(PAYMENT_ATTEMPT_ID);
     }
 
     @Test
@@ -986,6 +1237,8 @@ class FinancialServiceTest {
         assertThat(repayment.getTotalRepayableAmount()).isEqualByComparingTo("636625.00");
         assertThat(repayment.getTotalInstallments()).isEqualTo(18);
         assertThat(repayment.getRepaymentState()).isEqualTo(RepaymentState.NOT_STARTED);
+        assertThat(repayment.getFinalDueAt()).isEqualTo(
+                repayment.getStartedAt().atZone(ZoneOffset.UTC).plusMonths(18).toInstant());
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<RepaymentInstallment>> installmentCaptor = ArgumentCaptor.forClass(List.class);
@@ -998,10 +1251,58 @@ class FinancialServiceTest {
         assertThat(firstInstallment.getInstallmentNumber()).isEqualTo(1);
         assertThat(firstInstallment.getAmount()).isEqualByComparingTo("35368.06");
         assertThat(firstInstallment.getInstallmentState()).isEqualTo(RepaymentInstallmentState.NOT_STARTED);
+        assertThat(firstInstallment.getDueAt()).isEqualTo(
+                repayment.getStartedAt().atZone(ZoneOffset.UTC).plusMonths(1).toInstant());
         assertThat(finalInstallment.getInstallmentNumber()).isEqualTo(18);
         assertThat(finalInstallment.getAmount()).isEqualByComparingTo("35367.98");
+        assertThat(finalInstallment.getDueAt()).isEqualTo(repayment.getFinalDueAt());
         assertThat(installments.stream().map(RepaymentInstallment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add))
                 .isEqualByComparingTo("636625.00");
+    }
+
+    @ParameterizedTest(name = "quarterly tenure {0} months ends at {1}")
+    @CsvSource({
+            "2, '2'",
+            "5, '3,5'",
+            "6, '3,6'",
+            "7, '3,6,7'"
+    })
+    void quarterlyRepaymentScheduleEndsAtTenureBoundary(
+            int tenureMonths,
+            String expectedDueMonths
+    ) {
+        stubSuccessfulSettlementConfirmation(quarterlyAgreement(tenureMonths));
+
+        service.confirmLocalPaymentAttempt(
+                INVESTOR_ACCOUNT_ID,
+                RoleType.INVESTOR,
+                PAYMENT_ATTEMPT_ID
+        );
+
+        ArgumentCaptor<Repayment> repaymentCaptor = ArgumentCaptor.forClass(Repayment.class);
+        verify(repaymentRepository).save(repaymentCaptor.capture());
+        Repayment repayment = repaymentCaptor.getValue();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<RepaymentInstallment>> installmentCaptor = ArgumentCaptor.forClass(List.class);
+        verify(repaymentInstallmentRepository).saveAll(installmentCaptor.capture());
+        List<RepaymentInstallment> installments = installmentCaptor.getValue();
+        List<Long> dueMonths = java.util.Arrays.stream(expectedDueMonths.split(","))
+                .map(Long::parseLong)
+                .toList();
+        List<Instant> expectedDueDates = dueMonths.stream()
+                .map(months -> repayment.getStartedAt().atZone(ZoneOffset.UTC)
+                        .plusMonths(months)
+                        .toInstant())
+                .toList();
+
+        assertThat(installments).hasSize(dueMonths.size());
+        assertThat(installments).extracting(RepaymentInstallment::getDueAt)
+                .containsExactlyElementsOf(expectedDueDates);
+        assertThat(repayment.getFinalDueAt()).isEqualTo(expectedDueDates.getLast());
+        assertThat(installments.stream()
+                .map(RepaymentInstallment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add))
+                .isEqualByComparingTo(repayment.getTotalRepayableAmount());
     }
 
     @Test
@@ -1038,7 +1339,8 @@ class FinancialServiceTest {
         assertThat(repayment.getAgreementId()).isEqualTo(AGREEMENT_ID);
         assertThat(repayment.getTotalInstallments()).isEqualTo(1);
         assertThat(repayment.getTotalRepayableAmount()).isEqualByComparingTo("554812.50");
-        assertThat(Duration.between(now(), repayment.getFinalDueAt()).toDays()).isBetween(27L, 31L);
+        assertThat(repayment.getFinalDueAt()).isEqualTo(
+                repayment.getStartedAt().atZone(ZoneOffset.UTC).plusMonths(1).toInstant());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<RepaymentInstallment>> installmentCaptor = ArgumentCaptor.forClass(List.class);
         verify(repaymentInstallmentRepository).saveAll(installmentCaptor.capture());
@@ -1046,6 +1348,7 @@ class FinancialServiceTest {
                 .satisfies(installment -> {
                     assertThat(installment.getInstallmentNumber()).isEqualTo(1);
                     assertThat(installment.getAmount()).isEqualByComparingTo("554812.50");
+                    assertThat(installment.getDueAt()).isEqualTo(repayment.getFinalDueAt());
                 });
     }
 
@@ -1416,6 +1719,32 @@ class FinancialServiceTest {
     }
 
     @Test
+    void repaymentFailureBeforeDuePublishesGenericFailureOnly() {
+        stubRepaymentFailure(RepaymentInstallmentState.PAYMENT_FAILED);
+
+        service.failLocalPaymentAttempt(STARTUP_ACCOUNT_ID, RoleType.STARTUP, PAYMENT_ATTEMPT_ID);
+
+        verify(eventPublisher).publish(any(RepaymentInstallmentPaymentFailedEvent.class));
+        verify(eventPublisher, never()).publish(any(RepaymentInstallmentOverdueEvent.class));
+    }
+
+    @Test
+    void repaymentFailureAtOrAfterDuePublishesOverdueInsteadOfGenericFailure() {
+        stubRepaymentFailure(RepaymentInstallmentState.OVERDUE);
+
+        service.failLocalPaymentAttempt(STARTUP_ACCOUNT_ID, RoleType.STARTUP, PAYMENT_ATTEMPT_ID);
+
+        ArgumentCaptor<RepaymentInstallmentOverdueEvent> event =
+                ArgumentCaptor.forClass(RepaymentInstallmentOverdueEvent.class);
+        verify(eventPublisher).publish(event.capture());
+        verify(eventPublisher, never()).publish(any(RepaymentInstallmentPaymentFailedEvent.class));
+        assertThat(event.getValue().source()).isEqualTo(RepaymentInstallmentOverdueSource.PAYMENT_FAILURE);
+        assertThat(event.getValue().actorAccountId()).isEqualTo(STARTUP_ACCOUNT_ID);
+        assertThat(event.getValue().paymentIntentId()).isEqualTo(PAYMENT_INTENT_ID);
+        assertThat(event.getValue().reason()).isEqualTo("Local payment failure was simulated");
+    }
+
+    @Test
     void providerCallbackCanFailPaymentAttemptThroughSharedCommandPath() {
         PaymentAttempt attempt = initiatedLocalAttempt();
         PaymentAttempt failedAttempt = failedLocalAttempt("UPI_DECLINED", "UPI provider declined the payment");
@@ -1544,6 +1873,55 @@ class FinancialServiceTest {
                 .thenReturn(Optional.ofNullable(latestInstallment));
     }
 
+    private void stubExpiredRepaymentIntent(Instant now, RepaymentInstallmentState resultingState) {
+        when(paymentIntentRepository.expireExpiredActiveReturning(now, 1))
+                .thenReturn(List.of(new ExpiredPaymentIntentReference(
+                        PAYMENT_INTENT_ID,
+                        PaymentPurpose.REPAYMENT,
+                        null,
+                        REPAYMENT_INSTALLMENT_ID
+                )));
+        when(repaymentInstallmentRepository.findById(REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(
+                        Optional.of(repaymentInstallment(RepaymentInstallmentState.PAYMENT_IN_PROGRESS, null)),
+                        Optional.of(repaymentInstallment(resultingState, null))
+                );
+        when(repaymentInstallmentRepository.markPaymentFailed(
+                REPAYMENT_INSTALLMENT_ID, "Payment intent expired", now))
+                .thenReturn(1);
+        if (resultingState == RepaymentInstallmentState.OVERDUE) {
+            when(repaymentRepository.findById(REPAYMENT_ID)).thenReturn(Optional.of(repayment()));
+        }
+    }
+
+    private void stubRepaymentFailure(RepaymentInstallmentState resultingState) {
+        PaymentIntent pendingIntent = repaymentPaymentIntent(PaymentState.PAYMENT_PENDING);
+        PaymentIntent failedIntent = repaymentPaymentIntent(PaymentState.PAYMENT_FAILED);
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, STARTUP_ACCOUNT_ID))
+                .thenReturn(Optional.of(initiatedLocalAttempt()), Optional.of(failedLocalAttempt()));
+        when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
+                .thenReturn(Optional.of(pendingIntent), Optional.of(failedIntent));
+        when(paymentAttemptRepository.failActive(
+                eq(PAYMENT_ATTEMPT_ID), eq("LOCAL_FAILURE"),
+                eq("Local payment failure was simulated"), any(Instant.class)))
+                .thenReturn(1);
+        when(paymentIntentRepository.failActive(
+                eq(PAYMENT_INTENT_ID), eq("LOCAL_FAILURE"),
+                eq("Local payment failure was simulated"), any(Instant.class)))
+                .thenReturn(1);
+        when(repaymentInstallmentRepository.findById(REPAYMENT_INSTALLMENT_ID))
+                .thenReturn(
+                        Optional.of(repaymentInstallment(RepaymentInstallmentState.PAYMENT_IN_PROGRESS, null)),
+                        Optional.of(repaymentInstallment(resultingState, null))
+                );
+        when(repaymentRepository.findById(REPAYMENT_ID)).thenReturn(Optional.of(repayment()));
+        when(repaymentInstallmentRepository.markPaymentFailed(
+                eq(REPAYMENT_INSTALLMENT_ID),
+                eq("Local payment failure was simulated"),
+                any(Instant.class)))
+                .thenReturn(1);
+    }
+
     private void stubRepaymentConfirmation(
             int confirmedCount,
             RepaymentInstallment latestInstallment
@@ -1582,6 +1960,33 @@ class FinancialServiceTest {
                 eq(PAYMENT_INTENT_ID),
                 any(Instant.class)))
                 .thenReturn(confirmedCount);
+    }
+
+    private void stubSuccessfulSettlementConfirmation(Agreement confirmedAgreement) {
+        when(paymentAttemptRepository.findByIdForPayer(PAYMENT_ATTEMPT_ID, INVESTOR_ACCOUNT_ID))
+                .thenReturn(Optional.of(initiatedLocalAttempt()), Optional.of(confirmedLocalAttempt()));
+        when(paymentIntentRepository.findById(PAYMENT_INTENT_ID))
+                .thenReturn(
+                        Optional.of(settlementPaymentIntent(PaymentState.PAYMENT_PENDING)),
+                        Optional.of(settlementPaymentIntent(PaymentState.PAYMENT_CONFIRMED))
+                );
+        when(paymentAttemptRepository.confirmActive(
+                eq(PAYMENT_ATTEMPT_ID),
+                eq("LOCAL-PAYMENT-" + PAYMENT_ATTEMPT_ID),
+                any(Instant.class)))
+                .thenReturn(1);
+        when(paymentIntentRepository.confirmActive(eq(PAYMENT_INTENT_ID), any(Instant.class)))
+                .thenReturn(1);
+        when(settlementRepository.findById(SETTLEMENT_ID)).thenReturn(Optional.of(settlement()));
+        when(settlementRepository.confirmPending(
+                eq(SETTLEMENT_ID), eq(PAYMENT_INTENT_ID), any(Instant.class)))
+                .thenReturn(1);
+        when(repaymentRepository.findByAgreementId(AGREEMENT_ID)).thenReturn(Optional.empty());
+        when(agreementRepository.findById(AGREEMENT_ID)).thenReturn(Optional.of(confirmedAgreement));
+        when(repaymentRepository.save(any(Repayment.class)))
+                .thenAnswer(invocation -> withRepaymentId(invocation.getArgument(0), 9001L));
+        when(repaymentInstallmentRepository.saveAll(any()))
+                .thenAnswer(invocation -> List.copyOf(invocation.getArgument(0)));
     }
 
     private static Agreement agreement() {
@@ -1623,6 +2028,28 @@ class FinancialServiceTest {
                         18,
                         RepaymentPlanType.ONE_TIME,
                         1,
+                        now()
+                ))
+                .build();
+    }
+
+    private static Agreement quarterlyAgreement(int tenureMonths) {
+        return Agreement.builder()
+                .agreementId(AGREEMENT_ID)
+                .listingId(LISTING_ID)
+                .bidId(501L)
+                .startupId(STARTUP_ID)
+                .investorId(INVESTOR_ID)
+                .fundingModel(FundingModel.DEBT)
+                .createdAt(now())
+                .debtTerms(new AgreementDebtTerms(
+                        601L,
+                        AGREEMENT_ID,
+                        new BigDecimal("550000.00"),
+                        new BigDecimal("10.50"),
+                        tenureMonths,
+                        RepaymentPlanType.INSTALLMENT_QUARTERLY,
+                        null,
                         now()
                 ))
                 .build();

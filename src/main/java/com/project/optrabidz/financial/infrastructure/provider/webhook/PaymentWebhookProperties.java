@@ -16,8 +16,13 @@ import java.util.Optional;
 @Validated
 @ConfigurationProperties(prefix = "optrabidz.financial.webhook")
 public class PaymentWebhookProperties {
+    /** Maximum accepted webhook request body size. */
     private DataSize maxBodySize = DataSize.ofKilobytes(64);
+
+    /** Maximum allowed difference between the webhook timestamp and server time. */
     private Duration timestampTolerance = Duration.ofMinutes(5);
+
+    /** Provider-specific webhook verification settings keyed by provider code. */
     private Map<String, ProviderConfiguration> providers = new LinkedHashMap<>();
 
     public Optional<ProviderConfiguration> enabledProvider(String providerCode) {
@@ -63,9 +68,16 @@ public class PaymentWebhookProperties {
     }
 
     public static final class ProviderConfiguration {
+        /** Whether webhook processing is enabled for the provider. */
         private boolean enabled;
+
+        /** Current secret used to verify webhook signatures. */
         private String activeSecret;
+
+        /** Previous secret accepted temporarily during secret rotation. */
         private String previousSecret;
+
+        /** Time after which the previous secret is no longer accepted. */
         private Instant previousSecretValidUntil;
 
         public boolean isEnabled() {

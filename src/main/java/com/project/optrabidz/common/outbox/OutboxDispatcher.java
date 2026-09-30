@@ -1,7 +1,6 @@
 package com.project.optrabidz.common.outbox;
 
 import com.project.optrabidz.common.observability.OperationalEventLogger;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -26,13 +25,13 @@ public class OutboxDispatcher {
                             List<OutboxEventProcessor> processors,
                             OperationalEventLogger operationalEventLogger,
                             TransactionTemplate transactionTemplate,
-                            @Value("${optrabidz.outbox.dispatcher.batch-size:50}") int batchSize,
-                            @Value("${optrabidz.outbox.dispatcher.worker-id:}") String configuredWorkerId) {
+                            OutboxDispatcherProperties properties) {
         this.outboxEventRepository = outboxEventRepository;
         this.processors = processors;
         this.operationalEventLogger = operationalEventLogger;
         this.transactionTemplate = transactionTemplate;
-        this.batchSize = Math.max(batchSize, 1);
+        this.batchSize = properties.getBatchSize();
+        String configuredWorkerId = properties.getWorkerId();
         this.workerId = configuredWorkerId == null || configuredWorkerId.isBlank()
                 ? "outbox-" + UUID.randomUUID()
                 : configuredWorkerId;

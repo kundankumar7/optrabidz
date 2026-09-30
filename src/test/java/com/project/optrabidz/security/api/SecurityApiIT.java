@@ -221,16 +221,42 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
     }
 
     @Test
-    void changePasswordAcceptsCurrentPasswordAndRejectsOldPasswordAfterward() throws Exception {
+    void terminatedPersistedSessionCannotBeRestored() throws Exception {
+        AuthenticatedClient client = registerAndLogin(RoleType.STARTUP);
+        long persistedSessionId = persistedSessionId(client);
+        jdbcTemplate.update("""
+                update session
+                set session_status = 'TERMINATED'
+                where session_id = ?
+                """, persistedSessionId);
+
+        mockMvc.perform(get("/api/v1/me")
+                        .session(client.session())
+                        .cookie(client.xsrfCookie()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentType(
+                        MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code")
+                        .value("AUTHENTICATION_REQUIRED"));
+
+        assertThat(sessionStatus(persistedSessionId))
+                .isEqualTo("TERMINATED");
+    }
+
+    @Test
+    void changePasswordEndsEveryAccountSessionAndRejectsOldPasswordAfterward() throws Exception {
         String email = uniqueEmail("startup-password");
         register(email, INITIAL_PASSWORD, RoleType.STARTUP)
                 .andExpect(status().isCreated());
-        AuthenticatedClient client = login(email, INITIAL_PASSWORD);
+        AuthenticatedClient submittingClient = login(email, INITIAL_PASSWORD);
+        AuthenticatedClient otherClient = login(email, INITIAL_PASSWORD);
+        long submittingSessionId = persistedSessionId(submittingClient);
+        long otherSessionId = persistedSessionId(otherClient);
 
         mockMvc.perform(post("/api/v1/auth/change-password")
-                        .session(client.session())
-                        .cookie(client.xsrfCookie())
-                        .header("X-CSRF-TOKEN", client.csrfToken())
+                        .session(submittingClient.session())
+                        .cookie(submittingClient.xsrfCookie())
+                        .header("X-CSRF-TOKEN", submittingClient.csrfToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of(
                                 "currentPassword", INITIAL_PASSWORD,
@@ -238,6 +264,16 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
                         ))))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
+
+        assertThat(submittingClient.session().isInvalid()).isTrue();
+        assertThat(sessionStatus(submittingSessionId)).isEqualTo("TERMINATED");
+        assertThat(sessionStatus(otherSessionId)).isEqualTo("TERMINATED");
+
+        mockMvc.perform(get("/api/v1/me")
+                        .session(otherClient.session())
+                        .cookie(otherClient.xsrfCookie()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
 
         loginAttempt(email, INITIAL_PASSWORD)
                 .andExpect(status().isUnauthorized())
@@ -254,6 +290,30 @@ class SecurityApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.csrfToken").doesNotExist())
                 .andExpect(jsonPath("$.success").doesNotExist())
                 .andExpect(cookie().exists("XSRF-TOKEN"));
+    }
+
+    @Test
+    void rejectedPasswordChangeKeepsTheSubmittingSessionUsable() throws Exception {
+        String email = registeredEmail("password-rejection-session");
+        AuthenticatedClient client = login(email, INITIAL_PASSWORD);
+
+        mockMvc.perform(post("/api/v1/auth/change-password")
+                        .session(client.session())
+                        .cookie(client.xsrfCookie())
+                        .header("X-CSRF-TOKEN", client.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "currentPassword", "WrongPassword01",
+                                "newPassword", CHANGED_PASSWORD
+                        ))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("CURRENT_PASSWORD_INVALID"));
+
+        assertThat(client.session().isInvalid()).isFalse();
+        mockMvc.perform(get("/api/v1/me")
+                        .session(client.session())
+                        .cookie(client.xsrfCookie()))
+                .andExpect(status().isOk());
     }
 
     @Test

@@ -6,7 +6,10 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "optrabidz.governance.eligibility")
 public class GovernanceEligibilityProperties {
+    /** Whether a startup classification is required before publishing a listing. */
     private boolean requireStartupClassificationForListing = true;
+
+    /** Whether investor preferences are required before placing a bid. */
     private boolean requireInvestorPreferencesForBidding = true;
 
     public boolean isRequireStartupClassificationForListing() {

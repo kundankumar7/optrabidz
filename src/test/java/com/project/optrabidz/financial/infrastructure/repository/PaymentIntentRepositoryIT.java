@@ -1,6 +1,8 @@
 package com.project.optrabidz.financial.infrastructure.repository;
 
+import com.project.optrabidz.financial.domain.model.ExpiredPaymentIntentReference;
 import com.project.optrabidz.financial.domain.model.PaymentIntent;
+import com.project.optrabidz.financial.domain.model.PaymentPurpose;
 import com.project.optrabidz.financial.domain.model.PaymentState;
 import com.project.optrabidz.financial.domain.repository.PaymentIntentRepository;
 import com.project.optrabidz.financial.infrastructure.mapper.FinancialPersistenceMapper;
@@ -15,9 +17,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 
 @Import({
         FinancialPersistenceMapper.class,
@@ -137,9 +141,9 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
     }
 
     @Test
-    void expireExpiredActiveUsesBatchLimitAndIgnoresFutureOrConfirmedIntents() {
+    void expireExpiredActiveReturnsOnlyTheRowsActuallyTransitioned() {
         PaymentReference expiredCreatedSettlement = testData.createSettlementReference("expired-created");
-        PaymentReference expiredPendingSettlement = testData.createSettlementReference("expired-pending");
+        PaymentReference expiredPendingRepayment = testData.createRepaymentInstallmentReference("expired-pending");
         PaymentReference futureCreatedSettlement = testData.createSettlementReference("future-created");
         PaymentReference confirmedSettlement = testData.createSettlementReference("expired-confirmed");
         PaymentIntent expiredCreated = paymentIntentRepository.save(settlementIntent(
@@ -149,12 +153,12 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
                 NOW.minusSeconds(1_000),
                 NOW.minusSeconds(300)
         ));
-        PaymentIntent expiredPending = paymentIntentRepository.save(settlementIntent(
-                expiredPendingSettlement,
+        PaymentIntent expiredPending = paymentIntentRepository.save(repaymentIntent(
+                expiredPendingRepayment,
                 PaymentState.PAYMENT_PENDING,
                 "expired-pending",
                 NOW.minusSeconds(900),
-                NOW.minusSeconds(100)
+                NOW.minusSeconds(400)
         ));
         paymentIntentRepository.save(settlementIntent(
                 futureCreatedSettlement,
@@ -171,24 +175,39 @@ class PaymentIntentRepositoryIT extends PostgresJpaIntegrationTestSupport {
                 NOW.minusSeconds(300)
         ));
 
-        int expiredCount = paymentIntentRepository.expireExpiredActive(NOW, 10);
+        List<ExpiredPaymentIntentReference> expired =
+                paymentIntentRepository.expireExpiredActiveReturning(NOW, 2);
 
-        assertThat(expiredCount).isEqualTo(2);
-        assertThat(paymentIntentRepository.findById(expiredCreated.getPaymentIntentId()))
-                .isPresent()
-                .get()
-                .extracting(PaymentIntent::getPaymentState)
+        assertThat(expired)
+                .extracting(
+                        ExpiredPaymentIntentReference::paymentIntentId,
+                        ExpiredPaymentIntentReference::paymentPurpose,
+                        ExpiredPaymentIntentReference::settlementId,
+                        ExpiredPaymentIntentReference::repaymentInstallmentId
+                )
+                .containsExactly(
+                        tuple(expiredPending.getPaymentIntentId(), PaymentPurpose.REPAYMENT, null,
+                                expiredPendingRepayment.referenceId()),
+                        tuple(expiredCreated.getPaymentIntentId(), PaymentPurpose.SETTLEMENT,
+                                expiredCreatedSettlement.referenceId(), null)
+                );
+        assertThat(paymentState(expiredCreated.getPaymentIntentId()))
                 .isEqualTo(PaymentState.PAYMENT_EXPIRED);
-        assertThat(paymentIntentRepository.findById(expiredPending.getPaymentIntentId()))
-                .isPresent()
-                .get()
-                .extracting(PaymentIntent::getPaymentState)
+        assertThat(paymentState(expiredPending.getPaymentIntentId()))
                 .isEqualTo(PaymentState.PAYMENT_EXPIRED);
         assertThat(paymentIntentRepository.findById(confirmed.getPaymentIntentId()))
                 .isPresent()
                 .get()
                 .extracting(PaymentIntent::getPaymentState)
                 .isEqualTo(PaymentState.PAYMENT_CONFIRMED);
+    }
+
+    private PaymentState paymentState(Long paymentIntentId) {
+        return PaymentState.valueOf(jdbcTemplate.queryForObject("""
+                select payment_state::text
+                from payment_intent
+                where payment_intent_id = ?
+                """, String.class, paymentIntentId));
     }
 
     private static PaymentIntent settlementIntent(PaymentReference settlement,

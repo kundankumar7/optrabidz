@@ -77,7 +77,7 @@ class ErrorCatalogueInventoryTest {
                     .isEqualTo(declared);
         }
 
-        assertThat(declaredFieldCount).isEqualTo(61);
+        assertThat(declaredFieldCount).isEqualTo(62);
     }
 
     @Test

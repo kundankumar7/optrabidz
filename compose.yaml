@@ -1,0 +1,21 @@
+name: optrabidz
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: optrabidz
+      POSTGRES_USER: ${OPTRABIDZ_DATASOURCE_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${OPTRABIDZ_DATASOURCE_PASSWORD:?Set OPTRABIDZ_DATASOURCE_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${OPTRABIDZ_DATASOURCE_USERNAME:-postgres} -d optrabidz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:

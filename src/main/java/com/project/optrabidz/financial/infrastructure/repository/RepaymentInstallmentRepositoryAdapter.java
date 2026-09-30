@@ -6,8 +6,12 @@ import com.project.optrabidz.financial.domain.repository.RepaymentInstallmentRep
 import com.project.optrabidz.financial.infrastructure.mapper.FinancialPersistenceMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -17,11 +21,14 @@ import java.util.Optional;
 public class RepaymentInstallmentRepositoryAdapter implements RepaymentInstallmentRepository {
     private final JpaRepaymentInstallmentRepository jpaRepository;
     private final FinancialPersistenceMapper mapper;
+    private final NamedParameterJdbcTemplate jdbcTemplate;
 
     public RepaymentInstallmentRepositoryAdapter(JpaRepaymentInstallmentRepository jpaRepository,
-                                                 FinancialPersistenceMapper mapper) {
+                                                 FinancialPersistenceMapper mapper,
+                                                 NamedParameterJdbcTemplate jdbcTemplate) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
@@ -146,10 +153,26 @@ public class RepaymentInstallmentRepositoryAdapter implements RepaymentInstallme
     }
 
     @Override
-    public int markOverdue(Collection<Long> installmentIds, Instant now) {
+    @Transactional
+    public List<Long> markOverdueReturning(Collection<Long> installmentIds, Instant now) {
         if (installmentIds == null || installmentIds.isEmpty()) {
-            return 0;
+            return List.of();
         }
-        return jpaRepository.markOverdue(installmentIds, now);
+        return jdbcTemplate.queryForList("""
+                update repayment_installment
+                set installment_status = 'OVERDUE',
+                    overdue_at = coalesce(overdue_at, :now),
+                    updated_at = :now
+                where repayment_installment_id in (:installmentIds)
+                  and due_at < :now
+                  and installment_status in (
+                    'NOT_STARTED'::repayment_installment_status_enum,
+                    'PAYMENT_IN_PROGRESS'::repayment_installment_status_enum,
+                    'PAYMENT_FAILED'::repayment_installment_status_enum
+                  )
+                returning repayment_installment_id
+                """, new MapSqlParameterSource()
+                .addValue("installmentIds", installmentIds)
+                .addValue("now", Timestamp.from(now)), Long.class);
     }
 }

@@ -109,7 +109,7 @@ split the diagram.
 4. Render the selected publication entry.
 5. Run the structural checks and complete the desktop/mobile review.
 6. Record the result in the applicable work item, pull request, or curated
-   Confluence review record.
+   curated external review record.
 
 If validation fails, correct the declared source or publication asset. Do not
 allowlist a known defect or edit generated output independently of its source.

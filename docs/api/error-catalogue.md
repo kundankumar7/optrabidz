@@ -45,6 +45,7 @@ Do not add diagnostic or secret values.
 | `NOTIFICATION_SUBSCRIPTION_NOT_FOUND` | `NOT_FOUND` | 404 | Resource not found | The requested notification subscription was not found | `urn:optrabidz:problem:notification-subscription-not-found` | `notification` |
 | `NOT_ACCEPTABLE` | `TRANSPORT` | 406 | Response type not acceptable | The requested response media type is not available | `urn:optrabidz:problem:not-acceptable` | `spring-mvc` |
 | `PASSWORD_POLICY_VIOLATION` | `VALIDATION` | 400 | Request validation failed | Password must contain at least one letter and one digit | `urn:optrabidz:problem:password-policy-violation` | `security-application` |
+| `PASSWORD_REUSE_NOT_ALLOWED` | `VALIDATION` | 400 | Request validation failed | New password must be different from current password | `urn:optrabidz:problem:password-reuse-not-allowed` | `security-application` |
 | `PAYMENT_ALREADY_CONFIRMED` | `CONFLICT` | 409 | Request conflict | The payment has already been confirmed | `urn:optrabidz:problem:payment-already-confirmed` | `financial` |
 | `PAYMENT_ATTEMPT_NOT_FOUND` | `NOT_FOUND` | 404 | Resource not found | The requested payment attempt was not found | `urn:optrabidz:problem:payment-attempt-not-found` | `financial` |
 | `PAYMENT_INTENT_EXPIRED` | `CONFLICT` | 409 | Request conflict | The payment intent has expired | `urn:optrabidz:problem:payment-intent-expired` | `financial` |
