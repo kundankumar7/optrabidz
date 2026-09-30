@@ -91,7 +91,11 @@ public class AuthController {
         authenticationService.changePassword(principal, request);
         HttpSession existingSession = httpRequest.getSession(false);
         if (existingSession != null) {
-            existingSession.invalidate();
+            try {
+                existingSession.invalidate();
+            } catch (IllegalStateException ignored) {
+                // Another request already invalidated this session.
+            }
         }
         SecurityContextHolder.clearContext();
         return ResponseEntity.noContent().build();
