@@ -6,6 +6,7 @@ import com.project.optrabidz.identity.domain.model.RoleType;
 import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
+@Import(PaymentAccountBindingTestConfiguration.class)
 public abstract class ApiIntegrationTestSupport extends PostgresIntegrationTestSupport {
     protected static final String DEFAULT_PASSWORD = "Password01";
 
@@ -164,6 +166,32 @@ public abstract class ApiIntegrationTestSupport extends PostgresIntegrationTestS
                         ))))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
+    }
+
+    protected Long createAndVerifyReceivingAccount(AuthenticatedClient client) throws Exception {
+        MvcResult createResult = mockMvc.perform(post("/api/v1/payment-account-bindings")
+                        .session(client.session())
+                        .cookie(client.xsrfCookie())
+                        .header("X-CSRF-TOKEN", client.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "idempotencyKey", "test-binding-" + UUID.randomUUID()
+                        ))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.paymentAccountBindingId").isNumber())
+                .andExpect(jsonPath("$.status").value("PENDING_VERIFICATION"))
+                .andReturn();
+        Long bindingId = objectMapper.readTree(createResult.getResponse().getContentAsString())
+                .get("paymentAccountBindingId")
+                .asLong();
+
+        mockMvc.perform(post("/api/v1/payment-account-bindings/{bindingId}/actions/verify", bindingId)
+                        .session(client.session())
+                        .cookie(client.xsrfCookie())
+                        .header("X-CSRF-TOKEN", client.csrfToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ready").value(true));
+        return bindingId;
     }
 
     protected String json(Object value) throws JacksonException {

@@ -1,72 +1,79 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1100" viewBox="0 0 1700 1100" role="img" aria-labelledby="title desc">
   <title id="title">Payment processing relational schema</title>
-  <desc id="desc">Schema-backed ER slice showing payment attempts, payment intents, payment providers, and provider method configuration.</desc>
+  <desc id="desc">Schema-backed ER slice showing accounts, receiving-account bindings, payment intents and attempts, provider configuration, and payout delivery.</desc>
   <defs>
     <style>
-      .canvas{fill:#FFFFFF}.title{font:700 30px "Segoe UI",Arial,sans-serif;fill:#0F172A}.subtitle{font:400 16px "Segoe UI",Arial,sans-serif;fill:#475569}
-      .entity,.payment,.config{fill:#EFF6FF;stroke:#2563EB;stroke-width:2;rx:12}
-      .head{font:700 18px "Segoe UI",Arial,sans-serif;fill:#0F172A}.field{font:400 15px "Segoe UI",Arial,sans-serif;fill:#334155}.key{font:700 15px "Segoe UI",Arial,sans-serif;fill:#0F172A}
+      .canvas{fill:#FFFFFF}.title{font:700 34px "Segoe UI",Arial,sans-serif;fill:#0F172A}.subtitle{font:400 17px "Segoe UI",Arial,sans-serif;fill:#475569}
+      .entity{fill:#EFF6FF;stroke:#2563EB;stroke-width:2}.account{fill:#F0FDF4;stroke:#16A34A}.delivery{fill:#FFF7ED;stroke:#EA580C}.config{fill:#F5F3FF;stroke:#7C3AED}
+      .head{font:700 19px "Segoe UI",Arial,sans-serif;fill:#0F172A}.field{font:400 15px "Segoe UI",Arial,sans-serif;fill:#334155}.key{font:700 15px "Segoe UI",Arial,sans-serif;fill:#0F172A}
       .fk{fill:none;stroke:#334155;stroke-width:2.5;stroke-linecap:square;stroke-linejoin:round}.port{fill:#FFFFFF;stroke:#334155;stroke-width:2}
       .card{font:700 14px "Segoe UI",Arial,sans-serif;fill:#0F172A}.tagbox{fill:#FFFFFF;stroke:#2563EB;stroke-width:1.5}.tag{font:700 13px "Segoe UI",Arial,sans-serif;fill:#1D4ED8}.note{font:400 14px "Segoe UI",Arial,sans-serif;fill:#475569}
     </style>
   </defs>
-  <rect class="canvas" width="1200" height="650"/>
-  <text class="title" x="600" y="44" text-anchor="middle">Payment processing</text>
-  <text class="subtitle" x="600" y="70" text-anchor="middle">How a payment attempt belongs to an intent and is processed by a provider</text>
+  <rect class="canvas" width="1700" height="1100"/>
+  <text class="title" x="850" y="48" text-anchor="middle">Payment processing</text>
+  <text class="subtitle" x="850" y="78" text-anchor="middle">Collection, provider configuration, receiving-account verification, and payout delivery</text>
 
   <g id="relationships">
-    <path class="fk" d="M370 260 H445"/>
-    <circle class="port" cx="370" cy="260" r="4"/><circle class="port" cx="445" cy="260" r="4"/>
-    <text class="card" x="382" y="248">1</text><text class="card" x="405" y="283">0..N</text>
-    <rect class="tagbox" x="387" y="249" width="44" height="22" rx="6"/><text class="tag" x="409" y="265" text-anchor="middle">R1</text>
+    <path class="fk" d="M810 340 V460"/><circle class="port" cx="810" cy="340" r="4"/><circle class="port" cx="810" cy="460" r="4"/>
+    <text class="card" x="822" y="362">1</text><text class="card" x="822" y="450">0..N</text><rect class="tagbox" x="788" y="388" width="44" height="22" rx="6"/><text class="tag" x="810" y="404" text-anchor="middle">R1</text>
 
-    <path class="fk" d="M805 300 H870"/>
-    <circle class="port" cx="805" cy="300" r="4"/><circle class="port" cx="870" cy="300" r="4"/>
-    <text class="card" x="815" y="288">0..N</text><text class="card" x="854" y="288">1</text>
-    <rect class="tagbox" x="816" y="309" width="44" height="22" rx="6"/><text class="tag" x="838" y="325" text-anchor="middle">R2</text>
+    <path class="fk" d="M1000 535 H1160 V450 H1210"/><circle class="port" cx="1000" cy="535" r="4"/><circle class="port" cx="1210" cy="450" r="4"/>
+    <text class="card" x="1014" y="523">0..N</text><text class="card" x="1180" y="438">1</text><rect class="tagbox" x="1138" y="474" width="44" height="22" rx="6"/><text class="tag" x="1160" y="490" text-anchor="middle">R2</text>
 
-    <path class="fk" d="M995 330 V430"/>
-    <circle class="port" cx="995" cy="330" r="4"/><circle class="port" cx="995" cy="430" r="4"/>
-    <text class="card" x="1007" y="354">1</text><text class="card" x="1007" y="422">0..N</text>
-    <rect class="tagbox" x="973" y="374" width="44" height="22" rx="6"/><text class="tag" x="995" y="390" text-anchor="middle">R3</text>
+    <path class="fk" d="M1365 470 V650"/><circle class="port" cx="1365" cy="470" r="4"/><circle class="port" cx="1365" cy="650" r="4"/>
+    <text class="card" x="1377" y="494">1</text><text class="card" x="1377" y="640">0..N</text><rect class="tagbox" x="1343" y="548" width="44" height="22" rx="6"/><text class="tag" x="1365" y="564" text-anchor="middle">R3</text>
+
+    <path class="fk" d="M220 330 V480"/><circle class="port" cx="220" cy="330" r="4"/><circle class="port" cx="220" cy="480" r="4"/>
+    <text class="card" x="232" y="354">1</text><text class="card" x="232" y="470">0..N</text><rect class="tagbox" x="198" y="393" width="44" height="22" rx="6"/><text class="tag" x="220" y="409" text-anchor="middle">R4</text>
+
+    <path class="fk" d="M400 570 H530 V405 H1210"/><circle class="port" cx="400" cy="570" r="4"/><circle class="port" cx="1210" cy="405" r="4"/>
+    <text class="card" x="414" y="558">0..N</text><text class="card" x="1180" y="393">1</text><rect class="tagbox" x="508" y="438" width="44" height="22" rx="6"/><text class="tag" x="530" y="454" text-anchor="middle">R5</text>
+
+    <path class="fk" d="M70 610 H35 V700 H70"/><circle class="port" cx="70" cy="610" r="4"/><circle class="port" cx="70" cy="700" r="4"/>
+    <text class="card" x="42" y="598">0..N</text><text class="card" x="82" y="720">0..1</text><rect class="tagbox" x="40" y="644" width="44" height="22" rx="6"/><text class="tag" x="62" y="660" text-anchor="middle">R6</text>
+
+    <path class="fk" d="M990 255 H1080 V850 H1040"/><circle class="port" cx="990" cy="255" r="4"/><circle class="port" cx="1040" cy="850" r="4"/>
+    <text class="card" x="1004" y="243">1</text><text class="card" x="992" y="838">0..1</text><rect class="tagbox" x="1058" y="690" width="44" height="22" rx="6"/><text class="tag" x="1080" y="706" text-anchor="middle">R7</text>
+
+    <path class="fk" d="M400 655 H500 V875 H600"/><circle class="port" cx="400" cy="655" r="4"/><circle class="port" cx="600" cy="875" r="4"/>
+    <text class="card" x="414" y="643">1</text><text class="card" x="548" y="863">0..N</text><rect class="tagbox" x="478" y="752" width="44" height="22" rx="6"/><text class="tag" x="500" y="768" text-anchor="middle">R8</text>
   </g>
 
-  <g transform="translate(80 180)">
-    <rect class="entity payment" width="290" height="160" rx="8"/>
-    <text class="head" x="18" y="32">payment_intent</text>
-    <text class="key" x="18" y="64">payment_intent_id PK</text>
-    <text class="field" x="18" y="94">payment_purpose</text>
-    <text class="field" x="18" y="120">payment_state</text>
-    <text class="field" x="18" y="146">idempotency_key UK</text>
+  <g transform="translate(70 170)">
+    <rect class="entity account" width="300" height="160" rx="10"/>
+    <text class="head" x="18" y="34">account</text><text class="key" x="18" y="68">account_id PK</text><text class="field" x="18" y="98">account_type</text><text class="field" x="18" y="126">account_state</text>
   </g>
 
-  <g transform="translate(455 180)">
-    <rect class="entity payment" width="350" height="200" rx="8"/>
-    <text class="head" x="18" y="32">payment_attempt</text>
-    <text class="key" x="18" y="64">payment_attempt_id PK</text>
-    <text class="field" x="18" y="94">payment_intent_id FK</text>
-    <text class="field" x="18" y="120">provider_code FK</text>
-    <text class="field" x="18" y="146">method_type</text>
-    <text class="field" x="18" y="172">attempt_state</text>
+  <g transform="translate(70 480)">
+    <rect class="entity account" width="330" height="280" rx="10"/>
+    <text class="head" x="18" y="34">payment_account_binding</text><text class="key" x="18" y="68">payment_account_binding_id PK</text><text class="field" x="18" y="98">account_id FK</text><text class="field" x="18" y="126">provider_code FK</text><text class="field" x="18" y="154">replaces_binding_id FK, nullable</text><text class="field" x="18" y="182">binding_status</text><text class="field" x="18" y="210">external_recipient_reference UK</text><text class="field" x="18" y="238">command_idempotency_key UK</text><text class="field" x="18" y="266">lock_version</text>
   </g>
 
-  <g transform="translate(870 180)">
-    <rect class="entity payment" width="250" height="150" rx="8"/>
-    <text class="head" x="18" y="32">payment_provider</text>
-    <text class="key" x="18" y="64">provider_code PK</text>
-    <text class="field" x="18" y="94">display_name</text>
-    <text class="field" x="18" y="120">enabled</text>
+  <g transform="translate(620 150)">
+    <rect class="entity" width="370" height="190" rx="10"/>
+    <text class="head" x="18" y="34">payment_intent</text><text class="key" x="18" y="68">payment_intent_id PK</text><text class="field" x="18" y="98">payment_purpose</text><text class="field" x="18" y="126">payment_state</text><text class="field" x="18" y="154">idempotency_key UK</text>
   </g>
 
-  <g transform="translate(870 430)">
-    <rect class="entity config" width="250" height="150" rx="8"/>
-    <text class="head" x="18" y="32">payment_provider_method</text>
-    <text class="field" x="18" y="64">provider_code PK, FK</text>
-    <text class="field" x="18" y="90">method_type PK</text>
-    <text class="field" x="18" y="116">currency_code PK</text>
-    <text class="field" x="18" y="140">enabled</text>
+  <g transform="translate(620 460)">
+    <rect class="entity" width="380" height="210" rx="10"/>
+    <text class="head" x="18" y="34">payment_attempt</text><text class="key" x="18" y="68">payment_attempt_id PK</text><text class="field" x="18" y="98">payment_intent_id FK</text><text class="field" x="18" y="126">provider_code FK</text><text class="field" x="18" y="154">method_type</text><text class="field" x="18" y="182">attempt_state</text>
   </g>
 
-  <text class="note" x="80" y="590">payment_attempt.method_type is stored on the attempt, but the schema does not define a foreign key to payment_provider_method.</text>
-  <text class="note" x="80" y="615">Relationship badges map to the schema-backed table below this diagram.</text>
+  <g transform="translate(600 780)">
+    <rect class="entity delivery" width="440" height="250" rx="10"/>
+    <text class="head" x="18" y="34">payout_transfer</text><text class="key" x="18" y="68">payout_transfer_id PK</text><text class="field" x="18" y="98">payment_intent_id FK, UK</text><text class="field" x="18" y="126">payment_account_binding_id FK</text><text class="field" x="18" y="154">provider_code FK</text><text class="field" x="18" y="182">transfer_status</text><text class="field" x="18" y="210">idempotency_key UK</text><text class="field" x="18" y="238">provider_transfer_reference UK, nullable</text>
+  </g>
+
+  <g transform="translate(1210 300)">
+    <rect class="entity config" width="310" height="170" rx="10"/>
+    <text class="head" x="18" y="34">payment_provider</text><text class="key" x="18" y="68">provider_code PK</text><text class="field" x="18" y="98">display_name</text><text class="field" x="18" y="126">enabled</text>
+  </g>
+
+  <g transform="translate(1210 650)">
+    <rect class="entity config" width="360" height="190" rx="10"/>
+    <text class="head" x="18" y="34">payment_provider_method</text><text class="field" x="18" y="68">provider_code PK, FK</text><text class="field" x="18" y="98">method_type PK</text><text class="field" x="18" y="126">currency_code PK</text><text class="field" x="18" y="154">enabled</text>
+  </g>
+
+  <text class="note" x="70" y="1062">The payout composite foreign key captures the selected binding and provider. Relationship badges map to the schema-backed table in the owning document.</text>
 </svg>

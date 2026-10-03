@@ -15,7 +15,8 @@ public class FinanceNotificationRule implements NotificationRule {
             "SettlementConfirmedEvent",
             "RepaymentInstallmentPaidEvent",
             "RepaymentInstallmentPaymentFailedEvent",
-            "RepaymentInstallmentOverdueEvent"
+            "RepaymentInstallmentOverdueEvent",
+            "PayoutTransferFailedEvent"
     );
 
     private final ObjectMapper objectMapper;
@@ -76,8 +77,34 @@ public class FinanceNotificationRule implements NotificationRule {
                     "Repayment installment overdue",
                     "A repayment installment is overdue. Review the payment and take action."
             );
+            case "PayoutTransferFailedEvent" -> payoutFailurePlan(event, payload);
             default -> List.of();
         };
+    }
+
+    private List<NotificationPlan> payoutFailurePlan(OutboxEvent event, JsonNode payload) {
+        Long payoutTransferId = JsonEventPayload.longValue(payload, "payoutTransferId");
+        Long payerAccountId = JsonEventPayload.longValue(payload, "payerAccountId");
+        Long payeeAccountId = JsonEventPayload.longValue(payload, "payeeAccountId");
+        List<Long> recipients = java.util.stream.Stream.of(payerAccountId, payeeAccountId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        if (recipients.isEmpty()) {
+            return List.of();
+        }
+        return List.of(new NotificationPlan(
+                "PAYOUT_TRANSFER_FAILED",
+                "FINANCE",
+                "PAYOUT_TRANSFER",
+                payoutTransferId,
+                "Demonstration payout failed",
+                "Demonstration payout failed. Review the transfer and retry when ready.",
+                event.getPayload(),
+                event.getOccurredAt(),
+                recipients,
+                NotificationChannels.standard()
+        ));
     }
 
     private List<NotificationPlan> financePlan(OutboxEvent event,

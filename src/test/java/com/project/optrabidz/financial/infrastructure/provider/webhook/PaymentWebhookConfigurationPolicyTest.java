@@ -94,10 +94,32 @@ class PaymentWebhookConfigurationPolicyTest {
                 .hasMessageNotContaining(developmentSecret);
     }
 
+    @Test
+    void demoWebhookRequiresDemoProfileAndRejectsProductionCombination() {
+        PaymentWebhookProperties properties = properties(
+                "DEMO", provider(true, STRONG_SECRET, null, null));
+
+        assertThatThrownBy(() -> validate(properties, "dev"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("DEMO")
+                .hasMessageContaining("demo profile");
+        assertThatThrownBy(() -> validate(properties, "demo", "prod"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("DEMO")
+                .hasMessageContaining("prod");
+        assertThatCode(() -> validate(properties, "demo")).doesNotThrowAnyException();
+    }
+
     private static PaymentWebhookProperties properties(
             PaymentWebhookProperties.ProviderConfiguration provider) {
+        return properties("UPI", provider);
+    }
+
+    private static PaymentWebhookProperties properties(
+            String providerCode,
+            PaymentWebhookProperties.ProviderConfiguration provider) {
         PaymentWebhookProperties properties = new PaymentWebhookProperties();
-        properties.setProviders(Map.of("upi", provider));
+        properties.setProviders(Map.of(providerCode, provider));
         return properties;
     }
 

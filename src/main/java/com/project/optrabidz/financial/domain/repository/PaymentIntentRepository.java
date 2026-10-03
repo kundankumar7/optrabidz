@@ -28,6 +28,8 @@ public interface PaymentIntentRepository {
 
     int failActive(Long paymentIntentId, String failureCode, String failureMessage, Instant now);
 
+    int cancelActive(Long paymentIntentId, Instant now);
+
     List<ExpiredPaymentIntentReference> expireExpiredActiveReturning(Instant now, int batchSize);
 
     Optional<ExpiredPaymentIntentReference> expireActiveByIdReturning(Long paymentIntentId, Instant now);

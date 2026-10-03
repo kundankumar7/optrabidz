@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,14 +55,6 @@ class AgreementRepositoryIT extends PostgresJpaIntegrationTestSupport {
     }
 
     private PostgresTestDataFixture.Agreement agreementWithDebtTerms(String label) {
-        PostgresTestDataFixture.Agreement agreement = testData.createAgreement(label);
-        jdbcTemplate.update("""
-                insert into agreement_debt_terms (
-                    agreement_id, principal_amount, interest_rate, tenure_months,
-                    repayment_plan_type, created_at
-                )
-                values (?, 550000.00, 12.00, 12, 'INSTALLMENT_MONTHLY', ?)
-                """, agreement.agreementId(), Timestamp.from(NOW));
-        return agreement;
+        return testData.createAgreement(label);
     }
 }

@@ -16,9 +16,11 @@ import com.project.optrabidz.marketplace.application.event.ListingClosedEvent;
 import com.project.optrabidz.marketplace.application.event.ListingPublishedEvent;
 import com.project.optrabidz.marketplace.application.exception.ListingNotFoundException;
 import com.project.optrabidz.marketplace.application.exception.MarketplaceAccessException;
+import com.project.optrabidz.marketplace.application.exception.ReceivingAccountNotReadyException;
 import com.project.optrabidz.marketplace.application.factory.FundingListingFactory;
 import com.project.optrabidz.marketplace.application.policy.ListingExpiryPolicy;
 import com.project.optrabidz.marketplace.application.policy.FundingModelPolicyResolver;
+import com.project.optrabidz.marketplace.application.port.ReceivingAccountReadinessPort;
 import com.project.optrabidz.marketplace.application.specification.ListingCanBeClosedSpec;
 import com.project.optrabidz.marketplace.application.specification.ListingCanBePublishedSpec;
 import com.project.optrabidz.marketplace.application.specification.ListingCanBeUpdatedSpec;
@@ -49,6 +51,7 @@ public class ListingService {
     private final FundingModelPolicyResolver policyResolver;
     private final ListingExpiryPolicy listingExpiryPolicy;
     private final EligibilityEvaluationController eligibilityEvaluationController;
+    private final ReceivingAccountReadinessPort receivingAccountReadinessPort;
     private final EventPublisher eventPublisher;
     private final MarketplaceResponseMapper responseMapper;
     private final ListingCanBeUpdatedSpec listingCanBeUpdatedSpec;
@@ -63,6 +66,7 @@ public class ListingService {
                           FundingModelPolicyResolver policyResolver,
                           ListingExpiryPolicy listingExpiryPolicy,
                           EligibilityEvaluationController eligibilityEvaluationController,
+                          ReceivingAccountReadinessPort receivingAccountReadinessPort,
                           EventPublisher eventPublisher,
                           MarketplaceResponseMapper responseMapper,
                           ListingCanBeUpdatedSpec listingCanBeUpdatedSpec,
@@ -76,6 +80,7 @@ public class ListingService {
         this.policyResolver = policyResolver;
         this.listingExpiryPolicy = listingExpiryPolicy;
         this.eligibilityEvaluationController = eligibilityEvaluationController;
+        this.receivingAccountReadinessPort = receivingAccountReadinessPort;
         this.eventPublisher = eventPublisher;
         this.responseMapper = responseMapper;
         this.listingCanBeUpdatedSpec = listingCanBeUpdatedSpec;
@@ -146,6 +151,11 @@ public class ListingService {
 
         eligibilityEvaluationController.assertStartupCanPublishListing(accountId);
         policyResolver.resolve(listing.getFundingModel()).validateListing(listing);
+        if (!receivingAccountReadinessPort.hasVerifiedBinding(accountId)) {
+            throw new ReceivingAccountNotReadyException(
+                    "Startup has no verified receiving account binding; accountId=" + accountId
+            );
+        }
 
         Instant now = Instant.now();
         listing.publish(now, listingExpiryPolicy.expiresAtFor(now));

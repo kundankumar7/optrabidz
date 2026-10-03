@@ -3,14 +3,17 @@ package com.project.optrabidz.financial.api;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 import com.project.optrabidz.financial.application.FinancialService;
+import com.project.optrabidz.common.outbox.OutboxDispatcher;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
+import com.project.optrabidz.testsupport.ConfirmedPayoutTestConfiguration;
 import com.project.optrabidz.testsupport.PostgresTestDataFixture;
 import com.project.optrabidz.testsupport.PostgresTestDataFixture.PaymentReference;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -39,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Import(ConfirmedPayoutTestConfiguration.class)
 class FinancialApiIT extends ApiIntegrationTestSupport {
     private static final String UPI_WEBHOOK_SECRET =
             "test-only-upi-webhook-secret-material-001";
@@ -50,6 +54,9 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
 
     @Autowired
     private FinancialService financialService;
+
+    @Autowired
+    private OutboxDispatcher outboxDispatcher;
 
     @Test
     void scheduledOverdueTransitionPublishesOnlyOnce() {
@@ -444,6 +451,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.attemptState").value("CONFIRMED"))
                 .andExpect(jsonPath("$.providerPaymentId").value("LOCAL-PAYMENT-" + settlementAttemptId));
 
+        completePayout(settlementPaymentIntentId);
+
         mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
@@ -575,6 +584,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.paymentIntentId").value(repaymentPaymentIntentId.intValue()))
                 .andExpect(jsonPath("$.attemptState").value("CONFIRMED"));
 
+        completePayout(repaymentPaymentIntentId);
+
         mockMvc.perform(get("/api/v1/repayments/{repaymentId}", repaymentId)
                         .session(scenario.startup().session())
                         .cookie(scenario.startup().xsrfCookie()))
@@ -642,6 +653,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk());
+
+        completePayout(paymentIntentId);
 
         Long repaymentId = getStartupRepaymentId(scenario.startup());
         assertThat(count("""
@@ -711,6 +724,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
 
+        completePayout(paymentIntentId);
+
         mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
@@ -778,6 +793,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         "The payment has already been confirmed",
                         "payment-competing-provider"
                 ));
+
+        completePayout(paymentIntentId);
 
         mockMvc.perform(get("/api/v1/payment-intents/{paymentIntentId}", paymentIntentId)
                         .session(scenario.investor().session())
@@ -905,6 +922,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.attemptState").value("CONFIRMED"));
 
+        completePayout(settlementPaymentIntentId);
+
         Long repaymentId = getStartupRepaymentId(scenario.startup());
 
         List<Long> paymentIntentIds = runTwoPaymentIntentRequests(
@@ -941,6 +960,8 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .content("{}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.attemptState").value("CONFIRMED"));
+
+        completePayout(settlementPaymentIntentId);
 
         Long repaymentId = getStartupRepaymentId(scenario.startup());
         Long installmentId = getFirstRepaymentInstallmentId(scenario.startup(), repaymentId);
@@ -1009,6 +1030,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         List<Integer> statusCodes = runTwoLocalConfirmRequests(scenario.investor(), paymentAttemptId);
 
         assertThat(statusCodes).containsOnly(200);
+        completePayout(paymentIntentId);
         mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
                         .session(scenario.investor().session())
                         .cookie(scenario.investor().xsrfCookie()))
@@ -1130,6 +1152,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
 
         String paymentState = readText(intentResult, "/paymentState");
         if ("PAYMENT_CONFIRMED".equals(paymentState)) {
+            completePayout(paymentIntentId);
             mockMvc.perform(get("/api/v1/settlements/{settlementId}", settlementId)
                             .session(scenario.investor().session())
                             .cookie(scenario.investor().xsrfCookie()))
@@ -1756,6 +1779,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk());
+        completePayout(paymentIntentId);
         Long repaymentId = getStartupRepaymentId(finance.startup());
         Long installmentId = getFirstRepaymentInstallmentId(
                 finance.startup(), repaymentId);
@@ -1766,6 +1790,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
         createCompleteStartupProfile(startup, publicDisplayName);
         addStartupClassification(startup, "SECTOR", "FINTECH");
+        createAndVerifyReceivingAccount(startup);
         return startup;
     }
 
@@ -1773,6 +1798,7 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
         AuthenticatedClient investor = registerAndLogin(RoleType.INVESTOR);
         createCompleteInvestorProfile(investor, publicDisplayName);
         addInvestorPreference(investor, "SECTOR", "FINTECH");
+        createAndVerifyReceivingAccount(investor);
         return investor;
     }
 
@@ -1888,6 +1914,24 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.items[0].repaymentState").value("NOT_STARTED"))
                 .andReturn();
         return readLong(result, "/items/0/repaymentId");
+    }
+
+    private void completePayout(Long paymentIntentId) {
+        List<String> transferStatuses = List.of();
+        for (int attempt = 0; attempt < 5; attempt++) {
+            outboxDispatcher.dispatchPending();
+            transferStatuses = jdbcTemplate.queryForList("""
+                    select transfer_status::text
+                    from payout_transfer
+                    where payment_intent_id = ?
+                    """, String.class, paymentIntentId);
+            if (transferStatuses.contains("CONFIRMED")) {
+                return;
+            }
+        }
+        assertThat(transferStatuses)
+                .as("payout transfer status for payment intent %s", paymentIntentId)
+                .contains("CONFIRMED");
     }
 
     private Long createSettlementPaymentIntent(AuthenticatedClient investor, Long settlementId) throws Exception {

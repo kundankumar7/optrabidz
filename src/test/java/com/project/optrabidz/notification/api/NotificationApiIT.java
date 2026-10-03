@@ -9,11 +9,13 @@ import com.project.optrabidz.notification.application.channel.NotificationDelive
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.security.infrastructure.config.SecuritySessionConstants;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
+import com.project.optrabidz.testsupport.ConfirmedPayoutTestConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 
@@ -34,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Import(ConfirmedPayoutTestConfiguration.class)
 class NotificationApiIT extends ApiIntegrationTestSupport {
     @Autowired
     private OutboxDispatcher outboxDispatcher;
@@ -448,10 +451,12 @@ class NotificationApiIT extends ApiIntegrationTestSupport {
         AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
         createCompleteStartupProfile(startup, "Notification Startup");
         addStartupClassification(startup, "INDUSTRY", "SAAS");
+        createAndVerifyReceivingAccount(startup);
 
         AuthenticatedClient investor = registerAndLogin(RoleType.INVESTOR);
         createCompleteInvestorProfile(investor, "Notification Investor");
         addInvestorPreference(investor, "INDUSTRY", "SAAS");
+        createAndVerifyReceivingAccount(investor);
 
         outboxDispatcher.dispatchPending();
 

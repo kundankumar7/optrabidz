@@ -14,7 +14,11 @@ public interface PaymentAttemptRepository {
 
     Optional<PaymentAttempt> findByIdForProvider(Long paymentAttemptId, String providerCode);
 
+    Optional<PaymentAttempt> findLatestByPaymentIntentId(Long paymentIntentId);
+
     int confirmActive(Long paymentAttemptId, String providerPaymentId, Instant now);
 
     int failActive(Long paymentAttemptId, String failureCode, String failureMessage, Instant now);
+
+    int cancelActive(Long paymentAttemptId, Instant now);
 }

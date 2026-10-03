@@ -78,6 +78,16 @@ public class SettlementRepositoryAdapter implements SettlementRepository {
     }
 
     @Override
+    public int markPayoutPending(Long settlementId, Long paymentIntentId, Instant now) {
+        return jpaSettlementRepository.markPayoutPending(settlementId, paymentIntentId, now);
+    }
+
+    @Override
+    public int confirmPayoutPending(Long settlementId, Long paymentIntentId, Instant now) {
+        return jpaSettlementRepository.confirmPayoutPending(settlementId, paymentIntentId, now);
+    }
+
+    @Override
     @Transactional
     public int expireExpiredPending(Instant now, int batchSize) {
         if (batchSize <= 0) {

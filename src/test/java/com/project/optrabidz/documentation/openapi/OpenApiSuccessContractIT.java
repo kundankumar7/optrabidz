@@ -58,9 +58,19 @@ class OpenApiSuccessContractIT extends RealHttpIntegrationTestSupport {
             "PATCH /api/v1/notifications/{recipientId}/read",
             "POST /api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm",
             "POST /api/v1/payment-attempts/{paymentAttemptId}/actions/local-fail",
+            "POST /api/v1/payment-account-bindings",
+            "GET /api/v1/payment-account-bindings/current",
+            "GET /api/v1/payment-account-bindings/{bindingId}",
+            "POST /api/v1/payment-account-bindings/{bindingId}/actions/deactivate",
+            "POST /api/v1/payment-account-bindings/{bindingId}/actions/replace",
+            "POST /api/v1/payment-account-bindings/{bindingId}/actions/verify",
             "GET /api/v1/payment-intents/{paymentIntentId}",
+            "GET /api/v1/payment-intents/{paymentIntentId}/payout-transfer",
+            "GET /api/v1/payment-intents/{paymentIntentId}/timeline",
             "POST /api/v1/payment-intents/{paymentIntentId}/attempts",
             "POST /api/v1/payment-providers/{providerCode}/webhooks",
+            "GET /api/v1/payout-transfers/{payoutTransferId}",
+            "POST /api/v1/payout-transfers/{payoutTransferId}/actions/retry",
             "GET /api/v1/repayment-installments/{installmentId}",
             "POST /api/v1/repayment-installments/{installmentId}/payment-intents",
             "GET /api/v1/repayments/{repaymentId}",
@@ -82,20 +92,19 @@ class OpenApiSuccessContractIT extends RealHttpIntegrationTestSupport {
             "GET /api/v1/startups/me/settlements"
     );
 
-    private static final Map<String, String> CREATED_RESPONSE_SCHEMAS = Map.of(
-            "POST /api/v1/auth/register", "SignupResponse",
-            "POST /api/v1/startups", "StartupResponse",
-            "POST /api/v1/investors", "InvestorResponse",
-            "POST /api/v1/funding-listings", "ListingResponse",
-            "POST /api/v1/bids", "BidResponse",
-            "POST /api/v1/settlements/{settlementId}/payment-intents",
-            "PaymentIntentResponse",
-            "POST /api/v1/repayments/{repaymentId}/payment-intents",
-            "PaymentIntentResponse",
-            "POST /api/v1/repayment-installments/{installmentId}/payment-intents",
-            "PaymentIntentResponse",
-            "POST /api/v1/payment-intents/{paymentIntentId}/attempts",
-            "PaymentAttemptResponse"
+    private static final Map<String, String> CREATED_RESPONSE_SCHEMAS = Map.ofEntries(
+            Map.entry("POST /api/v1/auth/register", "SignupResponse"),
+            Map.entry("POST /api/v1/startups", "StartupResponse"),
+            Map.entry("POST /api/v1/investors", "InvestorResponse"),
+            Map.entry("POST /api/v1/funding-listings", "ListingResponse"),
+            Map.entry("POST /api/v1/bids", "BidResponse"),
+            Map.entry("POST /api/v1/settlements/{settlementId}/payment-intents", "PaymentIntentResponse"),
+            Map.entry("POST /api/v1/repayments/{repaymentId}/payment-intents", "PaymentIntentResponse"),
+            Map.entry("POST /api/v1/repayment-installments/{installmentId}/payment-intents", "PaymentIntentResponse"),
+            Map.entry("POST /api/v1/payment-intents/{paymentIntentId}/attempts", "PaymentAttemptResponse"),
+            Map.entry("POST /api/v1/payment-account-bindings", "PaymentAccountBindingResponse"),
+            Map.entry("POST /api/v1/payment-account-bindings/{bindingId}/actions/replace",
+                    "PaymentAccountBindingResponse")
     );
 
     private static final Set<String> CREATED_OPERATIONS =
@@ -123,7 +132,9 @@ class OpenApiSuccessContractIT extends RealHttpIntegrationTestSupport {
             "POST /api/v1/bids",
             "POST /api/v1/settlements/{settlementId}/payment-intents",
             "POST /api/v1/repayments/{repaymentId}/payment-intents",
-            "POST /api/v1/repayment-installments/{installmentId}/payment-intents"
+            "POST /api/v1/repayment-installments/{installmentId}/payment-intents",
+            "POST /api/v1/payment-account-bindings",
+            "POST /api/v1/payment-account-bindings/{bindingId}/actions/replace"
     );
 
     @Test

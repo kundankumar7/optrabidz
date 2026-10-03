@@ -26,8 +26,10 @@ class RuntimeConfigurationPolicyTest {
             "optrabidz.admin.recovery.enabled",
             "optrabidz.financial.local-provider.enabled",
             "optrabidz.financial.sandbox-providers.enabled",
+            "optrabidz.financial.demo-provider.enabled",
             "optrabidz.financial.webhook.providers.UPI.enabled",
-            "optrabidz.financial.webhook.providers.CARD.enabled"
+            "optrabidz.financial.webhook.providers.CARD.enabled",
+            "optrabidz.financial.webhook.providers.DEMO.enabled"
     );
 
     private static final List<String> SECRET_KEYS = List.of(
@@ -35,7 +37,8 @@ class RuntimeConfigurationPolicyTest {
             "OPTRABIDZ_ADMIN_BOOTSTRAP_PASSWORD",
             "OPTRABIDZ_ADMIN_RECOVERY_TOKEN",
             "OPTRABIDZ_UPI_WEBHOOK_SECRET",
-            "OPTRABIDZ_CARD_WEBHOOK_SECRET"
+            "OPTRABIDZ_CARD_WEBHOOK_SECRET",
+            "OPTRABIDZ_DEMO_WEBHOOK_SECRET"
     );
 
     @Test
@@ -65,10 +68,16 @@ class RuntimeConfigurationPolicyTest {
         assertThat(development.getProperty("spring.config.import"))
                 .isEqualTo("optional:file:.env[.properties]");
         assertThat(development).doesNotContainKeys("spring.profiles.active", "spring.profiles.default");
-        assertThat(PRIVILEGED_SWITCHES)
+        assertThat(PRIVILEGED_SWITCHES.stream()
+                .filter(key -> !key.contains(".DEMO.") && !key.contains("demo-provider")))
                 .allSatisfy(key -> assertThat(development.getProperty(key))
                         .as(key)
                         .matches("\\$\\{[A-Z0-9_]+:false}"));
+        assertThat(development).doesNotContainKeys(
+                "optrabidz.financial.demo-provider.enabled",
+                "optrabidz.financial.webhook.providers.DEMO.enabled",
+                "optrabidz.financial.webhook.providers.DEMO.active-secret"
+        );
     }
 
     @Test
@@ -81,6 +90,38 @@ class RuntimeConfigurationPolicyTest {
                 .isEqualTo("XSRF-TOKEN");
         assertThat(development.getProperty("springdoc.swagger-ui.csrf.header-name"))
                 .isEqualTo("X-CSRF-TOKEN");
+    }
+
+    @Test
+    void demonstrationProfileIsExplicitSafeAndSwaggerReady() throws IOException {
+        Properties demonstration = load("src/main/resources/application-demo.properties");
+
+        assertThat(demonstration.getProperty("optrabidz.documentation.api-docs-enabled"))
+                .isEqualTo("true");
+        assertThat(demonstration.getProperty("optrabidz.documentation.swagger-ui-enabled"))
+                .isEqualTo("true");
+        assertThat(demonstration.getProperty("optrabidz.documentation.management-port-enabled"))
+                .isEqualTo("false");
+        assertThat(demonstration.getProperty("optrabidz.documentation.access"))
+                .isEqualTo("PUBLIC");
+        assertThat(demonstration.getProperty("springdoc.swagger-ui.csrf.enabled"))
+                .isEqualTo("true");
+        assertThat(demonstration.getProperty("springdoc.swagger-ui.csrf.cookie-name"))
+                .isEqualTo("XSRF-TOKEN");
+        assertThat(demonstration.getProperty("springdoc.swagger-ui.csrf.header-name"))
+                .isEqualTo("X-CSRF-TOKEN");
+        assertThat(demonstration.getProperty("optrabidz.financial.local-provider.enabled"))
+                .isEqualTo("false");
+        assertThat(demonstration.getProperty("optrabidz.financial.sandbox-providers.enabled"))
+                .isEqualTo("false");
+        assertThat(demonstration.getProperty("optrabidz.financial.demo-provider.enabled"))
+                .isEqualTo("true");
+        assertThat(demonstration.getProperty("optrabidz.financial.webhook.providers.DEMO.enabled"))
+                .isEqualTo("true");
+        assertThat(demonstration.getProperty("optrabidz.financial.webhook.providers.DEMO.active-secret"))
+                .isEqualTo("${OPTRABIDZ_DEMO_WEBHOOK_SECRET}");
+        assertThat(demonstration.getProperty("optrabidz.financial.demo-provider.payout-behavior"))
+                .isEqualTo("${OPTRABIDZ_DEMO_PAYOUT_BEHAVIOR:SUCCESS}");
     }
 
     @Test
@@ -113,6 +154,8 @@ class RuntimeConfigurationPolicyTest {
                 "OPTRABIDZ_UPI_WEBHOOK_ENABLED",
                 "OPTRABIDZ_CARD_WEBHOOK_ENABLED"
         )).allSatisfy(key -> assertThat(environment.getProperty(key)).as(key).isEqualTo("false"));
+        assertThat(environment.getProperty("OPTRABIDZ_DEMO_WEBHOOK_SECRET")).isEmpty();
+        assertThat(environment.getProperty("OPTRABIDZ_DEMO_PAYOUT_BEHAVIOR")).isEmpty();
         assertThat(SECRET_KEYS)
                 .allSatisfy(key -> assertThat(environment.getProperty(key)).as(key).isEmpty());
     }

@@ -137,6 +137,37 @@ public interface JpaRepaymentInstallmentRepository extends JpaRepository<Repayme
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
             update repayment_installment
+            set installment_status = 'PAYOUT_PENDING',
+                confirmed_payment_intent_id = :paymentIntentId,
+                failed_at = null,
+                failure_reason = null,
+                updated_at = :now
+            where repayment_installment_id = :installmentId
+              and installment_status = 'PAYMENT_IN_PROGRESS'::repayment_installment_status_enum
+            """, nativeQuery = true)
+    int markPayoutPending(@Param("installmentId") Long installmentId,
+                          @Param("paymentIntentId") Long paymentIntentId,
+                          @Param("now") Instant now);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+            update repayment_installment
+            set installment_status = 'PAID',
+                paid_at = :now,
+                failed_at = null,
+                failure_reason = null,
+                updated_at = :now
+            where repayment_installment_id = :installmentId
+              and installment_status = 'PAYOUT_PENDING'::repayment_installment_status_enum
+              and confirmed_payment_intent_id = :paymentIntentId
+            """, nativeQuery = true)
+    int confirmPayoutPending(@Param("installmentId") Long installmentId,
+                             @Param("paymentIntentId") Long paymentIntentId,
+                             @Param("now") Instant now);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+            update repayment_installment
             set installment_status = case
                     when due_at <= :now then 'OVERDUE'::repayment_installment_status_enum
                     else 'PAYMENT_FAILED'::repayment_installment_status_enum

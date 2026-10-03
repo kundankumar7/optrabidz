@@ -44,6 +44,13 @@ public class PaymentAttemptRepositoryAdapter implements PaymentAttemptRepository
     }
 
     @Override
+    public Optional<PaymentAttempt> findLatestByPaymentIntentId(Long paymentIntentId) {
+        return jpaPaymentAttemptRepository
+                .findFirstByPaymentIntentIdOrderByCreatedAtDescPaymentAttemptIdDesc(paymentIntentId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public int confirmActive(Long paymentAttemptId, String providerPaymentId, Instant now) {
         return jpaPaymentAttemptRepository.confirmActive(paymentAttemptId, providerPaymentId, now);
     }
@@ -51,5 +58,10 @@ public class PaymentAttemptRepositoryAdapter implements PaymentAttemptRepository
     @Override
     public int failActive(Long paymentAttemptId, String failureCode, String failureMessage, Instant now) {
         return jpaPaymentAttemptRepository.failActive(paymentAttemptId, failureCode, failureMessage, now);
+    }
+
+    @Override
+    public int cancelActive(Long paymentAttemptId, Instant now) {
+        return jpaPaymentAttemptRepository.cancelActive(paymentAttemptId, now);
     }
 }

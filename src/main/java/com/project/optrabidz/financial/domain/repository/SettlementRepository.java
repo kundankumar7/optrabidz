@@ -24,5 +24,9 @@ public interface SettlementRepository {
 
     int confirmPending(Long settlementId, Long paymentIntentId, Instant now);
 
+    int markPayoutPending(Long settlementId, Long paymentIntentId, Instant now);
+
+    int confirmPayoutPending(Long settlementId, Long paymentIntentId, Instant now);
+
     int expireExpiredPending(Instant now, int batchSize);
 }

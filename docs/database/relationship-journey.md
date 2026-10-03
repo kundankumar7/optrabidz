@@ -83,6 +83,12 @@ The method lookup is application-enforced because no matching foreign key to
 the three-column provider-method key exists. Partial unique indexes protect
 active and confirmed intents and provider identifiers.
 
+A payee's demonstration receiving destination is represented by a
+`payment_account_binding` tied to its `account` and `payment_provider`. A
+confirmed collection can then own one `payout_transfer`. Its composite foreign
+key captures both the binding and provider, preventing provider mismatch while
+keeping collection and payout as separate lifecycle records.
+
 Every callback is stored as `payment_webhook_event`, uniquely identified per
 provider and optionally linked to an intent and attempt. Nullable links reflect
 callbacks that cannot yet be associated; signature and replay validation remain
