@@ -2,9 +2,11 @@ package com.project.optrabidz.notification.application.channel;
 
 import com.project.optrabidz.notification.domain.model.ChannelType;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!prod & (dev | test | demo)")
 @ConditionalOnProperty(prefix = "optrabidz.notification.channels.push", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class SandboxPushNotificationChannelStrategy implements NotificationChannelStrategy {
     @Override

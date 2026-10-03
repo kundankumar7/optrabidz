@@ -46,7 +46,9 @@ claiming and idempotency rules therefore matter before horizontal scaling.
 
 - PostgreSQL is the system of record and the durable queue for outbox work.
 - Sessions are server-side records, not JWTs.
-- Email and push delivery are sandbox strategies; in-app delivery is local.
+- In-app delivery is database-backed in every profile. Email and push use
+  sandbox strategies only in `dev`, `test`, and `demo`; production disables
+  them until real provider adapters are supplied.
 - Local and sandbox payment strategies exercise the payment lifecycle without
   transferring real money.
 
