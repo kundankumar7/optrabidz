@@ -132,6 +132,16 @@ public class RepaymentInstallmentRepositoryAdapter implements RepaymentInstallme
     }
 
     @Override
+    public int markPayoutPending(Long installmentId, Long paymentIntentId, Instant now) {
+        return jpaRepository.markPayoutPending(installmentId, paymentIntentId, now);
+    }
+
+    @Override
+    public int confirmPayoutPending(Long installmentId, Long paymentIntentId, Instant now) {
+        return jpaRepository.confirmPayoutPending(installmentId, paymentIntentId, now);
+    }
+
+    @Override
     public int markPaymentFailed(Long installmentId, String reason, Instant now) {
         return jpaRepository.markPaymentFailed(installmentId, reason, now);
     }

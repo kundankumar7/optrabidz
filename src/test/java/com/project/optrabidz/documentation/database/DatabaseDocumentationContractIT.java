@@ -76,11 +76,11 @@ class DatabaseDocumentationContractIT {
     }
 
     private void assertExtractionBaseline(DatabaseSchemaSnapshot schema) {
-        assertThat(schema.tables()).hasSize(35);
-        assertThat(schema.foreignKeys()).hasSize(46);
-        assertThat(schema.uniqueConstraints()).hasSize(25);
-        assertThat(schema.checkConstraints()).hasSize(57);
-        assertThat(schema.partialIndexes()).hasSize(19);
+        assertThat(schema.tables()).hasSize(37);
+        assertThat(schema.foreignKeys()).hasSize(51);
+        assertThat(schema.uniqueConstraints()).hasSize(30);
+        assertThat(schema.checkConstraints()).hasSize(67);
+        assertThat(schema.partialIndexes()).hasSize(21);
         assertThat(schema.triggers()).hasSize(12);
     }
 

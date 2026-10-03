@@ -43,7 +43,9 @@ public class SecurityConfig {
                                 "/api/v1/repayments/**",
                                 "/api/v1/repayment-installments/**",
                                 "/api/v1/payment-intents/**",
-                                "/api/v1/payment-attempts/**"
+                                "/api/v1/payment-attempts/**",
+                                "/api/v1/payment-account-bindings/**",
+                                "/api/v1/payout-transfers/**"
                         ).authenticated()
                         .requestMatchers(
                                 "/api/v1/bids",

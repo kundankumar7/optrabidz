@@ -65,4 +65,19 @@ public interface JpaPaymentIntentRepository extends JpaRepository<PaymentIntent,
                    @Param("failureCode") String failureCode,
                    @Param("failureMessage") String failureMessage,
                    @Param("now") Instant now);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+            update payment_intent
+            set payment_state = 'PAYMENT_CANCELLED',
+                cancelled_at = :now
+            where payment_intent_id = :paymentIntentId
+              and payment_state in (
+                'CREATED'::payment_state_enum,
+                'PAYMENT_PENDING'::payment_state_enum
+              )
+              and expires_at > :now
+            """, nativeQuery = true)
+    int cancelActive(@Param("paymentIntentId") Long paymentIntentId,
+                     @Param("now") Instant now);
 }

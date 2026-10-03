@@ -648,10 +648,58 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.detail").value("Request security validation failed"));
     }
 
+    @Test
+    void verifiedReceivingAccountIsRequiredOnlyAtPublishAndBidBoundaries() throws Exception {
+        AuthenticatedClient startupWithoutBinding = registerAndLogin(RoleType.STARTUP);
+        createCompleteStartupProfile(startupWithoutBinding, "Unbound Startup");
+        addStartupClassification(startupWithoutBinding, "SECTOR", "FINTECH");
+
+        MvcResult draftResult = mockMvc.perform(post("/api/v1/funding-listings")
+                        .session(startupWithoutBinding.session())
+                        .cookie(startupWithoutBinding.xsrfCookie())
+                        .header("X-CSRF-TOKEN", startupWithoutBinding.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(createListingRequest(
+                                "Unbound Draft Listing", new BigDecimal("765432.11")))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.listingState").value("DRAFT"))
+                .andReturn();
+        long draftId = objectMapper.readTree(draftResult.getResponse().getContentAsString())
+                .get("listingId").asLong();
+
+        mockMvc.perform(post("/api/v1/funding-listings/{listingId}/actions/publish", draftId)
+                        .session(startupWithoutBinding.session())
+                        .cookie(startupWithoutBinding.xsrfCookie())
+                        .header("X-CSRF-TOKEN", startupWithoutBinding.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("confirmation", "CONFIRM"))))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.code").value("RECEIVING_ACCOUNT_NOT_READY"));
+
+        AuthenticatedClient fundedStartup = eligibleStartup("Bound Startup");
+        Long openListingId = createAndPublishListing(
+                fundedStartup, "Browsable Bound Listing", new BigDecimal("765432.12"));
+        mockMvc.perform(get("/api/v1/funding-listings/{listingId}", openListingId))
+                .andExpect(status().isOk());
+
+        AuthenticatedClient investorWithoutBinding = registerAndLogin(RoleType.INVESTOR);
+        createCompleteInvestorProfile(investorWithoutBinding, "Unbound Investor");
+        addInvestorPreference(investorWithoutBinding, "SECTOR", "FINTECH");
+        mockMvc.perform(post("/api/v1/bids")
+                        .session(investorWithoutBinding.session())
+                        .cookie(investorWithoutBinding.xsrfCookie())
+                        .header("X-CSRF-TOKEN", investorWithoutBinding.csrfToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(submitBidRequest(openListingId, new BigDecimal("750000.00")))))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.code").value("RECEIVING_ACCOUNT_NOT_READY"));
+    }
+
     private AuthenticatedClient eligibleStartup(String publicDisplayName) throws Exception {
         AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
         createCompleteStartupProfile(startup, publicDisplayName);
         addStartupClassification(startup, "SECTOR", "FINTECH");
+        createAndVerifyReceivingAccount(startup);
         return startup;
     }
 
@@ -659,6 +707,7 @@ class MarketplaceApiIT extends ApiIntegrationTestSupport {
         AuthenticatedClient investor = registerAndLogin(RoleType.INVESTOR);
         createCompleteInvestorProfile(investor, publicDisplayName);
         addInvestorPreference(investor, "SECTOR", "FINTECH");
+        createAndVerifyReceivingAccount(investor);
         return investor;
     }
 

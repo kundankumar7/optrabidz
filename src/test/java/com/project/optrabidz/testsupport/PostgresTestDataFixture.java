@@ -61,6 +61,12 @@ public final class PostgresTestDataFixture {
                 returning agreement_id
                 """, Long.class, listingId, bidId, startup.startupId(), investor.investorId(),
                 timestamp(now.minusSeconds(2_400)));
+        jdbcTemplate.update("""
+                insert into agreement_debt_terms (
+                    agreement_id, principal_amount, interest_rate, tenure_months,
+                    repayment_plan_type, created_at
+                ) values (?, 550000.00, 12.00, 12, 'INSTALLMENT_MONTHLY', ?)
+                """, agreementId, timestamp(now.minusSeconds(2_400)));
         return new Agreement(
                 startup.accountId(),
                 investor.accountId(),

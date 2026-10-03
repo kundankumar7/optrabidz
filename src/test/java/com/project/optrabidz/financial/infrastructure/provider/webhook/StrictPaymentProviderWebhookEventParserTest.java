@@ -23,7 +23,7 @@ class StrictPaymentProviderWebhookEventParserTest {
     }
 
     @Test
-    void parsesValidConfirmedAndFailedEvents() {
+    void parsesValidConfirmedFailedAndCancelledEvents() {
         PaymentProviderWebhookCommand confirmed = parse("""
                 {
                   "eventType":"PAYMENT_CONFIRMED",
@@ -41,12 +41,21 @@ class StrictPaymentProviderWebhookEventParserTest {
                   "providerEventId":"evt_1002"
                 }
                 """);
+        PaymentProviderWebhookCommand cancelled = parse("""
+                {
+                  "eventType":"PAYMENT_CANCELLED",
+                  "paymentAttemptId":1003,
+                  "providerEventId":"evt_1003"
+                }
+                """);
 
         assertThat(confirmed.providerCode()).isEqualTo("UPI");
         assertThat(confirmed.eventType()).isEqualTo(PaymentProviderWebhookEventType.PAYMENT_CONFIRMED);
         assertThat(confirmed.providerPaymentId()).isEqualTo("UPI-PAYMENT-1001");
         assertThat(failed.eventType()).isEqualTo(PaymentProviderWebhookEventType.PAYMENT_FAILED);
         assertThat(failed.failureCode()).isEqualTo("UPI_DECLINED");
+        assertThat(cancelled.eventType()).isEqualTo(PaymentProviderWebhookEventType.PAYMENT_CANCELLED);
+        assertThat(cancelled.providerPaymentId()).isNull();
     }
 
     @Test

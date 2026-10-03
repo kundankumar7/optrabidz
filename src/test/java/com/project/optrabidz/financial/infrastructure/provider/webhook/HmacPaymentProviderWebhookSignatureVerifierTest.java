@@ -50,6 +50,17 @@ class HmacPaymentProviderWebhookSignatureVerifierTest {
     }
 
     @Test
+    void sharedSignerProducesSignatureAcceptedByVerifier() {
+        String timestamp = Long.toString(NOW.getEpochSecond());
+        PaymentWebhookHmac signer = new PaymentWebhookHmac();
+        String signature = signer.sign(timestamp, BODY, ACTIVE_SECRET);
+
+        assertThatCode(() -> verifier.verify(new PaymentProviderWebhookEnvelope(
+                "UPI", BODY, timestamp, signature)))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     void rejectsAlteredExactBodyBytes() {
         String timestamp = Long.toString(NOW.getEpochSecond());
         PaymentProviderWebhookEnvelope signed = envelope(timestamp, BODY, ACTIVE_SECRET);

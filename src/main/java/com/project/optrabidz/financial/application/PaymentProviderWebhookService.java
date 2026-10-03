@@ -27,6 +27,13 @@ public class PaymentProviderWebhookService {
             );
         }
 
+        if (command.eventType() == PaymentProviderWebhookEventType.PAYMENT_CANCELLED) {
+            return financialService.cancelProviderPaymentAttempt(
+                    command.providerCode(),
+                    command.paymentAttemptId()
+            );
+        }
+
         return financialService.failProviderPaymentAttempt(
                 command.providerCode(),
                 command.paymentAttemptId(),

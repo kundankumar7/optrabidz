@@ -3,6 +3,7 @@ package com.project.optrabidz.notification.application.rule;
 import com.project.optrabidz.common.outbox.OutboxEvent;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueEvent;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueSource;
+import com.project.optrabidz.financial.application.event.PayoutTransferFailedEvent;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -34,6 +35,40 @@ class FinanceNotificationRuleTest {
                     assertThat(plan.entityId()).isEqualTo(101L);
                     assertThat(plan.title()).isEqualTo("Repayment installment overdue");
                     assertThat(plan.body()).contains("overdue").contains("take action");
+                    assertThat(plan.recipientAccountIds()).containsExactlyInAnyOrder(501L, 502L);
+                });
+    }
+
+    @Test
+    void payoutFailureNotifiesBothAffectedAccountsWithDemonstrationWording() {
+        NotificationRecipientResolver resolver = mock(NotificationRecipientResolver.class);
+        FinanceNotificationRule rule = new FinanceNotificationRule(
+                JsonMapper.builder().build(), resolver);
+        PayoutTransferFailedEvent domainEvent = new PayoutTransferFailedEvent(
+                41L, 31L, 501L, 502L, 1,
+                "DEMO_PAYOUT_FAILED", "Demonstration payout failed", NOW);
+        OutboxEvent event = OutboxEvent.from(
+                domainEvent,
+                "payout-failed",
+                "FINANCIAL",
+                "PAYOUT_TRANSFER",
+                "41",
+                """
+                        {"payoutTransferId":41,"paymentIntentId":31,
+                         "payerAccountId":501,"payeeAccountId":502,"attemptCount":1,
+                         "failureCode":"DEMO_PAYOUT_FAILED"}
+                        """,
+                NOW
+        );
+
+        assertThat(rule.supports(event)).isTrue();
+        assertThat(rule.createPlans(event))
+                .singleElement()
+                .satisfies(plan -> {
+                    assertThat(plan.notificationName()).isEqualTo("PAYOUT_TRANSFER_FAILED");
+                    assertThat(plan.entityType()).isEqualTo("PAYOUT_TRANSFER");
+                    assertThat(plan.entityId()).isEqualTo(41L);
+                    assertThat(plan.body()).contains("Demonstration payout").contains("failed");
                     assertThat(plan.recipientAccountIds()).containsExactlyInAnyOrder(501L, 502L);
                 });
     }

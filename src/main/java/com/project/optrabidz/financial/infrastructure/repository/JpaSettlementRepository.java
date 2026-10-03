@@ -64,4 +64,30 @@ public interface JpaSettlementRepository extends JpaRepository<Settlement, Long>
     int confirmPending(@Param("settlementId") Long settlementId,
                        @Param("paymentIntentId") Long paymentIntentId,
                        @Param("now") Instant now);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+            update settlement
+            set settlement_state = 'SETTLEMENT_PAYOUT_PENDING',
+                confirmed_payment_intent_id = :paymentIntentId
+            where settlement_id = :settlementId
+              and settlement_state = 'SETTLEMENT_PENDING'::settlement_state_enum
+              and expires_at > :now
+            """, nativeQuery = true)
+    int markPayoutPending(@Param("settlementId") Long settlementId,
+                          @Param("paymentIntentId") Long paymentIntentId,
+                          @Param("now") Instant now);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+            update settlement
+            set settlement_state = 'SETTLEMENT_CONFIRMED',
+                confirmed_at = :now
+            where settlement_id = :settlementId
+              and settlement_state = 'SETTLEMENT_PAYOUT_PENDING'::settlement_state_enum
+              and confirmed_payment_intent_id = :paymentIntentId
+            """, nativeQuery = true)
+    int confirmPayoutPending(@Param("settlementId") Long settlementId,
+                             @Param("paymentIntentId") Long paymentIntentId,
+                             @Param("now") Instant now);
 }

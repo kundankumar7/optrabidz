@@ -61,6 +61,10 @@ public class OutboxEventMetadataResolver {
                 "newAdminAccountId",
                 "revokedAdminAccountId",
                 "accountId",
+                "paymentAccountBindingId",
+                "payoutTransferId",
+                "paymentIntentId",
+                "paymentAttemptId",
                 "repaymentInstallmentId",
                 "repaymentId",
                 "settlementId"

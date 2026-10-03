@@ -22,6 +22,7 @@ Do not add diagnostic or secret values.
 | `CREDENTIAL_NOT_FOUND` | `NOT_FOUND` | 404 | Resource not found | The requested credential was not found | `urn:optrabidz:problem:credential-not-found` | `security-application` |
 | `CSRF_VALIDATION_FAILED` | `AUTHORIZATION` | 403 | Request security validation failed | Request security validation failed | `urn:optrabidz:problem:csrf-validation-failed` | `spring-security` |
 | `CURRENT_PASSWORD_INVALID` | `AUTHENTICATION` | 401 | Authentication required | Current password is incorrect | `urn:optrabidz:problem:current-password-invalid` | `security-application` |
+| `DEMO_PAYMENT_OUTCOME_IDEMPOTENCY_CONFLICT` | `CONFLICT` | 409 | Request conflict | The demo payment outcome idempotency key conflicts with an earlier outcome | `urn:optrabidz:problem:demo-payment-outcome-idempotency-conflict` | `financial` |
 | `EMAIL_ALREADY_REGISTERED` | `CONFLICT` | 409 | Request conflict | Email is already registered | `urn:optrabidz:problem:email-already-registered` | `security-application` |
 | `ENDPOINT_NOT_FOUND` | `TRANSPORT` | 404 | Endpoint not found | The requested endpoint is unavailable | `urn:optrabidz:problem:endpoint-not-found` | `spring-mvc` |
 | `FINANCIAL_OPERATION_NOT_ALLOWED` | `AUTHORIZATION` | 403 | Access denied | This financial operation is not allowed | `urn:optrabidz:problem:financial-operation-not-allowed` | `financial` |
@@ -46,6 +47,10 @@ Do not add diagnostic or secret values.
 | `NOT_ACCEPTABLE` | `TRANSPORT` | 406 | Response type not acceptable | The requested response media type is not available | `urn:optrabidz:problem:not-acceptable` | `spring-mvc` |
 | `PASSWORD_POLICY_VIOLATION` | `VALIDATION` | 400 | Request validation failed | Password must contain at least one letter and one digit | `urn:optrabidz:problem:password-policy-violation` | `security-application` |
 | `PASSWORD_REUSE_NOT_ALLOWED` | `VALIDATION` | 400 | Request validation failed | New password must be different from current password | `urn:optrabidz:problem:password-reuse-not-allowed` | `security-application` |
+| `PAYMENT_ACCOUNT_BINDING_ALREADY_EXISTS` | `CONFLICT` | 409 | Request conflict | An active payment account binding already exists | `urn:optrabidz:problem:payment-account-binding-already-exists` | `financial` |
+| `PAYMENT_ACCOUNT_BINDING_IDEMPOTENCY_CONFLICT` | `CONFLICT` | 409 | Request conflict | The idempotency key was already used for a different binding command | `urn:optrabidz:problem:payment-account-binding-idempotency-conflict` | `financial` |
+| `PAYMENT_ACCOUNT_BINDING_NOT_FOUND` | `NOT_FOUND` | 404 | Resource not found | The requested payment account binding was not found | `urn:optrabidz:problem:payment-account-binding-not-found` | `financial` |
+| `PAYMENT_ACCOUNT_BINDING_STATE_CONFLICT` | `CONFLICT` | 409 | Request conflict | The payment account binding state no longer permits this operation | `urn:optrabidz:problem:payment-account-binding-state-conflict` | `financial` |
 | `PAYMENT_ALREADY_CONFIRMED` | `CONFLICT` | 409 | Request conflict | The payment has already been confirmed | `urn:optrabidz:problem:payment-already-confirmed` | `financial` |
 | `PAYMENT_ATTEMPT_NOT_FOUND` | `NOT_FOUND` | 404 | Resource not found | The requested payment attempt was not found | `urn:optrabidz:problem:payment-attempt-not-found` | `financial` |
 | `PAYMENT_INTENT_EXPIRED` | `CONFLICT` | 409 | Request conflict | The payment intent has expired | `urn:optrabidz:problem:payment-intent-expired` | `financial` |
@@ -57,7 +62,10 @@ Do not add diagnostic or secret values.
 | `PAYMENT_WEBHOOK_PAYLOAD_INVALID` | `VALIDATION` | 400 | Request validation failed | The webhook payload is invalid | `urn:optrabidz:problem:payment-webhook-payload-invalid` | `financial` |
 | `PAYMENT_WEBHOOK_PROCESSING_FAILED` | `INTERNAL` | 500 | Internal server error | The webhook could not be processed | `urn:optrabidz:problem:payment-webhook-processing-failed` | `financial` |
 | `PAYMENT_WEBHOOK_REJECTED` | `VALIDATION` | 400 | Request validation failed | The webhook request was rejected | `urn:optrabidz:problem:payment-webhook-rejected` | `financial` |
+| `PAYOUT_TRANSFER_NOT_FOUND` | `NOT_FOUND` | 404 | Resource not found | The requested payout transfer was not found | `urn:optrabidz:problem:payout-transfer-not-found` | `financial` |
+| `PAYOUT_TRANSFER_STATE_CONFLICT` | `CONFLICT` | 409 | Request conflict | The payout transfer state no longer permits this operation | `urn:optrabidz:problem:payout-transfer-state-conflict` | `financial` |
 | `PROFILE_STATE_CONFLICT` | `CONFLICT` | 409 | Request conflict | The profile state does not allow this operation | `urn:optrabidz:problem:profile-state-conflict` | `identity` |
+| `RECEIVING_ACCOUNT_NOT_READY` | `BUSINESS_RULE` | 422 | Business rule violation | A verified receiving account is required for this operation | `urn:optrabidz:problem:receiving-account-not-ready` | `financial, marketplace` |
 | `REPAYMENT_INSTALLMENT_NOT_FOUND` | `NOT_FOUND` | 404 | Resource not found | The requested repayment installment was not found | `urn:optrabidz:problem:repayment-installment-not-found` | `financial` |
 | `REPAYMENT_INSTALLMENT_NOT_PAYABLE` | `CONFLICT` | 409 | Request conflict | The repayment installment cannot be paid in its current state | `urn:optrabidz:problem:repayment-installment-not-payable` | `financial` |
 | `REPAYMENT_NOT_FOUND` | `NOT_FOUND` | 404 | Resource not found | The requested repayment was not found | `urn:optrabidz:problem:repayment-not-found` | `financial` |

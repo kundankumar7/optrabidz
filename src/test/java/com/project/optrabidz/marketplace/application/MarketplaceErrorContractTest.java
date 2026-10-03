@@ -11,6 +11,7 @@ import com.project.optrabidz.marketplace.application.exception.InvalidBidStateEx
 import com.project.optrabidz.marketplace.application.exception.InvalidListingStateException;
 import com.project.optrabidz.marketplace.application.exception.ListingNotFoundException;
 import com.project.optrabidz.marketplace.application.exception.MarketplaceAccessException;
+import com.project.optrabidz.marketplace.application.exception.ReceivingAccountNotReadyException;
 import com.project.optrabidz.marketplace.application.exception.UnsupportedFundingModelException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -27,6 +28,7 @@ import static com.project.optrabidz.marketplace.application.error.MarketplaceErr
 import static com.project.optrabidz.marketplace.application.error.MarketplaceErrors.LISTING_NOT_FOUND;
 import static com.project.optrabidz.marketplace.application.error.MarketplaceErrors.LISTING_STATE_CONFLICT;
 import static com.project.optrabidz.marketplace.application.error.MarketplaceErrors.MARKETPLACE_ACCESS_DENIED;
+import static com.project.optrabidz.marketplace.application.error.MarketplaceErrors.RECEIVING_ACCOUNT_NOT_READY;
 import static com.project.optrabidz.marketplace.application.error.MarketplaceErrors.UNSUPPORTED_FUNDING_MODEL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -94,7 +96,10 @@ class MarketplaceErrorContractTest {
                         "The bid cannot be accepted in the current marketplace state"),
                 arguments(UNSUPPORTED_FUNDING_MODEL, "UNSUPPORTED_FUNDING_MODEL",
                         ErrorCategory.BUSINESS_RULE,
-                        "The requested funding model is not supported")
+                        "The requested funding model is not supported"),
+                arguments(RECEIVING_ACCOUNT_NOT_READY, "RECEIVING_ACCOUNT_NOT_READY",
+                        ErrorCategory.BUSINESS_RULE,
+                        "A verified receiving account is required for this operation")
         );
     }
 
@@ -117,7 +122,9 @@ class MarketplaceErrorContractTest {
                 arguments((Function<String, ApplicationException>) BidAcceptanceConflictException::new,
                         BID_ACCEPTANCE_CONFLICT, "MARKETPLACE.BID.ACCEPTANCE_CONFLICT"),
                 arguments((Function<String, ApplicationException>) UnsupportedFundingModelException::new,
-                        UNSUPPORTED_FUNDING_MODEL, "MARKETPLACE.FUNDING_MODEL.UNSUPPORTED")
+                        UNSUPPORTED_FUNDING_MODEL, "MARKETPLACE.FUNDING_MODEL.UNSUPPORTED"),
+                arguments((Function<String, ApplicationException>) ReceivingAccountNotReadyException::new,
+                        RECEIVING_ACCOUNT_NOT_READY, "MARKETPLACE.RECEIVING_ACCOUNT.NOT_READY")
         );
     }
 }

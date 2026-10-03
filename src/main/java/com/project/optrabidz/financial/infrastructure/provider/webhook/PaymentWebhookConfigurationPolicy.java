@@ -42,8 +42,11 @@ public class PaymentWebhookConfigurationPolicy implements SmartInitializingSingl
         boolean developmentEnvironment = !productionEnvironment
                 && Arrays.stream(environment.getActiveProfiles())
                 .anyMatch(profile -> profile.equals("dev") || profile.equals("test"));
+        boolean demonstrationEnvironment = !productionEnvironment
+                && Arrays.stream(environment.getActiveProfiles())
+                .anyMatch("demo"::equals);
         properties.getProviders().forEach((providerCode, provider) ->
-                validateProvider(providerCode, provider, developmentEnvironment));
+                validateProvider(providerCode, provider, developmentEnvironment, demonstrationEnvironment));
     }
 
     private void validateGlobalLimits() {
@@ -59,9 +62,13 @@ public class PaymentWebhookConfigurationPolicy implements SmartInitializingSingl
 
     private void validateProvider(String providerCode,
                                   PaymentWebhookProperties.ProviderConfiguration provider,
-                                  boolean developmentEnvironment) {
+                                  boolean developmentEnvironment,
+                                  boolean demonstrationEnvironment) {
         if (provider == null || !provider.isEnabled()) {
             return;
+        }
+        if ("DEMO".equalsIgnoreCase(providerCode) && !demonstrationEnvironment) {
+            throw invalid(providerCode, "DEMO webhook requires the demo profile and cannot run with prod");
         }
         validateSecret(providerCode, "active", provider.getActiveSecret(), developmentEnvironment);
 

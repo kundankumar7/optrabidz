@@ -133,6 +133,22 @@ class FinancialDomainTest {
     }
 
     @Test
+    void activePaymentAttemptAndIntentCanBeCancelled() {
+        PaymentAttempt attempt = PaymentAttempt.create(9001L, "DEMO", PaymentMethodType.UPI, NOW);
+        PaymentIntent intent = settlementPaymentIntent();
+        attempt.markInitiated("order-001", "ref-001", "{}", NOW.plusSeconds(10));
+        intent.markPending();
+
+        attempt.markCancelled(NOW.plusSeconds(30));
+        intent.markCancelled(NOW.plusSeconds(30));
+
+        assertThat(attempt.getAttemptState()).isEqualTo(PaymentAttemptState.CANCELLED);
+        assertThat(attempt.getCancelledAt()).isEqualTo(NOW.plusSeconds(30));
+        assertThat(intent.getPaymentState()).isEqualTo(PaymentState.PAYMENT_CANCELLED);
+        assertThat(intent.getCancelledAt()).isEqualTo(NOW.plusSeconds(30));
+    }
+
+    @Test
     void repaymentAggregateStartsAsNotStartedAndDoesNotBehaveLikeInstallment() {
         Repayment repayment = repayment();
 

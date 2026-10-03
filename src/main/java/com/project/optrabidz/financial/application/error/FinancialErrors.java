@@ -120,6 +120,54 @@ public final class FinancialErrors {
             "The webhook could not be processed"
     );
 
+    public static final ErrorDescriptor PAYMENT_ACCOUNT_BINDING_NOT_FOUND = new ErrorDescriptor(
+            "PAYMENT_ACCOUNT_BINDING_NOT_FOUND",
+            ErrorCategory.NOT_FOUND,
+            "The requested payment account binding was not found"
+    );
+
+    public static final ErrorDescriptor PAYMENT_ACCOUNT_BINDING_ALREADY_EXISTS = new ErrorDescriptor(
+            "PAYMENT_ACCOUNT_BINDING_ALREADY_EXISTS",
+            ErrorCategory.CONFLICT,
+            "An active payment account binding already exists"
+    );
+
+    public static final ErrorDescriptor PAYMENT_ACCOUNT_BINDING_STATE_CONFLICT = new ErrorDescriptor(
+            "PAYMENT_ACCOUNT_BINDING_STATE_CONFLICT",
+            ErrorCategory.CONFLICT,
+            "The payment account binding state no longer permits this operation"
+    );
+
+    public static final ErrorDescriptor PAYMENT_ACCOUNT_BINDING_IDEMPOTENCY_CONFLICT = new ErrorDescriptor(
+            "PAYMENT_ACCOUNT_BINDING_IDEMPOTENCY_CONFLICT",
+            ErrorCategory.CONFLICT,
+            "The idempotency key was already used for a different binding command"
+    );
+
+    public static final ErrorDescriptor RECEIVING_ACCOUNT_NOT_READY = new ErrorDescriptor(
+            "RECEIVING_ACCOUNT_NOT_READY",
+            ErrorCategory.BUSINESS_RULE,
+            "A verified receiving account is required for this operation"
+    );
+
+    public static final ErrorDescriptor PAYOUT_TRANSFER_NOT_FOUND = new ErrorDescriptor(
+            "PAYOUT_TRANSFER_NOT_FOUND",
+            ErrorCategory.NOT_FOUND,
+            "The requested payout transfer was not found"
+    );
+
+    public static final ErrorDescriptor PAYOUT_TRANSFER_STATE_CONFLICT = new ErrorDescriptor(
+            "PAYOUT_TRANSFER_STATE_CONFLICT",
+            ErrorCategory.CONFLICT,
+            "The payout transfer state no longer permits this operation"
+    );
+
+    public static final ErrorDescriptor DEMO_PAYMENT_OUTCOME_IDEMPOTENCY_CONFLICT = new ErrorDescriptor(
+            "DEMO_PAYMENT_OUTCOME_IDEMPOTENCY_CONFLICT",
+            ErrorCategory.CONFLICT,
+            "The demo payment outcome idempotency key conflicts with an earlier outcome"
+    );
+
     public static List<ErrorDescriptor> descriptors() {
         return List.of(
                 FINANCIAL_OPERATION_NOT_ALLOWED,
@@ -140,7 +188,15 @@ public final class FinancialErrors {
                 PAYMENT_PROVIDER_MISMATCH,
                 PAYMENT_WEBHOOK_REJECTED,
                 PAYMENT_WEBHOOK_PAYLOAD_INVALID,
-                PAYMENT_WEBHOOK_PROCESSING_FAILED
+                PAYMENT_WEBHOOK_PROCESSING_FAILED,
+                PAYMENT_ACCOUNT_BINDING_NOT_FOUND,
+                PAYMENT_ACCOUNT_BINDING_ALREADY_EXISTS,
+                PAYMENT_ACCOUNT_BINDING_STATE_CONFLICT,
+                PAYMENT_ACCOUNT_BINDING_IDEMPOTENCY_CONFLICT,
+                RECEIVING_ACCOUNT_NOT_READY,
+                PAYOUT_TRANSFER_NOT_FOUND,
+                PAYOUT_TRANSFER_STATE_CONFLICT,
+                DEMO_PAYMENT_OUTCOME_IDEMPOTENCY_CONFLICT
         );
     }
 
