@@ -11,9 +11,15 @@ import java.util.List;
 @Component
 public class NotificationChannelSelector {
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final NotificationChannelProperties channelProperties;
+    private final NotificationChannelRegistry channelRegistry;
 
-    public NotificationChannelSelector(NamedParameterJdbcTemplate jdbcTemplate) {
+    public NotificationChannelSelector(NamedParameterJdbcTemplate jdbcTemplate,
+                                       NotificationChannelProperties channelProperties,
+                                       NotificationChannelRegistry channelRegistry) {
         this.jdbcTemplate = jdbcTemplate;
+        this.channelProperties = channelProperties;
+        this.channelRegistry = channelRegistry;
     }
 
     public List<ResolvedNotificationChannel> resolve(Long accountId, List<ChannelType> requestedChannels) {
@@ -21,10 +27,16 @@ public class NotificationChannelSelector {
         if (requestedChannels.contains(ChannelType.IN_APP)) {
             resolved.add(new ResolvedNotificationChannel(ChannelType.IN_APP));
         }
-        if (requestedChannels.contains(ChannelType.EMAIL) && hasActiveSubscription(accountId, ChannelType.EMAIL)) {
+        if (channelProperties.getEmail().isEnabled()
+                && channelRegistry.supports(ChannelType.EMAIL)
+                && requestedChannels.contains(ChannelType.EMAIL)
+                && hasActiveSubscription(accountId, ChannelType.EMAIL)) {
             resolved.add(new ResolvedNotificationChannel(ChannelType.EMAIL));
         }
-        if (requestedChannels.contains(ChannelType.PUSH) && hasActiveSubscription(accountId, ChannelType.PUSH)) {
+        if (channelProperties.getPush().isEnabled()
+                && channelRegistry.supports(ChannelType.PUSH)
+                && requestedChannels.contains(ChannelType.PUSH)
+                && hasActiveSubscription(accountId, ChannelType.PUSH)) {
             resolved.add(new ResolvedNotificationChannel(ChannelType.PUSH));
         }
         return resolved;

@@ -125,6 +125,16 @@ class RuntimeConfigurationPolicyTest {
     }
 
     @Test
+    void productionProfileDisablesSandboxNotificationChannels() throws IOException {
+        Properties production = load("src/main/resources/application-prod.properties");
+
+        assertThat(production.getProperty("optrabidz.notification.channels.email.enabled"))
+                .isEqualTo("false");
+        assertThat(production.getProperty("optrabidz.notification.channels.push.enabled"))
+                .isEqualTo("false");
+    }
+
+    @Test
     void trackedRuntimeProfilesContainNoOperationalSecretFallbacks() throws IOException {
         Properties baseline = load("src/main/resources/application.properties");
         Properties development = load("src/main/resources/application-dev.properties");

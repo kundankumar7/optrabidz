@@ -52,6 +52,8 @@ public class NotificationDeliveryDispatcher {
             fixedDelayString = "${optrabidz.notification.dispatcher.fixed-delay-ms:5000}"
     )
     public int dispatchReadyDeliveries() {
+        reconcileExhaustedDeliveries();
+
         int processed = 0;
         for (int index = 0; index < batchSize; index++) {
             Boolean dispatched = transactionTemplate.execute(status -> dispatchOneReadyDelivery());
@@ -61,6 +63,53 @@ public class NotificationDeliveryDispatcher {
             processed++;
         }
         return processed;
+    }
+
+    private void reconcileExhaustedDeliveries() {
+        for (int index = 0; index < batchSize; index++) {
+            Boolean reconciled = transactionTemplate.execute(status -> reconcileOneExhaustedDelivery());
+            if (!Boolean.TRUE.equals(reconciled)) {
+                break;
+            }
+        }
+    }
+
+    private Boolean reconcileOneExhaustedDelivery() {
+        List<ExhaustedDelivery> deliveries = jdbcTemplate.query("""
+                select delivery_id, recipient_id
+                from notification_delivery
+                where channel_delivery_status = 'FAILED'::channel_delivery_status_enum
+                  and attempt_count >= :maxAttempts
+                  and (
+                    next_attempt_at is not null
+                    or locked_at is not null
+                    or locked_by is not null
+                  )
+                order by coalesce(next_attempt_at, last_attempt_at, failed_at), delivery_id
+                for update skip locked
+                limit 1
+                """, new MapSqlParameterSource()
+                .addValue("maxAttempts", maxAttempts),
+                (rs, rowNum) -> new ExhaustedDelivery(
+                        rs.getLong("delivery_id"),
+                        rs.getLong("recipient_id")
+                ));
+        if (deliveries.isEmpty()) {
+            return false;
+        }
+
+        ExhaustedDelivery delivery = deliveries.getFirst();
+        Instant reconciledAt = Instant.now();
+        jdbcTemplate.update("""
+                update notification_delivery
+                set next_attempt_at = null,
+                    locked_at = null,
+                    locked_by = null
+                where delivery_id = :deliveryId
+                """, new MapSqlParameterSource()
+                .addValue("deliveryId", delivery.deliveryId()));
+        refreshRecipientStatus(delivery.recipientId(), reconciledAt);
+        return true;
     }
 
     public boolean dispatchDeliveryNow(Long deliveryId) {
@@ -85,9 +134,18 @@ public class NotificationDeliveryDispatcher {
         Instant attemptStartedAt = Instant.now();
         markAttempting(context.deliveryId(), attemptStartedAt);
 
-        NotificationChannelStrategy strategy = channelRegistry.get(context.channelType());
         long startNanos = System.nanoTime();
-        NotificationSendResult result = channelProxy.send(strategy, context);
+        NotificationSendResult result;
+        if (channelRegistry.supports(context.channelType())) {
+            NotificationChannelStrategy strategy = channelRegistry.get(context.channelType());
+            result = channelProxy.send(strategy, context);
+        } else {
+            result = NotificationSendResult.failed(
+                    "CHANNEL_UNAVAILABLE",
+                    "No notification channel strategy configured for " + context.channelType(),
+                    false
+            );
+        }
         long durationMs = Duration.ofNanos(System.nanoTime() - startNanos).toMillis();
         Instant completedAt = Instant.now();
 
@@ -307,6 +365,9 @@ public class NotificationDeliveryDispatcher {
     private Duration retryDelay(int attemptNumber) {
         long seconds = Math.min(300, (long) Math.pow(2, Math.max(attemptNumber - 1, 0)));
         return Duration.ofSeconds(seconds);
+    }
+
+    private record ExhaustedDelivery(Long deliveryId, Long recipientId) {
     }
 
     private static class NotificationDispatchContextRowMapper implements RowMapper<NotificationDispatchContext> {

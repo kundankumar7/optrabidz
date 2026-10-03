@@ -23,4 +23,8 @@ public class NotificationChannelRegistry {
         }
         return strategy;
     }
+
+    public boolean supports(ChannelType channelType) {
+        return strategies.containsKey(channelType);
+    }
 }

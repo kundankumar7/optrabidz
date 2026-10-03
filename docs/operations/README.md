@@ -9,7 +9,8 @@
 | default | Fail-closed baseline; API docs and local financial adapters are disabled |
 | `dev` | Local development with Swagger UI and optional, disabled-by-default integrations |
 | `test` | Automated tests with isolated fixtures and Testcontainers |
-| `prod` | Production datasource and authenticated API-document access settings |
+| `demo` | Deployable demonstration with Swagger UI, real in-app notifications, and simulated payment, email, and push adapters |
+| `prod` | Production datasource and authenticated API-document access settings; demo and sandbox adapters are unavailable |
 
 The application does not activate a profile automatically. Local development
 copies `.env.example` to ignored `.env`; only `application-dev.properties`
@@ -238,9 +239,15 @@ Disabled webhook providers require no secret. Enabled providers fail before
 readiness when secret material is missing or invalid. When profiles are mixed,
 production restrictions take precedence.
 
-Notification channels use application configuration and the current local
-delivery adapters; external broker or delivery-provider infrastructure is not
-implemented.
+In-app notification delivery is database-backed and available in every runtime
+profile. Sandbox email and push adapters are restricted to `dev`, `test`, and
+`demo`; the production profile disables both channels explicitly. External
+email, push, broker, and delivery-provider infrastructure is not implemented.
+When an eligible pending or retryable sandbox delivery already exists as the
+application enters a profile without its strategy, the dispatcher records one
+terminal `CHANNEL_UNAVAILABLE` failure, clears its lock and retry schedule, and
+refreshes recipient status. Re-enabling the channel does not revive that row;
+future delivery requires newly created work.
 
 ## Operational Checks
 
