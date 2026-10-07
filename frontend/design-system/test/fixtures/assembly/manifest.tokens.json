@@ -16,14 +16,8 @@
     "dark": "themes/dark.tokens.json"
   },
   "allowedOverlayRoots": [
-    "color.action",
-    "color.border",
-    "color.focus",
-    "color.icon",
-    "color.shadow",
-    "color.status",
-    "color.surface",
-    "color.text"
+    "color.text",
+    "color.surface"
   ],
   "contracts": {
     "accessibility": "../contracts/accessibility.contract.json",

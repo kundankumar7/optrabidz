@@ -23,6 +23,8 @@ export function resolveDesignSystemPaths(moduleUrl) {
   };
 }
 
+export const designSystemPaths = resolveDesignSystemPaths(import.meta.url);
+
 export async function assertOutsideRepository(candidatePath, repositoryRoot) {
   if (!path.isAbsolute(candidatePath)) {
     throw new TypeError("Output requires an absolute path outside the repository.");
