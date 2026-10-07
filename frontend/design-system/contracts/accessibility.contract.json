@@ -20,6 +20,7 @@
     { "id": "focus-on-overlay", "foreground": "color.focus.ring", "background": "color.surface.overlay", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] },
     { "id": "focus-on-inverse", "foreground": "color.focus.inverse", "background": "color.surface.inverse", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] },
     { "id": "control-border-on-raised", "foreground": "color.border.default", "background": "color.surface.raised", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] },
-    { "id": "primary-icon-on-canvas", "foreground": "color.icon.primary", "background": "color.surface.canvas", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] }
+    { "id": "primary-icon-on-canvas", "foreground": "color.icon.primary", "background": "color.surface.canvas", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] },
+    { "id": "scrollbar-thumb-on-track", "foreground": "color.scrollbar.thumb", "background": "color.scrollbar.track", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] }
   ]
 }

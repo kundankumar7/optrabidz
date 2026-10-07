@@ -44,6 +44,11 @@
       "$type": "color",
       "default": { "$value": "{color.neutral.alpha.warm95012}" }
     },
+    "scrollbar": {
+      "$type": "color",
+      "thumb": { "$value": "{color.neutral.warm.500}" },
+      "track": { "$value": "{color.surface.canvas}" }
+    },
     "action": {
       "$type": "color",
       "primary": {

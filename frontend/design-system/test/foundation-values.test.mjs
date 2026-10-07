@@ -185,6 +185,33 @@ test("defines complete and symmetric semantic light and dark color overlays", as
   }
 });
 
+test("defines accessible native scrollbar colors without forcing scrollbar width", async () => {
+  const [semantic, light, dark, accessibility] = await Promise.all([
+    readTokenFile("semantic.tokens.json"),
+    readTokenFile(path.join("themes", "light.tokens.json")),
+    readTokenFile(path.join("themes", "dark.tokens.json")),
+    readContract("accessibility.contract.json"),
+  ]);
+
+  assert.equal(tokenValue(semantic, "color.scrollbar.thumb"), "{color.neutral.warm.500}");
+  assert.equal(tokenValue(semantic, "color.scrollbar.track"), "{color.neutral.warm.500}");
+  assert.equal(tokenValue(light, "color.scrollbar.thumb"), "{color.neutral.warm.500}");
+  assert.equal(tokenValue(light, "color.scrollbar.track"), "{color.surface.canvas}");
+  assert.equal(tokenValue(dark, "color.scrollbar.thumb"), "{color.neutral.warm.600}");
+  assert.equal(tokenValue(dark, "color.scrollbar.track"), "{color.surface.canvas}");
+  assert.deepEqual(
+    accessibility.contrastPairs.find(({ id }) => id === "scrollbar-thumb-on-track"),
+    {
+      id: "scrollbar-thumb-on-track",
+      foreground: "color.scrollbar.thumb",
+      background: "color.scrollbar.track",
+      category: "nonText",
+      minimum: 3,
+      themes: ["light", "dark"],
+    },
+  );
+});
+
 test("defines machine-readable accessibility, status, and elevation contracts", async () => {
   const [accessibility, status, elevation] = await Promise.all([
     readContract("accessibility.contract.json"),
