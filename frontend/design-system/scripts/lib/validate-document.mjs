@@ -14,6 +14,7 @@ const validators = {
   accessibility: ajv.compile(readSchema("accessibility-contract.schema.json")),
   status: ajv.compile(readSchema("status-contract.schema.json")),
   elevation: ajv.compile(readSchema("elevation-contract.schema.json")),
+  responsive: ajv.compile(readSchema("responsive-contract.schema.json")),
 };
 
 const categoryMinimums = {
@@ -87,6 +88,9 @@ export function validateDocument(assembled, contracts) {
   }
   if (contracts.elevation) {
     validateElevation(resolvedTokens, contracts.elevation, issues);
+  }
+  if (contracts.responsive) {
+    validateResponsive(resolvedTokens, contracts.responsive, issues);
   }
 
   issues.sort(compareIssues);
@@ -231,6 +235,94 @@ function validateElevation(tokens, contract, issues) {
     validateContractToken(tokens, level.border, "color", `${levelName}.border`, issues);
     if (level.shadow !== null) {
       validateContractToken(tokens, level.shadow, "shadow", `${levelName}.shadow`, issues);
+    }
+  }
+}
+
+function validateResponsive(tokens, contract, issues) {
+  if (!validateAgainstSchema(validators.responsive, contract, "responsive-contract-schema", issues)) {
+    return;
+  }
+
+  const evidenceWidths = new Set(contract.evidence.widths);
+  const seenIds = new Set();
+  const seenTokens = new Set();
+  let previousThreshold = -Infinity;
+
+  for (const breakpoint of contract.breakpoints) {
+    if (seenIds.has(breakpoint.id)) {
+      issues.push(
+        issue("duplicate-responsive-id", breakpoint.id, `Duplicate responsive ID ${breakpoint.id}.`),
+      );
+    }
+    seenIds.add(breakpoint.id);
+
+    if (seenTokens.has(breakpoint.token)) {
+      issues.push(
+        issue("duplicate-responsive-token", breakpoint.id, `Duplicate responsive token ${breakpoint.token}.`),
+      );
+    }
+    seenTokens.add(breakpoint.token);
+
+    if (breakpoint.threshold <= previousThreshold) {
+      issues.push(
+        issue(
+          "responsive-threshold-order",
+          breakpoint.id,
+          "Responsive thresholds must be strictly increasing.",
+        ),
+      );
+    }
+    previousThreshold = breakpoint.threshold;
+
+    const token = tokens.get(breakpoint.token);
+    if (!token) {
+      issues.push(
+        issue("missing-responsive-token", breakpoint.id, `Missing responsive token ${breakpoint.token}.`),
+      );
+    } else if (token.type !== "dimension") {
+      issues.push(
+        issue(
+          "responsive-token-type",
+          breakpoint.id,
+          `${breakpoint.token} must resolve to a dimension, not ${token.type}.`,
+        ),
+      );
+    } else if (token.value.unit !== "px" || token.value.value !== breakpoint.threshold) {
+      issues.push(
+        issue(
+          "responsive-token-value",
+          breakpoint.id,
+          `${breakpoint.token} must equal ${breakpoint.threshold}px.`,
+        ),
+      );
+    }
+
+    const expectedBoundary = {
+      below: breakpoint.threshold - 1,
+      exact: breakpoint.threshold,
+      above: breakpoint.threshold + 1,
+    };
+    for (const [position, expectedWidth] of Object.entries(expectedBoundary)) {
+      const actualWidth = breakpoint.boundaryEvidence[position];
+      if (actualWidth !== expectedWidth) {
+        issues.push(
+          issue(
+            "responsive-boundary-evidence",
+            `${breakpoint.id}.${position}`,
+            `${position} evidence must be ${expectedWidth}px, not ${actualWidth}px.`,
+          ),
+        );
+      }
+      if (!evidenceWidths.has(expectedWidth)) {
+        issues.push(
+          issue(
+            "responsive-evidence-width",
+            `${breakpoint.id}.${position}`,
+            `Evidence widths must include ${expectedWidth}px.`,
+          ),
+        );
+      }
     }
   }
 }

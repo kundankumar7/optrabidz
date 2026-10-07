@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:optrabidz:design-tokens:responsive-contract:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "strategy", "evidence", "breakpoints"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "strategy": { "const": "contentDriven" },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reference", "themes", "widths", "requiredContent"],
+      "properties": {
+        "reference": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "themes": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": { "enum": ["light", "dark"] }
+        },
+        "widths": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 1 }
+        },
+        "requiredContent": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["navigation", "cardGrid", "denseData", "form", "decisionDialog", "readableMeasure"]
+          }
+        }
+      }
+    },
+    "breakpoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "token", "threshold", "condition", "boundaryEvidence", "structuralChanges"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" },
+          "token": { "type": "string", "pattern": "^responsive\\.breakpoint\\.[a-z][a-zA-Z0-9]*$" },
+          "threshold": { "type": "integer", "minimum": 1 },
+          "condition": { "const": "maxWidthInclusive" },
+          "boundaryEvidence": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["below", "exact", "above"],
+            "properties": {
+              "below": { "type": "integer", "minimum": 1 },
+              "exact": { "type": "integer", "minimum": 1 },
+              "above": { "type": "integer", "minimum": 1 }
+            }
+          },
+          "structuralChanges": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" }
+          }
+        }
+      }
+    }
+  }
+}

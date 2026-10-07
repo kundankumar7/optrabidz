@@ -54,11 +54,12 @@
     "contracts": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["accessibility", "status", "elevation"],
+      "required": ["accessibility", "status", "elevation", "responsive"],
       "properties": {
         "accessibility": { "$ref": "#/definitions/relativePath" },
         "status": { "$ref": "#/definitions/relativePath" },
-        "elevation": { "$ref": "#/definitions/relativePath" }
+        "elevation": { "$ref": "#/definitions/relativePath" },
+        "responsive": { "$ref": "#/definitions/relativePath" }
       }
     },
     "outputs": {

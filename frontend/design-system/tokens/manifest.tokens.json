@@ -28,7 +28,8 @@
   "contracts": {
     "accessibility": "../contracts/accessibility.contract.json",
     "status": "../contracts/status.contract.json",
-    "elevation": "../contracts/elevation.contract.json"
+    "elevation": "../contracts/elevation.contract.json",
+    "responsive": "../contracts/responsive.contract.json"
   },
   "outputs": {
     "css": "../../src/styles/generated/tokens.css"

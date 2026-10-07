@@ -392,6 +392,61 @@ test("validates elevation contract token existence and effective types", async (
   );
 });
 
+test("validates responsive token values, ordering, and exact boundary evidence", async () => {
+  const { validateDocument } = await loadValidationUtilities();
+  const document = {
+    $schema: schemaUrn,
+    responsive: {
+      breakpoint: {
+        $type: "dimension",
+        compact: { $value: { value: 680, unit: "px" } },
+        comfortable: { $value: { value: 920, unit: "px" } },
+        wide: { $value: { value: 960, unit: "px" } },
+      },
+    },
+  };
+  const responsive = {
+    schemaVersion: 1,
+    strategy: "contentDriven",
+    evidence: {
+      reference: "responsive-foundation-stress-review-v2",
+      themes: ["light", "dark"],
+      widths: [679, 680, 681, 919, 920, 921, 959, 960, 961],
+      requiredContent: ["navigation", "cardGrid", "denseData", "form", "decisionDialog", "readableMeasure"],
+    },
+    breakpoints: [
+      breakpoint("compact", 680),
+      breakpoint("comfortable", 920),
+      breakpoint("wide", 960),
+    ],
+  };
+
+  assert.equal(validateDocument(asTheme(document), { responsive }).valid, true);
+
+  const invalid = structuredClone(responsive);
+  invalid.breakpoints[0].id = "comfortable";
+  invalid.breakpoints[1].threshold = 900;
+  invalid.breakpoints[2].boundaryEvidence.exact = 959;
+  invalid.evidence.widths = invalid.evidence.widths.filter((width) => width !== 961);
+  const report = validateDocument(asTheme(document), { responsive: invalid });
+
+  assert.ok(report.issues.some((issue) => issue.code === "duplicate-responsive-id"));
+  assert.ok(report.issues.some((issue) => issue.code === "responsive-token-value"));
+  assert.ok(report.issues.some((issue) => issue.code === "responsive-boundary-evidence"));
+  assert.ok(report.issues.some((issue) => issue.code === "responsive-evidence-width"));
+});
+
+function breakpoint(id, threshold) {
+  return {
+    id,
+    token: `responsive.breakpoint.${id}`,
+    threshold,
+    condition: "maxWidthInclusive",
+    boundaryEvidence: { below: threshold - 1, exact: threshold, above: threshold + 1 },
+    structuralChanges: ["contentDrivenTransition"],
+  };
+}
+
 test("calculates WCAG contrast from DTCG sRGB colors", async () => {
   const { contrastRatio } = await loadValidationUtilities();
 
