@@ -312,7 +312,7 @@ function figmaValue(tokenType, value) {
     return value.value;
   }
   if (tokenType === "fontFamily") {
-    return Array.isArray(value) ? value.join(", ") : value;
+    return Array.isArray(value) ? value[0] : value;
   }
   if (tokenType === "cubicBezier") {
     return value.join(", ");

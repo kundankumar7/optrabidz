@@ -270,6 +270,12 @@ test("generates a deterministic Figma bundle for the approved free-plan collecti
   const primitiveColor = core.variables.find(
     (variable) => variable.logicalId === "color.neutral.warm.900",
   );
+  const displayFont = core.variables.find(
+    (variable) => variable.logicalId === "font.family.display",
+  );
+  const productFont = core.variables.find(
+    (variable) => variable.logicalId === "font.family.product",
+  );
   const semanticColor = lightSemantic.variables.find(
     (variable) => variable.logicalId === "color.surface.canvas",
   );
@@ -283,6 +289,8 @@ test("generates a deterministic Figma bundle for the approved free-plan collecti
   assert.equal(primitiveColor.name, "color/neutral/warm/900");
   assert.equal(primitiveColor.type, "COLOR");
   assert.deepEqual(Object.keys(primitiveColor.value).sort(), ["a", "b", "g", "r"]);
+  assert.equal(displayFont.value, "Cabinet Grotesk");
+  assert.equal(productFont.value, "General Sans");
   assert.equal(semanticColor.name, "color/surface/canvas");
   assert.equal(semanticColor.type, "COLOR");
   assert.equal(semanticColor.alias, "color.neutral.warm.050");
