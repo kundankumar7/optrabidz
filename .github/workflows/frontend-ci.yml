@@ -41,6 +41,9 @@ jobs:
       - name: Run token tests
         run: npm run tokens:test
 
+      - name: Enforce repository artifact policy
+        run: npm run tokens:policy
+
       - name: Validate token semantics
         run: npm run tokens:validate
 

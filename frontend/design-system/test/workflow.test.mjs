@@ -38,6 +38,7 @@ test("frontend CI runs every token gate with pinned actions", async () => {
   const commands = [
     "npm ci",
     "npm run tokens:test",
+    "npm run tokens:policy",
     "npm run tokens:validate",
     "npm run tokens:check",
     "git diff --exit-code -- src/styles/generated/tokens.css",
