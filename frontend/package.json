@@ -11,7 +11,8 @@
     "tokens:test": "node --test \"design-system/test/**/*.test.mjs\"",
     "tokens:validate": "node design-system/scripts/validate.mjs",
     "tokens:build": "node design-system/scripts/generate.mjs --write",
-    "tokens:check": "node design-system/scripts/check.mjs"
+    "tokens:check": "node design-system/scripts/check.mjs",
+    "tokens:policy": "node design-system/scripts/repository-policy.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0",
