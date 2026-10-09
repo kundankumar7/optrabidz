@@ -88,19 +88,11 @@ test("rejects relative paths even when traversal would leave the repository", as
   );
 });
 
-test("rejects a symlink that resolves into the repository", async (context) => {
+test("rejects a platform-supported directory link that resolves into the repository", async () => {
   const { assertOutsideRepository } = await loadPathUtilities();
-  const linkPath = path.join(temporaryRoot, "repository-symbolic-link");
-
-  try {
-    await symlink(expectedRepositoryRoot, linkPath, "dir");
-  } catch (error) {
-    if (process.platform === "win32" && error.code === "EPERM") {
-      context.skip("Windows symbolic links require Developer Mode or elevation");
-      return;
-    }
-    throw error;
-  }
+  const linkPath = path.join(temporaryRoot, "repository-directory-link");
+  const linkType = process.platform === "win32" ? "junction" : "dir";
+  await symlink(expectedRepositoryRoot, linkPath, linkType);
 
   await assert.rejects(
     assertOutsideRepository(path.join(linkPath, "bundle.json"), expectedRepositoryRoot),
@@ -108,36 +100,17 @@ test("rejects a symlink that resolves into the repository", async (context) => {
   );
 });
 
-test("rejects a Windows junction that resolves into the repository", async (context) => {
-  if (process.platform !== "win32") {
-    context.skip("Windows junction behavior");
-    return;
-  }
+if (process.platform === "win32") {
+  test("rejects an inside path when only the Windows drive-letter case differs", async () => {
+    const { assertOutsideRepository } = await loadPathUtilities();
+    const alternateCase = `${expectedDesignSystemRoot[0].toLowerCase()}${expectedDesignSystemRoot.slice(1)}`;
 
-  const { assertOutsideRepository } = await loadPathUtilities();
-  const junctionPath = path.join(temporaryRoot, "repository-junction");
-  await symlink(expectedRepositoryRoot, junctionPath, "junction");
-
-  await assert.rejects(
-    assertOutsideRepository(path.join(junctionPath, "bundle.json"), expectedRepositoryRoot),
-    /outside the repository/i,
-  );
-});
-
-test("rejects an inside path when only the Windows drive-letter case differs", async (context) => {
-  if (process.platform !== "win32") {
-    context.skip("Windows drive-letter behavior");
-    return;
-  }
-
-  const { assertOutsideRepository } = await loadPathUtilities();
-  const alternateCase = `${expectedDesignSystemRoot[0].toLowerCase()}${expectedDesignSystemRoot.slice(1)}`;
-
-  await assert.rejects(
-    assertOutsideRepository(alternateCase, expectedRepositoryRoot),
-    /outside the repository/i,
-  );
-});
+    await assert.rejects(
+      assertOutsideRepository(alternateCase, expectedRepositoryRoot),
+      /outside the repository/i,
+    );
+  });
+}
 
 test("does not confuse a sibling directory that merely shares the repository prefix", async () => {
   const { assertOutsideRepository } = await loadPathUtilities();
