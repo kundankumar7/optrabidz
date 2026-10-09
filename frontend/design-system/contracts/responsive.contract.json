@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "strategy": "contentDriven",
+  "evidence": {
+    "reference": "responsive-foundation-stress-review-v2",
+    "themes": ["light", "dark"],
+    "widths": [
+      320,
+      360,
+      390,
+      480,
+      600,
+      679,
+      680,
+      681,
+      768,
+      900,
+      919,
+      920,
+      921,
+      959,
+      960,
+      961,
+      1024,
+      1280,
+      1440
+    ],
+    "requiredContent": [
+      "navigation",
+      "cardGrid",
+      "denseData",
+      "form",
+      "decisionDialog",
+      "readableMeasure"
+    ]
+  },
+  "breakpoints": [
+    {
+      "id": "compact",
+      "token": "responsive.breakpoint.compact",
+      "threshold": 680,
+      "condition": "maxWidthInclusive",
+      "boundaryEvidence": { "below": 679, "exact": 680, "above": 681 },
+      "structuralChanges": [
+        "singleColumnCards",
+        "singleColumnForms",
+        "stackedDialogActions",
+        "compactTypography"
+      ]
+    },
+    {
+      "id": "comfortable",
+      "token": "responsive.breakpoint.comfortable",
+      "threshold": 920,
+      "condition": "maxWidthInclusive",
+      "boundaryEvidence": { "below": 919, "exact": 920, "above": 921 },
+      "structuralChanges": ["labelledDenseDataCards"]
+    },
+    {
+      "id": "wide",
+      "token": "responsive.breakpoint.wide",
+      "threshold": 960,
+      "condition": "maxWidthInclusive",
+      "boundaryEvidence": { "below": 959, "exact": 960, "above": 961 },
+      "structuralChanges": ["collapsedPrimaryNavigation", "twoColumnMarketplace"]
+    }
+  ]
+}

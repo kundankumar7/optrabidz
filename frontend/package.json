@@ -1,0 +1,20 @@
+{
+  "name": "@optrabidz/frontend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11 <12"
+  },
+  "scripts": {
+    "tokens:test": "node --test \"design-system/test/**/*.test.mjs\"",
+    "tokens:validate": "node design-system/scripts/validate.mjs",
+    "tokens:build": "node design-system/scripts/generate.mjs --write",
+    "tokens:check": "node design-system/scripts/check.mjs",
+    "tokens:policy": "node design-system/scripts/repository-policy.mjs"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0"
+  }
+}

@@ -1,0 +1,27 @@
+FONT LICENSING NOTICE
+
+Typeface families:
+- Cabinet Grotesk
+- General Sans
+
+Publisher and licensor: Indian Type Foundry (ITF)
+Source: Fontshare
+License: ITF Free Font License (FFL), Version 2.0 - 17 Aug 2026
+Authoritative terms: https://www.fontshare.com/licenses/sil-ofl
+Family catalogue: https://www.fontshare.com/
+Verified: 2026-10-07
+
+The authoritative license is the version displayed by Fontshare for each
+family. This notice intentionally does not reproduce the mutable EULA as if
+it were an immutable repository license.
+
+Maintenance summary (not a substitute for the authoritative license):
+- personal and commercial product use is permitted;
+- web and application embedding is permitted under the license terms;
+- font files may not be modified, subset, converted, renamed, redistributed,
+  uploaded to a public repository, or passed to external providers;
+- no font binaries are therefore stored in this repository.
+
+Re-check the authoritative family terms before adding or changing any font
+delivery mechanism. If the official terms conflict with this summary, the
+official terms govern.

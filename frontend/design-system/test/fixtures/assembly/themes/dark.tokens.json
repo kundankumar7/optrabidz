@@ -1,0 +1,20 @@
+{
+  "$schema": "urn:optrabidz:design-tokens:schema:2025.10",
+  "color": {
+    "text": {
+      "$type": "color",
+      "primary": {
+        "$value": "{color.neutral.warm.000}"
+      },
+      "secondary": {
+        "$value": "{color.neutral.warm.000}"
+      }
+    },
+    "surface": {
+      "$type": "color",
+      "canvas": {
+        "$value": "{color.neutral.warm.900}"
+      }
+    }
+  }
+}
