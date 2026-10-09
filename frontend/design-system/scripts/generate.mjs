@@ -7,13 +7,15 @@ import {
   generateFigmaBundle,
   writeTemporaryFigmaBundle,
 } from "./lib/generate-figma-bundle.mjs";
+import { loadManifest } from "./lib/load-json.mjs";
 import { designSystemPaths } from "./lib/paths.mjs";
 import { writeIfChanged } from "./lib/serialize-output.mjs";
 
 export async function generateArtifacts(inputs = {}) {
   const tokenRoot = path.resolve(inputs.tokenRoot ?? designSystemPaths.tokenRoot);
+  const manifest = await loadManifest(tokenRoot);
   const cssOutputPath = path.resolve(
-    inputs.cssOutputPath ?? designSystemPaths.generatedCssPath,
+    inputs.cssOutputPath ?? resolveManifestOutput(tokenRoot, manifest.outputs.css),
   );
   const [light, dark] = await Promise.all([
     assembleTheme(tokenRoot, "light"),
@@ -29,6 +31,20 @@ export async function generateArtifacts(inputs = {}) {
     figmaBundle,
     files: new Map([[cssOutputPath, css]]),
   };
+}
+
+function resolveManifestOutput(tokenRoot, configuredPath) {
+  if (typeof configuredPath !== "string" || path.isAbsolute(configuredPath)) {
+    throw new TypeError("Manifest output paths must be relative strings.");
+  }
+
+  const frontendRoot = path.resolve(tokenRoot, "..", "..");
+  const resolved = path.resolve(tokenRoot, configuredPath);
+  const relative = path.relative(frontendRoot, resolved);
+  if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new RangeError(`Manifest output escapes the frontend root: ${configuredPath}.`);
+  }
+  return resolved;
 }
 
 async function main(arguments_) {

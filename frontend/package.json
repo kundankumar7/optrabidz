@@ -15,7 +15,6 @@
     "tokens:policy": "node design-system/scripts/repository-policy.mjs"
   },
   "devDependencies": {
-    "ajv": "8.20.0",
-    "style-dictionary": "5.5.5"
+    "ajv": "8.20.0"
   }
 }

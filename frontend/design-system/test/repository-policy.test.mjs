@@ -32,6 +32,14 @@ function runPolicy(root) {
   });
 }
 
+function runGit(root, arguments_) {
+  const result = spawnSync("git", arguments_, {
+    cwd: root,
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+}
+
 test("accepts a repository containing only maintained source artifacts", async () => {
   const root = path.join(temporaryRoot, "clean");
   await mkdir(path.join(root, "frontend", "design-system"), { recursive: true });
@@ -79,4 +87,18 @@ test("does not inspect dependency, build-output, or version-control directories"
   const result = runPolicy(root);
 
   assert.equal(result.status, 0, result.stderr);
+});
+
+test("rejects force-added private artifacts inside ignored build directories", async () => {
+  const root = path.join(temporaryRoot, "tracked-build-output");
+  const prohibitedPath = path.join(root, "build", "pre-migration-backup.fig");
+  await mkdir(path.dirname(prohibitedPath), { recursive: true });
+  await writeFile(prohibitedPath, "private\n");
+  runGit(root, ["init", "--quiet"]);
+  runGit(root, ["add", "--force", "build/pre-migration-backup.fig"]);
+
+  const result = runPolicy(root);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /build\/pre-migration-backup\.fig/u);
 });

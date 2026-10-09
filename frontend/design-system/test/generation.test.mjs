@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -97,6 +97,40 @@ test("returns byte-identical CSS and keeps generation in memory", async () => {
   assert.equal(first.css, second.css);
   assert.equal(first.files.get(cssOutputPath), first.css);
   await assert.rejects(readFile(cssOutputPath, "utf8"), { code: "ENOENT" });
+});
+
+test("uses the manifest CSS output when no explicit output override is supplied", async () => {
+  const root = await createTemporaryRoot();
+  const temporaryTokenRoot = path.join(root, "tokens");
+  await cp(tokenRoot, temporaryTokenRoot, { recursive: true });
+
+  const manifestPath = path.join(temporaryTokenRoot, "manifest.tokens.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.outputs.css = "../generated/manifest-tokens.css";
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+
+  const { generateArtifacts } = await loadGenerationUtilities();
+  const artifacts = await generateArtifacts({ tokenRoot: temporaryTokenRoot });
+  const expectedPath = path.resolve(temporaryTokenRoot, manifest.outputs.css);
+
+  assert.deepEqual([...artifacts.files.keys()], [expectedPath]);
+});
+
+test("rejects a manifest CSS output outside the frontend root", async () => {
+  const root = await createTemporaryRoot();
+  const temporaryTokenRoot = path.join(root, "design-system", "tokens");
+  await cp(tokenRoot, temporaryTokenRoot, { recursive: true });
+
+  const manifestPath = path.join(temporaryTokenRoot, "manifest.tokens.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.outputs.css = "../../../outside.css";
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+
+  const { generateArtifacts } = await loadGenerationUtilities();
+  await assert.rejects(
+    generateArtifacts({ tokenRoot: temporaryTokenRoot }),
+    /manifest output escapes the frontend root/i,
+  );
 });
 
 test("writes only changed bytes and rejects stale generated files without modifying them", async () => {

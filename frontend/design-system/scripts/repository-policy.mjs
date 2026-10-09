@@ -1,6 +1,10 @@
 import { readdir } from "node:fs/promises";
+import { execFile } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 const ignoredDirectories = new Set([".git", "build", "node_modules", "target"]);
 const prohibitedNames = [
@@ -21,7 +25,41 @@ export async function findRepositoryPolicyViolations(repositoryRoot) {
   const absoluteRoot = path.resolve(repositoryRoot);
   const violations = [];
   await visitDirectory(absoluteRoot, absoluteRoot, violations);
+  await inspectTrackedPaths(absoluteRoot, violations);
   return violations.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+async function inspectTrackedPaths(repositoryRoot, violations) {
+  const trackedPaths = await listTrackedPaths(repositoryRoot);
+  const existingPaths = new Set(violations.map((violation) => violation.path));
+
+  for (const trackedPath of trackedPaths) {
+    const normalizedPath = trackedPath.replaceAll("\\", "/");
+    if (existingPaths.has(normalizedPath)) {
+      continue;
+    }
+    const match = prohibitedNames.find(({ pattern }) => pattern.test(path.posix.basename(normalizedPath)));
+    if (match) {
+      violations.push({ path: normalizedPath, reason: match.label });
+      existingPaths.add(normalizedPath);
+    }
+  }
+}
+
+async function listTrackedPaths(repositoryRoot) {
+  try {
+    const { stdout } = await execFileAsync(
+      "git",
+      ["-C", repositoryRoot, "ls-files", "-z"],
+      { encoding: "utf8", windowsHide: true },
+    );
+    return stdout.split("\0").filter(Boolean);
+  } catch (error) {
+    if (error?.stderr?.includes("not a git repository")) {
+      return [];
+    }
+    throw error;
+  }
 }
 
 async function visitDirectory(directory, repositoryRoot, violations) {
