@@ -27,6 +27,7 @@ class RuntimeConfigurationPolicyTest {
             "optrabidz.financial.local-provider.enabled",
             "optrabidz.financial.sandbox-providers.enabled",
             "optrabidz.financial.demo-provider.enabled",
+            "optrabidz.financial.payout-orchestration.enabled",
             "optrabidz.financial.webhook.providers.UPI.enabled",
             "optrabidz.financial.webhook.providers.CARD.enabled",
             "optrabidz.financial.webhook.providers.DEMO.enabled"
@@ -69,10 +70,14 @@ class RuntimeConfigurationPolicyTest {
                 .isEqualTo("optional:file:.env[.properties]");
         assertThat(development).doesNotContainKeys("spring.profiles.active", "spring.profiles.default");
         assertThat(PRIVILEGED_SWITCHES.stream()
-                .filter(key -> !key.contains(".DEMO.") && !key.contains("demo-provider")))
+                .filter(key -> !key.contains(".DEMO.")
+                        && !key.contains("demo-provider")
+                        && !key.contains("payout-orchestration")))
                 .allSatisfy(key -> assertThat(development.getProperty(key))
                         .as(key)
                         .matches("\\$\\{[A-Z0-9_]+:false}"));
+        assertThat(development.getProperty("optrabidz.financial.payout-orchestration.enabled"))
+                .isEqualTo("false");
         assertThat(development).doesNotContainKeys(
                 "optrabidz.financial.demo-provider.enabled",
                 "optrabidz.financial.webhook.providers.DEMO.enabled",
@@ -116,6 +121,8 @@ class RuntimeConfigurationPolicyTest {
                 .isEqualTo("false");
         assertThat(demonstration.getProperty("optrabidz.financial.demo-provider.enabled"))
                 .isEqualTo("true");
+        assertThat(demonstration.getProperty("optrabidz.financial.payout-orchestration.enabled"))
+                .isEqualTo("true");
         assertThat(demonstration.getProperty("optrabidz.financial.webhook.providers.DEMO.enabled"))
                 .isEqualTo("true");
         assertThat(demonstration.getProperty("optrabidz.financial.webhook.providers.DEMO.active-secret"))
@@ -125,9 +132,11 @@ class RuntimeConfigurationPolicyTest {
     }
 
     @Test
-    void productionProfileDisablesSandboxNotificationChannels() throws IOException {
+    void productionProfileKeepsStagedFinancialFlowAndSandboxChannelsDisabled() throws IOException {
         Properties production = load("src/main/resources/application-prod.properties");
 
+        assertThat(production.getProperty("optrabidz.financial.payout-orchestration.enabled"))
+                .isEqualTo("false");
         assertThat(production.getProperty("optrabidz.notification.channels.email.enabled"))
                 .isEqualTo("false");
         assertThat(production.getProperty("optrabidz.notification.channels.push.enabled"))

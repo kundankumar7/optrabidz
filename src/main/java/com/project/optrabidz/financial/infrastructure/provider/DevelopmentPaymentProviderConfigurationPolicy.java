@@ -13,20 +13,24 @@ import java.util.List;
 public class DevelopmentPaymentProviderConfigurationPolicy implements SmartInitializingSingleton {
     private final DevelopmentPaymentProviderProperties properties;
     private final DemoPaymentProviderProperties demoProperties;
+    private final PayoutOrchestrationProperties payoutOrchestrationProperties;
     private final Environment environment;
 
     public DevelopmentPaymentProviderConfigurationPolicy(
             DevelopmentPaymentProviderProperties properties,
             DemoPaymentProviderProperties demoProperties,
+            PayoutOrchestrationProperties payoutOrchestrationProperties,
             Environment environment) {
         this.properties = properties;
         this.demoProperties = demoProperties;
+        this.payoutOrchestrationProperties = payoutOrchestrationProperties;
         this.environment = environment;
     }
 
     @Override
     public void afterSingletonsInstantiated() {
         validateDemoProvider();
+        validatePayoutOrchestration();
         List<String> enabledProviders = enabledProviders();
         if (enabledProviders.isEmpty()) {
             return;
@@ -55,6 +59,25 @@ public class DevelopmentPaymentProviderConfigurationPolicy implements SmartIniti
         }
         if (demoProperties.getPayoutBehavior() == null) {
             throw new IllegalStateException("Demo payout behavior is required");
+        }
+    }
+
+    private void validatePayoutOrchestration() {
+        if (!payoutOrchestrationProperties.isEnabled()) {
+            return;
+        }
+        String[] activeProfiles = environment.getActiveProfiles();
+        boolean testRuntime = activeProfiles.length > 0
+                && Arrays.stream(activeProfiles).allMatch("test"::equals);
+        List<String> activeProfileList = Arrays.asList(activeProfiles);
+        boolean demoRuntime = activeProfileList.contains("demo")
+                && activeProfileList.stream().allMatch(
+                        profile -> "demo".equals(profile) || "test".equals(profile))
+                && demoProperties.isEnabled();
+        if (!testRuntime && !demoRuntime) {
+            throw new IllegalStateException(
+                    "Payout orchestration requires either the test runtime or the configured demo runtime"
+            );
         }
     }
 

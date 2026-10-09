@@ -134,6 +134,7 @@ class ListingServiceTest {
         when(startupRepository.findByAccountId(ACCOUNT_ID)).thenReturn(Optional.of(startup()));
         when(listingRepository.findById(LISTING_ID)).thenReturn(Optional.of(draftListing));
         when(policyResolver.resolve(FundingModel.DEBT)).thenReturn(fundingModelPolicy);
+        when(receivingAccountReadinessPort.requiresVerifiedBinding()).thenReturn(true);
         when(receivingAccountReadinessPort.hasVerifiedBinding(ACCOUNT_ID)).thenReturn(false);
 
         assertThatThrownBy(() -> service.publishListing(
@@ -149,6 +150,26 @@ class ListingServiceTest {
 
         verify(listingRepository, never()).save(any());
         verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
+    void startupCanPublishWhenVerifiedReceivingBindingIsNotRequired() {
+        FundingListing draftListing = draftListing();
+        when(startupRepository.findByAccountId(ACCOUNT_ID)).thenReturn(Optional.of(startup()));
+        when(listingRepository.findById(LISTING_ID)).thenReturn(Optional.of(draftListing));
+        when(policyResolver.resolve(FundingModel.DEBT)).thenReturn(fundingModelPolicy);
+        when(receivingAccountReadinessPort.requiresVerifiedBinding()).thenReturn(false);
+        when(listingExpiryPolicy.expiresAtFor(any(Instant.class)))
+                .thenAnswer(invocation -> invocation.<Instant>getArgument(0)
+                        .plusSeconds(86_400));
+        when(listingRepository.save(any(FundingListing.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.publishListing(ACCOUNT_ID, RoleType.STARTUP, LISTING_ID, null);
+
+        verify(receivingAccountReadinessPort, never()).hasVerifiedBinding(any());
+        verify(listingRepository).save(draftListing);
+        verify(eventPublisher).publish(any());
     }
 
     private static FundingListing draftListing() {

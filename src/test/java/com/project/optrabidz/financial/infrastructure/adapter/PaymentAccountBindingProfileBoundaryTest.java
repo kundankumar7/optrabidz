@@ -33,6 +33,8 @@ class PaymentAccountBindingProfileBoundaryTest {
                             .doesNotHaveBean(DemoReceivingAccountReadinessAdapter.class)
                             .hasSingleBean(ReceivingAccountReadinessPort.class);
                     assertThat(context.getBean(ReceivingAccountReadinessPort.class)
+                            .requiresVerifiedBinding()).isFalse();
+                    assertThat(context.getBean(ReceivingAccountReadinessPort.class)
                             .hasVerifiedBinding(501L)).isFalse();
                 });
     }
@@ -50,6 +52,8 @@ class PaymentAccountBindingProfileBoundaryTest {
                             .hasSingleBean(ReceivingAccountReadinessPort.class);
                     assertThat(context.getBean(ReceivingAccountReadinessPort.class))
                             .isInstanceOf(DemoReceivingAccountReadinessAdapter.class);
+                    assertThat(context.getBean(ReceivingAccountReadinessPort.class)
+                            .requiresVerifiedBinding()).isTrue();
                 });
     }
 
@@ -64,6 +68,8 @@ class PaymentAccountBindingProfileBoundaryTest {
                             .doesNotHaveBean(PaymentAccountBindingService.class)
                             .doesNotHaveBean(DemoReceivingAccountReadinessAdapter.class)
                             .hasSingleBean(ReceivingAccountReadinessPort.class);
+                    assertThat(context.getBean(ReceivingAccountReadinessPort.class)
+                            .requiresVerifiedBinding()).isFalse();
                     assertThat(context.getBean(ReceivingAccountReadinessPort.class)
                             .hasVerifiedBinding(601L)).isFalse();
                 });
