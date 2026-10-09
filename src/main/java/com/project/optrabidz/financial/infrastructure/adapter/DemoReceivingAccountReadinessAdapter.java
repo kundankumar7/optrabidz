@@ -19,6 +19,11 @@ public class DemoReceivingAccountReadinessAdapter implements ReceivingAccountRea
     }
 
     @Override
+    public boolean requiresVerifiedBinding() {
+        return true;
+    }
+
+    @Override
     public boolean hasVerifiedBinding(Long accountId) {
         return repository.findVerifiedByAccountIdAndProviderCode(accountId, DEMO_PROVIDER).isPresent();
     }

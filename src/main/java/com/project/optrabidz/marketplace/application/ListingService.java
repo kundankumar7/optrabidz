@@ -151,7 +151,8 @@ public class ListingService {
 
         eligibilityEvaluationController.assertStartupCanPublishListing(accountId);
         policyResolver.resolve(listing.getFundingModel()).validateListing(listing);
-        if (!receivingAccountReadinessPort.hasVerifiedBinding(accountId)) {
+        if (receivingAccountReadinessPort.requiresVerifiedBinding()
+                && !receivingAccountReadinessPort.hasVerifiedBinding(accountId)) {
             throw new ReceivingAccountNotReadyException(
                     "Startup has no verified receiving account binding; accountId=" + accountId
             );

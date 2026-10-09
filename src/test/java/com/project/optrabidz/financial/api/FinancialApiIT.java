@@ -3,6 +3,7 @@ package com.project.optrabidz.financial.api;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 import com.project.optrabidz.financial.application.FinancialService;
+import com.project.optrabidz.financial.infrastructure.provider.PayoutOrchestrationProperties;
 import com.project.optrabidz.common.outbox.OutboxDispatcher;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.testsupport.ApiIntegrationTestSupport;
@@ -57,6 +58,97 @@ class FinancialApiIT extends ApiIntegrationTestSupport {
 
     @Autowired
     private OutboxDispatcher outboxDispatcher;
+
+    @Autowired
+    private PayoutOrchestrationProperties payoutOrchestrationProperties;
+
+    @Test
+    void compatibilityModeConfirmsSettlementAndRepaymentWithoutPayoutPendingStates() throws Exception {
+        payoutOrchestrationProperties.setEnabled(false);
+        try {
+            FinanceScenario scenario = createAcceptedBidScenario(
+                    "Compatibility Startup",
+                    "Compatibility Investor",
+                    new BigDecimal("410000.00")
+            );
+            Long settlementId = getInvestorSettlementId(scenario.investor());
+            Long settlementIntentId = createSettlementPaymentIntent(
+                    scenario.investor(), settlementId);
+            Long settlementAttemptId = createPaymentAttempt(
+                    scenario.investor(), settlementIntentId);
+
+            mockMvc.perform(post(
+                            "/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm",
+                            settlementAttemptId)
+                            .session(scenario.investor().session())
+                            .cookie(scenario.investor().xsrfCookie())
+                            .header("X-CSRF-TOKEN", scenario.investor().csrfToken())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.attemptState").value("CONFIRMED"));
+
+            assertThat(jdbcTemplate.queryForObject("""
+                    select settlement_state::text
+                    from settlement
+                    where settlement_id = ?
+                    """, String.class, settlementId)).isEqualTo("SETTLEMENT_CONFIRMED");
+            assertThat(count("""
+                    select count(*) from payout_transfer where payment_intent_id = ?
+                    """, settlementIntentId)).isZero();
+            assertThat(count("""
+                    select count(*) from event_outbox
+                    where event_type = 'PaymentCollectionConfirmedEvent'
+                      and payload ->> 'paymentIntentId' = ?
+                    """, settlementIntentId.toString())).isZero();
+            assertThat(count("""
+                    select count(*) from event_outbox
+                    where event_type = 'SettlementConfirmedEvent'
+                      and payload ->> 'paymentIntentId' = ?
+                    """, settlementIntentId.toString())).isEqualTo(1);
+
+            Long repaymentId = getStartupRepaymentId(scenario.startup());
+            Long repaymentIntentId = createRepaymentPaymentIntent(
+                    scenario.startup(), repaymentId);
+            Long repaymentAttemptId = createPaymentAttempt(
+                    scenario.startup(), repaymentIntentId);
+
+            mockMvc.perform(post(
+                            "/api/v1/payment-attempts/{paymentAttemptId}/actions/local-confirm",
+                            repaymentAttemptId)
+                            .session(scenario.startup().session())
+                            .cookie(scenario.startup().xsrfCookie())
+                            .header("X-CSRF-TOKEN", scenario.startup().csrfToken())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.attemptState").value("CONFIRMED"));
+
+            assertThat(count("""
+                    select count(*) from repayment_installment
+                    where repayment_id = ? and installment_status = 'PAID'
+                    """, repaymentId)).isEqualTo(1);
+            assertThat(count("""
+                    select count(*) from repayment_installment
+                    where repayment_id = ? and installment_status = 'PAYOUT_PENDING'
+                    """, repaymentId)).isZero();
+            assertThat(count("""
+                    select count(*) from payout_transfer where payment_intent_id = ?
+                    """, repaymentIntentId)).isZero();
+            assertThat(count("""
+                    select count(*) from event_outbox
+                    where event_type = 'PaymentCollectionConfirmedEvent'
+                      and payload ->> 'paymentIntentId' = ?
+                    """, repaymentIntentId.toString())).isZero();
+            assertThat(count("""
+                    select count(*) from event_outbox
+                    where event_type = 'RepaymentInstallmentPaidEvent'
+                      and payload ->> 'paymentIntentId' = ?
+                    """, repaymentIntentId.toString())).isEqualTo(1);
+        } finally {
+            payoutOrchestrationProperties.setEnabled(true);
+        }
+    }
 
     @Test
     void scheduledOverdueTransitionPublishesOnlyOnce() {

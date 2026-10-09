@@ -12,6 +12,11 @@ import org.springframework.stereotype.Component;
 )
 public class UnavailableReceivingAccountReadinessAdapter implements ReceivingAccountReadinessPort {
     @Override
+    public boolean requiresVerifiedBinding() {
+        return false;
+    }
+
+    @Override
     public boolean hasVerifiedBinding(Long accountId) {
         return false;
     }

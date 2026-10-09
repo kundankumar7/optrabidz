@@ -147,14 +147,14 @@ class BidServiceTest {
     }
 
     @Test
-    void investorCanSubmitBidForOpenDebtListing() {
+    void investorCanSubmitBidWhenVerifiedReceivingBindingIsNotRequired() {
         when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID)).thenReturn(Optional.of(investor()));
         when(listingRepository.findById(LISTING_ID)).thenReturn(Optional.of(openListing()));
         when(startupRepository.findById(STARTUP_ID)).thenReturn(Optional.of(startup()));
         when(crossLifecycleConstraintController.evaluateBidSubmission(ListingState.OPEN.name()))
                 .thenReturn(GovernanceDecision.allow("Listing can accept bids"));
         when(bidRepository.existsActiveByInvestorIdAndListingId(INVESTOR_ID, LISTING_ID)).thenReturn(false);
-        when(receivingAccountReadinessPort.hasVerifiedBinding(INVESTOR_ACCOUNT_ID)).thenReturn(true);
+        when(receivingAccountReadinessPort.requiresVerifiedBinding()).thenReturn(false);
         when(bidRepository.save(any(Bid.class)))
                 .thenAnswer(invocation -> withBidId(invocation.getArgument(0), BID_ID));
 
@@ -166,6 +166,7 @@ class BidServiceTest {
         assertThat(response.bidState()).isEqualTo(BidState.SUBMITTED);
         assertThat(response.debtTerms().proposedAmount()).isEqualByComparingTo("500000.00");
         verify(eligibilityEvaluationController).assertInvestorCanSubmitBid(INVESTOR_ACCOUNT_ID);
+        verify(receivingAccountReadinessPort, never()).hasVerifiedBinding(any());
         verify(eventPublisher).publish(any());
     }
 
@@ -177,6 +178,7 @@ class BidServiceTest {
         when(crossLifecycleConstraintController.evaluateBidSubmission(ListingState.OPEN.name()))
                 .thenReturn(GovernanceDecision.allow("Listing can accept bids"));
         when(bidRepository.existsActiveByInvestorIdAndListingId(INVESTOR_ID, LISTING_ID)).thenReturn(false);
+        when(receivingAccountReadinessPort.requiresVerifiedBinding()).thenReturn(true);
         when(receivingAccountReadinessPort.hasVerifiedBinding(INVESTOR_ACCOUNT_ID)).thenReturn(false);
 
         assertThatThrownBy(() -> service.submitBid(

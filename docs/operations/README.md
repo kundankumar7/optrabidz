@@ -239,6 +239,31 @@ Disabled webhook providers require no secret. Enabled providers fail before
 readiness when secret material is missing or invalid. When profiles are mixed,
 production restrictions take precedence.
 
+Payout orchestration introduces persisted settlement and repayment states that
+older application versions do not understand. This release therefore permits
+orchestration only in the `demo` and `test` profiles; startup rejects attempts
+to enable it in production, development, or mixed-profile runtimes. Production
+continues to use direct confirmation until a compatible receiving-account and
+payout provider is delivered with a separately reviewed activation plan.
+
+Before rolling back this release, verify that no incompatible states or
+unfinished collection events exist:
+
+```sql
+SELECT
+    (SELECT count(*) FROM settlement
+     WHERE settlement_state = 'SETTLEMENT_PAYOUT_PENDING') AS pending_settlements,
+    (SELECT count(*) FROM repayment_installment
+     WHERE installment_status = 'PAYOUT_PENDING') AS pending_installments,
+    (SELECT count(*) FROM event_outbox
+     WHERE event_type = 'PaymentCollectionConfirmedEvent'
+       AND event_status <> 'PROCESSED') AS unfinished_collection_events;
+```
+
+All three counts must be zero. If any count is non-zero, do not start an older
+binary. Keep the compatible version running and complete or forward-recover
+the affected payout lifecycle before reconsidering rollback.
+
 In-app notification delivery is database-backed and available in every runtime
 profile. Sandbox email and push adapters are restricted to `dev`, `test`, and
 `demo`; the production profile disables both channels explicitly. External
@@ -256,10 +281,11 @@ Before a release:
 1. run unit and PostgreSQL integration tests;
 2. validate Flyway history and rehearse any populated-database migration;
 3. confirm local and sandbox providers are disabled in the target profile;
-4. verify required secrets are supplied without logging their values;
-5. inspect outbox and notification backlog, retry, and failed-delivery counts;
-6. confirm request IDs connect API failures to server logs and audit records;
-7. record a rollback or forward-recovery checkpoint.
+4. confirm payout orchestration matches the approved rollout phase;
+5. verify required secrets are supplied without logging their values;
+6. inspect outbox and notification backlog, retry, and failed-delivery counts;
+7. confirm request IDs connect API failures to server logs and audit records;
+8. record a rollback or forward-recovery checkpoint.
 
 Never publish credentials, webhook secrets, access tokens, database dumps, or
 machine-specific filesystem paths in repository documentation or shared

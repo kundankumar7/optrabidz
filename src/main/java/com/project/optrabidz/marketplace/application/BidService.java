@@ -146,7 +146,8 @@ public class BidService {
         if (bidRepository.existsActiveByInvestorIdAndListingId(investor.getInvestorId(), listing.getListingId())) {
             throw new BidAlreadyExistsException("Investor already has an active bid for this listing");
         }
-        if (!receivingAccountReadinessPort.hasVerifiedBinding(accountId)) {
+        if (receivingAccountReadinessPort.requiresVerifiedBinding()
+                && !receivingAccountReadinessPort.hasVerifiedBinding(accountId)) {
             throw new ReceivingAccountNotReadyException(
                     "Investor has no verified receiving account binding; accountId=" + accountId
             );

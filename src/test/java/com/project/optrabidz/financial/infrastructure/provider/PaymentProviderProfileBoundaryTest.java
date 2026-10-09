@@ -107,6 +107,46 @@ class PaymentProviderProfileBoundaryTest {
     }
 
     @Test
+    void payoutOrchestrationRejectsProfilesWithoutACompatiblePayoutRuntime() {
+        contextRunner.withSystemProperties("spring.profiles.active=prod")
+                .withPropertyValues("optrabidz.financial.payout-orchestration.enabled=true")
+                .run(context -> assertThat(context).hasFailed());
+
+        contextRunner.withSystemProperties("spring.profiles.active=dev")
+                .withPropertyValues("optrabidz.financial.payout-orchestration.enabled=true")
+                .run(context -> assertThat(context).hasFailed());
+
+        contextRunner.withSystemProperties("spring.profiles.active=demo")
+                .withPropertyValues("optrabidz.financial.payout-orchestration.enabled=true")
+                .run(context -> assertThat(context).hasFailed());
+    }
+
+    @Test
+    void payoutOrchestrationAllowsTestAndConfiguredDemoRuntimes() {
+        contextRunner.withSystemProperties("spring.profiles.active=test")
+                .withPropertyValues("optrabidz.financial.payout-orchestration.enabled=true")
+                .run(context -> assertThat(context).hasNotFailed());
+
+        contextRunner.withSystemProperties("spring.profiles.active=demo")
+                .withPropertyValues(
+                        "optrabidz.financial.demo-provider.enabled=true",
+                        "optrabidz.financial.payout-orchestration.enabled=true"
+                )
+                .run(context -> assertThat(context)
+                        .hasNotFailed()
+                        .hasSingleBean(DemoPayoutProvider.class));
+
+        contextRunner.withSystemProperties("spring.profiles.active=test,demo")
+                .withPropertyValues(
+                        "optrabidz.financial.demo-provider.enabled=true",
+                        "optrabidz.financial.payout-orchestration.enabled=true"
+                )
+                .run(context -> assertThat(context)
+                        .hasNotFailed()
+                        .hasSingleBean(DemoPayoutProvider.class));
+    }
+
+    @Test
     void enabledDemoProviderRejectsUnsupportedPayoutBehavior() {
         contextRunner.withSystemProperties("spring.profiles.active=demo")
                 .withPropertyValues(
@@ -152,6 +192,7 @@ class PaymentProviderProfileBoundaryTest {
                     pattern = {
                             "com\\.project\\.optrabidz\\.financial\\.infrastructure\\.provider\\.DevelopmentPaymentProviderProperties",
                              "com\\.project\\.optrabidz\\.financial\\.infrastructure\\.provider\\.DevelopmentPaymentProviderConfigurationPolicy",
+                             "com\\.project\\.optrabidz\\.financial\\.infrastructure\\.provider\\.PayoutOrchestrationProperties",
                              "com\\.project\\.optrabidz\\.financial\\.infrastructure\\.provider\\.demo\\.DemoPaymentProviderProperties"
                     }
             )
