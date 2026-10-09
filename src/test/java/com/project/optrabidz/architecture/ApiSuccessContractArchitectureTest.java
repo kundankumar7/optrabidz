@@ -5,8 +5,11 @@ import com.project.optrabidz.classification.api.InvestorPreferenceController;
 import com.project.optrabidz.classification.api.StartupClassificationController;
 import com.project.optrabidz.common.application.pagination.PageResponse;
 import com.project.optrabidz.financial.api.FinancialController;
+import com.project.optrabidz.financial.api.DemoPaymentController;
 import com.project.optrabidz.financial.api.LocalPaymentSimulationController;
 import com.project.optrabidz.financial.api.PaymentProviderWebhookController;
+import com.project.optrabidz.financial.api.PaymentAccountBindingController;
+import com.project.optrabidz.financial.api.PayoutTransferController;
 import com.project.optrabidz.governance.api.AdminRecoveryController;
 import com.project.optrabidz.marketplace.api.AgreementController;
 import com.project.optrabidz.marketplace.api.BidController;
@@ -57,6 +60,9 @@ class ApiSuccessContractArchitectureTest {
             BidController.class,
             AgreementController.class,
             FinancialController.class,
+            DemoPaymentController.class,
+            PaymentAccountBindingController.class,
+            PayoutTransferController.class,
             LocalPaymentSimulationController.class,
             NotificationController.class,
             AdminAuditController.class,
@@ -107,6 +113,18 @@ class ApiSuccessContractArchitectureTest {
             "FinancialController#createRepaymentInstallmentPaymentIntent",
             "FinancialController#getPaymentIntent",
             "FinancialController#createPaymentAttempt",
+            "DemoPaymentController#getCheckout",
+            "DemoPaymentController#processOutcome",
+            "PaymentAccountBindingController#create",
+            "PaymentAccountBindingController#replace",
+            "PaymentAccountBindingController#getCurrent",
+            "PaymentAccountBindingController#getById",
+            "PaymentAccountBindingController#verify",
+            "PaymentAccountBindingController#deactivate",
+            "PayoutTransferController#getById",
+            "PayoutTransferController#getByPaymentIntentId",
+            "PayoutTransferController#getTimeline",
+            "PayoutTransferController#retry",
             "LocalPaymentSimulationController#confirmLocalPaymentAttempt",
             "LocalPaymentSimulationController#failLocalPaymentAttempt",
             "NotificationController#getMyNotifications",
@@ -134,6 +152,8 @@ class ApiSuccessContractArchitectureTest {
             "FinancialController#createRepaymentPaymentIntent",
             "FinancialController#createRepaymentInstallmentPaymentIntent",
             "FinancialController#createPaymentAttempt",
+            "PaymentAccountBindingController#create",
+            "PaymentAccountBindingController#replace",
             "NotificationController#markRead",
             "NotificationController#deleteNotification",
             "NotificationController#revokeSubscription"
@@ -156,7 +176,7 @@ class ApiSuccessContractArchitectureTest {
                     .as("the shared success envelope must stay retired");
 
     @Test
-    void allSixtySixEndpointsUseTheirRequiredReturnContract() {
+    void allSeventyEightEndpointsUseTheirRequiredReturnContract() {
         Set<String> discoveredControllers = new ClassFileImporter()
                 .withImportOption(new ImportOption.DoNotIncludeTests())
                 .importPackages("com.project.optrabidz").stream()
@@ -182,10 +202,10 @@ class ApiSuccessContractArchitectureTest {
                         Function.identity()
                 ));
 
-        assertThat(endpoints).hasSize(66);
+        assertThat(endpoints).hasSize(78);
         assertThat(endpoints.keySet()).containsExactlyInAnyOrderElementsOf(
                 CONTRACT_METHODS);
-        assertThat(EXPLICIT_HTTP_METHODS).hasSize(20);
+        assertThat(EXPLICIT_HTTP_METHODS).hasSize(22);
 
         endpoints.forEach((methodKey, method) -> {
             if (EXPLICIT_HTTP_METHODS.contains(methodKey)) {

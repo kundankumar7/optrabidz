@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:optrabidz:design-tokens:status-contract:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "statuses"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "statuses": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tokens", "labelRequired", "nonColorCue"],
+        "properties": {
+          "tokens": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["background", "foreground", "border", "icon"],
+            "properties": {
+              "background": { "type": "string" },
+              "foreground": { "type": "string" },
+              "border": { "type": "string" },
+              "icon": { "type": "string" }
+            }
+          },
+          "labelRequired": { "const": true },
+          "nonColorCue": { "enum": ["icon", "text", "iconOrText"] }
+        }
+      }
+    }
+  }
+}

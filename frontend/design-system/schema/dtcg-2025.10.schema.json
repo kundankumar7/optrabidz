@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:optrabidz:design-tokens:schema:2025.10",
+  "title": "OptraBidz project-maintained DTCG 2025.10 profile",
+  "type": "object",
+  "required": ["$schema"],
+  "properties": {
+    "$schema": { "const": "urn:optrabidz:design-tokens:schema:2025.10" },
+    "$description": { "type": "string" },
+    "$extensions": { "type": "object" }
+  },
+  "patternProperties": {
+    "^(?!\\$)": { "$ref": "#/definitions/node" }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "node": {
+      "oneOf": [
+        { "$ref": "#/definitions/valueToken" },
+        { "$ref": "#/definitions/referenceToken" },
+        { "$ref": "#/definitions/group" }
+      ]
+    },
+    "valueToken": {
+      "type": "object",
+      "required": ["$value"],
+      "properties": {
+        "$value": {},
+        "$type": { "$ref": "#/definitions/tokenType" },
+        "$description": { "type": "string" },
+        "$deprecated": { "oneOf": [{ "type": "boolean" }, { "type": "string" }] },
+        "$extensions": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "referenceToken": {
+      "type": "object",
+      "required": ["$ref"],
+      "properties": {
+        "$ref": { "type": "string", "pattern": "^#/" },
+        "$type": { "$ref": "#/definitions/tokenType" },
+        "$description": { "type": "string" },
+        "$deprecated": { "oneOf": [{ "type": "boolean" }, { "type": "string" }] },
+        "$extensions": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "group": {
+      "type": "object",
+      "properties": {
+        "$root": {
+          "oneOf": [
+            { "$ref": "#/definitions/valueToken" },
+            { "$ref": "#/definitions/referenceToken" }
+          ]
+        },
+        "$type": { "$ref": "#/definitions/tokenType" },
+        "$description": { "type": "string" },
+        "$extends": {
+          "type": "string",
+          "pattern": "^(?:\\{[^{}]+\\}|#/.+)$"
+        },
+        "$deprecated": { "oneOf": [{ "type": "boolean" }, { "type": "string" }] },
+        "$extensions": { "type": "object" }
+      },
+      "patternProperties": {
+        "^(?!\\$)": { "$ref": "#/definitions/node" }
+      },
+      "additionalProperties": false
+    },
+    "tokenType": {
+      "enum": [
+        "color",
+        "dimension",
+        "fontFamily",
+        "fontWeight",
+        "duration",
+        "cubicBezier",
+        "number",
+        "strokeStyle",
+        "border",
+        "transition",
+        "shadow",
+        "gradient",
+        "typography"
+      ]
+    }
+  }
+}

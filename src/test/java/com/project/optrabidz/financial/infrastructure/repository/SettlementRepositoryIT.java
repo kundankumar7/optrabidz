@@ -72,6 +72,42 @@ class SettlementRepositoryIT extends PostgresJpaIntegrationTestSupport {
                 .isEqualTo(settlementId);
     }
 
+    @Test
+    void movesSettlementFromPendingThroughPayoutPendingToConfirmedConditionally() {
+        Agreement agreement = testData.createAgreement("settlement payout transition");
+        Settlement settlement = repository.save(pendingSettlement(agreement));
+        long paymentIntentId = 7001L;
+
+        assertThat(repository.markPayoutPending(
+                settlement.getSettlementId(), paymentIntentId, NOW.plusSeconds(10)))
+                .isEqualTo(1);
+        assertThat(repository.markPayoutPending(
+                settlement.getSettlementId(), paymentIntentId, NOW.plusSeconds(11)))
+                .isZero();
+        assertThat(repository.findById(settlement.getSettlementId()))
+                .isPresent()
+                .get()
+                .satisfies(pending -> {
+                    assertThat(pending.getSettlementState()).isEqualTo(SettlementState.SETTLEMENT_PAYOUT_PENDING);
+                    assertThat(pending.getConfirmedPaymentIntentId()).isEqualTo(paymentIntentId);
+                    assertThat(pending.getConfirmedAt()).isNull();
+                });
+
+        assertThat(repository.confirmPayoutPending(
+                settlement.getSettlementId(), paymentIntentId, NOW.plusSeconds(20)))
+                .isEqualTo(1);
+        assertThat(repository.confirmPayoutPending(
+                settlement.getSettlementId(), paymentIntentId, NOW.plusSeconds(21)))
+                .isZero();
+        assertThat(repository.findById(settlement.getSettlementId()))
+                .isPresent()
+                .get()
+                .satisfies(confirmed -> {
+                    assertThat(confirmed.getSettlementState()).isEqualTo(SettlementState.SETTLEMENT_CONFIRMED);
+                    assertThat(confirmed.getConfirmedAt()).isEqualTo(NOW.plusSeconds(20));
+                });
+    }
+
     private static Settlement pendingSettlement(Agreement agreement) {
         return Settlement.builder()
                 .agreementId(agreement.agreementId())

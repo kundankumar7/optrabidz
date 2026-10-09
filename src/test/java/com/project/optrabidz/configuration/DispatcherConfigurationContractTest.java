@@ -9,6 +9,7 @@ import com.project.optrabidz.notification.application.channel.NotificationChanne
 import com.project.optrabidz.notification.application.channel.NotificationChannelRegistry;
 import com.project.optrabidz.notification.application.channel.NotificationDeliveryDispatcher;
 import com.project.optrabidz.notification.application.channel.NotificationDispatcherProperties;
+import com.project.optrabidz.notification.application.channel.InAppNotificationChannelStrategy;
 import com.project.optrabidz.notification.application.channel.SandboxEmailNotificationChannelStrategy;
 import com.project.optrabidz.notification.application.channel.SandboxPushNotificationChannelStrategy;
 import org.junit.jupiter.api.Test;
@@ -62,26 +63,67 @@ class DispatcherConfigurationContractTest {
 
     @Test
     void emailChannelIsEnabledWhenAbsentOrTrueAndDisabledWhenFalse() {
-        channelRunner.run(context -> assertThat(context)
+        channelRunner.withSystemProperties("spring.profiles.active=dev")
+                .run(context -> assertThat(context)
                 .hasSingleBean(SandboxEmailNotificationChannelStrategy.class));
-        channelRunner.withPropertyValues("optrabidz.notification.channels.email.enabled=true")
+        channelRunner.withSystemProperties("spring.profiles.active=dev")
+                .withPropertyValues("optrabidz.notification.channels.email.enabled=true")
                 .run(context -> assertThat(context)
                         .hasSingleBean(SandboxEmailNotificationChannelStrategy.class));
-        channelRunner.withPropertyValues("optrabidz.notification.channels.email.enabled=false")
+        channelRunner.withSystemProperties("spring.profiles.active=dev")
+                .withPropertyValues("optrabidz.notification.channels.email.enabled=false")
                 .run(context -> assertThat(context)
                         .doesNotHaveBean(SandboxEmailNotificationChannelStrategy.class));
     }
 
     @Test
     void pushChannelIsEnabledWhenAbsentOrTrueAndDisabledWhenFalse() {
-        channelRunner.run(context -> assertThat(context)
+        channelRunner.withSystemProperties("spring.profiles.active=test")
+                .run(context -> assertThat(context)
                 .hasSingleBean(SandboxPushNotificationChannelStrategy.class));
-        channelRunner.withPropertyValues("optrabidz.notification.channels.push.enabled=true")
+        channelRunner.withSystemProperties("spring.profiles.active=test")
+                .withPropertyValues("optrabidz.notification.channels.push.enabled=true")
                 .run(context -> assertThat(context)
                         .hasSingleBean(SandboxPushNotificationChannelStrategy.class));
-        channelRunner.withPropertyValues("optrabidz.notification.channels.push.enabled=false")
+        channelRunner.withSystemProperties("spring.profiles.active=test")
+                .withPropertyValues("optrabidz.notification.channels.push.enabled=false")
                 .run(context -> assertThat(context)
                         .doesNotHaveBean(SandboxPushNotificationChannelStrategy.class));
+    }
+
+    @Test
+    void productionCannotInstantiateSandboxNotificationChannelsEvenWhenEnabled() {
+        channelRunner.withSystemProperties("spring.profiles.active=prod")
+                .withPropertyValues(
+                        "optrabidz.notification.channels.email.enabled=true",
+                        "optrabidz.notification.channels.push.enabled=true"
+                )
+                .run(context -> assertThat(context)
+                        .hasSingleBean(InAppNotificationChannelStrategy.class)
+                        .doesNotHaveBean(SandboxEmailNotificationChannelStrategy.class)
+                        .doesNotHaveBean(SandboxPushNotificationChannelStrategy.class));
+    }
+
+    @Test
+    void productionProfileTakesPrecedenceWhenCombinedWithDemonstration() {
+        channelRunner.withSystemProperties("spring.profiles.active=prod,demo")
+                .withPropertyValues(
+                        "optrabidz.notification.channels.email.enabled=true",
+                        "optrabidz.notification.channels.push.enabled=true"
+                )
+                .run(context -> assertThat(context)
+                        .hasSingleBean(InAppNotificationChannelStrategy.class)
+                        .doesNotHaveBean(SandboxEmailNotificationChannelStrategy.class)
+                        .doesNotHaveBean(SandboxPushNotificationChannelStrategy.class));
+    }
+
+    @Test
+    void demonstrationIncludesInAppAndSandboxNotificationChannels() {
+        channelRunner.withSystemProperties("spring.profiles.active=demo")
+                .run(context -> assertThat(context)
+                        .hasSingleBean(InAppNotificationChannelStrategy.class)
+                        .hasSingleBean(SandboxEmailNotificationChannelStrategy.class)
+                        .hasSingleBean(SandboxPushNotificationChannelStrategy.class));
     }
 
     @Test
@@ -254,6 +296,7 @@ class DispatcherConfigurationContractTest {
     @Configuration(proxyBeanMethods = false)
     @EnableConfigurationProperties(NotificationChannelProperties.class)
     @Import({
+            InAppNotificationChannelStrategy.class,
             SandboxEmailNotificationChannelStrategy.class,
             SandboxPushNotificationChannelStrategy.class
     })

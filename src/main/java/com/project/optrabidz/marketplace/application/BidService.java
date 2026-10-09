@@ -24,10 +24,12 @@ import com.project.optrabidz.marketplace.application.exception.BidAcceptanceConf
 import com.project.optrabidz.marketplace.application.exception.BidAlreadyExistsException;
 import com.project.optrabidz.marketplace.application.exception.BidNotFoundException;
 import com.project.optrabidz.marketplace.application.exception.MarketplaceAccessException;
+import com.project.optrabidz.marketplace.application.exception.ReceivingAccountNotReadyException;
 import com.project.optrabidz.marketplace.application.factory.AgreementFactory;
 import com.project.optrabidz.marketplace.application.factory.BidFactory;
 import com.project.optrabidz.marketplace.application.policy.FundingModelPolicyResolver;
 import com.project.optrabidz.marketplace.application.port.FinanceAgreementPort;
+import com.project.optrabidz.marketplace.application.port.ReceivingAccountReadinessPort;
 import com.project.optrabidz.marketplace.application.specification.BidCanBeAcceptedSpec;
 import com.project.optrabidz.marketplace.application.specification.BidCanBeRejectedSpec;
 import com.project.optrabidz.marketplace.application.specification.BidCanBeSubmittedSpec;
@@ -71,6 +73,7 @@ public class BidService {
     private final EligibilityEvaluationController eligibilityEvaluationController;
     private final CrossLifecycleConstraintController crossLifecycleConstraintController;
     private final FinanceAgreementPort financeAgreementPort;
+    private final ReceivingAccountReadinessPort receivingAccountReadinessPort;
     private final EventPublisher eventPublisher;
     private final MarketplaceResponseMapper responseMapper;
     private final BidCanBeSubmittedSpec bidCanBeSubmittedSpec;
@@ -93,6 +96,7 @@ public class BidService {
                       EligibilityEvaluationController eligibilityEvaluationController,
                       CrossLifecycleConstraintController crossLifecycleConstraintController,
                       FinanceAgreementPort financeAgreementPort,
+                      ReceivingAccountReadinessPort receivingAccountReadinessPort,
                       EventPublisher eventPublisher,
                       MarketplaceResponseMapper responseMapper,
                       BidCanBeSubmittedSpec bidCanBeSubmittedSpec,
@@ -114,6 +118,7 @@ public class BidService {
         this.eligibilityEvaluationController = eligibilityEvaluationController;
         this.crossLifecycleConstraintController = crossLifecycleConstraintController;
         this.financeAgreementPort = financeAgreementPort;
+        this.receivingAccountReadinessPort = receivingAccountReadinessPort;
         this.eventPublisher = eventPublisher;
         this.responseMapper = responseMapper;
         this.bidCanBeSubmittedSpec = bidCanBeSubmittedSpec;
@@ -140,6 +145,12 @@ public class BidService {
         investorCannotBidOnOwnListingSpec.assertSatisfiedBy(accountId, listingStartup);
         if (bidRepository.existsActiveByInvestorIdAndListingId(investor.getInvestorId(), listing.getListingId())) {
             throw new BidAlreadyExistsException("Investor already has an active bid for this listing");
+        }
+        if (receivingAccountReadinessPort.requiresVerifiedBinding()
+                && !receivingAccountReadinessPort.hasVerifiedBinding(accountId)) {
+            throw new ReceivingAccountNotReadyException(
+                    "Investor has no verified receiving account binding; accountId=" + accountId
+            );
         }
 
         Instant now = Instant.now();

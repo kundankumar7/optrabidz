@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "dtcgVersion": "2025.10",
+  "schemaUrn": "urn:optrabidz:design-tokens:schema:2025.10",
+  "normativeSource": "https://www.designtokens.org/tr/2025.10/format/",
+  "projectSchema": {
+    "revision": 1,
+    "checksum": "sha256:f868432342de7e979022efc6d246ff59a158e04aa2d7bf3b78870d9d619a8bd9"
+  },
+  "baseSources": [
+    "primitives.tokens.json",
+    "semantic.tokens.json"
+  ],
+  "themes": {
+    "light": "themes/light.tokens.json",
+    "dark": "themes/dark.tokens.json"
+  },
+  "allowedOverlayRoots": [
+    "color.action",
+    "color.border",
+    "color.focus",
+    "color.icon",
+    "color.scrollbar",
+    "color.shadow",
+    "color.status",
+    "color.surface",
+    "color.text"
+  ],
+  "contracts": {
+    "accessibility": "../contracts/accessibility.contract.json",
+    "status": "../contracts/status.contract.json",
+    "elevation": "../contracts/elevation.contract.json",
+    "responsive": "../contracts/responsive.contract.json"
+  },
+  "outputs": {
+    "css": "../../src/styles/generated/tokens.css"
+  }
+}

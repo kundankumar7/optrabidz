@@ -27,6 +27,9 @@ public interface JpaPaymentAttemptRepository extends JpaRepository<PaymentAttemp
     Optional<PaymentAttempt> findByPaymentAttemptIdAndProviderCodeIgnoreCase(Long paymentAttemptId,
                                                                              String providerCode);
 
+    Optional<PaymentAttempt> findFirstByPaymentIntentIdOrderByCreatedAtDescPaymentAttemptIdDesc(
+            Long paymentIntentId);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
             update payment_attempt
@@ -62,4 +65,19 @@ public interface JpaPaymentAttemptRepository extends JpaRepository<PaymentAttemp
                    @Param("failureCode") String failureCode,
                    @Param("failureMessage") String failureMessage,
                    @Param("now") Instant now);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+            update payment_attempt
+            set attempt_state = 'CANCELLED',
+                cancelled_at = :now
+            where payment_attempt_id = :paymentAttemptId
+              and attempt_state in (
+                'CREATED'::payment_attempt_state_enum,
+                'INITIATED'::payment_attempt_state_enum,
+                'REQUIRES_ACTION'::payment_attempt_state_enum
+              )
+            """, nativeQuery = true)
+    int cancelActive(@Param("paymentAttemptId") Long paymentAttemptId,
+                     @Param("now") Instant now);
 }

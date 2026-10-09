@@ -2,6 +2,7 @@ package com.project.optrabidz.financial.infrastructure.provider;
 
 import com.project.optrabidz.financial.application.strategy.LocalPaymentStrategy;
 import com.project.optrabidz.financial.infrastructure.provider.sandbox.SandboxUpiPaymentStrategy;
+import com.project.optrabidz.financial.infrastructure.provider.demo.DemoPayoutProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
@@ -77,6 +78,85 @@ class PaymentProviderProfileBoundaryTest {
     }
 
     @Test
+    void enabledDemoProviderRequiresDemoProfileAndRejectsProductionCombination() {
+        contextRunner.withSystemProperties("spring.profiles.active=prod")
+                .withPropertyValues("optrabidz.financial.demo-provider.enabled=true")
+                .run(context -> assertThat(context).hasFailed());
+
+        contextRunner.withSystemProperties("spring.profiles.active=dev")
+                .withPropertyValues("optrabidz.financial.demo-provider.enabled=true")
+                .run(context -> assertThat(context).hasFailed());
+
+        contextRunner.withSystemProperties("spring.profiles.active=demo,prod")
+                .withPropertyValues("optrabidz.financial.demo-provider.enabled=true")
+                .run(context -> assertThat(context).hasFailed());
+
+        contextRunner.withSystemProperties("spring.profiles.active=demo")
+                .withPropertyValues("optrabidz.financial.demo-provider.enabled=true")
+                .run(context -> assertThat(context)
+                        .hasNotFailed()
+                        .hasSingleBean(DemoPayoutProvider.class));
+    }
+
+    @Test
+    void demoPayoutAdapterDoesNotExistInProductionContext() {
+        contextRunner.withSystemProperties("spring.profiles.active=prod")
+                .run(context -> assertThat(context)
+                        .hasNotFailed()
+                        .doesNotHaveBean(DemoPayoutProvider.class));
+    }
+
+    @Test
+    void payoutOrchestrationRejectsProfilesWithoutACompatiblePayoutRuntime() {
+        contextRunner.withSystemProperties("spring.profiles.active=prod")
+                .withPropertyValues("optrabidz.financial.payout-orchestration.enabled=true")
+                .run(context -> assertThat(context).hasFailed());
+
+        contextRunner.withSystemProperties("spring.profiles.active=dev")
+                .withPropertyValues("optrabidz.financial.payout-orchestration.enabled=true")
+                .run(context -> assertThat(context).hasFailed());
+
+        contextRunner.withSystemProperties("spring.profiles.active=demo")
+                .withPropertyValues("optrabidz.financial.payout-orchestration.enabled=true")
+                .run(context -> assertThat(context).hasFailed());
+    }
+
+    @Test
+    void payoutOrchestrationAllowsTestAndConfiguredDemoRuntimes() {
+        contextRunner.withSystemProperties("spring.profiles.active=test")
+                .withPropertyValues("optrabidz.financial.payout-orchestration.enabled=true")
+                .run(context -> assertThat(context).hasNotFailed());
+
+        contextRunner.withSystemProperties("spring.profiles.active=demo")
+                .withPropertyValues(
+                        "optrabidz.financial.demo-provider.enabled=true",
+                        "optrabidz.financial.payout-orchestration.enabled=true"
+                )
+                .run(context -> assertThat(context)
+                        .hasNotFailed()
+                        .hasSingleBean(DemoPayoutProvider.class));
+
+        contextRunner.withSystemProperties("spring.profiles.active=test,demo")
+                .withPropertyValues(
+                        "optrabidz.financial.demo-provider.enabled=true",
+                        "optrabidz.financial.payout-orchestration.enabled=true"
+                )
+                .run(context -> assertThat(context)
+                        .hasNotFailed()
+                        .hasSingleBean(DemoPayoutProvider.class));
+    }
+
+    @Test
+    void enabledDemoProviderRejectsUnsupportedPayoutBehavior() {
+        contextRunner.withSystemProperties("spring.profiles.active=demo")
+                .withPropertyValues(
+                        "optrabidz.financial.demo-provider.enabled=true",
+                        "optrabidz.financial.demo-provider.payout-behavior=UNKNOWN"
+                )
+                .run(context -> assertThat(context).hasFailed());
+    }
+
+    @Test
     void packagedConfigurationDoesNotActivateDevelopmentProfile() throws IOException {
         Properties properties = new Properties();
         try (InputStream stream = getClass().getResourceAsStream("/application.properties")) {
@@ -103,7 +183,7 @@ class PaymentProviderProfileBoundaryTest {
     }
 
     @Configuration(proxyBeanMethods = false)
-    @Import({LocalPaymentStrategy.class, SandboxUpiPaymentStrategy.class})
+    @Import({LocalPaymentStrategy.class, SandboxUpiPaymentStrategy.class, DemoPayoutProvider.class})
     @ComponentScan(
             basePackages = "com.project.optrabidz.financial.infrastructure.provider",
             useDefaultFilters = false,
@@ -111,7 +191,9 @@ class PaymentProviderProfileBoundaryTest {
                     type = FilterType.REGEX,
                     pattern = {
                             "com\\.project\\.optrabidz\\.financial\\.infrastructure\\.provider\\.DevelopmentPaymentProviderProperties",
-                            "com\\.project\\.optrabidz\\.financial\\.infrastructure\\.provider\\.DevelopmentPaymentProviderConfigurationPolicy"
+                             "com\\.project\\.optrabidz\\.financial\\.infrastructure\\.provider\\.DevelopmentPaymentProviderConfigurationPolicy",
+                             "com\\.project\\.optrabidz\\.financial\\.infrastructure\\.provider\\.PayoutOrchestrationProperties",
+                             "com\\.project\\.optrabidz\\.financial\\.infrastructure\\.provider\\.demo\\.DemoPaymentProviderProperties"
                     }
             )
     )

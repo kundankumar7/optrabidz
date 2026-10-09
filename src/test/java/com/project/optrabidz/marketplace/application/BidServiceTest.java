@@ -13,12 +13,14 @@ import com.project.optrabidz.marketplace.application.dto.response.AcceptBidRespo
 import com.project.optrabidz.marketplace.application.dto.response.BidResponse;
 import com.project.optrabidz.marketplace.application.error.MarketplaceErrors;
 import com.project.optrabidz.marketplace.application.exception.BidAcceptanceConflictException;
+import com.project.optrabidz.marketplace.application.exception.ReceivingAccountNotReadyException;
 import com.project.optrabidz.marketplace.application.factory.AgreementFactory;
 import com.project.optrabidz.marketplace.application.factory.BidFactory;
 import com.project.optrabidz.marketplace.application.factory.DebtTermsFactory;
 import com.project.optrabidz.marketplace.application.policy.DebtFundingModelPolicy;
 import com.project.optrabidz.marketplace.application.policy.FundingModelPolicyResolver;
 import com.project.optrabidz.marketplace.application.port.FinanceAgreementPort;
+import com.project.optrabidz.marketplace.application.port.ReceivingAccountReadinessPort;
 import com.project.optrabidz.marketplace.application.specification.BidCanBeAcceptedSpec;
 import com.project.optrabidz.marketplace.application.specification.BidCanBeRejectedSpec;
 import com.project.optrabidz.marketplace.application.specification.BidCanBeSubmittedSpec;
@@ -100,6 +102,9 @@ class BidServiceTest {
     private FinanceAgreementPort financeAgreementPort;
 
     @Mock
+    private ReceivingAccountReadinessPort receivingAccountReadinessPort;
+
+    @Mock
     private EventPublisher eventPublisher;
 
     @Mock
@@ -127,6 +132,7 @@ class BidServiceTest {
                 eligibilityEvaluationController,
                 crossLifecycleConstraintController,
                 financeAgreementPort,
+                receivingAccountReadinessPort,
                 eventPublisher,
                 responseMapper,
                 new BidCanBeSubmittedSpec(),
@@ -141,13 +147,14 @@ class BidServiceTest {
     }
 
     @Test
-    void investorCanSubmitBidForOpenDebtListing() {
+    void investorCanSubmitBidWhenVerifiedReceivingBindingIsNotRequired() {
         when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID)).thenReturn(Optional.of(investor()));
         when(listingRepository.findById(LISTING_ID)).thenReturn(Optional.of(openListing()));
         when(startupRepository.findById(STARTUP_ID)).thenReturn(Optional.of(startup()));
         when(crossLifecycleConstraintController.evaluateBidSubmission(ListingState.OPEN.name()))
                 .thenReturn(GovernanceDecision.allow("Listing can accept bids"));
         when(bidRepository.existsActiveByInvestorIdAndListingId(INVESTOR_ID, LISTING_ID)).thenReturn(false);
+        when(receivingAccountReadinessPort.requiresVerifiedBinding()).thenReturn(false);
         when(bidRepository.save(any(Bid.class)))
                 .thenAnswer(invocation -> withBidId(invocation.getArgument(0), BID_ID));
 
@@ -159,7 +166,32 @@ class BidServiceTest {
         assertThat(response.bidState()).isEqualTo(BidState.SUBMITTED);
         assertThat(response.debtTerms().proposedAmount()).isEqualByComparingTo("500000.00");
         verify(eligibilityEvaluationController).assertInvestorCanSubmitBid(INVESTOR_ACCOUNT_ID);
+        verify(receivingAccountReadinessPort, never()).hasVerifiedBinding(any());
         verify(eventPublisher).publish(any());
+    }
+
+    @Test
+    void investorCannotSubmitBidWithoutVerifiedReceivingAccount() {
+        when(investorRepository.findByAccountId(INVESTOR_ACCOUNT_ID)).thenReturn(Optional.of(investor()));
+        when(listingRepository.findById(LISTING_ID)).thenReturn(Optional.of(openListing()));
+        when(startupRepository.findById(STARTUP_ID)).thenReturn(Optional.of(startup()));
+        when(crossLifecycleConstraintController.evaluateBidSubmission(ListingState.OPEN.name()))
+                .thenReturn(GovernanceDecision.allow("Listing can accept bids"));
+        when(bidRepository.existsActiveByInvestorIdAndListingId(INVESTOR_ID, LISTING_ID)).thenReturn(false);
+        when(receivingAccountReadinessPort.requiresVerifiedBinding()).thenReturn(true);
+        when(receivingAccountReadinessPort.hasVerifiedBinding(INVESTOR_ACCOUNT_ID)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.submitBid(
+                INVESTOR_ACCOUNT_ID,
+                RoleType.INVESTOR,
+                submitBidRequest()
+        ))
+                .isInstanceOf(ReceivingAccountNotReadyException.class)
+                .satisfies(failure -> assertThat(((ApplicationException) failure).descriptor())
+                        .isSameAs(MarketplaceErrors.RECEIVING_ACCOUNT_NOT_READY));
+
+        verify(bidRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
     }
 
     @Test

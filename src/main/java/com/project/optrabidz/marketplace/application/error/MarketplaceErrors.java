@@ -51,6 +51,11 @@ public final class MarketplaceErrors {
             ErrorCategory.BUSINESS_RULE,
             "The requested funding model is not supported"
     );
+    public static final ErrorDescriptor RECEIVING_ACCOUNT_NOT_READY = new ErrorDescriptor(
+            "RECEIVING_ACCOUNT_NOT_READY",
+            ErrorCategory.BUSINESS_RULE,
+            "A verified receiving account is required for this operation"
+    );
 
     public static List<ErrorDescriptor> descriptors() {
         return List.of(
@@ -62,7 +67,8 @@ public final class MarketplaceErrors {
                 BID_STATE_CONFLICT,
                 BID_ALREADY_EXISTS,
                 BID_ACCEPTANCE_CONFLICT,
-                UNSUPPORTED_FUNDING_MODEL
+                UNSUPPORTED_FUNDING_MODEL,
+                RECEIVING_ACCOUNT_NOT_READY
         );
     }
 

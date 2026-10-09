@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,6 +69,37 @@ class BusinessAuditIT extends ApiIntegrationTestSupport {
     }
 
     @Test
+    void paymentAccountBindingLifecycleCreatesSanitizedAuditRecords() throws Exception {
+        AuthenticatedClient startup = registerAndLogin(RoleType.STARTUP);
+        Long bindingId = createAndVerifyReceivingAccount(startup);
+
+        outboxDispatcher.dispatchPending();
+
+        List<Map<String, Object>> audits = jdbcTemplate.queryForList("""
+                select action, object_type, object_id, actor_role, details::text as details
+                from audit_record
+                where object_type = 'PAYMENT_ACCOUNT_BINDING'
+                  and object_id = ?
+                order by action
+                """, String.valueOf(bindingId));
+
+        assertThat(audits).hasSize(2);
+        assertThat(audits)
+                .extracting(row -> row.get("action"))
+                .containsExactly(
+                        "PAYMENT_ACCOUNT_BINDING_CREATED",
+                        "PAYMENT_ACCOUNT_BINDING_VERIFIED"
+                );
+        assertThat(audits).allSatisfy(audit -> {
+            assertThat(audit.get("object_type")).isEqualTo("PAYMENT_ACCOUNT_BINDING");
+            assertThat(audit.get("actor_role")).isEqualTo("STARTUP");
+            assertThat(audit.get("details").toString())
+                    .contains("\"paymentAccountBindingId\": " + bindingId)
+                    .doesNotContain("externalRecipientReference", "idempotencyKey", "maskedAccountSuffix");
+        });
+    }
+
+    @Test
     void businessOutboxAuditUsesPolicySummaryAndActorContext() throws Exception {
         String email = uniqueEmail("audit-business-startup");
         register(email, DEFAULT_PASSWORD, RoleType.STARTUP)
@@ -75,6 +107,7 @@ class BusinessAuditIT extends ApiIntegrationTestSupport {
         AuthenticatedClient startup = login(email, DEFAULT_PASSWORD);
         createCompleteStartupProfile(startup, "Audit Business Startup");
         addStartupClassification(startup, "INDUSTRY", "SAAS");
+        createAndVerifyReceivingAccount(startup);
 
         outboxDispatcher.dispatchPending();
 

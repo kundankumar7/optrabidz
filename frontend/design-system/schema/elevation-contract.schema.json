@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:optrabidz:design-tokens:elevation-contract:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "levels"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "levels": {
+      "type": "object",
+      "required": ["none", "low", "medium", "high"],
+      "additionalProperties": false,
+      "properties": {
+        "none": { "$ref": "#/definitions/level" },
+        "low": { "$ref": "#/definitions/level" },
+        "medium": { "$ref": "#/definitions/level" },
+        "high": { "$ref": "#/definitions/level" }
+      }
+    }
+  },
+  "definitions": {
+    "level": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface", "border", "shadow"],
+      "properties": {
+        "surface": { "type": "string" },
+        "border": { "type": "string" },
+        "shadow": { "oneOf": [{ "type": "null" }, { "type": "string" }] }
+      }
+    }
+  }
+}

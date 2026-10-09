@@ -1,6 +1,7 @@
 package com.project.optrabidz.financial.infrastructure.repository;
 
 import com.project.optrabidz.financial.domain.model.RepaymentInstallment;
+import com.project.optrabidz.financial.domain.model.RepaymentInstallmentState;
 import com.project.optrabidz.financial.domain.repository.RepaymentInstallmentRepository;
 import com.project.optrabidz.financial.infrastructure.mapper.FinancialPersistenceMapper;
 import com.project.optrabidz.testsupport.PostgresJpaIntegrationTestSupport;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.Timestamp;
@@ -17,6 +19,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Import({FinancialPersistenceMapper.class, RepaymentInstallmentRepositoryAdapter.class})
 class RepaymentInstallmentRepositoryIT extends PostgresJpaIntegrationTestSupport {
@@ -84,6 +87,98 @@ class RepaymentInstallmentRepositoryIT extends PostgresJpaIntegrationTestSupport
                 .get()
                 .satisfies(installment ->
                         assertThat(installment.getInstallmentState().name()).isEqualTo("NOT_STARTED"));
+    }
+
+    @Test
+    void movesInstallmentFromPaymentInProgressThroughPayoutPendingToPaidConditionally() {
+        Agreement agreement = testData.createAgreement("installment payout transition");
+        Long installmentId = insertInstallment(insertRepayment(agreement));
+        long paymentIntentId = 8001L;
+        assertThat(repository.markPaymentInProgress(installmentId, NOW.plusSeconds(10))).isEqualTo(1);
+
+        assertThat(repository.markPayoutPending(installmentId, paymentIntentId, NOW.plusSeconds(20)))
+                .isEqualTo(1);
+        assertThat(repository.markPayoutPending(installmentId, paymentIntentId, NOW.plusSeconds(21)))
+                .isZero();
+        assertThat(repository.findById(installmentId))
+                .isPresent()
+                .get()
+                .satisfies(pending -> {
+                    assertThat(pending.getInstallmentState()).isEqualTo(RepaymentInstallmentState.PAYOUT_PENDING);
+                    assertThat(pending.getConfirmedPaymentIntentId()).isEqualTo(paymentIntentId);
+                    assertThat(pending.getPaidAt()).isNull();
+                });
+
+        assertThat(repository.confirmPayoutPending(installmentId, paymentIntentId, NOW.plusSeconds(30)))
+                .isEqualTo(1);
+        assertThat(repository.confirmPayoutPending(installmentId, paymentIntentId, NOW.plusSeconds(31)))
+                .isZero();
+        assertThat(repository.findById(installmentId))
+                .isPresent()
+                .get()
+                .satisfies(paid -> {
+                    assertThat(paid.getInstallmentState()).isEqualTo(RepaymentInstallmentState.PAID);
+                    assertThat(paid.getPaidAt()).isEqualTo(NOW.plusSeconds(30));
+                });
+    }
+
+    @Test
+    void paymentFailureBeforeDueKeepsInstallmentPayableForRetry() {
+        Agreement agreement = testData.createAgreement("failure before due");
+        Long installmentId = insertInstallment(
+                insertRepayment(agreement), 1, "NOT_STARTED", NOW.plusSeconds(60));
+        assertThat(repository.markPaymentInProgress(installmentId, NOW))
+                .isEqualTo(1);
+
+        assertThat(repository.markPaymentFailed(installmentId, "Payment cancelled", NOW))
+                .isEqualTo(1);
+
+        assertThat(repository.findById(installmentId))
+                .isPresent()
+                .get()
+                .satisfies(installment -> {
+                    assertThat(installment.getInstallmentState())
+                            .isEqualTo(RepaymentInstallmentState.PAYMENT_FAILED);
+                    assertThat(installment.getOverdueAt()).isNull();
+                    assertThat(installment.getFailureReason()).isEqualTo("Payment cancelled");
+                });
+    }
+
+    @Test
+    void paymentFailureAtOrAfterDueMarksInstallmentOverdue() {
+        Agreement agreement = testData.createAgreement("failure after due");
+        Long installmentId = insertInstallment(
+                insertRepayment(agreement), 1, "NOT_STARTED", NOW.minusSeconds(1));
+        assertThat(repository.markPaymentInProgress(installmentId, NOW))
+                .isEqualTo(1);
+
+        assertThat(repository.markPaymentFailed(installmentId, "Payment cancelled", NOW))
+                .isEqualTo(1);
+
+        assertThat(repository.findById(installmentId))
+                .isPresent()
+                .get()
+                .satisfies(installment -> {
+                    assertThat(installment.getInstallmentState())
+                            .isEqualTo(RepaymentInstallmentState.OVERDUE);
+                    assertThat(installment.getOverdueAt()).isEqualTo(NOW);
+                    assertThat(installment.getFailureReason()).isEqualTo("Payment cancelled");
+                });
+    }
+
+    @Test
+    void databaseRejectsFailureTimestampWhilePayoutIsPending() {
+        Agreement agreement = testData.createAgreement("installment payout invariant");
+        Long installmentId = insertInstallment(insertRepayment(agreement));
+        assertThat(repository.markPaymentInProgress(installmentId, NOW.plusSeconds(10))).isEqualTo(1);
+        assertThat(repository.markPayoutPending(installmentId, 8002L, NOW.plusSeconds(20))).isEqualTo(1);
+
+        assertThatThrownBy(() -> jdbcTemplate.update("""
+                update repayment_installment
+                set failed_at = ?
+                where repayment_installment_id = ?
+                """, Timestamp.from(NOW.plusSeconds(30)), installmentId))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     private Long insertRepayment(Agreement agreement) {

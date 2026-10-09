@@ -16,7 +16,7 @@ and the exact Flyway-backed relationship table for that slice.
 | How does an accepted agreement become a settlement? | [Settlement](settlement.md) |
 | How is investor repayment scheduled? | [Repayment schedule](repayment-schedule.md) |
 | How is a payment purpose tied to payer and payee accounts? | [Payment intent](payment-intent.md) |
-| How do attempts select a configured provider? | [Payment processing](payment-processing.md) |
+| How do collection attempts, receiving-account bindings, and payouts use a configured provider? | [Payment processing](payment-processing.md) |
 | How are provider callbacks deduplicated and linked? | [Payment webhooks](payment-webhook.md) |
 | How are notification recipients, channels, and attempts tracked? | [Notification delivery](notification-delivery.md) |
 | Which event links are correlations rather than foreign keys? | [Outbox and audit](outbox-audit.md) |

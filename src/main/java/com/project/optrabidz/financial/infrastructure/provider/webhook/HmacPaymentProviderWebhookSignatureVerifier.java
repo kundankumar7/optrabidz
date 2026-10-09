@@ -7,11 +7,6 @@ import com.project.optrabidz.financial.application.port.PaymentProviderWebhookSi
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.time.Clock;
 import java.time.Instant;
@@ -19,20 +14,27 @@ import java.util.HexFormat;
 
 @Component
 public class HmacPaymentProviderWebhookSignatureVerifier implements PaymentProviderWebhookSignatureVerifier {
-    private static final String HMAC_ALGORITHM = "HmacSHA256";
     private static final String SIGNATURE_PREFIX = "sha256=";
 
     private final PaymentWebhookProperties properties;
     private final Clock clock;
+    private final PaymentWebhookHmac hmac;
 
     @Autowired
     public HmacPaymentProviderWebhookSignatureVerifier(PaymentWebhookProperties properties) {
-        this(properties, Clock.systemUTC());
+        this(properties, Clock.systemUTC(), new PaymentWebhookHmac());
     }
 
     HmacPaymentProviderWebhookSignatureVerifier(PaymentWebhookProperties properties, Clock clock) {
+        this(properties, clock, new PaymentWebhookHmac());
+    }
+
+    HmacPaymentProviderWebhookSignatureVerifier(PaymentWebhookProperties properties,
+                                                Clock clock,
+                                                PaymentWebhookHmac hmac) {
         this.properties = properties;
         this.clock = clock;
+        this.hmac = hmac;
     }
 
     @Override
@@ -48,9 +50,8 @@ public class HmacPaymentProviderWebhookSignatureVerifier implements PaymentProvi
         Instant signedAt = parseTimestamp(envelope.timestamp());
         verifyFreshness(signedAt);
         byte[] actualSignature = parseSignature(envelope.signature());
-        byte[] canonicalBytes = canonicalBytes(envelope.timestamp(), envelope.rawBody());
-
-        byte[] activeCandidate = hmac(canonicalBytes, provider.getActiveSecret());
+        byte[] activeCandidate = hmac.calculate(
+                envelope.timestamp(), envelope.rawBody(), provider.getActiveSecret());
         boolean activeMatch = MessageDigest.isEqual(activeCandidate, actualSignature);
 
         boolean previousMatch = false;
@@ -58,7 +59,8 @@ public class HmacPaymentProviderWebhookSignatureVerifier implements PaymentProvi
                 && !provider.getPreviousSecret().isBlank()
                 && provider.getPreviousSecretValidUntil() != null
                 && clock.instant().isBefore(provider.getPreviousSecretValidUntil())) {
-            byte[] previousCandidate = hmac(canonicalBytes, provider.getPreviousSecret());
+            byte[] previousCandidate = hmac.calculate(
+                    envelope.timestamp(), envelope.rawBody(), provider.getPreviousSecret());
             previousMatch = MessageDigest.isEqual(previousCandidate, actualSignature);
         }
 
@@ -100,27 +102,6 @@ public class HmacPaymentProviderWebhookSignatureVerifier implements PaymentProvi
             throw rejected(PaymentWebhookRejectionReason.SIGNATURE_INVALID);
         }
         return HexFormat.of().parseHex(hexadecimal);
-    }
-
-    private byte[] canonicalBytes(String timestamp, byte[] body) {
-        byte[] prefix = (timestamp + ".").getBytes(StandardCharsets.US_ASCII);
-        ByteBuffer canonical = ByteBuffer.allocate(prefix.length + body.length);
-        canonical.put(prefix);
-        canonical.put(body);
-        return canonical.array();
-    }
-
-    private byte[] hmac(byte[] payload, String secret) {
-        try {
-            Mac mac = Mac.getInstance(HMAC_ALGORITHM);
-            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM));
-            return mac.doFinal(payload);
-        } catch (GeneralSecurityException | RuntimeException exception) {
-            throw new PaymentWebhookRejectedException(
-                    PaymentWebhookRejectionReason.SIGNATURE_INVALID,
-                    exception
-            );
-        }
     }
 
     private PaymentWebhookRejectedException rejected(PaymentWebhookRejectionReason reason) {

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "statuses": {
+    "success": { "tokens": { "background": "color.status.success.background", "foreground": "color.status.success.foreground", "border": "color.status.success.border", "icon": "color.status.success.icon" }, "labelRequired": true, "nonColorCue": "iconOrText" },
+    "warning": { "tokens": { "background": "color.status.warning.background", "foreground": "color.status.warning.foreground", "border": "color.status.warning.border", "icon": "color.status.warning.icon" }, "labelRequired": true, "nonColorCue": "iconOrText" },
+    "error": { "tokens": { "background": "color.status.error.background", "foreground": "color.status.error.foreground", "border": "color.status.error.border", "icon": "color.status.error.icon" }, "labelRequired": true, "nonColorCue": "iconOrText" },
+    "information": { "tokens": { "background": "color.status.information.background", "foreground": "color.status.information.foreground", "border": "color.status.information.border", "icon": "color.status.information.icon" }, "labelRequired": true, "nonColorCue": "iconOrText" },
+    "pending": { "tokens": { "background": "color.status.pending.background", "foreground": "color.status.pending.foreground", "border": "color.status.pending.border", "icon": "color.status.pending.icon" }, "labelRequired": true, "nonColorCue": "iconOrText" },
+    "overdue": { "tokens": { "background": "color.status.overdue.background", "foreground": "color.status.overdue.foreground", "border": "color.status.overdue.border", "icon": "color.status.overdue.icon" }, "labelRequired": true, "nonColorCue": "iconOrText" },
+    "completed": { "tokens": { "background": "color.status.completed.background", "foreground": "color.status.completed.foreground", "border": "color.status.completed.border", "icon": "color.status.completed.icon" }, "labelRequired": true, "nonColorCue": "iconOrText" },
+    "neutral": { "tokens": { "background": "color.status.neutral.background", "foreground": "color.status.neutral.foreground", "border": "color.status.neutral.border", "icon": "color.status.neutral.icon" }, "labelRequired": true, "nonColorCue": "iconOrText" }
+  }
+}

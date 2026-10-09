@@ -61,4 +61,21 @@ class PaymentProviderWebhookServiceTest {
         verify(financialService, never()).failProviderPaymentAttempt(
                 "UPI", 1001L, "UPI_DECLINED", "Provider declined");
     }
+
+    @Test
+    void cancelledAuthenticatedEventDelegatesToCancellationUseCase() {
+        PaymentProviderWebhookCommand command = new PaymentProviderWebhookCommand(
+                "UPI", PaymentProviderWebhookEventType.PAYMENT_CANCELLED,
+                1001L, null, null, null, "evt_1001");
+        when(financialService.cancelProviderPaymentAttempt("UPI", 1001L))
+                .thenReturn(response);
+
+        assertThat(service.handle(command)).isSameAs(response);
+        verify(financialService).cancelProviderPaymentAttempt("UPI", 1001L);
+        verify(financialService, never()).failProviderPaymentAttempt(
+                "UPI",
+                1001L,
+                "PROVIDER_REPORTED_FAILURE",
+                "Payment provider reported that the payment failed");
+    }
 }

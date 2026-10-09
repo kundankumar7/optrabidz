@@ -96,6 +96,16 @@ public class PaymentAttempt {
         this.failedAt = now;
     }
 
+    public void markCancelled(Instant now) {
+        if (attemptState != PaymentAttemptState.CREATED
+                && attemptState != PaymentAttemptState.INITIATED
+                && attemptState != PaymentAttemptState.REQUIRES_ACTION) {
+            throw new IllegalStateException("Only active payment attempt can be cancelled");
+        }
+        this.attemptState = PaymentAttemptState.CANCELLED;
+        this.cancelledAt = now;
+    }
+
     private void validate() {
         Assert.notNull(paymentIntentId, "paymentIntentId must not be null");
         Assert.hasText(providerCode, "providerCode must not be blank");

@@ -8,9 +8,12 @@ import com.project.optrabidz.marketplace.application.dto.request.ListingDebtTerm
 import com.project.optrabidz.marketplace.application.dto.request.UpdateListingRequest;
 import com.project.optrabidz.marketplace.application.error.MarketplaceErrors;
 import com.project.optrabidz.marketplace.application.exception.ListingNotFoundException;
+import com.project.optrabidz.marketplace.application.exception.ReceivingAccountNotReadyException;
 import com.project.optrabidz.marketplace.application.factory.FundingListingFactory;
 import com.project.optrabidz.marketplace.application.policy.FundingModelPolicyResolver;
+import com.project.optrabidz.marketplace.application.policy.FundingModelPolicy;
 import com.project.optrabidz.marketplace.application.policy.ListingExpiryPolicy;
+import com.project.optrabidz.marketplace.application.port.ReceivingAccountReadinessPort;
 import com.project.optrabidz.marketplace.application.specification.ListingCanBeClosedSpec;
 import com.project.optrabidz.marketplace.application.specification.ListingCanBePublishedSpec;
 import com.project.optrabidz.marketplace.application.specification.ListingCanBeUpdatedSpec;
@@ -57,9 +60,13 @@ class ListingServiceTest {
     @Mock
     private FundingModelPolicyResolver policyResolver;
     @Mock
+    private FundingModelPolicy fundingModelPolicy;
+    @Mock
     private ListingExpiryPolicy listingExpiryPolicy;
     @Mock
     private EligibilityEvaluationController eligibilityEvaluationController;
+    @Mock
+    private ReceivingAccountReadinessPort receivingAccountReadinessPort;
     @Mock
     private EventPublisher eventPublisher;
     @Mock
@@ -119,6 +126,72 @@ class ListingServiceTest {
                 .satisfies(failure -> org.assertj.core.api.Assertions.assertThat(
                                 ((ApplicationException) failure).descriptor())
                         .isSameAs(MarketplaceErrors.UNSUPPORTED_FUNDING_MODEL));
+    }
+
+    @Test
+    void startupCannotPublishWithoutVerifiedReceivingAccount() {
+        FundingListing draftListing = draftListing();
+        when(startupRepository.findByAccountId(ACCOUNT_ID)).thenReturn(Optional.of(startup()));
+        when(listingRepository.findById(LISTING_ID)).thenReturn(Optional.of(draftListing));
+        when(policyResolver.resolve(FundingModel.DEBT)).thenReturn(fundingModelPolicy);
+        when(receivingAccountReadinessPort.requiresVerifiedBinding()).thenReturn(true);
+        when(receivingAccountReadinessPort.hasVerifiedBinding(ACCOUNT_ID)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.publishListing(
+                ACCOUNT_ID,
+                RoleType.STARTUP,
+                LISTING_ID,
+                null
+        ))
+                .isInstanceOf(ReceivingAccountNotReadyException.class)
+                .satisfies(failure -> org.assertj.core.api.Assertions.assertThat(
+                                ((ApplicationException) failure).descriptor())
+                        .isSameAs(MarketplaceErrors.RECEIVING_ACCOUNT_NOT_READY));
+
+        verify(listingRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
+    void startupCanPublishWhenVerifiedReceivingBindingIsNotRequired() {
+        FundingListing draftListing = draftListing();
+        when(startupRepository.findByAccountId(ACCOUNT_ID)).thenReturn(Optional.of(startup()));
+        when(listingRepository.findById(LISTING_ID)).thenReturn(Optional.of(draftListing));
+        when(policyResolver.resolve(FundingModel.DEBT)).thenReturn(fundingModelPolicy);
+        when(receivingAccountReadinessPort.requiresVerifiedBinding()).thenReturn(false);
+        when(listingExpiryPolicy.expiresAtFor(any(Instant.class)))
+                .thenAnswer(invocation -> invocation.<Instant>getArgument(0)
+                        .plusSeconds(86_400));
+        when(listingRepository.save(any(FundingListing.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.publishListing(ACCOUNT_ID, RoleType.STARTUP, LISTING_ID, null);
+
+        verify(receivingAccountReadinessPort, never()).hasVerifiedBinding(any());
+        verify(listingRepository).save(draftListing);
+        verify(eventPublisher).publish(any());
+    }
+
+    private static FundingListing draftListing() {
+        return FundingListing.builder()
+                .listingId(LISTING_ID)
+                .startupId(STARTUP_ID)
+                .fundingModel(FundingModel.DEBT)
+                .listingState(ListingState.DRAFT)
+                .title("Working capital listing")
+                .fundingPurposeDescription("Funds needed for inventory expansion.")
+                .createdAt(NOW.minusSeconds(120))
+                .debtTerms(ListingDebtTerms.create(
+                        new BigDecimal("550000.00"),
+                        "INR",
+                        new BigDecimal("9.50"),
+                        new BigDecimal("12.75"),
+                        18,
+                        RepaymentPlanType.INSTALLMENT_MONTHLY,
+                        null,
+                        NOW.minusSeconds(120)
+                ))
+                .build();
     }
 
     private static FundingListing openListing() {

@@ -103,6 +103,11 @@ public class PaymentIntentRepositoryAdapter implements PaymentIntentRepository {
     }
 
     @Override
+    public int cancelActive(Long paymentIntentId, Instant now) {
+        return jpaPaymentIntentRepository.cancelActive(paymentIntentId, now);
+    }
+
+    @Override
     @Transactional
     public List<ExpiredPaymentIntentReference> expireExpiredActiveReturning(
             Instant now,

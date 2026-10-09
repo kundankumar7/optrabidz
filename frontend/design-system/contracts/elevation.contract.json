@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "levels": {
+    "none": { "surface": "color.surface.default", "border": "color.border.default", "shadow": null },
+    "low": { "surface": "color.surface.raised", "border": "color.border.subtle", "shadow": "shadow.low" },
+    "medium": { "surface": "color.surface.raised", "border": "color.border.default", "shadow": "shadow.medium" },
+    "high": { "surface": "color.surface.overlay", "border": "color.border.strong", "shadow": "shadow.high" }
+  }
+}

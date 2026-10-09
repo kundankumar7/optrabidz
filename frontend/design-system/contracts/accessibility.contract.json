@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "contrastPairs": [
+    { "id": "text-primary-on-canvas", "foreground": "color.text.primary", "background": "color.surface.canvas", "category": "normalText", "minimum": 4.5, "themes": ["light", "dark"] },
+    { "id": "text-secondary-on-raised", "foreground": "color.text.secondary", "background": "color.surface.raised", "category": "normalText", "minimum": 4.5, "themes": ["light", "dark"] },
+    { "id": "action-primary-label", "foreground": "color.action.primary.label", "background": "color.action.primary.background", "category": "normalText", "minimum": 4.5, "themes": ["light", "dark"] },
+    { "id": "action-secondary-label", "foreground": "color.action.secondary.label", "background": "color.action.secondary.background", "category": "normalText", "minimum": 4.5, "themes": ["light", "dark"] },
+    { "id": "status-success-label", "foreground": "color.status.success.foreground", "background": "color.status.success.background", "category": "normalText", "minimum": 4.5, "themes": ["light", "dark"] },
+    { "id": "status-warning-label", "foreground": "color.status.warning.foreground", "background": "color.status.warning.background", "category": "normalText", "minimum": 4.5, "themes": ["light", "dark"] },
+    { "id": "status-error-label", "foreground": "color.status.error.foreground", "background": "color.status.error.background", "category": "normalText", "minimum": 4.5, "themes": ["light", "dark"] },
+    { "id": "status-information-label", "foreground": "color.status.information.foreground", "background": "color.status.information.background", "category": "normalText", "minimum": 4.5, "themes": ["light", "dark"] },
+    { "id": "status-pending-label", "foreground": "color.status.pending.foreground", "background": "color.status.pending.background", "category": "normalText", "minimum": 4.5, "themes": ["light", "dark"] },
+    { "id": "status-overdue-label", "foreground": "color.status.overdue.foreground", "background": "color.status.overdue.background", "category": "normalText", "minimum": 4.5, "themes": ["light", "dark"] },
+    { "id": "status-completed-label", "foreground": "color.status.completed.foreground", "background": "color.status.completed.background", "category": "normalText", "minimum": 4.5, "themes": ["light", "dark"] },
+    { "id": "status-neutral-label", "foreground": "color.status.neutral.foreground", "background": "color.status.neutral.background", "category": "normalText", "minimum": 4.5, "themes": ["light", "dark"] },
+    { "id": "focus-on-canvas", "foreground": "color.focus.ring", "background": "color.surface.canvas", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] },
+    { "id": "focus-on-default", "foreground": "color.focus.ring", "background": "color.surface.default", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] },
+    { "id": "focus-on-raised", "foreground": "color.focus.ring", "background": "color.surface.raised", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] },
+    { "id": "focus-on-inset", "foreground": "color.focus.ring", "background": "color.surface.inset", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] },
+    { "id": "focus-on-overlay", "foreground": "color.focus.ring", "background": "color.surface.overlay", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] },
+    { "id": "focus-on-inverse", "foreground": "color.focus.inverse", "background": "color.surface.inverse", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] },
+    { "id": "control-border-on-raised", "foreground": "color.border.default", "background": "color.surface.raised", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] },
+    { "id": "primary-icon-on-canvas", "foreground": "color.icon.primary", "background": "color.surface.canvas", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] },
+    { "id": "scrollbar-thumb-on-track", "foreground": "color.scrollbar.thumb", "background": "color.scrollbar.track", "category": "nonText", "minimum": 3, "themes": ["light", "dark"] }
+  ]
+}

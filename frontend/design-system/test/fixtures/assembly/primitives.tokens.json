@@ -1,0 +1,31 @@
+{
+  "$schema": "urn:optrabidz:design-tokens:schema:2025.10",
+  "color": {
+    "neutral": {
+      "$type": "color",
+      "warm": {
+        "000": {
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [1, 0.992157, 0.972549],
+            "alpha": 1,
+            "hex": "#FFFDF8"
+          }
+        },
+        "900": {
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [0.082353, 0.090196, 0.078431],
+            "alpha": 1,
+            "hex": "#151714"
+          },
+          "$extensions": {
+            "org.optrabidz.evidence": {
+              "source": "approved"
+            }
+          }
+        }
+      }
+    }
+  }
+}

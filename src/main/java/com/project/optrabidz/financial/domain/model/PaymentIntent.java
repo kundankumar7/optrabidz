@@ -120,6 +120,14 @@ public class PaymentIntent {
         this.failedAt = now;
     }
 
+    public void markCancelled(Instant now) {
+        if (paymentState != PaymentState.CREATED && paymentState != PaymentState.PAYMENT_PENDING) {
+            throw new IllegalStateException("Only active payment intent can be cancelled");
+        }
+        this.paymentState = PaymentState.PAYMENT_CANCELLED;
+        this.cancelledAt = now;
+    }
+
     public boolean expireIfEligible(Instant now) {
         if ((paymentState != PaymentState.CREATED && paymentState != PaymentState.PAYMENT_PENDING) || expiresAt.isAfter(now)) {
             return false;

@@ -25,10 +25,13 @@ import com.project.optrabidz.financial.application.exception.RepaymentInstallmen
 import com.project.optrabidz.financial.application.exception.RepaymentInstallmentNotPayableException;
 import com.project.optrabidz.financial.application.exception.RepaymentNotFoundException;
 import com.project.optrabidz.financial.application.exception.RepaymentStateConflictException;
+import com.project.optrabidz.financial.application.exception.ReceivingAccountNotReadyException;
 import com.project.optrabidz.financial.application.exception.SettlementNotFoundException;
 import com.project.optrabidz.financial.application.exception.SettlementNotPayableException;
 import com.project.optrabidz.financial.application.exception.SettlementStateConflictException;
 import com.project.optrabidz.financial.application.exception.UnsupportedPaymentMethodException;
+import com.project.optrabidz.financial.application.event.PaymentCollectionConfirmedEvent;
+import com.project.optrabidz.financial.application.event.PaymentCollectionCancelledEvent;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentPaidEvent;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueEvent;
 import com.project.optrabidz.financial.application.event.RepaymentInstallmentOverdueSource;
@@ -53,11 +56,14 @@ import com.project.optrabidz.financial.domain.model.RepaymentState;
 import com.project.optrabidz.financial.domain.model.Settlement;
 import com.project.optrabidz.financial.domain.model.SettlementState;
 import com.project.optrabidz.financial.domain.repository.PaymentAttemptRepository;
+import com.project.optrabidz.financial.domain.repository.PaymentAccountBindingRepository;
 import com.project.optrabidz.financial.domain.repository.PaymentIntentRepository;
 import com.project.optrabidz.financial.domain.repository.RepaymentInstallmentRepository;
 import com.project.optrabidz.financial.domain.repository.RepaymentRepository;
 import com.project.optrabidz.financial.domain.repository.SettlementRepository;
 import com.project.optrabidz.financial.infrastructure.repository.JpaPaymentProviderMethodRepository;
+import com.project.optrabidz.financial.infrastructure.provider.PayoutOrchestrationProperties;
+import com.project.optrabidz.financial.infrastructure.provider.demo.DemoPaymentProviderProperties;
 import com.project.optrabidz.identity.domain.model.RoleType;
 import com.project.optrabidz.marketplace.domain.model.Agreement;
 import com.project.optrabidz.marketplace.domain.model.AgreementDebtTerms;
@@ -98,6 +104,7 @@ public class FinancialService {
     private final RepaymentInstallmentRepository repaymentInstallmentRepository;
     private final PaymentIntentRepository paymentIntentRepository;
     private final PaymentAttemptRepository paymentAttemptRepository;
+    private final PaymentAccountBindingRepository paymentAccountBindingRepository;
     private final StartupRepository startupRepository;
     private final InvestorRepository investorRepository;
     private final AgreementRepository agreementRepository;
@@ -105,6 +112,8 @@ public class FinancialService {
     private final JpaPaymentProviderMethodRepository paymentProviderMethodRepository;
     private final PaymentMethodStrategyRegistry paymentMethodStrategyRegistry;
     private final EventPublisher eventPublisher;
+    private final DemoPaymentProviderProperties demoPaymentProviderProperties;
+    private final PayoutOrchestrationProperties payoutOrchestrationProperties;
     private final long settlementExpiryMinutes;
     private final long paymentIntentExpiryMinutes;
 
@@ -113,6 +122,7 @@ public class FinancialService {
                             RepaymentInstallmentRepository repaymentInstallmentRepository,
                             PaymentIntentRepository paymentIntentRepository,
                             PaymentAttemptRepository paymentAttemptRepository,
+                            PaymentAccountBindingRepository paymentAccountBindingRepository,
                             StartupRepository startupRepository,
                             InvestorRepository investorRepository,
                             AgreementRepository agreementRepository,
@@ -120,6 +130,8 @@ public class FinancialService {
                             JpaPaymentProviderMethodRepository paymentProviderMethodRepository,
                             PaymentMethodStrategyRegistry paymentMethodStrategyRegistry,
                             EventPublisher eventPublisher,
+                            DemoPaymentProviderProperties demoPaymentProviderProperties,
+                            PayoutOrchestrationProperties payoutOrchestrationProperties,
                             @Value("${optrabidz.financial.settlement.expiry-minutes:30}") long settlementExpiryMinutes,
                             @Value("${optrabidz.financial.payment-intent.expiry-minutes:15}") long paymentIntentExpiryMinutes) {
         this.settlementRepository = settlementRepository;
@@ -127,6 +139,7 @@ public class FinancialService {
         this.repaymentInstallmentRepository = repaymentInstallmentRepository;
         this.paymentIntentRepository = paymentIntentRepository;
         this.paymentAttemptRepository = paymentAttemptRepository;
+        this.paymentAccountBindingRepository = paymentAccountBindingRepository;
         this.startupRepository = startupRepository;
         this.investorRepository = investorRepository;
         this.agreementRepository = agreementRepository;
@@ -134,6 +147,8 @@ public class FinancialService {
         this.paymentProviderMethodRepository = paymentProviderMethodRepository;
         this.paymentMethodStrategyRegistry = paymentMethodStrategyRegistry;
         this.eventPublisher = eventPublisher;
+        this.demoPaymentProviderProperties = demoPaymentProviderProperties;
+        this.payoutOrchestrationProperties = payoutOrchestrationProperties;
         this.settlementExpiryMinutes = settlementExpiryMinutes;
         this.paymentIntentExpiryMinutes = paymentIntentExpiryMinutes;
     }
@@ -177,6 +192,9 @@ public class FinancialService {
         Settlement settlement = settlementRepository
                 .findByIdForInvestor(settlementId, investor.getInvestorId())
                 .orElseThrow(() -> settlementNotFound(settlementId));
+        if (demoPaymentProviderProperties.isEnabled()) {
+            ensureDemoReceivingAccountReady(getStartupById(settlement.getStartupId()).getAccountId());
+        }
         Instant now = Instant.now();
         ensureSettlementPayable(settlement, now);
 
@@ -304,6 +322,9 @@ public class FinancialService {
             Repayment repayment,
             RepaymentInstallment installment
     ) {
+        if (demoPaymentProviderProperties.isEnabled()) {
+            ensureDemoReceivingAccountReady(getInvestorById(repayment.getInvestorId()).getAccountId());
+        }
         Long installmentId = installment.getRepaymentInstallmentId();
         Instant now = Instant.now();
         Optional<PaymentIntent> activeIntent =
@@ -360,9 +381,16 @@ public class FinancialService {
         ensurePaymentIntentActive(paymentIntent);
 
         String providerCode = normalizeProviderCode(request == null ? null : request.providerCode());
-        PaymentMethodType methodType = request == null || request.methodType() == null
-                ? PaymentMethodType.OTHER
-                : request.methodType();
+        PaymentMethodType methodType = request == null ? null : request.methodType();
+        if (demoPaymentProviderProperties.isEnabled()) {
+            if (!"DEMO".equals(providerCode)
+                    || (methodType != PaymentMethodType.UPI && methodType != PaymentMethodType.CARD)) {
+                throw new UnsupportedPaymentMethodException(
+                        "Demo payments require provider DEMO and method UPI or CARD");
+            }
+        } else if (methodType == null) {
+            methodType = PaymentMethodType.OTHER;
+        }
         ensureProviderMethodEnabled(providerCode, methodType, paymentIntent.getCurrencyCode());
 
         Instant now = Instant.now();
@@ -450,6 +478,51 @@ public class FinancialService {
                 failureCode,
                 failureMessage
         ));
+    }
+
+    @Transactional
+    public PaymentAttemptResponse cancelProviderPaymentAttempt(String providerCode,
+                                                               Long paymentAttemptId) {
+        PaymentAttempt attempt = getProviderPaymentAttempt(providerCode, paymentAttemptId);
+        PaymentIntent paymentIntent = getPaymentIntent(attempt.getPaymentIntentId());
+        Instant now = Instant.now();
+        int cancelledAttemptCount = paymentAttemptRepository.cancelActive(paymentAttemptId, now);
+        PaymentAttempt cancelledAttempt = getProviderPaymentAttempt(providerCode, paymentAttemptId);
+        if (cancelledAttemptCount == 0) {
+            if (cancelledAttempt.getAttemptState() == PaymentAttemptState.CANCELLED) {
+                return toPaymentAttemptResponse(cancelledAttempt);
+            }
+            throw new PaymentStateConflictException(
+                    "Payment attempt cannot be cancelled from its current state");
+        }
+        if (paymentIntentRepository.cancelActive(paymentIntent.getPaymentIntentId(), now) == 0) {
+            throw paymentIntentNotActiveException(paymentIntent.getPaymentIntentId());
+        }
+        applyBusinessCancellation(paymentIntent, cancelledAttempt, now);
+        return toPaymentAttemptResponse(cancelledAttempt);
+    }
+
+    private void applyBusinessCancellation(PaymentIntent paymentIntent,
+                                           PaymentAttempt paymentAttempt,
+                                           Instant now) {
+        if (paymentIntent.getPaymentPurpose() != PaymentPurpose.REPAYMENT) {
+            eventPublisher.publish(new PaymentCollectionCancelledEvent(
+                    paymentAttempt.getPaymentAttemptId(), paymentIntent.getPaymentIntentId(),
+                    paymentIntent.getPaymentPurpose(), paymentIntent.getPayerAccountId(),
+                    null, null, null, null, null, "Payment cancelled", now));
+            return;
+        }
+        RepaymentInstallment installment = getRepaymentInstallment(paymentIntent.getRepaymentInstallmentId());
+        Repayment repayment = getRepayment(installment.getRepaymentId());
+        repaymentInstallmentRepository.markPaymentFailed(
+                installment.getRepaymentInstallmentId(), "Payment cancelled", now);
+        repaymentRepository.refreshStatus(repayment.getRepaymentId(), now);
+        eventPublisher.publish(new PaymentCollectionCancelledEvent(
+                paymentAttempt.getPaymentAttemptId(), paymentIntent.getPaymentIntentId(),
+                paymentIntent.getPaymentPurpose(), paymentIntent.getPayerAccountId(),
+                installment.getRepaymentInstallmentId(), repayment.getRepaymentId(),
+                repayment.getAgreementId(), repayment.getStartupId(), repayment.getInvestorId(),
+                "Payment cancelled", now));
     }
 
     private PaymentAttemptResponse failPaymentAttempt(PaymentAttemptFailureCommand command) {
@@ -685,6 +758,46 @@ public class FinancialService {
     }
 
     private void applyBusinessConfirmation(PaymentIntent paymentIntent, Instant now) {
+        if (!payoutOrchestrationProperties.isEnabled()) {
+            applyDirectBusinessConfirmation(paymentIntent, now);
+            return;
+        }
+
+        if (paymentIntent.getPaymentPurpose() == PaymentPurpose.SETTLEMENT) {
+            Settlement settlement = getSettlement(paymentIntent.getSettlementId());
+            int confirmedCount = settlementRepository.markPayoutPending(
+                    settlement.getSettlementId(),
+                    paymentIntent.getPaymentIntentId(),
+                    now
+            );
+            if (confirmedCount == 0) {
+                ensureAlreadyAwaitingPayoutBySameIntent(
+                        settlement.getSettlementId(), paymentIntent.getPaymentIntentId());
+                return;
+            }
+            eventPublisher.publish(new PaymentCollectionConfirmedEvent(
+                    paymentIntent.getPaymentIntentId(), now));
+            return;
+        }
+
+        RepaymentInstallment installment = getRepaymentInstallment(paymentIntent.getRepaymentInstallmentId());
+        int confirmedCount = repaymentInstallmentRepository.markPayoutPending(
+                installment.getRepaymentInstallmentId(),
+                paymentIntent.getPaymentIntentId(),
+                now
+        );
+        if (confirmedCount == 0) {
+            if (alreadyAwaitingPayoutBySameIntent(
+                    installment.getRepaymentInstallmentId(),
+                    paymentIntent.getPaymentIntentId())) {
+                return;
+            }
+        }
+        eventPublisher.publish(new PaymentCollectionConfirmedEvent(
+                paymentIntent.getPaymentIntentId(), now));
+    }
+
+    private void applyDirectBusinessConfirmation(PaymentIntent paymentIntent, Instant now) {
         if (paymentIntent.getPaymentPurpose() == PaymentPurpose.SETTLEMENT) {
             Settlement settlement = getSettlement(paymentIntent.getSettlementId());
             int confirmedCount = settlementRepository.confirmPending(
@@ -693,7 +806,8 @@ public class FinancialService {
                     now
             );
             if (confirmedCount == 0) {
-                ensureAlreadyConfirmedBySameIntent(settlement.getSettlementId(), paymentIntent.getPaymentIntentId());
+                ensureAlreadyConfirmedBySameIntent(
+                        settlement.getSettlementId(), paymentIntent.getPaymentIntentId());
                 return;
             }
             createRepaymentScheduleIfMissing(settlement, now);
@@ -709,7 +823,8 @@ public class FinancialService {
             return;
         }
 
-        RepaymentInstallment installment = getRepaymentInstallment(paymentIntent.getRepaymentInstallmentId());
+        RepaymentInstallment installment = getRepaymentInstallment(
+                paymentIntent.getRepaymentInstallmentId());
         Repayment repayment = getRepayment(installment.getRepaymentId());
         int confirmedCount = repaymentInstallmentRepository.markPaid(
                 installment.getRepaymentInstallmentId(),
@@ -806,7 +921,9 @@ public class FinancialService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
-    private Instant dueAtFor(AgreementDebtTerms debtTerms, int repaymentNumber, Instant scheduleStart) {
+    private Instant dueAtFor(AgreementDebtTerms debtTerms,
+                             int repaymentNumber,
+                             Instant scheduleStart) {
         long months = switch (debtTerms.getRepaymentPlanType()) {
             case INSTALLMENT_MONTHLY -> repaymentNumber;
             case INSTALLMENT_QUARTERLY -> Math.min(
@@ -880,6 +997,18 @@ public class FinancialService {
         }
     }
 
+    private void ensureAlreadyAwaitingPayoutBySameIntent(Long settlementId, Long paymentIntentId) {
+        Settlement latestSettlement = getSettlement(settlementId);
+        if (latestSettlement.getSettlementState() == SettlementState.SETTLEMENT_PAYOUT_PENDING
+                && paymentIntentId.equals(latestSettlement.getConfirmedPaymentIntentId())) {
+            return;
+        }
+        throw new SettlementStateConflictException(
+                "Settlement " + settlementId + " changed before payment intent " + paymentIntentId
+                        + " could confirm it"
+        );
+    }
+
     private void ensureAlreadyConfirmedBySameIntent(Long settlementId, Long paymentIntentId) {
         Settlement latestSettlement = getSettlement(settlementId);
         if (latestSettlement.getSettlementState() == SettlementState.SETTLEMENT_CONFIRMED
@@ -907,12 +1036,21 @@ public class FinancialService {
         throw repaymentStateConflict(installmentId);
     }
 
-    private boolean alreadyPaidBySameIntent(
+    private boolean alreadyAwaitingPayoutBySameIntent(
             Long installmentId,
             Long paymentIntentId
     ) {
         RepaymentInstallment latestInstallment = getRepaymentInstallment(
                 installmentId);
+        if (latestInstallment.getInstallmentState() == RepaymentInstallmentState.PAYOUT_PENDING
+                && paymentIntentId.equals(latestInstallment.getConfirmedPaymentIntentId())) {
+            return true;
+        }
+        throw repaymentStateConflict(installmentId);
+    }
+
+    private boolean alreadyPaidBySameIntent(Long installmentId, Long paymentIntentId) {
+        RepaymentInstallment latestInstallment = getRepaymentInstallment(installmentId);
         if (latestInstallment.getInstallmentState() == RepaymentInstallmentState.PAID
                 && paymentIntentId.equals(latestInstallment.getConfirmedPaymentIntentId())) {
             return true;
@@ -930,9 +1068,20 @@ public class FinancialService {
 
     private String normalizeProviderCode(String providerCode) {
         if (providerCode == null || providerCode.isBlank()) {
-            return LocalPaymentStrategy.PROVIDER_CODE;
+            return demoPaymentProviderProperties.isEnabled()
+                    ? "DEMO"
+                    : LocalPaymentStrategy.PROVIDER_CODE;
         }
         return providerCode.trim().toUpperCase();
+    }
+
+    private void ensureDemoReceivingAccountReady(Long payeeAccountId) {
+        if (paymentAccountBindingRepository
+                .findVerifiedByAccountIdAndProviderCode(payeeAccountId, "DEMO")
+                .isEmpty()) {
+            throw new ReceivingAccountNotReadyException(
+                    "Payee account " + payeeAccountId + " has no verified DEMO receiving binding");
+        }
     }
 
     private Settlement getSettlement(Long settlementId) {

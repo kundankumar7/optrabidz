@@ -45,6 +45,10 @@ public interface RepaymentInstallmentRepository {
 
     int markPaid(Long installmentId, Long paymentIntentId, Instant now);
 
+    int markPayoutPending(Long installmentId, Long paymentIntentId, Instant now);
+
+    int confirmPayoutPending(Long installmentId, Long paymentIntentId, Instant now);
+
     int markPaymentFailed(Long installmentId, String reason, Instant now);
 
     List<Long> findOverdueEligibleIds(Instant now, int batchSize);
