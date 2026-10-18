@@ -28,7 +28,7 @@ test("frontend CI runs every token gate with pinned actions", async () => {
   );
   assert.match(
     workflow,
-    /actions\/setup-node@820762786026740c76f36085b0efc47a31fe5020/u,
+    /actions\/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1/u,
   );
   assert.match(workflow, /node-version: "24"/u);
   assert.match(workflow, /cache: npm/u);
